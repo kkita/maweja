@@ -11,7 +11,7 @@ import { useCart } from "@/lib/cart-store";
 import { SERVICE_FEE } from "@/lib/demo-data";
 
 const paymentMethods = [
-  { id: "mobile_money", name: "Mobile Money", description: "MTN, Airtel, Orange", icon: Smartphone, color: "text-amber-500" },
+  { id: "mobile_money", name: "Mobile Money", description: "Airtel Money, M-PSA, Orange Money, AfriMoney, Illico Cash", icon: Smartphone, color: "text-amber-500" },
   { id: "cash", name: "Cash", description: "Payer a la livraison", icon: Banknote, color: "text-emerald-500" },
   { id: "card", name: "Carte de Credit", description: "Visa, Mastercard", icon: CreditCard, color: "text-blue-500" },
 ];

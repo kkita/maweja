@@ -1,7 +1,13 @@
-# FoodDash - Application de Commande de Nourriture
+# Mon Food Livreur - Application de Commande de Nourriture
 
 ## Overview
-Food delivery application with multiple restaurants, menus, cart system, and multiple payment options (Mobile Money, Cash, Credit Card). Currently uses demo data for client-side presentation.
+Food delivery application for Kinshasa with real restaurant names (Aldar, KFC, Hunga Busta, City Market, Hilton, Golden Tulip, Kin Marche, La Terrasse Gombe), menus, cart system, and multiple payment options (Mobile Money: Airtel Money, M-PSA, Orange Money, AfriMoney, Illico Cash + Cash + Credit Card). Uses demo data for client-side presentation.
+
+## Branding
+- App Name: Mon Food Livreur
+- Signature: Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+- Icons: /icon-192.png, /icon-512.png (generated)
+- PWA manifest configured
 
 ## Architecture
 - **Frontend**: React + Vite with Tailwind CSS and Shadcn UI
@@ -19,6 +25,7 @@ Food delivery application with multiple restaurants, menus, cart system, and mul
 - `client/src/pages/checkout.tsx` - Checkout with address, phone, payment method selection
 - `client/src/pages/order-success.tsx` - Order confirmation page
 - `client/src/pages/tracking.tsx` - Order tracking with step-by-step progress
+- `client/public/manifest.json` - PWA manifest for mobile app
 
 ## Pages
 1. `/` - Home (search, categories, promo banner, featured & all restaurants)
@@ -33,15 +40,14 @@ Food delivery application with multiple restaurants, menus, cart system, and mul
 - Primary color: Orange (24 95% 53%)
 - Clean, modern, mobile-first design
 - Glassmorphism headers (backdrop-blur)
-- Smooth transitions and interactions
 
 ## Pricing Structure
 - Subtotal: food items total
-- Delivery fee: $2.00
+- Delivery fee: varies by restaurant
 - Service fee: $0.99
 - Total = Subtotal + Delivery + Service
 
 ## Payment Methods
-- Mobile Money (MTN, Airtel, Orange)
+- Mobile Money (Airtel Money, M-PSA, Orange Money, AfriMoney, Illico Cash)
 - Cash (pay on delivery)
 - Credit Card (Visa, Mastercard)

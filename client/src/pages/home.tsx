@@ -130,10 +130,13 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <MapPin className="w-5 h-5 text-primary flex-shrink-0" />
+            <img src="/icon-192.png" alt="Mon Food Livreur" className="w-8 h-8 rounded-md flex-shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Livrer a</p>
-              <p className="text-sm font-semibold truncate" data-testid="text-delivery-address">123 Avenue de la Paix</p>
+              <p className="text-sm font-bold text-primary truncate">Mon Food Livreur</p>
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                <p className="text-xs text-muted-foreground truncate" data-testid="text-delivery-address">Kinshasa, RDC</p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -162,7 +165,7 @@ export default function Home() {
           <h1 className="text-2xl md:text-3xl font-bold mb-1" data-testid="text-home-title">
             Que souhaitez-vous manger ?
           </h1>
-          <p className="text-muted-foreground text-sm mb-4">Decouvrez les meilleurs restaurants pres de chez vous</p>
+          <p className="text-muted-foreground text-sm mb-4">Decouvrez les meilleurs restaurants de Kinshasa</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -228,8 +231,9 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-border mt-12">
-        <div className="max-w-5xl mx-auto px-4 py-8 text-center">
-          <p className="text-sm text-muted-foreground">FoodDash - Livraison de repas rapide et fiable</p>
+        <div className="max-w-5xl mx-auto px-4 py-8 text-center space-y-1">
+          <p className="text-sm font-semibold">Mon Food Livreur</p>
+          <p className="text-xs text-muted-foreground">Demo by Khevin Andrew Kita - Ed Corporation 0911742202</p>
         </div>
       </footer>
     </div>

@@ -47,7 +47,7 @@ export default function OrderSuccessPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Support</p>
-              <p className="font-semibold text-sm">WhatsApp: +243 XXX XXX XXX</p>
+              <p className="font-semibold text-sm">WhatsApp: +243 0911742202</p>
             </div>
           </div>
         </Card>
