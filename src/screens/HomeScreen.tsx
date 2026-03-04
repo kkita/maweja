@@ -39,7 +39,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Bienvenue sur</Text>
-            <Text style={styles.appName}>Mon Food Livreur</Text>
+            <Text style={styles.appName}>Voss</Text>
             <Text style={styles.location}>
               <Feather name="map-pin" size={14} color={colors.primary} /> Kinshasa, RDC
             </Text>

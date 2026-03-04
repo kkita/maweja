@@ -1,4 +1,4 @@
-# Mon Food Livreur - React Native/Expo
+# Voss - React Native/Expo
 
 ## Overview
 Food delivery application for Kinshasa, RDC built with React Native and Expo. Features real Kinshasa restaurants, menus, cart system, and multiple payment options (Mobile Money + Cash + Card). Uses demo data for client-side presentation. Can be built as an Android APK via EAS Build.
