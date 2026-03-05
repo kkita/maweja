@@ -1,130 +1,305 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Facture - Ed Corporation</title>
-<style>
-  @media print { body { margin: 0; } .no-print { display: none; } }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; background: #f5f5f5; }
-  .page { max-width: 800px; margin: 20px auto; background: #fff; padding: 48px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #f97316; padding-bottom: 24px; margin-bottom: 32px; }
-  .company-name { font-size: 28px; font-weight: 800; color: #f97316; letter-spacing: 1px; }
-  .company-info { font-size: 13px; color: #555; margin-top: 6px; line-height: 1.6; }
-  .invoice-title { text-align: right; }
-  .invoice-title h1 { font-size: 32px; font-weight: 800; color: #1a1a1a; text-transform: uppercase; letter-spacing: 2px; }
-  .invoice-meta { font-size: 13px; color: #555; margin-top: 8px; line-height: 1.8; }
-  .invoice-meta strong { color: #1a1a1a; }
-  .section { margin-bottom: 28px; }
-  .section-title { font-size: 12px; font-weight: 700; color: #f97316; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
-  .client-box { background: #fef3e2; border-left: 4px solid #f97316; padding: 16px 20px; border-radius: 0 8px 8px 0; }
-  .client-box p { font-size: 14px; line-height: 1.7; color: #333; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  thead th { background: #1a1a1a; color: #fff; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 12px 16px; text-align: left; }
-  thead th:last-child { text-align: right; }
-  tbody td { padding: 14px 16px; font-size: 14px; border-bottom: 1px solid #eee; }
-  tbody td:last-child { text-align: right; font-weight: 600; }
-  .totals { display: flex; justify-content: flex-end; margin-top: 20px; }
-  .totals-table { width: 320px; }
-  .totals-table .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; color: #555; }
-  .totals-table .row.total { border-top: 2px solid #1a1a1a; padding-top: 12px; margin-top: 4px; font-size: 18px; font-weight: 800; color: #1a1a1a; }
-  .totals-table .row.paid { color: #16a34a; font-weight: 700; font-size: 15px; }
-  .totals-table .row.remaining { color: #f97316; font-weight: 700; font-size: 15px; }
-  .payment-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px 20px; margin-top: 28px; }
-  .payment-note p { font-size: 13px; color: #166534; line-height: 1.7; }
-  .payment-note strong { color: #15803d; }
-  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #999; line-height: 1.8; }
-  .stamp { display: inline-block; border: 3px solid #f97316; color: #f97316; font-size: 14px; font-weight: 800; padding: 8px 24px; border-radius: 8px; transform: rotate(-5deg); margin-top: 20px; text-transform: uppercase; letter-spacing: 2px; }
-  .print-btn { display: block; margin: 20px auto; background: #f97316; color: #fff; border: none; padding: 12px 32px; font-size: 15px; font-weight: 700; border-radius: 8px; cursor: pointer; }
-  .print-btn:hover { background: #ea580c; }
-</style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facture - Ed Corporation</title>
+    <style>
+      @media print {
+        body {
+          margin: 0;
+        }
+        .no-print {
+          display: none;
+        }
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #1a1a1a;
+        background: #f5f5f5;
+      }
+      .page {
+        max-width: 800px;
+        margin: 20px auto;
+        background: #fff;
+        padding: 48px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 3px solid #f97316;
+        padding-bottom: 24px;
+        margin-bottom: 32px;
+      }
+      .company-name {
+        font-size: 28px;
+        font-weight: 800;
+        color: #f97316;
+        letter-spacing: 1px;
+      }
+      .company-info {
+        font-size: 13px;
+        color: #555;
+        margin-top: 6px;
+        line-height: 1.6;
+      }
+      .invoice-title {
+        text-align: right;
+      }
+      .invoice-title h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #1a1a1a;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      .invoice-meta {
+        font-size: 13px;
+        color: #555;
+        margin-top: 8px;
+        line-height: 1.8;
+      }
+      .invoice-meta strong {
+        color: #1a1a1a;
+      }
+      .section {
+        margin-bottom: 28px;
+      }
+      .section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #f97316;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 10px;
+      }
+      .client-box {
+        background: #fef3e2;
+        border-left: 4px solid #f97316;
+        padding: 16px 20px;
+        border-radius: 0 8px 8px 0;
+      }
+      .client-box p {
+        font-size: 14px;
+        line-height: 1.7;
+        color: #333;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      thead th {
+        background: #1a1a1a;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 12px 16px;
+        text-align: left;
+      }
+      thead th:last-child {
+        text-align: right;
+      }
+      tbody td {
+        padding: 14px 16px;
+        font-size: 14px;
+        border-bottom: 1px solid #eee;
+      }
+      tbody td:last-child {
+        text-align: right;
+        font-weight: 600;
+      }
+      .totals {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+      .totals-table {
+        width: 320px;
+      }
+      .totals-table .row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
+        color: #555;
+      }
+      .totals-table .row.total {
+        border-top: 2px solid #1a1a1a;
+        padding-top: 12px;
+        margin-top: 4px;
+        font-size: 18px;
+        font-weight: 800;
+        color: #1a1a1a;
+      }
+      .totals-table .row.paid {
+        color: #16a34a;
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .totals-table .row.remaining {
+        color: #f97316;
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .payment-note {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-top: 28px;
+      }
+      .payment-note p {
+        font-size: 13px;
+        color: #166534;
+        line-height: 1.7;
+      }
+      .payment-note strong {
+        color: #15803d;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        font-size: 12px;
+        color: #999;
+        line-height: 1.8;
+      }
+      .stamp {
+        display: inline-block;
+        border: 3px solid #f97316;
+        color: #f97316;
+        font-size: 14px;
+        font-weight: 800;
+        padding: 8px 24px;
+        border-radius: 8px;
+        transform: rotate(-5deg);
+        margin-top: 20px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      .print-btn {
+        display: block;
+        margin: 20px auto;
+        background: #f97316;
+        color: #fff;
+        border: none;
+        padding: 12px 32px;
+        font-size: 15px;
+        font-weight: 700;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .print-btn:hover {
+        background: #ea580c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div>
+          <div class="company-name">Ed Corporation</div>
+          <div class="company-info">
+            Tél : 0819994041<br />
+            RCCM : RCCM/15-A-29656<br />
+            Kinshasa, RDC
+          </div>
+        </div>
+        <div class="invoice-title">
+          <h1>Facture</h1>
+          <div class="invoice-meta">
+            <strong>N° :</strong> EC-2026-0042<br />
+            <strong>Date :</strong> 05 Mars 2026<br />
+            <strong>Statut :</strong> Acompte reçu
+          </div>
+        </div>
+      </div>
 
-<div class="page">
-  <div class="header">
-    <div>
-      <div class="company-name">Ed Corporation</div>
-      <div class="company-info">
-        Tél : 0819994041<br>
-        RCCM : RCCM/15-A-29656<br>
-        Kinshasa, RDC
+      <div class="section">
+        <div class="section-title">Objet</div>
+        <div class="client-box">
+          <p><strong>Conception de l'Application MAWEJA</strong></p>
+          <p>Développement complet d'une application mobile sur mesure.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <table>
+          <thead>
+            <tr>
+              <th>Description</th>
+              <th>Montant (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Conception et développement de l'Application MAWEJA</td>
+              <td>1 500,00 $</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="totals">
+        <div class="totals-table">
+          <div class="row">
+            <span>Montant total</span>
+            <span>1 500,00 $</span>
+          </div>
+          <div class="row paid">
+            <span>Acompte reçu (50%)</span>
+            <span>750,00 $</span>
+          </div>
+          <div class="row remaining">
+            <span>Solde restant (50%)</span>
+            <span>750,00 $</span>
+          </div>
+          <div class="row total">
+            <span>Restant dû</span>
+            <span>750,00 $</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="payment-note">
+        <p><strong>Conditions de paiement :</strong></p>
+        <p>
+          Reçu un acompte de <strong>750,00 $</strong> correspondant à 50% du
+          montant total de 1 500,00 $ pour la conception de l'Application
+          MAWEJA.
+        </p>
+        <p>
+          Le solde de <strong>750,00 $</strong> (50% restant) est payable à la
+          livraison de l'application.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin-top: 32px">
+        <div class="stamp">Acompte reçu</div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <strong>Ed Corporation</strong> — Tél : 0819994041 — RCCM :
+          RCCM/15-A-29656
+        </p>
+        <p>Kinshasa, République Démocratique du Congo</p>
       </div>
     </div>
-    <div class="invoice-title">
-      <h1>Facture</h1>
-      <div class="invoice-meta">
-        <strong>N° :</strong> EC-2026-0042<br>
-        <strong>Date :</strong> 05 Mars 2026<br>
-        <strong>Statut :</strong> Acompte reçu
-      </div>
-    </div>
-  </div>
 
-  <div class="section">
-    <div class="section-title">Objet</div>
-    <div class="client-box">
-      <p><strong>Conception de l'Application MAWEJA</strong></p>
-      <p>Développement complet d'une application mobile sur mesure.</p>
-    </div>
-  </div>
-
-  <div class="section">
-    <table>
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Montant (USD)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Conception et développement de l'Application MAWEJA</td>
-          <td>1 500,00 $</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="totals">
-    <div class="totals-table">
-      <div class="row">
-        <span>Montant total</span>
-        <span>1 500,00 $</span>
-      </div>
-      <div class="row paid">
-        <span>Acompte reçu (50%)</span>
-        <span>750,00 $</span>
-      </div>
-      <div class="row remaining">
-        <span>Solde restant (50%)</span>
-        <span>750,00 $</span>
-      </div>
-      <div class="row total">
-        <span>Restant dû</span>
-        <span>750,00 $</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="payment-note">
-    <p><strong>Conditions de paiement :</strong></p>
-    <p>Reçu un acompte de <strong>750,00 $</strong> correspondant à 50% du montant total de 1 500,00 $ pour la conception de l'Application MAWEJA.</p>
-    <p>Le solde de <strong>750,00 $</strong> (50% restant) est payable à la livraison de l'application.</p>
-  </div>
-
-  <div style="text-align: center; margin-top: 32px;">
-    <div class="stamp">Acompte reçu</div>
-  </div>
-
-  <div class="footer">
-    <p><strong>Ed Corporation</strong> — Tél : 0819994041 — RCCM : RCCM/15-A-29656</p>
-    <p>Kinshasa, République Démocratique du Congo</p>
-  </div>
-</div>
-
-<button class="print-btn no-print" onclick="window.print()">Imprimer / Télécharger PDF</button>
-
-</body>
+    <button class="print-btn no-print" onclick="window.print()">
+      Imprimer / Télécharger PDF
+    </button>
+  </body>
 </html>
