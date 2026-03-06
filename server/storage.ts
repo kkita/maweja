@@ -45,6 +45,7 @@ export interface IStorage {
   getChatMessages(userId1: number, userId2: number): Promise<ChatMessage[]>;
   getChatContacts(userId: number): Promise<any[]>;
   createChatMessage(msg: InsertChatMessage): Promise<ChatMessage>;
+  updateChatMessage(id: number, data: Partial<ChatMessage>): Promise<void>;
 
   getWalletTransactions(userId: number): Promise<WalletTransaction[]>;
   createWalletTransaction(t: InsertWalletTransaction): Promise<WalletTransaction>;
@@ -209,6 +210,10 @@ export class DatabaseStorage implements IStorage {
   async createChatMessage(msg: InsertChatMessage) {
     const [created] = await db.insert(chatMessages).values(msg).returning();
     return created;
+  }
+
+  async updateChatMessage(id: number, data: Partial<ChatMessage>) {
+    await db.update(chatMessages).set(data).where(eq(chatMessages.id, id));
   }
 
   async getWalletTransactions(userId: number) {

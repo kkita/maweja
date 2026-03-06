@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { Home, Package, DollarSign, LogOut, Power } from "lucide-react";
+import { Home, Package, DollarSign, LogOut, Power, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import { apiRequest } from "../lib/queryClient";
 
@@ -22,6 +22,7 @@ export default function DriverNav() {
   const links = [
     { path: "/", icon: Home, label: "Accueil" },
     { path: "/driver/orders", icon: Package, label: "Livraisons" },
+    { path: "/driver/chat", icon: MessageCircle, label: "Messages" },
     { path: "/driver/earnings", icon: DollarSign, label: "Revenus" },
   ];
 

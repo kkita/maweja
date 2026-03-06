@@ -76,6 +76,12 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - AdminFinance - Revenue/expense tracking, category breakdown, daily chart, CSV export
 - AdminSettings - App configuration
 
+## Chat System
+- Admin ↔ Driver: Admin can message any driver from AdminChat (dynamic contact list). Driver has dedicated chat page (/driver/chat) to message admins.
+- Client → Admin: Floating "Contactez-nous" bubble on client pages with live chat and structured complaint form (predefined subjects).
+- Real-time: WebSocket notifications + polling fallback. Unread message counts shown per contact.
+- Security: All chat endpoints enforce session ownership (users can only access their own messages/unread counts). Sender ID validated against session.
+
 ## API Endpoints
 - POST /api/auth/login, /api/auth/register, /api/auth/logout, GET /api/auth/me
 - CRUD /api/restaurants, /api/restaurants/:id/menu, /api/menu-items
@@ -84,7 +90,8 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - GET/POST /api/finance, GET /api/finance/summary, GET /api/finance/export (CSV)
 - GET /api/orders/export (CSV)
 - GET /api/dashboard/stats
-- GET/POST /api/notifications, /api/chat, /api/wallet
+- GET/POST /api/notifications, /api/wallet
+- Chat: GET /api/chat/contacts/:userId, GET /api/chat/users-by-role/:role, GET /api/chat/unread/:userId, PATCH /api/chat/read/:senderId/:receiverId, GET /api/chat/:userId1/:userId2, POST /api/chat
 
 ## Accounts (seed data)
 - Admin: admin@maweja.cd / admin123

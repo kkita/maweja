@@ -1,0 +1,297 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../lib/auth";
+import { apiRequest, queryClient } from "../lib/queryClient";
+import { onWSMessage } from "../lib/websocket";
+import { useToast } from "../hooks/use-toast";
+import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import type { ChatMessage, User as UserType } from "@shared/schema";
+
+type SafeUser = Omit<UserType, "password">;
+
+export default function ClientContactBubble() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [view, setView] = useState<"menu" | "chat" | "complaint">("menu");
+  const [selectedAdmin, setSelectedAdmin] = useState<SafeUser | null>(null);
+  const [message, setMessage] = useState("");
+  const [complaintSubject, setComplaintSubject] = useState("");
+  const [complaintMessage, setComplaintMessage] = useState("");
+  const [complaintSent, setComplaintSent] = useState(false);
+  const messagesEnd = useRef<HTMLDivElement>(null);
+
+  const { data: admins = [] } = useQuery<SafeUser[]>({
+    queryKey: ["/api/chat/users-by-role", "admin"],
+    queryFn: () => fetch("/api/chat/users-by-role/admin").then(r => r.json()),
+    enabled: !!user && isOpen,
+  });
+
+  const { data: unreadCounts = {} } = useQuery<Record<number, number>>({
+    queryKey: ["/api/chat/unread", user?.id],
+    queryFn: () => fetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 10000,
+  });
+
+  const { data: messages = [] } = useQuery<ChatMessage[]>({
+    queryKey: ["/api/chat", user?.id, selectedAdmin?.id],
+    queryFn: () => fetch(`/api/chat/${user?.id}/${selectedAdmin?.id}`).then(r => r.json()),
+    enabled: !!selectedAdmin && !!user,
+    refetchInterval: 3000,
+  });
+
+  useEffect(() => {
+    messagesEnd.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    return onWSMessage((data) => {
+      if (data.type === "chat_message" || data.type === "notification") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (selectedAdmin && user) {
+      apiRequest(`/api/chat/read/${selectedAdmin.id}/${user.id}`, { method: "PATCH" })
+        .then(() => queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] }))
+        .catch(() => {});
+    }
+  }, [selectedAdmin, user, messages.length]);
+
+  const totalUnread = Object.values(unreadCounts).reduce((s, n) => s + n, 0);
+
+  const sendMessage = async () => {
+    if (!message.trim() || !selectedAdmin || !user) return;
+    await apiRequest("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        senderId: user.id,
+        receiverId: selectedAdmin.id,
+        message: message.trim(),
+        isRead: false,
+      }),
+    });
+    setMessage("");
+    queryClient.invalidateQueries({ queryKey: ["/api/chat", user?.id, selectedAdmin?.id] });
+  };
+
+  const sendComplaint = async () => {
+    if (!complaintSubject.trim() || !complaintMessage.trim() || !user) return;
+    const admin = admins.find((a: any) => a.isOnline) || admins[0];
+    if (!admin) {
+      toast({ title: "Erreur", description: "Aucun administrateur disponible", variant: "destructive" });
+      return;
+    }
+    const fullMessage = `[RECLAMATION] ${complaintSubject}\n\n${complaintMessage}`;
+    await apiRequest("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({
+        senderId: user.id,
+        receiverId: admin.id,
+        message: fullMessage,
+        isRead: false,
+      }),
+    });
+    setComplaintSent(true);
+    setComplaintSubject("");
+    setComplaintMessage("");
+    setTimeout(() => {
+      setComplaintSent(false);
+      setView("menu");
+    }, 3000);
+  };
+
+  const formatTime = (date: string | Date) => {
+    return new Intl.DateTimeFormat("fr-CD", { hour: "2-digit", minute: "2-digit" }).format(new Date(date));
+  };
+
+  if (!user) return null;
+
+  return (
+    <>
+      <button
+        onClick={() => { setIsOpen(!isOpen); if (!isOpen) { setView("menu"); setSelectedAdmin(null); } }}
+        data-testid="button-contact-bubble"
+        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-red-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-red-300 hover:bg-red-700 transition-all hover:scale-110"
+      >
+        {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
+        {!isOpen && totalUnread > 0 && (
+          <span className="absolute -top-1 -right-1 bg-white text-red-600 text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-red-600" data-testid="unread-bubble-count">
+            {totalUnread}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="fixed bottom-40 right-4 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden" style={{ maxHeight: "480px" }} data-testid="contact-panel">
+          {view === "menu" && (
+            <>
+              <div className="bg-red-600 p-4">
+                <h3 className="text-white font-bold text-sm">Contactez-nous</h3>
+                <p className="text-red-200 text-xs mt-0.5">Comment pouvons-nous vous aider ?</p>
+              </div>
+              <div className="p-3 space-y-2">
+                <button onClick={() => {
+                  const admin = admins.find((a: any) => a.isOnline) || admins[0];
+                  if (admin) { setSelectedAdmin(admin); setView("chat"); }
+                  else toast({ title: "Info", description: "Aucun administrateur disponible pour le moment" });
+                }} data-testid="button-start-chat"
+                  className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <MessageCircle size={18} className="text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-gray-900">Chat en direct</p>
+                    <p className="text-[10px] text-gray-400">Discutez avec un administrateur</p>
+                  </div>
+                  {totalUnread > 0 && (
+                    <span className="bg-red-600 text-white text-[9px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {totalUnread}
+                    </span>
+                  )}
+                </button>
+                <button onClick={() => { setView("complaint"); setComplaintSent(false); }} data-testid="button-start-complaint"
+                  className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+                    <AlertTriangle size={18} className="text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-900">Reclamation</p>
+                    <p className="text-[10px] text-gray-400">Signalez un probleme structure</p>
+                  </div>
+                </button>
+              </div>
+            </>
+          )}
+
+          {view === "chat" && selectedAdmin && (
+            <div className="flex flex-col" style={{ height: "480px" }}>
+              <div className="bg-red-600 p-3 flex items-center gap-3">
+                <button onClick={() => { setView("menu"); setSelectedAdmin(null); }} className="text-white/80 hover:text-white">
+                  <ArrowLeft size={18} />
+                </button>
+                <div className="relative">
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <Shield size={14} className="text-white" />
+                  </div>
+                  {selectedAdmin.isOnline && (
+                    <Circle size={8} className="absolute -bottom-0.5 -right-0.5 text-green-400 fill-green-400" />
+                  )}
+                </div>
+                <div>
+                  <p className="text-white font-bold text-xs">{selectedAdmin.name}</p>
+                  <p className="text-red-200 text-[10px]">{selectedAdmin.isOnline ? "En ligne" : "Hors ligne"}</p>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
+                {messages.length === 0 && (
+                  <div className="text-center pt-12 text-gray-400">
+                    <MessageCircle size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Envoyez votre premier message</p>
+                  </div>
+                )}
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
+                      msg.senderId === user?.id
+                        ? "bg-red-600 text-white rounded-br-sm"
+                        : "bg-white text-gray-900 rounded-bl-sm shadow-sm border border-gray-100"
+                    }`}>
+                      <p>{msg.message}</p>
+                      <p className={`text-[8px] mt-0.5 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400"}`}>
+                        {formatTime(msg.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEnd} />
+              </div>
+
+              <div className="p-2 border-t border-gray-100 bg-white">
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    placeholder="Votre message..."
+                    data-testid="client-chat-input"
+                    className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                  <button onClick={sendMessage} data-testid="client-chat-send"
+                    className="w-10 h-10 bg-red-600 text-white rounded-lg flex items-center justify-center hover:bg-red-700">
+                    <Send size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {view === "complaint" && (
+            <>
+              <div className="bg-red-600 p-3 flex items-center gap-3">
+                <button onClick={() => setView("menu")} className="text-white/80 hover:text-white">
+                  <ArrowLeft size={18} />
+                </button>
+                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <AlertTriangle size={14} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-white font-bold text-xs">Reclamation</p>
+                  <p className="text-red-200 text-[10px]">Signalez un probleme</p>
+                </div>
+              </div>
+
+              {complaintSent ? (
+                <div className="p-8 text-center">
+                  <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 size={28} className="text-green-600" />
+                  </div>
+                  <h4 className="font-bold text-sm text-gray-900 mb-1">Reclamation envoyee</h4>
+                  <p className="text-xs text-gray-500">Un administrateur vous repondra dans les plus brefs delais.</p>
+                </div>
+              ) : (
+                <div className="p-3 space-y-3">
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">Sujet</label>
+                    <select value={complaintSubject} onChange={e => setComplaintSubject(e.target.value)}
+                      data-testid="complaint-subject"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-red-500">
+                      <option value="">Choisir un sujet...</option>
+                      <option value="Commande non livree">Commande non livree</option>
+                      <option value="Retard de livraison">Retard de livraison</option>
+                      <option value="Commande incorrecte">Commande incorrecte</option>
+                      <option value="Qualite de nourriture">Qualite de nourriture</option>
+                      <option value="Probleme de paiement">Probleme de paiement</option>
+                      <option value="Comportement du livreur">Comportement du livreur</option>
+                      <option value="Probleme technique">Probleme technique</option>
+                      <option value="Autre">Autre</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">Description detaillee</label>
+                    <textarea value={complaintMessage} onChange={e => setComplaintMessage(e.target.value)}
+                      placeholder="Decrivez votre probleme en detail..."
+                      data-testid="complaint-message"
+                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs resize-none h-28 focus:outline-none focus:ring-2 focus:ring-red-500" />
+                  </div>
+                  <button onClick={sendComplaint} disabled={!complaintSubject || !complaintMessage.trim()}
+                    data-testid="button-send-complaint"
+                    className="w-full bg-red-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                    <Send size={14} />
+                    Envoyer la reclamation
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </>
+  );
+}

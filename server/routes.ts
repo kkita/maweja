@@ -438,14 +438,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(contacts);
   });
 
+  app.get("/api/chat/users-by-role/:role", requireAuth, async (req, res) => {
+    const sessionUserId = (req.session as any)?.userId;
+    const sessionUser = await storage.getUser(sessionUserId);
+    if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
+    const requestedRole = req.params.role;
+    if (sessionUser.role === "client" && requestedRole !== "admin") return res.status(403).json({ message: "Acces interdit" });
+    if (sessionUser.role === "driver" && requestedRole !== "admin") return res.status(403).json({ message: "Acces interdit" });
+    const all = await storage.getAllUsers();
+    const filtered = all
+      .filter(u => u.role === requestedRole)
+      .map(({ password: _, ...u }) => u);
+    res.json(filtered);
+  });
+
+  app.get("/api/chat/unread/:userId", requireAuth, async (req, res) => {
+    const sessionUserId = (req.session as any)?.userId;
+    const userId = Number(req.params.userId);
+    if (sessionUserId !== userId) return res.status(403).json({ message: "Acces interdit" });
+    const all = await storage.getAllUsers();
+    const counts: Record<number, number> = {};
+    for (const u of all) {
+      if (u.id === userId) continue;
+      const msgs = await storage.getChatMessages(userId, u.id);
+      const unread = msgs.filter(m => m.receiverId === userId && !m.isRead).length;
+      if (unread > 0) counts[u.id] = unread;
+    }
+    res.json(counts);
+  });
+
+  app.patch("/api/chat/read/:senderId/:receiverId", requireAuth, async (req, res) => {
+    const sessionUserId = (req.session as any)?.userId;
+    const receiverId = Number(req.params.receiverId);
+    if (sessionUserId !== receiverId) return res.status(403).json({ message: "Acces interdit" });
+    const senderId = Number(req.params.senderId);
+    const msgs = await storage.getChatMessages(senderId, receiverId);
+    for (const m of msgs) {
+      if (m.receiverId === receiverId && !m.isRead) {
+        await storage.updateChatMessage(m.id, { isRead: true });
+      }
+    }
+    res.json({ ok: true });
+  });
+
   app.get("/api/chat/:userId1/:userId2", requireAuth, async (req, res) => {
-    const msgs = await storage.getChatMessages(Number(req.params.userId1), Number(req.params.userId2));
+    const sessionUserId = (req.session as any)?.userId;
+    const userId1 = Number(req.params.userId1);
+    const userId2 = Number(req.params.userId2);
+    if (sessionUserId !== userId1 && sessionUserId !== userId2) {
+      const sessionUser = await storage.getUser(sessionUserId);
+      if (!sessionUser || sessionUser.role !== "admin") return res.status(403).json({ message: "Acces interdit" });
+    }
+    const msgs = await storage.getChatMessages(userId1, userId2);
     res.json(msgs);
   });
 
   app.post("/api/chat", requireAuth, async (req, res) => {
+    const sessionUserId = (req.session as any)?.userId;
+    if (sessionUserId !== req.body.senderId) return res.status(403).json({ message: "Acces interdit" });
     const msg = await storage.createChatMessage(req.body);
     sendToUser(req.body.receiverId, { type: "chat_message", message: msg });
+    const sender = await storage.getUser(req.body.senderId);
+    if (sender) {
+      await storage.createNotification({
+        userId: req.body.receiverId,
+        title: "Nouveau message",
+        message: `${sender.name}: ${req.body.message.substring(0, 50)}${req.body.message.length > 50 ? "..." : ""}`,
+        type: "chat",
+        isRead: false,
+      });
+      sendToUser(req.body.receiverId, {
+        type: "notification",
+        notification: { title: "Nouveau message", message: `${sender.name}: ${req.body.message.substring(0, 50)}` },
+      });
+    }
     res.json(msg);
   });
 

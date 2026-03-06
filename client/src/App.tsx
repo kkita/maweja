@@ -6,6 +6,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { connectWS } from "./lib/websocket";
 import { Toaster } from "./components/Toaster";
+import ClientContactBubble from "./components/ClientContactBubble";
 
 import LoginPage from "./pages/LoginPage";
 import DriverLoginPage from "./pages/DriverLoginPage";
@@ -21,6 +22,7 @@ import WalletPage from "./pages/client/WalletPage";
 import DriverDashboard from "./pages/driver/DriverDashboard";
 import DriverOrders from "./pages/driver/DriverOrders";
 import DriverEarnings from "./pages/driver/DriverEarnings";
+import DriverChat from "./pages/driver/DriverChat";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -70,6 +72,7 @@ function AppRoutes() {
       <Switch>
         <Route path="/" component={DriverDashboard} />
         <Route path="/driver/orders" component={DriverOrders} />
+        <Route path="/driver/chat" component={DriverChat} />
         <Route path="/driver/earnings" component={DriverEarnings} />
         <Route component={DriverDashboard} />
       </Switch>
@@ -78,16 +81,19 @@ function AppRoutes() {
 
   if (user?.role === "client") {
     return (
-      <Switch>
-        <Route path="/" component={ClientHome} />
-        <Route path="/restaurant/:id" component={RestaurantPage} />
-        <Route path="/cart" component={CartPage} />
-        <Route path="/checkout" component={CheckoutPage} />
-        <Route path="/orders" component={OrdersPage} />
-        <Route path="/tracking/:id" component={TrackingPage} />
-        <Route path="/wallet" component={WalletPage} />
-        <Route component={ClientHome} />
-      </Switch>
+      <>
+        <Switch>
+          <Route path="/" component={ClientHome} />
+          <Route path="/restaurant/:id" component={RestaurantPage} />
+          <Route path="/cart" component={CartPage} />
+          <Route path="/checkout" component={CheckoutPage} />
+          <Route path="/orders" component={OrdersPage} />
+          <Route path="/tracking/:id" component={TrackingPage} />
+          <Route path="/wallet" component={WalletPage} />
+          <Route component={ClientHome} />
+        </Switch>
+        <ClientContactBubble />
+      </>
     );
   }
 
