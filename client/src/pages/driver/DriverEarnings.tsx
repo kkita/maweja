@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth";
+import { authFetch } from "../../lib/queryClient";
 import DriverNav from "../../components/DriverNav";
 import { DollarSign, TrendingUp, Package, Clock } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
@@ -10,7 +11,7 @@ export default function DriverEarnings() {
 
   const { data: orders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders", { driverId: user?.id }],
-    queryFn: () => fetch(`/api/orders?driverId=${user?.id}`).then((r) => r.json()),
+    queryFn: () => authFetch(`/api/orders?driverId=${user?.id}`).then((r) => r.json()),
     enabled: !!user,
   });
 

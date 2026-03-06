@@ -13,7 +13,7 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - **Backend**: Express.js + PostgreSQL + WebSocket
 - **Frontend**: React + Vite + Tailwind CSS 3
 - **Database**: PostgreSQL via Drizzle ORM
-- **Auth**: Session-based with express-session
+- **Auth**: Session-based with express-session (3 separate cookies: sid_admin, sid_driver, sid_client for multi-tab support)
 - **Real-time**: WebSocket for notifications, chat, live updates, driver location
 - **Maps**: Leaflet + react-leaflet v4 (OpenStreetMap tiles)
 - **Routing**: wouter (client-side)
@@ -29,7 +29,8 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - `server/vite.ts` - Vite dev server middleware
 - `shared/schema.ts` - Database schema + types (users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances)
 - `client/src/App.tsx` - Main router (role-based routing with driver verification gate)
-- `client/src/lib/auth.tsx` - Auth context
+- `client/src/lib/auth.tsx` - Auth context (sessionStorage-based role detection per tab)
+- `client/src/lib/queryClient.ts` - Query client, apiRequest, authFetch (all include X-User-Role header)
 - `client/src/lib/cart.tsx` - Cart context
 - `client/src/lib/websocket.ts` - WebSocket client
 

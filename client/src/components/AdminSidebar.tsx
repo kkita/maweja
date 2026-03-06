@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
+import { authFetch } from "../lib/queryClient";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield
 } from "lucide-react";
@@ -12,7 +13,7 @@ export default function AdminSidebar() {
 
   const { data: notifications = [] } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
-    queryFn: () => fetch(`/api/notifications/${user?.id}`).then((r) => r.json()),
+    queryFn: () => authFetch(`/api/notifications/${user?.id}`).then((r) => r.json()),
     enabled: !!user,
     refetchInterval: 10000,
   });

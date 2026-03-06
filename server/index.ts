@@ -10,14 +10,29 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "maweja-secret-2024",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 },
-  })
-);
+const sessionOpts = {
+  secret: process.env.SESSION_SECRET || "maweja-secret-2024",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 },
+};
+
+const adminSession = session({ ...sessionOpts, name: "sid_admin" });
+const driverSession = session({ ...sessionOpts, name: "sid_driver" });
+const clientSession = session({ ...sessionOpts, name: "sid_client" });
+
+app.use((req: any, res, next) => {
+  const role = req.headers["x-user-role"] as string;
+  if (role === "admin") return adminSession(req, res, next);
+  if (role === "driver") return driverSession(req, res, next);
+  if (role === "client") return clientSession(req, res, next);
+
+  const path = req.path;
+  if (path.startsWith("/api/admin") || path === "/api/dashboard/stats") return adminSession(req, res, next);
+  if (path.startsWith("/api/driver")) return driverSession(req, res, next);
+
+  return clientSession(req, res, next);
+});
 
 (async () => {
   await db.execute(sql`

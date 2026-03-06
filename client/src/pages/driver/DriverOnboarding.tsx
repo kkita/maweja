@@ -32,7 +32,8 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include" });
+      const role = sessionStorage.getItem("maweja_role") || "driver";
+      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include", headers: { "X-User-Role": role } });
       if (!res.ok) throw new Error("Echec de l'upload");
       const data = await res.json();
       onChange(data.url);

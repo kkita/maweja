@@ -11,6 +11,21 @@ interface AuthContextType {
   setUser: (user: Omit<User, "password"> | null) => void;
 }
 
+function detectRoleFromPath(): string {
+  const path = window.location.pathname;
+  if (path.startsWith("/admin")) return "admin";
+  if (path.startsWith("/driver")) return "driver";
+  return "client";
+}
+
+function initRole(): string {
+  const stored = sessionStorage.getItem("maweja_role");
+  if (stored) return stored;
+  const detected = detectRoleFromPath();
+  sessionStorage.setItem("maweja_role", detected);
+  return detected;
+}
+
 const AuthContext = createContext<AuthContextType>(null!);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -18,7 +33,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/auth/me", { credentials: "include" })
+    const role = initRole();
+    fetch("/api/auth/me", {
+      credentials: "include",
+      headers: { "X-User-Role": role },
+    })
       .then((r) => (r.ok ? r.json() : null))
       .then((u) => setUser(u))
       .catch(() => {})
@@ -26,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string, expectedRole?: string) => {
+    const role = expectedRole || "client";
+    sessionStorage.setItem("maweja_role", role);
     const res = await apiRequest("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password, expectedRole }),
@@ -35,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (data: { email: string; password: string; name: string; phone: string; role?: string; address?: string }) => {
+    sessionStorage.setItem("maweja_role", "client");
     const res = await apiRequest("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
@@ -45,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await apiRequest("/api/auth/logout", { method: "POST" });
+    sessionStorage.removeItem("maweja_role");
     setUser(null);
   };
 

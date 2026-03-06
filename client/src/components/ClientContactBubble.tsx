@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { apiRequest, queryClient } from "../lib/queryClient";
+import { apiRequest, queryClient, authFetch } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
 import { useToast } from "../hooks/use-toast";
 import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -23,20 +23,20 @@ export default function ClientContactBubble() {
 
   const { data: admins = [] } = useQuery<SafeUser[]>({
     queryKey: ["/api/chat/users-by-role", "admin"],
-    queryFn: () => fetch("/api/chat/users-by-role/admin").then(r => r.json()),
+    queryFn: () => authFetch("/api/chat/users-by-role/admin").then(r => r.json()),
     enabled: !!user && isOpen,
   });
 
   const { data: unreadCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
-    queryFn: () => fetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
     enabled: !!user,
     refetchInterval: 10000,
   });
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat", user?.id, selectedAdmin?.id],
-    queryFn: () => fetch(`/api/chat/${user?.id}/${selectedAdmin?.id}`).then(r => r.json()),
+    queryFn: () => authFetch(`/api/chat/${user?.id}/${selectedAdmin?.id}`).then(r => r.json()),
     enabled: !!selectedAdmin && !!user,
     refetchInterval: 3000,
   });

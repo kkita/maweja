@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, queryClient } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare } from "lucide-react";
 import type { ChatMessage, User as UserType } from "@shared/schema";
@@ -19,12 +19,12 @@ export default function AdminChat() {
 
   const { data: drivers = [] } = useQuery<SafeUser[]>({
     queryKey: ["/api/chat/users-by-role", "driver"],
-    queryFn: () => fetch("/api/chat/users-by-role/driver").then(r => r.json()),
+    queryFn: () => authFetch("/api/chat/users-by-role/driver").then(r => r.json()),
   });
 
   const { data: chatContacts = [] } = useQuery<SafeUser[]>({
     queryKey: ["/api/chat/contacts", user?.id],
-    queryFn: () => fetch(`/api/chat/contacts/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetch(`/api/chat/contacts/${user?.id}`).then(r => r.json()),
     enabled: !!user,
     refetchInterval: 10000,
   });
@@ -33,14 +33,14 @@ export default function AdminChat() {
 
   const { data: unreadCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
-    queryFn: () => fetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
     enabled: !!user,
     refetchInterval: 5000,
   });
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat", user?.id, selectedContact?.id],
-    queryFn: () => fetch(`/api/chat/${user?.id}/${selectedContact?.id}`).then(r => r.json()),
+    queryFn: () => authFetch(`/api/chat/${user?.id}/${selectedContact?.id}`).then(r => r.json()),
     enabled: !!selectedContact && !!user,
     refetchInterval: 3000,
   });

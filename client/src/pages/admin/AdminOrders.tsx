@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, queryClient } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { Package, ChevronDown, Truck, MapPin, Search } from "lucide-react";
 import { formatPrice, formatDate, statusLabels, statusColors, paymentLabels } from "../../lib/utils";
@@ -13,7 +13,7 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const { data: orders = [] } = useQuery<Order[]>({ queryKey: ["/api/orders"], refetchInterval: 5000 });
-  const { data: drivers = [] } = useQuery<User[]>({ queryKey: ["/api/drivers"], queryFn: () => fetch("/api/drivers").then((r) => r.json()) });
+  const { data: drivers = [] } = useQuery<User[]>({ queryKey: ["/api/drivers"], queryFn: () => authFetch("/api/drivers").then((r) => r.json()) });
 
   const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter);
 

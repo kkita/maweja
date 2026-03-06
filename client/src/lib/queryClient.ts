@@ -7,11 +7,29 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(url: string, options?: RequestInit) {
-  const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
+export function getUserRole(): string {
+  return sessionStorage.getItem("maweja_role") || "client";
+}
+
+export function authFetch(url: string, options?: RequestInit): Promise<Response> {
+  const { headers: extraHeaders, ...rest } = options || {};
+  return fetch(url, {
     credentials: "include",
+    ...rest,
+    headers: { "X-User-Role": getUserRole(), ...(extraHeaders as Record<string, string> || {}) },
+  });
+}
+
+export async function apiRequest(url: string, options?: RequestInit) {
+  const existingHeaders = options?.headers as Record<string, string> || {};
+  const res = await fetch(url, {
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "X-User-Role": getUserRole(),
+      ...existingHeaders,
+    },
+    credentials: "include",
   });
   await throwIfResNotOk(res);
   return res;
@@ -21,7 +39,10 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: async ({ queryKey }: QueryFunctionContext) => {
-        const res = await fetch(queryKey[0] as string, { credentials: "include" });
+        const res = await fetch(queryKey[0] as string, {
+          credentials: "include",
+          headers: { "X-User-Role": getUserRole() },
+        });
         await throwIfResNotOk(res);
         return res.json();
       },

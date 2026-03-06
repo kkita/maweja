@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
+import { authFetch } from "../../lib/queryClient";
 import ClientNav from "../../components/ClientNav";
 import { ClipboardList, ChevronRight, Package } from "lucide-react";
 import { formatPrice, formatDate, statusLabels, statusColors, paymentLabels } from "../../lib/utils";
@@ -11,7 +12,7 @@ export default function OrdersPage() {
   const [, navigate] = useLocation();
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders", { clientId: user?.id }],
-    queryFn: () => fetch(`/api/orders?clientId=${user?.id}`).then((r) => r.json()),
+    queryFn: () => authFetch(`/api/orders?clientId=${user?.id}`).then((r) => r.json()),
     enabled: !!user,
   });
 
