@@ -191,7 +191,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders", requireAuth, async (req, res) => {
     const orderNumber = `MAW-${Date.now().toString(36).toUpperCase()}`;
     const commission = Math.round(req.body.subtotal * 0.15);
-    const order = await storage.createOrder({ ...req.body, orderNumber, commission });
+    const restaurant = await storage.getRestaurant(req.body.restaurantId);
+    const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
+    const estimatedDelivery = new Date(Date.now() + deliveryMinutes * 60 * 1000).toISOString();
+    const order = await storage.createOrder({ ...req.body, orderNumber, commission, estimatedDelivery });
 
     // Record finance entries
     await storage.createFinance({
@@ -407,6 +410,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { isOnline } = req.body;
     await storage.updateUser(targetId, { isOnline });
     broadcast({ type: "driver_status", driverId: targetId, isOnline });
+    res.json({ ok: true });
+  });
+
+  app.post("/api/drivers/:id/alarm", requireAdmin, async (req, res) => {
+    const driverId = Number(req.params.id);
+    const { reason, orderId } = req.body;
+    const driver = await storage.getUser(driverId);
+    if (!driver) return res.status(404).json({ message: "Livreur non trouve" });
+    sendToUser(driverId, {
+      type: "alarm",
+      reason: reason || "Urgence - Contactez l'administration immediatement",
+      orderId: orderId || null,
+    });
+    await storage.createNotification({
+      userId: driverId,
+      title: "ALERTE URGENTE",
+      message: reason || "Urgence - Contactez l'administration",
+      type: "alarm",
+      isRead: false,
+    });
     res.json({ ok: true });
   });
 

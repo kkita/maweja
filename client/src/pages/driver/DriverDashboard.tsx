@@ -5,15 +5,91 @@ import { useToast } from "../../hooks/use-toast";
 import { apiRequest, queryClient } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import DriverNav from "../../components/DriverNav";
-import { Package, Clock, CheckCircle2, Truck, MapPin, Power, Navigation, DollarSign, Star, AlertCircle, Phone } from "lucide-react";
+import { Package, Clock, CheckCircle2, Truck, MapPin, Power, Navigation, DollarSign, Star, AlertCircle, Phone, Timer, Bell, X } from "lucide-react";
 import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/utils";
 import type { Order } from "@shared/schema";
+
+function CountdownBadge({ estimatedDelivery }: { estimatedDelivery: string | null }) {
+  const [remaining, setRemaining] = useState("");
+  const [isLate, setIsLate] = useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
+
+  useEffect(() => {
+    if (!estimatedDelivery) { setRemaining("--:--"); return; }
+    const update = () => {
+      const diff = new Date(estimatedDelivery).getTime() - Date.now();
+      if (diff <= 0) {
+        setRemaining(`-${Math.abs(Math.floor(diff / 60000))}min`);
+        setIsLate(true);
+        setIsUrgent(true);
+      } else {
+        const min = Math.floor(diff / 60000);
+        const sec = Math.floor((diff % 60000) / 1000);
+        setRemaining(`${min}:${sec.toString().padStart(2, "0")}`);
+        setIsLate(false);
+        setIsUrgent(min < 5);
+      }
+    };
+    update();
+    const i = setInterval(update, 1000);
+    return () => clearInterval(i);
+  }, [estimatedDelivery]);
+
+  return (
+    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl ${isLate ? "bg-red-100 border border-red-200 animate-pulse" : isUrgent ? "bg-orange-100 border border-orange-200" : "bg-green-100 border border-green-200"}`}>
+      <Timer size={12} className={isLate ? "text-red-600" : isUrgent ? "text-orange-600" : "text-green-600"} />
+      <span className={`font-mono font-black text-sm ${isLate ? "text-red-700" : isUrgent ? "text-orange-700" : "text-green-700"}`} data-testid="driver-countdown">
+        {remaining}
+      </span>
+      <span className={`text-[8px] font-bold ${isLate ? "text-red-500" : isUrgent ? "text-orange-500" : "text-green-500"}`}>
+        {isLate ? "RETARD!" : isUrgent ? "URGENT" : "restant"}
+      </span>
+    </div>
+  );
+}
+
+function AlarmOverlay({ reason, onDismiss }: { reason: string; onDismiss: () => void }) {
+  useEffect(() => {
+    const audio = new AudioContext();
+    let oscillator: OscillatorNode | null = null;
+    try {
+      oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.frequency.value = 880;
+      oscillator.type = "sawtooth";
+      gain.gain.value = 0.3;
+      oscillator.start();
+      setTimeout(() => { oscillator?.stop(); }, 3000);
+    } catch {}
+    if ("vibrate" in navigator) navigator.vibrate([500, 200, 500, 200, 500]);
+    return () => { try { oscillator?.stop(); audio.close(); } catch {} };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-red-600/95 flex items-center justify-center p-6 animate-pulse">
+      <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+          <Bell size={36} className="text-red-600" />
+        </div>
+        <h2 className="text-xl font-black text-red-600 mb-2">ALERTE URGENTE</h2>
+        <p className="text-gray-700 text-sm mb-6 leading-relaxed">{reason}</p>
+        <button onClick={onDismiss} data-testid="dismiss-alarm"
+          className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-red-200">
+          J'ai compris
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function DriverDashboard() {
   const { user, setUser } = useAuth();
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
   const [gpsActive, setGpsActive] = useState(false);
+  const [alarm, setAlarm] = useState<string | null>(null);
 
   const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders", "ready"],
@@ -31,6 +107,11 @@ export default function DriverDashboard() {
   const activeOrders = myOrders.filter(o => !["delivered", "cancelled"].includes(o.status));
   const deliveredToday = myOrders.filter(o => o.status === "delivered");
   const totalEarnings = deliveredToday.reduce((s, o) => s + o.deliveryFee, 0);
+
+  const lateOrders = activeOrders.filter(o => {
+    if (!o.estimatedDelivery) return false;
+    return new Date(o.estimatedDelivery).getTime() < Date.now();
+  });
 
   const sendLocation = useCallback(() => {
     if (!user?.id || !isOnline) return;
@@ -60,8 +141,32 @@ export default function DriverDashboard() {
         toast({ title: "Nouvelle commande!", description: "Une commande est disponible" });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       }
+      if (data.type === "alarm") {
+        setAlarm(data.reason || "Alerte de l'administration");
+      }
     });
   }, [toast]);
+
+  useEffect(() => {
+    if (lateOrders.length > 0 && isOnline) {
+      const checkInterval = setInterval(() => {
+        const lateNow = activeOrders.filter(o => {
+          if (!o.estimatedDelivery) return false;
+          const diff = new Date(o.estimatedDelivery).getTime() - Date.now();
+          return diff < 0 && diff > -60000;
+        });
+        if (lateNow.length > 0) {
+          toast({
+            title: "Retard detecte!",
+            description: `Vous etes en retard sur ${lateNow.length} livraison(s). Accelerez!`,
+            variant: "destructive",
+          });
+          if ("vibrate" in navigator) navigator.vibrate([300, 100, 300]);
+        }
+      }, 30000);
+      return () => clearInterval(checkInterval);
+    }
+  }, [lateOrders.length, isOnline, activeOrders, toast]);
 
   const toggleOnline = async () => {
     const newStatus = !isOnline;
@@ -99,6 +204,7 @@ export default function DriverDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
+      {alarm && <AlarmOverlay reason={alarm} onDismiss={() => setAlarm(null)} />}
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-6">
@@ -121,6 +227,16 @@ export default function DriverDashboard() {
           <div className={`flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl text-xs font-medium ${gpsActive ? "bg-green-50 text-green-700" : "bg-orange-50 text-orange-700"}`}>
             <Navigation size={14} />
             {gpsActive ? "GPS actif - Position partagee toutes les 15s" : "GPS inactif - Activez la localisation"}
+          </div>
+        )}
+
+        {lateOrders.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4 animate-pulse">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle size={16} className="text-red-600" />
+              <span className="font-bold text-sm text-red-700">Retard detecte!</span>
+            </div>
+            <p className="text-xs text-red-600">Vous avez {lateOrders.length} livraison(s) en retard. Veuillez accelerer.</p>
           </div>
         )}
 
@@ -169,7 +285,10 @@ export default function DriverDashboard() {
                     <span className="font-bold text-sm">{order.orderNumber}</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+
+                  <CountdownBadge estimatedDelivery={order.estimatedDelivery} />
+
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
                     <MapPin size={12} />
                     <span className="flex-1 truncate">{order.deliveryAddress}</span>
                   </div>
@@ -218,7 +337,8 @@ export default function DriverDashboard() {
                       <span className="font-bold text-sm">{order.orderNumber}</span>
                       <span className="font-bold text-red-600 text-sm">{formatPrice(order.deliveryFee)}</span>
                     </div>
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+                    {order.estimatedDelivery && <CountdownBadge estimatedDelivery={order.estimatedDelivery} />}
+                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-2">
                       <MapPin size={12} /> {order.deliveryAddress}
                     </p>
                     <p className="text-xs text-gray-400 mb-3">Total commande: {formatPrice(order.total)}</p>
