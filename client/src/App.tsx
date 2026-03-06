@@ -23,6 +23,7 @@ import DriverDashboard from "./pages/driver/DriverDashboard";
 import DriverOrders from "./pages/driver/DriverOrders";
 import DriverEarnings from "./pages/driver/DriverEarnings";
 import DriverChat from "./pages/driver/DriverChat";
+import DriverOnboarding from "./pages/driver/DriverOnboarding";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -32,6 +33,7 @@ import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminChat from "./pages/admin/AdminChat";
 import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminVerifications from "./pages/admin/AdminVerifications";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -62,12 +64,16 @@ function AppRoutes() {
         <Route path="/admin/chat" component={AdminChat} />
         <Route path="/admin/finance" component={AdminFinance} />
         <Route path="/admin/settings" component={AdminSettings} />
+        <Route path="/admin/verifications" component={AdminVerifications} />
         <Route component={AdminDashboard} />
       </Switch>
     );
   }
 
   if (user?.role === "driver") {
+    if (user.verificationStatus !== "approved") {
+      return <DriverOnboarding />;
+    }
     return (
       <Switch>
         <Route path="/" component={DriverDashboard} />

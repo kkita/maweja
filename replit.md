@@ -18,27 +18,40 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - **Maps**: Leaflet + react-leaflet v4 (OpenStreetMap tiles)
 - **Routing**: wouter (client-side)
 - **State**: TanStack React Query + Context API
+- **File uploads**: multer (uploads/ directory, 5MB limit, jpg/png/webp)
 
 ## Key Files
 - `server/index.ts` - Server entry, DB setup, table creation with ALTER TABLE migrations
-- `server/routes.ts` - API routes (auth, restaurants, orders, drivers CRUD, chat, wallet, finance, CSV export)
+- `server/routes.ts` - API routes (auth, restaurants, orders, drivers CRUD, chat, wallet, finance, CSV export, file upload, driver onboarding/verification)
 - `server/storage.ts` - Database operations (IStorage interface with finance & dashboard stats)
 - `server/db.ts` - Drizzle DB connection
 - `server/seed.ts` - Initial data seeding (restaurants, menu items, admin + drivers)
 - `server/vite.ts` - Vite dev server middleware
 - `shared/schema.ts` - Database schema + types (users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances)
-- `client/src/App.tsx` - Main router (role-based routing)
+- `client/src/App.tsx` - Main router (role-based routing with driver verification gate)
 - `client/src/lib/auth.tsx` - Auth context
 - `client/src/lib/cart.tsx` - Cart context
 - `client/src/lib/websocket.ts` - WebSocket client
 
 ## Database Tables
-- **users**: email, password, name, phone, role, isBlocked, vehicleType, vehiclePlate, driverLicense, commissionRate, lat/lng, walletBalance, loyaltyPoints
+- **users**: email, password, name, phone, role, isBlocked, vehicleType, vehiclePlate, driverLicense, commissionRate, lat/lng, walletBalance, loyaltyPoints, sex, dateOfBirth, fullAddress, idPhotoUrl, profilePhotoUrl, verificationStatus, rejectedFields
 - **restaurants**: name, description, cuisine, image, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours
 - **menu_items**: restaurantId, name, description, price, image, category, isAvailable, popular
-- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback
+- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery
 - **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
 - **notifications**, **chat_messages**, **wallet_transactions**
+
+## Driver Onboarding & Verification
+- Admin creates driver accounts (basic: email, password, name, phone)
+- New drivers get `verificationStatus: "not_started"`
+- On first login, driver sees onboarding form (NOT the dashboard)
+- Driver fills: full name, sex, date of birth, full address, email, phone, profile photo (required), ID photo (required)
+- After submission, verificationStatus becomes "pending" and driver sees waiting screen
+- Admin reviews on `/admin/verifications` page, can approve or reject specific fields
+- If rejected, driver sees only the rejected fields editable, re-submits
+- Once approved (verificationStatus: "approved"), driver accesses full app
+- WebSocket pushes verification_approved/verification_rejected events in real-time
+- Existing drivers (seeded) are pre-set to "approved"
 
 ## Guest Browsing & Auth
 - Non-authenticated users can browse restaurants, menus, and add to cart
@@ -62,19 +75,22 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - WalletPage - Wallet balance, top-up, transaction history
 
 ### Driver
-- DriverDashboard - Online/offline toggle, GPS location broadcasting, available/active orders, earnings
+- DriverOnboarding - First-login profile completion + waiting screen (gates unverified drivers)
+- DriverDashboard - Online/offline toggle, GPS location broadcasting, available/active orders, earnings, countdown timers, alarm overlay
 - DriverOrders - Delivery history
 - DriverEarnings - Revenue tracking
+- DriverChat - Chat with admin
 
 ### Admin Dashboard
 - AdminDashboard - KPIs, recent orders, performance metrics
 - AdminOrders - Order management with status/driver assignment
-- AdminDrivers - Driver CRUD (add/edit/delete/block), Leaflet map with real-time driver positions
+- AdminDrivers - 3-column layout: driver details (left), real-time map (center), driver list (right). CRUD, block, alarm, quick chat, countdown timers
 - AdminRestaurants - Restaurant management
 - AdminCustomers - Customer management, wallet/points
 - AdminChat - Messaging with clients and drivers
 - AdminFinance - Revenue/expense tracking, category breakdown, daily chart, CSV export
 - AdminSettings - App configuration
+- AdminVerifications - Review driver onboarding submissions, approve or reject fields individually
 
 ## Chat System
 - Admin ↔ Driver: Admin can message any driver from AdminChat (dynamic contact list). Driver has dedicated chat page (/driver/chat) to message admins.
@@ -84,9 +100,13 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ## API Endpoints
 - POST /api/auth/login, /api/auth/register, /api/auth/logout, GET /api/auth/me
+- POST /api/upload (file upload, auth required)
+- POST /api/driver/onboarding (driver profile completion)
+- GET /api/admin/verifications (pending/rejected drivers)
+- POST /api/admin/verify/:driverId (approve/reject with field-level rejection)
 - CRUD /api/restaurants, /api/restaurants/:id/menu, /api/menu-items
 - GET/POST/PATCH /api/orders, POST /api/orders/:id/rate
-- GET/POST/PATCH/DELETE /api/drivers, PATCH /api/drivers/:id/block, /api/drivers/:id/location, /api/drivers/:id/status
+- GET/POST/PATCH/DELETE /api/drivers, PATCH /api/drivers/:id/block, /api/drivers/:id/location, /api/drivers/:id/status, POST /api/drivers/:id/alarm
 - GET/POST /api/finance, GET /api/finance/summary, GET /api/finance/export (CSV)
 - GET /api/orders/export (CSV)
 - GET /api/dashboard/stats
@@ -95,7 +115,7 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ## Accounts (seed data)
 - Admin: admin@maweja.cd / admin123
-- Drivers: driver1-4@maweja.cd / driver123
+- Drivers: driver1-4@maweja.cd / driver123 (pre-approved)
 
 ## Payment Methods
 Mobile Money, Cash, Illico Cash, Wallet MAWEJA, Points de fidelite, Carte Bancaire

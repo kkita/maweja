@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
 import {
-  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell
+  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Notification as Notif } from "@shared/schema";
@@ -19,10 +19,16 @@ export default function AdminSidebar() {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
+  const { data: pendingVerifications = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/verifications"],
+    refetchInterval: 10000,
+  });
+
   const links = [
     { path: "/", icon: LayoutDashboard, label: "Dashboard" },
     { path: "/admin/orders", icon: Package, label: "Commandes" },
     { path: "/admin/drivers", icon: Truck, label: "Livreurs" },
+    { path: "/admin/verifications", icon: Shield, label: "Verifications" },
     { path: "/admin/restaurants", icon: Store, label: "Restaurants" },
     { path: "/admin/customers", icon: Users, label: "Clients" },
     { path: "/admin/chat", icon: MessageCircle, label: "Messages" },
@@ -63,6 +69,11 @@ export default function AdminSidebar() {
               {l.label === "Messages" && unreadCount > 0 && (
                 <span className="ml-auto bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                   {unreadCount}
+                </span>
+              )}
+              {l.label === "Verifications" && pendingVerifications.length > 0 && (
+                <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {pendingVerifications.length}
                 </span>
               )}
             </button>

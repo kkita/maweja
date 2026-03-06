@@ -2,6 +2,24 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname)}`),
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = /jpeg|jpg|png|webp/;
+    cb(null, allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype.replace("image/", "")));
+  },
+});
 
 const clients = new Map<number, WebSocket>();
 
@@ -103,6 +121,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {});
     res.json({ ok: true });
+  });
+
+  app.use("/uploads", (await import("express")).default.static(uploadsDir));
+
+  app.post("/api/upload", requireAuth, upload.single("file"), (req: any, res) => {
+    if (!req.file) return res.status(400).json({ message: "Fichier requis (jpg, png, webp, max 5MB)" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
+  app.post("/api/driver/onboarding", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
+    if (!user || user.role !== "driver") return res.status(403).json({ message: "Acces interdit" });
+    const { name, sex, dateOfBirth, fullAddress, email, phone, idPhotoUrl, profilePhotoUrl } = req.body;
+    if (!name || !sex || !dateOfBirth || !fullAddress || !email || !phone || !idPhotoUrl || !profilePhotoUrl) {
+      return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+    }
+    await storage.updateUser(userId, {
+      name, sex, dateOfBirth, fullAddress, email, phone, idPhotoUrl, profilePhotoUrl,
+      verificationStatus: "pending",
+      rejectedFields: null,
+    });
+    const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
+    for (const admin of admins) {
+      await storage.createNotification({
+        userId: admin.id,
+        title: "Verification livreur",
+        message: `${name} a soumis ses informations pour verification`,
+        type: "driver_verification",
+        data: { driverId: userId },
+        isRead: false,
+      });
+      sendToUser(admin.id, { type: "driver_verification", driverId: userId });
+    }
+    const updated = await storage.getUser(userId);
+    const { password: _, ...safeUser } = updated!;
+    res.json(safeUser);
+  });
+
+  app.get("/api/admin/verifications", requireAdmin, async (_req, res) => {
+    const allDrivers = await storage.getDrivers();
+    const pending = allDrivers.filter(d => d.verificationStatus === "pending" || d.verificationStatus === "rejected");
+    res.json(pending.map(({ password: _, ...d }) => d));
+  });
+
+  app.post("/api/admin/verify/:driverId", requireAdmin, async (req, res) => {
+    const driverId = Number(req.params.driverId);
+    const { action, rejectedFields } = req.body;
+    const driver = await storage.getUser(driverId);
+    if (!driver || driver.role !== "driver") return res.status(404).json({ message: "Livreur non trouve" });
+
+    if (action === "approve") {
+      await storage.updateUser(driverId, { verificationStatus: "approved", rejectedFields: null });
+      await storage.createNotification({
+        userId: driverId,
+        title: "Compte verifie!",
+        message: "Votre compte a ete approuve. Vous pouvez maintenant utiliser l'application.",
+        type: "verification",
+        isRead: false,
+      });
+      sendToUser(driverId, { type: "verification_approved" });
+    } else if (action === "reject") {
+      if (!rejectedFields || !Array.isArray(rejectedFields) || rejectedFields.length === 0) {
+        return res.status(400).json({ message: "Indiquez les champs a corriger" });
+      }
+      await storage.updateUser(driverId, { verificationStatus: "rejected", rejectedFields });
+      await storage.createNotification({
+        userId: driverId,
+        title: "Corrections requises",
+        message: "Certaines informations doivent etre corrigees. Veuillez les mettre a jour.",
+        type: "verification",
+        data: { rejectedFields },
+        isRead: false,
+      });
+      sendToUser(driverId, { type: "verification_rejected", rejectedFields });
+    }
+
+    const updated = await storage.getUser(driverId);
+    const { password: _, ...safe } = updated!;
+    res.json(safe);
   });
 
   // Restaurants

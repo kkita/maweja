@@ -21,6 +21,13 @@ export const users = pgTable("users", {
   vehiclePlate: text("vehicle_plate"),
   driverLicense: text("driver_license"),
   commissionRate: integer("commission_rate").default(15),
+  sex: text("sex"),
+  dateOfBirth: text("date_of_birth"),
+  fullAddress: text("full_address"),
+  idPhotoUrl: text("id_photo_url"),
+  profilePhotoUrl: text("profile_photo_url"),
+  verificationStatus: text("verification_status").default("not_started"),
+  rejectedFields: jsonb("rejected_fields"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
