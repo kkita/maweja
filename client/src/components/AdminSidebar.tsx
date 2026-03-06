@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
 import {
-  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, Settings, LogOut, Bell
+  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Notification as Notif } from "@shared/schema";
@@ -26,6 +26,7 @@ export default function AdminSidebar() {
     { path: "/admin/restaurants", icon: Store, label: "Restaurants" },
     { path: "/admin/customers", icon: Users, label: "Clients" },
     { path: "/admin/chat", icon: MessageCircle, label: "Messages" },
+    { path: "/admin/finance", icon: DollarSign, label: "Finance" },
     { path: "/admin/settings", icon: Settings, label: "Parametres" },
   ];
 

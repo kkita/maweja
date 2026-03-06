@@ -26,6 +26,7 @@ import AdminDrivers from "./pages/admin/AdminDrivers";
 import AdminRestaurants from "./pages/admin/AdminRestaurants";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminChat from "./pages/admin/AdminChat";
+import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 function AppRoutes() {
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="/admin/restaurants" component={AdminRestaurants} />
         <Route path="/admin/customers" component={AdminCustomers} />
         <Route path="/admin/chat" component={AdminChat} />
+        <Route path="/admin/finance" component={AdminFinance} />
         <Route path="/admin/settings" component={AdminSettings} />
         <Route component={AdminDashboard} />
       </Switch>

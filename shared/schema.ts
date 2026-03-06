@@ -13,8 +13,14 @@ export const users = pgTable("users", {
   walletBalance: integer("wallet_balance").notNull().default(0),
   loyaltyPoints: integer("loyalty_points").notNull().default(0),
   isOnline: boolean("is_online").notNull().default(false),
+  isBlocked: boolean("is_blocked").notNull().default(false),
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),
+  address: text("address"),
+  vehicleType: text("vehicle_type"),
+  vehiclePlate: text("vehicle_plate"),
+  driverLicense: text("driver_license"),
+  commissionRate: integer("commission_rate").default(15),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -32,6 +38,8 @@ export const restaurants = pgTable("restaurants", {
   isActive: boolean("is_active").notNull().default(true),
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),
+  phone: text("phone"),
+  openingHours: text("opening_hours"),
 });
 
 export const menuItems = pgTable("menu_items", {
@@ -56,6 +64,7 @@ export const orders = pgTable("orders", {
   items: jsonb("items").notNull(),
   subtotal: integer("subtotal").notNull(),
   deliveryFee: integer("delivery_fee").notNull(),
+  commission: integer("commission").notNull().default(0),
   total: integer("total").notNull(),
   paymentMethod: text("payment_method").notNull(),
   paymentStatus: text("payment_status").notNull().default("pending"),
@@ -64,6 +73,8 @@ export const orders = pgTable("orders", {
   deliveryLng: doublePrecision("delivery_lng"),
   notes: text("notes"),
   estimatedDelivery: text("estimated_delivery"),
+  rating: integer("rating"),
+  feedback: text("feedback"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -96,6 +107,19 @@ export const walletTransactions = pgTable("wallet_transactions", {
   type: text("type").notNull(),
   description: text("description").notNull(),
   reference: text("reference"),
+  orderId: integer("order_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const finances = pgTable("finances", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(),
+  category: text("category").notNull(),
+  amount: integer("amount").notNull(),
+  description: text("description").notNull(),
+  orderId: integer("order_id"),
+  userId: integer("user_id"),
+  reference: text("reference"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -106,6 +130,7 @@ export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, cre
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
+export const insertFinanceSchema = createInsertSchema(finances).omit({ id: true, createdAt: true });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -121,3 +146,5 @@ export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
+export type Finance = typeof finances.$inferSelect;
+export type InsertFinance = z.infer<typeof insertFinanceSchema>;

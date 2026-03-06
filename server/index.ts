@@ -5,7 +5,6 @@ import { setupVite, serveStatic } from "./vite";
 import { seedDatabase } from "./seed";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
-import * as schema from "@shared/schema";
 
 const app = express();
 app.use(express.json());
@@ -21,7 +20,6 @@ app.use(
 );
 
 (async () => {
-  // Create tables
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -34,11 +32,23 @@ app.use(
       wallet_balance INTEGER NOT NULL DEFAULT 0,
       loyalty_points INTEGER NOT NULL DEFAULT 0,
       is_online BOOLEAN NOT NULL DEFAULT false,
+      is_blocked BOOLEAN NOT NULL DEFAULT false,
       lat DOUBLE PRECISION,
       lng DOUBLE PRECISION,
+      address TEXT,
+      vehicle_type TEXT,
+      vehicle_plate TEXT,
+      driver_license TEXT,
+      commission_rate INTEGER DEFAULT 15,
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN NOT NULL DEFAULT false`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS vehicle_type TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS vehicle_plate TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS driver_license TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 15`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS restaurants (
@@ -54,9 +64,13 @@ app.use(
       min_order INTEGER NOT NULL DEFAULT 5000,
       is_active BOOLEAN NOT NULL DEFAULT true,
       lat DOUBLE PRECISION,
-      lng DOUBLE PRECISION
+      lng DOUBLE PRECISION,
+      phone TEXT,
+      opening_hours TEXT
     )
   `);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS phone TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS opening_hours TEXT`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS menu_items (
@@ -83,6 +97,7 @@ app.use(
       items JSONB NOT NULL,
       subtotal INTEGER NOT NULL,
       delivery_fee INTEGER NOT NULL,
+      commission INTEGER NOT NULL DEFAULT 0,
       total INTEGER NOT NULL,
       payment_method TEXT NOT NULL,
       payment_status TEXT NOT NULL DEFAULT 'pending',
@@ -91,10 +106,15 @@ app.use(
       delivery_lng DOUBLE PRECISION,
       notes TEXT,
       estimated_delivery TEXT,
+      rating INTEGER,
+      feedback TEXT,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     )
   `);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS commission INTEGER NOT NULL DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS rating INTEGER`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS feedback TEXT`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS notifications (
@@ -128,6 +148,22 @@ app.use(
       amount INTEGER NOT NULL,
       type TEXT NOT NULL,
       description TEXT NOT NULL,
+      reference TEXT,
+      order_id INTEGER,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  await db.execute(sql`ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS order_id INTEGER`);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS finances (
+      id SERIAL PRIMARY KEY,
+      type TEXT NOT NULL,
+      category TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      description TEXT NOT NULL,
+      order_id INTEGER,
+      user_id INTEGER,
       reference TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     )

@@ -9,13 +9,11 @@ export async function seedDatabase() {
   console.log("Seeding database...");
 
   await db.insert(users).values([
-    { email: "admin@maweja.cd", password: "admin123", name: "Admin MAWEJA", phone: "0819994041", role: "admin", walletBalance: 0, loyaltyPoints: 0, isOnline: true },
-    { email: "client@test.cd", password: "test123", name: "Patrick Kabongo", phone: "0812345678", role: "client", walletBalance: 15000, loyaltyPoints: 250, isOnline: false },
-    { email: "client2@test.cd", password: "test123", name: "Marie Lukusa", phone: "0898765432", role: "client", walletBalance: 8000, loyaltyPoints: 120, isOnline: false },
-    { email: "driver1@maweja.cd", password: "driver123", name: "Jean-Pierre Mutombo", phone: "0823456789", role: "driver", walletBalance: 45000, loyaltyPoints: 0, isOnline: true, lat: -4.3217, lng: 15.3125 },
-    { email: "driver2@maweja.cd", password: "driver123", name: "David Tshimanga", phone: "0834567890", role: "driver", walletBalance: 32000, loyaltyPoints: 0, isOnline: true, lat: -4.3150, lng: 15.2980 },
-    { email: "driver3@maweja.cd", password: "driver123", name: "Samuel Ilunga", phone: "0845678901", role: "driver", walletBalance: 28000, loyaltyPoints: 0, isOnline: false, lat: -4.3280, lng: 15.3050 },
-    { email: "driver4@maweja.cd", password: "driver123", name: "Joseph Kalala", phone: "0856789012", role: "driver", walletBalance: 52000, loyaltyPoints: 0, isOnline: true, lat: -4.3100, lng: 15.3200 },
+    { email: "admin@maweja.cd", password: "admin123", name: "Admin MAWEJA", phone: "0819994041", role: "admin", walletBalance: 0, loyaltyPoints: 0, isOnline: true, isBlocked: false },
+    { email: "driver1@maweja.cd", password: "driver123", name: "Jean-Pierre Mutombo", phone: "0823456789", role: "driver", walletBalance: 45000, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3217, lng: 15.3125, vehicleType: "moto", vehiclePlate: "KN-1234-AB", driverLicense: "DL-001234", commissionRate: 15 },
+    { email: "driver2@maweja.cd", password: "driver123", name: "David Tshimanga", phone: "0834567890", role: "driver", walletBalance: 32000, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3150, lng: 15.2980, vehicleType: "moto", vehiclePlate: "KN-5678-CD", driverLicense: "DL-005678", commissionRate: 15 },
+    { email: "driver3@maweja.cd", password: "driver123", name: "Samuel Ilunga", phone: "0845678901", role: "driver", walletBalance: 28000, loyaltyPoints: 0, isOnline: false, isBlocked: false, lat: -4.3280, lng: 15.3050, vehicleType: "voiture", vehiclePlate: "KN-9012-EF", driverLicense: "DL-009012", commissionRate: 12 },
+    { email: "driver4@maweja.cd", password: "driver123", name: "Joseph Kalala", phone: "0856789012", role: "driver", walletBalance: 52000, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3100, lng: 15.3200, vehicleType: "scooter", vehiclePlate: "KN-3456-GH", driverLicense: "DL-003456", commissionRate: 15 },
   ]);
 
   const restaurantData = [
@@ -88,13 +86,6 @@ export async function seedDatabase() {
   );
 
   await db.insert(menuItems).values(menuData);
-
-  // Seed some demo orders
-  await db.insert(orders).values([
-    { orderNumber: "MAW-001", clientId: 2, restaurantId: r[0].id, driverId: 4, status: "delivered", items: JSON.stringify([{name:"Shawarma Poulet",qty:2,price:7500},{name:"Houmous",qty:1,price:4500}]), subtotal: 19500, deliveryFee: 2500, total: 22000, paymentMethod: "mobile_money", paymentStatus: "paid", deliveryAddress: "123 Avenue Kasavubu, Kinshasa" },
-    { orderNumber: "MAW-002", clientId: 3, restaurantId: r[1].id, driverId: 5, status: "picked_up", items: JSON.stringify([{name:"Bucket 8 pieces",qty:1,price:18000},{name:"Frites Large",qty:2,price:3000}]), subtotal: 24000, deliveryFee: 2000, total: 26000, paymentMethod: "wallet", paymentStatus: "paid", deliveryAddress: "45 Blvd Lumumba, Gombe" },
-    { orderNumber: "MAW-003", clientId: 2, restaurantId: r[2].id, status: "pending", items: JSON.stringify([{name:"Classic Burger",qty:1,price:8000},{name:"Double Smash",qty:1,price:12000}]), subtotal: 20000, deliveryFee: 2000, total: 22000, paymentMethod: "cash", paymentStatus: "pending", deliveryAddress: "78 Rue de la Paix, Gombe" },
-  ]);
 
   console.log("Database seeded successfully!");
 }
