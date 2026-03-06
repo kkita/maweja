@@ -65,3 +65,7 @@
 .slide-in-from-top {
   animation-name: slide-in-from-top;
 }
+
+.leaflet-container {
+  z-index: 0 !important;
+}

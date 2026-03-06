@@ -270,8 +270,8 @@ export default function AdminDrivers() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setShowForm(false); setEditingDriver(null); }}>
-          <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={() => { setShowForm(false); setEditingDriver(null); }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 10000 }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-base">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h3>
               <button onClick={() => { setShowForm(false); setEditingDriver(null); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
@@ -316,8 +316,8 @@ export default function AdminDrivers() {
       )}
 
       {showAlarmModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-md" style={{ zIndex: 10000 }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center"><Bell size={18} className="text-red-600" /></div>
               <div>
