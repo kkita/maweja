@@ -40,12 +40,18 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
 - **notifications**, **chat_messages**, **wallet_transactions**
 
+## Guest Browsing
+- Non-authenticated users can browse restaurants, menus, and add to cart
+- Login/registration is required only at checkout (inline AuthGate component)
+- ClientNav adapts: shows "Connexion" button for guests, full nav for logged-in users
+- Driver/admin self-registration is blocked both client-side (no role selector) and server-side (403 response)
+
 ## Pages
 ### Client
-- HomePage - Restaurant listing, search, categories, promo
-- RestaurantPage - Menu with categories, add to cart
-- CartPage - Cart management
-- CheckoutPage - Address, payment selection, order placement
+- HomePage - Restaurant listing, search, categories, promo (guest accessible)
+- RestaurantPage - Menu with categories, add to cart (guest accessible)
+- CartPage - Cart management (guest accessible)
+- CheckoutPage - Address, payment selection, order placement (auth required - inline auth gate)
 - OrdersPage - Order history
 - TrackingPage - Real-time order tracking
 - WalletPage - Wallet balance, top-up, transaction history

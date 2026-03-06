@@ -47,9 +47,7 @@ function AppRoutes() {
     );
   }
 
-  if (!user) return <LoginPage />;
-
-  if (user.role === "admin") {
+  if (user?.role === "admin") {
     return (
       <Switch>
         <Route path="/" component={AdminDashboard} />
@@ -65,7 +63,7 @@ function AppRoutes() {
     );
   }
 
-  if (user.role === "driver") {
+  if (user?.role === "driver") {
     return (
       <Switch>
         <Route path="/" component={DriverDashboard} />
@@ -76,15 +74,29 @@ function AppRoutes() {
     );
   }
 
+  if (user?.role === "client") {
+    return (
+      <Switch>
+        <Route path="/" component={ClientHome} />
+        <Route path="/restaurant/:id" component={RestaurantPage} />
+        <Route path="/cart" component={CartPage} />
+        <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/orders" component={OrdersPage} />
+        <Route path="/tracking/:id" component={TrackingPage} />
+        <Route path="/wallet" component={WalletPage} />
+        <Route path="/login" component={LoginPage} />
+        <Route component={ClientHome} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
       <Route path="/" component={ClientHome} />
       <Route path="/restaurant/:id" component={RestaurantPage} />
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/orders" component={OrdersPage} />
-      <Route path="/tracking/:id" component={TrackingPage} />
-      <Route path="/wallet" component={WalletPage} />
+      <Route path="/login" component={LoginPage} />
       <Route component={ClientHome} />
     </Switch>
   );

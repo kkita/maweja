@@ -54,10 +54,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/register", async (req, res) => {
     const { email, password, name, phone, role, address } = req.body;
     if (!email || !password || !name || !phone) return res.status(400).json({ message: "Tous les champs sont requis" });
+    if (role === "driver") return res.status(403).json({ message: "Les comptes livreurs sont crees uniquement par l'administration" });
+    if (role === "admin") return res.status(403).json({ message: "Acces interdit" });
     const existing = await storage.getUserByEmail(email);
     if (existing) return res.status(400).json({ message: "Cet email existe deja" });
     const user = await storage.createUser({
-      email, password, name, phone, role: role || "client",
+      email, password, name, phone, role: "client",
       walletBalance: 0, loyaltyPoints: 0, isOnline: false, isBlocked: false,
       address: address || null,
     });

@@ -1,19 +1,24 @@
 import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
-import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut } from "lucide-react";
+import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn } from "lucide-react";
 
 export default function ClientNav() {
   const [location, navigate] = useLocation();
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
 
-  const links = [
-    { path: "/", icon: Home, label: "Accueil" },
-    { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
-    { path: "/orders", icon: ClipboardList, label: "Commandes" },
-    { path: "/wallet", icon: Wallet, label: "Wallet" },
-  ];
+  const links = user
+    ? [
+        { path: "/", icon: Home, label: "Accueil" },
+        { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
+        { path: "/orders", icon: ClipboardList, label: "Commandes" },
+        { path: "/wallet", icon: Wallet, label: "Wallet" },
+      ]
+    : [
+        { path: "/", icon: Home, label: "Accueil" },
+        { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
+      ];
 
   return (
     <>
@@ -29,10 +34,19 @@ export default function ClientNav() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-500 font-medium" data-testid="text-username">{user?.name?.split(" ")[0]}</span>
-            <button onClick={logout} className="text-gray-400 hover:text-red-600 transition-colors" data-testid="button-logout">
-              <LogOut size={18} />
-            </button>
+            {user ? (
+              <>
+                <span className="text-xs text-gray-500 font-medium" data-testid="text-username">{user.name?.split(" ")[0]}</span>
+                <button onClick={logout} className="text-gray-400 hover:text-red-600 transition-colors" data-testid="button-logout">
+                  <LogOut size={18} />
+                </button>
+              </>
+            ) : (
+              <button onClick={() => navigate("/login")} className="flex items-center gap-1.5 bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-red-700 transition-all" data-testid="button-login">
+                <LogIn size={14} />
+                Connexion
+              </button>
+            )}
           </div>
         </div>
       </header>

@@ -1,16 +1,17 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
-import { MapPin, Truck, Eye, EyeOff, User, Mail, Lock, Phone, ArrowRight, Utensils } from "lucide-react";
+import { useLocation } from "wouter";
+import { MapPin, Eye, EyeOff, User, Mail, Lock, Phone, ArrowRight, Utensils } from "lucide-react";
 
 export default function LoginPage() {
   const { login, register } = useAuth();
+  const [, navigate] = useLocation();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [role, setRole] = useState("client");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -24,8 +25,9 @@ export default function LoginPage() {
         await login(email, password);
       } else {
         if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caracteres"); setLoading(false); return; }
-        await register({ email, password, name, phone, role, address });
+        await register({ email, password, name, phone, role: "client", address });
       }
+      navigate("/");
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue");
     } finally {
@@ -118,24 +120,6 @@ export default function LoginPage() {
                     <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type="text" placeholder="Adresse (quartier, commune)" value={address} onChange={e => setAddress(e.target.value)}
                       data-testid="input-address" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-500 mb-2">Vous etes :</p>
-                    <div className="flex gap-2">
-                      {[
-                        { value: "client", label: "Client", desc: "Commander des repas", icon: MapPin },
-                        { value: "driver", label: "Livreur", desc: "Faire des livraisons", icon: Truck },
-                      ].map(r => (
-                        <button key={r.value} type="button" onClick={() => setRole(r.value)} data-testid={`role-${r.value}`}
-                          className={`flex-1 flex flex-col items-center gap-1 py-4 rounded-xl text-sm font-medium border-2 transition-all ${
-                            role === r.value ? "border-red-600 bg-red-50 text-red-700" : "border-gray-200 text-gray-500 hover:border-gray-300"
-                          }`}>
-                          <r.icon size={20} />
-                          <span className="font-semibold">{r.label}</span>
-                          <span className="text-[10px] text-gray-400">{r.desc}</span>
-                        </button>
-                      ))}
-                    </div>
                   </div>
                 </>
               )}
