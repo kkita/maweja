@@ -43,6 +43,7 @@ export default function DriverChat() {
       if (data.type === "chat_message" || data.type === "notification") {
         queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }
     });
   }, []);

@@ -18,7 +18,15 @@ export default function AdminSidebar() {
     refetchInterval: 10000,
   });
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
+    queryKey: ["/api/chat/unread", user?.id],
+    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 5000,
+  });
+
+  const unreadNotifCount = notifications.filter((n) => !n.isRead && n.type !== "chat").length;
+  const unreadChatCount = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
 
   const { data: pendingVerifications = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/verifications"],
@@ -37,6 +45,19 @@ export default function AdminSidebar() {
     { path: "/admin/settings", icon: Settings, label: "Parametres" },
   ];
 
+  const getBadge = (label: string) => {
+    if (label === "Messages" && unreadChatCount > 0) {
+      return { count: unreadChatCount, color: "bg-red-600" };
+    }
+    if (label === "Dashboard" && unreadNotifCount > 0) {
+      return { count: unreadNotifCount, color: "bg-red-600" };
+    }
+    if (label === "Verifications" && pendingVerifications.length > 0) {
+      return { count: pendingVerifications.length, color: "bg-orange-500" };
+    }
+    return null;
+  };
+
   return (
     <aside className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col fixed left-0 top-0 z-40">
       <div className="p-6 border-b border-gray-100">
@@ -54,6 +75,7 @@ export default function AdminSidebar() {
       <nav className="flex-1 p-4 space-y-1">
         {links.map((l) => {
           const isActive = location === l.path;
+          const badge = getBadge(l.label);
           return (
             <button
               key={l.path}
@@ -67,14 +89,9 @@ export default function AdminSidebar() {
             >
               <l.icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
               {l.label}
-              {l.label === "Messages" && unreadCount > 0 && (
-                <span className="ml-auto bg-red-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-              {l.label === "Verifications" && pendingVerifications.length > 0 && (
-                <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                  {pendingVerifications.length}
+              {badge && (
+                <span className={`ml-auto ${badge.color} text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center`} data-testid={`badge-${l.label.toLowerCase()}`}>
+                  {badge.count > 99 ? "99+" : badge.count}
                 </span>
               )}
             </button>

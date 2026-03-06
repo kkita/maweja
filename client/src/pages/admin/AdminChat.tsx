@@ -55,6 +55,7 @@ export default function AdminChat() {
         queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/chat/contacts"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }
     });
   }, []);

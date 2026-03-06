@@ -1,22 +1,45 @@
 import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
-import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn } from "lucide-react";
+import { authFetch } from "../lib/queryClient";
+import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn, MessageCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { queryClient } from "../lib/queryClient";
+import { onWSMessage } from "../lib/websocket";
 
 export default function ClientNav() {
   const [location, navigate] = useLocation();
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
 
+  const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
+    queryKey: ["/api/chat/unread", user?.id],
+    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 10000,
+  });
+
+  useEffect(() => {
+    return onWSMessage((data) => {
+      if (data.type === "chat_message" || data.type === "notification") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      }
+    });
+  }, []);
+
+  const unreadMsgCount = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
+
   const links = user
     ? [
-        { path: "/", icon: Home, label: "Accueil" },
+        { path: "/", icon: Home, label: "Accueil", badge: 0 },
         { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
-        { path: "/orders", icon: ClipboardList, label: "Commandes" },
-        { path: "/wallet", icon: Wallet, label: "Wallet" },
+        { path: "/orders", icon: ClipboardList, label: "Commandes", badge: 0 },
+        { path: "/wallet", icon: Wallet, label: "Wallet", badge: 0 },
       ]
     : [
-        { path: "/", icon: Home, label: "Accueil" },
+        { path: "/", icon: Home, label: "Accueil", badge: 0 },
         { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
       ];
 
@@ -36,6 +59,14 @@ export default function ClientNav() {
           <div className="flex items-center gap-3">
             {user ? (
               <>
+                {unreadMsgCount > 0 && (
+                  <div className="relative">
+                    <MessageCircle size={18} className="text-gray-400" />
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[8px] font-bold min-w-3.5 h-3.5 px-0.5 rounded-full flex items-center justify-center" data-testid="badge-unread-messages">
+                      {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
+                    </span>
+                  </div>
+                )}
                 <span className="text-xs text-gray-500 font-medium" data-testid="text-username">{user.name?.split(" ")[0]}</span>
                 <button onClick={logout} className="text-gray-400 hover:text-red-600 transition-colors" data-testid="button-logout">
                   <LogOut size={18} />
@@ -64,11 +95,11 @@ export default function ClientNav() {
               >
                 <div className="relative">
                   <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
-                  {l.badge ? (
-                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center" data-testid={`badge-${l.label.toLowerCase()}`}>
-                      {l.badge}
+                  {l.badge > 0 && (
+                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`badge-${l.label.toLowerCase()}`}>
+                      {l.badge > 99 ? "99+" : l.badge}
                     </span>
-                  ) : null}
+                  )}
                 </div>
                 <span className="text-[10px] font-semibold mt-1">{l.label}</span>
               </button>

@@ -1,13 +1,43 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { Home, Package, DollarSign, LogOut, Power, MessageCircle } from "lucide-react";
-import { useState } from "react";
-import { apiRequest } from "../lib/queryClient";
+import { authFetch } from "../lib/queryClient";
+import { Home, Package, DollarSign, LogOut, Power, MessageCircle, Bell } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "../lib/queryClient";
+import { onWSMessage } from "../lib/websocket";
+import type { Notification as Notif } from "@shared/schema";
 
 export default function DriverNav() {
   const [location, navigate] = useLocation();
   const { user, logout, setUser } = useAuth();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
+
+  const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
+    queryKey: ["/api/chat/unread", user?.id],
+    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 5000,
+  });
+
+  const { data: notifications = [] } = useQuery<Notif[]>({
+    queryKey: ["/api/notifications", user?.id],
+    queryFn: () => authFetch(`/api/notifications/${user?.id}`).then(r => r.json()),
+    enabled: !!user,
+    refetchInterval: 10000,
+  });
+
+  const unreadChatCount = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
+  const unreadNotifCount = notifications.filter(n => !n.isRead && n.type !== "chat").length;
+
+  useEffect(() => {
+    return onWSMessage((data) => {
+      if (data.type === "chat_message" || data.type === "notification") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      }
+    });
+  }, []);
 
   const toggleOnline = async () => {
     const newStatus = !isOnline;
@@ -20,10 +50,10 @@ export default function DriverNav() {
   };
 
   const links = [
-    { path: "/", icon: Home, label: "Accueil" },
-    { path: "/driver/orders", icon: Package, label: "Livraisons" },
-    { path: "/driver/chat", icon: MessageCircle, label: "Messages" },
-    { path: "/driver/earnings", icon: DollarSign, label: "Revenus" },
+    { path: "/", icon: Home, label: "Accueil", badge: unreadNotifCount },
+    { path: "/driver/orders", icon: Package, label: "Livraisons", badge: 0 },
+    { path: "/driver/chat", icon: MessageCircle, label: "Messages", badge: unreadChatCount },
+    { path: "/driver/earnings", icon: DollarSign, label: "Revenus", badge: 0 },
   ];
 
   return (
@@ -68,7 +98,14 @@ export default function DriverNav() {
                 data-testid={`driver-nav-${l.label.toLowerCase()}`}
                 className={`flex-1 flex flex-col items-center py-2.5 transition-colors ${isActive ? "text-red-600" : "text-gray-400"}`}
               >
-                <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+                <div className="relative">
+                  <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+                  {l.badge > 0 && (
+                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`driver-badge-${l.label.toLowerCase()}`}>
+                      {l.badge > 99 ? "99+" : l.badge}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[10px] font-semibold mt-1">{l.label}</span>
               </button>
             );
