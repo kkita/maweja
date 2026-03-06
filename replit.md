@@ -40,11 +40,16 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
 - **notifications**, **chat_messages**, **wallet_transactions**
 
-## Guest Browsing
+## Guest Browsing & Auth
 - Non-authenticated users can browse restaurants, menus, and add to cart
 - Login/registration is required only at checkout (inline AuthGate component)
 - ClientNav adapts: shows "Connexion" button for guests, full nav for logged-in users
 - Driver/admin self-registration is blocked both client-side (no role selector) and server-side (403 response)
+- Three separate login pages:
+  - `/login` - Client (login + registration, red gradient)
+  - `/driver/login` - Driver (login only, dark gradient, admin-created accounts notice)
+  - `/admin/login` - Admin (login only, dark slate gradient, dashboard access)
+- Backend enforces `expectedRole` on login: rejects mismatched roles with clear error messages
 
 ## Pages
 ### Client

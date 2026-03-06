@@ -1,0 +1,93 @@
+import { useState } from "react";
+import { useAuth } from "../lib/auth";
+import { useLocation } from "wouter";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, LayoutDashboard, Shield } from "lucide-react";
+
+export default function AdminLoginPage() {
+  const { login } = useAuth();
+  const [, navigate] = useLocation();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await login(email, password, "admin");
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message || "Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-red-900 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-red-900/50">
+            <LayoutDashboard size={32} className="text-white" />
+          </div>
+          <h1 className="text-3xl font-black text-white">MAWEJA</h1>
+          <p className="text-slate-400 mt-1 text-sm">Administration & Dashboard</p>
+        </div>
+
+        <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
+              <Shield size={18} className="text-slate-600" />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900 text-sm">Acces Administrateur</h2>
+              <p className="text-xs text-gray-400">Connectez-vous avec vos identifiants admin</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="relative">
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type="email" placeholder="Email administrateur" value={email} onChange={e => setEmail(e.target.value)}
+                data-testid="admin-input-email" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+            </div>
+
+            <div className="relative">
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
+                data-testid="admin-input-password" className="w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <p className="text-red-600 text-sm font-medium" data-testid="admin-error-message">{error}</p>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} data-testid="admin-button-submit"
+              className="w-full py-3.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  Acceder au Dashboard
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-slate-500/60 text-xs mt-6">
+          Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+        </p>
+      </div>
+    </div>
+  );
+}

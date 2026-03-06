@@ -37,7 +37,7 @@ async function requireAdmin(req: any, res: any, next: any) {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth
   app.post("/api/auth/login", async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, expectedRole } = req.body;
     if (!email || !password) return res.status(400).json({ message: "Email et mot de passe requis" });
     const user = await storage.getUserByEmail(email);
     if (!user || user.password !== password) {
@@ -45,6 +45,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     if (user.isBlocked) {
       return res.status(403).json({ message: "Votre compte a ete bloque. Contactez le support." });
+    }
+    if (expectedRole && user.role !== expectedRole) {
+      const msgs: Record<string, string> = {
+        client: "Ce compte n'est pas un compte client",
+        driver: "Ce compte n'est pas un compte livreur",
+        admin: "Ce compte n'est pas un compte administrateur",
+      };
+      return res.status(403).json({ message: msgs[expectedRole] || "Acces interdit" });
     }
     (req.session as any).userId = user.id;
     const { password: _, ...safeUser } = user;

@@ -22,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (isLogin) {
-        await login(email, password);
+        await login(email, password, "client");
       } else {
         if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caracteres"); setLoading(false); return; }
         await register({ email, password, name, phone, role: "client", address });
@@ -79,7 +79,7 @@ export default function LoginPage() {
               <span className="text-3xl font-black text-red-600">M</span>
             </div>
             <h1 className="text-3xl font-black text-white">MAWEJA</h1>
-            <p className="text-red-200 mt-1 text-sm">Livraison rapide a Kinshasa</p>
+            <p className="text-red-200 mt-1 text-sm">Espace Client</p>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl p-8">
@@ -88,7 +88,10 @@ export default function LoginPage() {
                 <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
                   <span className="text-white font-black text-lg">M</span>
                 </div>
-                <h1 className="text-xl font-black text-gray-900">MAWEJA</h1>
+                <div>
+                  <h1 className="text-xl font-black text-gray-900">MAWEJA</h1>
+                  <p className="text-xs text-gray-400">Espace Client</p>
+                </div>
               </div>
             </div>
 

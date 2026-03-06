@@ -5,7 +5,7 @@ import type { User } from "@shared/schema";
 interface AuthContextType {
   user: Omit<User, "password"> | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, expectedRole?: string) => Promise<void>;
   register: (data: { email: string; password: string; name: string; phone: string; role?: string; address?: string }) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: Omit<User, "password"> | null) => void;
@@ -25,10 +25,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, expectedRole?: string) => {
     const res = await apiRequest("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, expectedRole }),
     });
     const u = await res.json();
     setUser(u);

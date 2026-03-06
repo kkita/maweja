@@ -8,6 +8,8 @@ import { connectWS } from "./lib/websocket";
 import { Toaster } from "./components/Toaster";
 
 import LoginPage from "./pages/LoginPage";
+import DriverLoginPage from "./pages/DriverLoginPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
 import ClientHome from "./pages/client/HomePage";
 import RestaurantPage from "./pages/client/RestaurantPage";
 import CartPage from "./pages/client/CartPage";
@@ -84,7 +86,6 @@ function AppRoutes() {
         <Route path="/orders" component={OrdersPage} />
         <Route path="/tracking/:id" component={TrackingPage} />
         <Route path="/wallet" component={WalletPage} />
-        <Route path="/login" component={LoginPage} />
         <Route component={ClientHome} />
       </Switch>
     );
@@ -97,6 +98,8 @@ function AppRoutes() {
       <Route path="/cart" component={CartPage} />
       <Route path="/checkout" component={CheckoutPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/driver/login" component={DriverLoginPage} />
+      <Route path="/admin/login" component={AdminLoginPage} />
       <Route component={ClientHome} />
     </Switch>
   );

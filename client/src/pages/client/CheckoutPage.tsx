@@ -35,7 +35,7 @@ function AuthGate({ onSuccess }: { onSuccess: () => void }) {
     setLoading(true);
     try {
       if (isLogin) {
-        await login(email, password);
+        await login(email, password, "client");
       } else {
         if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caracteres"); setLoading(false); return; }
         await register({ email, password, name, phone, role: "client", address: addressField });
