@@ -195,7 +195,7 @@ export default function DriverChat() {
         </div>
       </div>
       <div className="fixed bottom-20 left-0 right-0 text-center">
-        <p className="text-[10px] text-gray-400">Demo by Khevin Andrew Kita - Ed Corporation 0911742202</p>
+        <p className="text-[10px] text-gray-400">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
     </div>
   );

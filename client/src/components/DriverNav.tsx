@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
 import { Home, Package, DollarSign, LogOut, Power, MessageCircle, Bell } from "lucide-react";
+import logoImg from "@assets/image_1772833363714.png";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "../lib/queryClient";
@@ -61,9 +62,7 @@ export default function DriverNav() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-gray-900 rounded-xl flex items-center justify-center">
-              <span className="text-white font-black text-sm">M</span>
-            </div>
+            <img src={logoImg} alt="MAWEJA" className="w-9 h-9 rounded-xl object-cover" />
             <div>
               <h1 className="text-lg font-black text-gray-900 leading-tight">MAWEJA</h1>
               <p className="text-[10px] text-gray-400 font-medium -mt-0.5">Espace Livreur</p>

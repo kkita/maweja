@@ -183,7 +183,7 @@ export default function DriverOnboarding() {
               <Loader2 size={14} className="animate-spin" /> Verification en cours...
             </p>
           </div>
-          <p className="text-[10px] text-gray-400 mt-8">Demo by Khevin Andrew Kita - Ed Corporation 0911742202</p>
+          <p className="text-[10px] text-gray-400 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
         </div>
       </div>
     );
@@ -349,7 +349,7 @@ export default function DriverOnboarding() {
           {submitting ? "Envoi en cours..." : isRejected ? "Renvoyer les corrections" : "Envoyer pour verification"}
         </button>
 
-        <p className="text-center text-[10px] text-gray-400 mt-6">Demo by Khevin Andrew Kita - Ed Corporation 0911742202</p>
+        <p className="text-center text-[10px] text-gray-400 mt-6">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
     </div>
   );

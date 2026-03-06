@@ -3,6 +3,7 @@ import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
 import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn, MessageCircle } from "lucide-react";
+import logoImg from "@assets/image_1772833363714.png";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { queryClient } from "../lib/queryClient";
@@ -48,9 +49,7 @@ export default function ClientNav() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-black text-sm">M</span>
-            </div>
+            <img src={logoImg} alt="MAWEJA" className="w-9 h-9 rounded-xl object-cover" />
             <div>
               <h1 className="text-lg font-black text-gray-900 leading-tight">MAWEJA</h1>
               <p className="text-[10px] text-gray-400 font-medium -mt-0.5">Kinshasa, RDC</p>

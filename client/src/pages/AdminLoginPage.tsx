@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, LayoutDashboard, Shield } from "lucide-react";
+import logoImg from "@assets/image_1772833363714.png";
 
 export default function AdminLoginPage() {
   const { login } = useAuth();
@@ -30,9 +31,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-red-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-red-900/50">
-            <LayoutDashboard size={32} className="text-white" />
-          </div>
+          <img src={logoImg} alt="MAWEJA" className="w-20 h-20 rounded-3xl mx-auto mb-4 shadow-2xl shadow-red-900/50 object-cover" />
           <h1 className="text-3xl font-black text-white">MAWEJA</h1>
           <p className="text-slate-400 mt-1 text-sm">Administration & Dashboard</p>
         </div>
@@ -85,7 +84,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-slate-500/60 text-xs mt-6">
-          Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+          Made By Khevin Andrew Kita - Ed Corporation
         </p>
       </div>
     </div>

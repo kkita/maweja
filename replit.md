@@ -5,7 +5,8 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ## Branding
 - App Name: MAWEJA
-- Signature: Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+- Signature: Made By Khevin Andrew Kita - Ed Corporation
+- Logo: attached_assets/image_1772833363714.png (imported as @assets/image_1772833363714.png in all components)
 - Primary Color: #dc2626 (red)
 - Color Scheme: Red + White
 

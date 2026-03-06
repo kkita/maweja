@@ -13,7 +13,7 @@ export default function AdminLayout({ children, title }: { children: ReactNode; 
           {children}
         </div>
         <footer className="p-8 text-center text-xs text-gray-400">
-          Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+          Made By Khevin Andrew Kita - Ed Corporation
         </footer>
       </main>
     </div>

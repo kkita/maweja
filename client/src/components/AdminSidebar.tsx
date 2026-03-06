@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Notification as Notif } from "@shared/schema";
+import logoImg from "@assets/image_1772833363714.png";
 
 export default function AdminSidebar() {
   const [location, navigate] = useLocation();
@@ -62,9 +63,7 @@ export default function AdminSidebar() {
     <aside className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col fixed left-0 top-0 z-40">
       <div className="p-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-black text-lg">M</span>
-          </div>
+          <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
           <div>
             <h1 className="text-lg font-black text-gray-900">MAWEJA</h1>
             <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Admin Panel</p>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Truck, Shield } from "lucide-react";
+import logoImg from "@assets/image_1772833363714.png";
 
 export default function DriverLoginPage() {
   const { login } = useAuth();
@@ -30,9 +31,7 @@ export default function DriverLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex">
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
-          <div className="w-20 h-20 bg-red-600/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mb-8">
-            <Truck size={36} className="text-red-400" />
-          </div>
+          <img src={logoImg} alt="MAWEJA" className="w-20 h-20 rounded-3xl mb-8 object-cover shadow-2xl opacity-90" />
           <h2 className="text-5xl font-black text-white leading-tight mb-4">
             Espace
             <br />
@@ -63,9 +62,7 @@ export default function DriverLoginPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
-              <Truck size={32} className="text-white" />
-            </div>
+            <img src={logoImg} alt="MAWEJA" className="w-20 h-20 rounded-3xl mx-auto mb-4 shadow-2xl object-cover" />
             <h1 className="text-3xl font-black text-white">MAWEJA</h1>
             <p className="text-gray-400 mt-1 text-sm">Espace Livreur</p>
           </div>
@@ -73,9 +70,7 @@ export default function DriverLoginPage() {
           <div className="bg-white rounded-3xl shadow-2xl p-8">
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
-                  <Truck size={18} className="text-white" />
-                </div>
+                <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
                 <div>
                   <h1 className="text-xl font-black text-gray-900">MAWEJA</h1>
                   <p className="text-xs text-gray-400">Espace Livreur</p>
@@ -127,7 +122,7 @@ export default function DriverLoginPage() {
           </div>
 
           <p className="text-center text-gray-500/60 text-xs mt-6">
-            Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+            Made By Khevin Andrew Kita - Ed Corporation
           </p>
         </div>
       </div>

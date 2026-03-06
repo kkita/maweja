@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
 import { MapPin, Eye, EyeOff, User, Mail, Lock, Phone, ArrowRight, Utensils } from "lucide-react";
+import logoImg from "@assets/image_1772833363714.png";
 
 export default function LoginPage() {
   const { login, register } = useAuth();
@@ -39,9 +40,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-red-600 via-red-700 to-red-900 flex">
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
-          <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mb-8">
-            <Utensils size={36} className="text-white" />
-          </div>
+          <img src={logoImg} alt="MAWEJA" className="w-20 h-20 rounded-3xl mb-8 object-cover shadow-2xl opacity-90" />
           <h2 className="text-5xl font-black text-white leading-tight mb-4">
             La meilleure
             <br />
@@ -75,9 +74,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
-              <span className="text-3xl font-black text-red-600">M</span>
-            </div>
+            <img src={logoImg} alt="MAWEJA" className="w-20 h-20 rounded-3xl mx-auto mb-4 shadow-2xl object-cover" />
             <h1 className="text-3xl font-black text-white">MAWEJA</h1>
             <p className="text-red-200 mt-1 text-sm">Espace Client</p>
           </div>
@@ -85,9 +82,7 @@ export default function LoginPage() {
           <div className="bg-white rounded-3xl shadow-2xl p-8">
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-black text-lg">M</span>
-                </div>
+                <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
                 <div>
                   <h1 className="text-xl font-black text-gray-900">MAWEJA</h1>
                   <p className="text-xs text-gray-400">Espace Client</p>
@@ -170,7 +165,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-red-200/60 text-xs mt-6">
-            Demo by Khevin Andrew Kita - Ed Corporation 0911742202
+            Made By Khevin Andrew Kita - Ed Corporation
           </p>
         </div>
       </div>
