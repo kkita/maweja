@@ -1,54 +1,67 @@
-# Voss - React Native/Expo
+# MAWEJA - Systeme de Livraison Kinshasa
 
 ## Overview
-Food delivery application for Kinshasa, RDC built with React Native and Expo. Features real Kinshasa restaurants, menus, cart system, and multiple payment options (Mobile Money + Cash + Card). Uses demo data for client-side presentation. Can be built as an Android APK via EAS Build.
+Complete food delivery system for Kinshasa, RDC with 3 interfaces: Client, Driver, Admin Dashboard. Built with Express + React + PostgreSQL + WebSocket. Red and white color scheme. Uber-style delivery platform.
 
 ## Branding
-- App Name: Mon Food Livreur
+- App Name: MAWEJA
 - Signature: Demo by Khevin Andrew Kita - Ed Corporation 0911742202
-- Package: com.edcorporation.monfoodlivreur
-- Primary Color: #f97316 (orange)
+- Primary Color: #dc2626 (red)
+- Color Scheme: Red + White
 
 ## Architecture
-- **Framework**: React Native + Expo SDK 52
-- **Navigation**: React Navigation (native-stack)
-- **Styling**: React Native StyleSheet with theme constants
-- **State Management**: useSyncExternalStore for cart (global external store)
-- **Icons**: @expo/vector-icons (Feather)
-- **Data**: Demo data in `src/lib/demo-data.ts`
+- **Backend**: Express.js + PostgreSQL + WebSocket
+- **Frontend**: React + Vite + Tailwind CSS 3
+- **Database**: PostgreSQL via Drizzle ORM
+- **Auth**: Session-based with express-session
+- **Real-time**: WebSocket for notifications, chat, live updates
+- **Routing**: wouter (client-side)
+- **State**: TanStack React Query + Context API
 
 ## Key Files
-- `App.tsx` - Root component with React Navigation stack
-- `index.js` - Expo entry point (registerRootComponent)
-- `app.json` - Expo configuration
-- `eas.json` - EAS Build configuration
-- `babel.config.cjs` - Babel config for Expo
-- `metro.config.cjs` - Metro bundler config
-- `src/lib/demo-data.ts` - All demo restaurants, menus, categories
-- `src/lib/cart-store.ts` - Global cart state with useSyncExternalStore
-- `src/lib/theme.ts` - Theme constants (colors, spacing, borderRadius, fontSize)
-- `src/screens/HomeScreen.tsx` - Home with search, categories, promo, restaurants
-- `src/screens/RestaurantScreen.tsx` - Restaurant detail with menu
-- `src/screens/CartScreen.tsx` - Cart with quantity controls, summary
-- `src/screens/CheckoutScreen.tsx` - Checkout with address, payment
-- `src/screens/OrderSuccessScreen.tsx` - Order confirmation
-- `src/screens/TrackingScreen.tsx` - Order tracking simulation
+- `server/index.ts` - Server entry, DB setup, table creation, seeding
+- `server/routes.ts` - API routes (auth, restaurants, orders, drivers, chat, wallet)
+- `server/storage.ts` - Database operations (IStorage interface)
+- `server/db.ts` - Drizzle DB connection
+- `server/seed.ts` - Demo data seeding
+- `server/vite.ts` - Vite dev server middleware
+- `shared/schema.ts` - Database schema + types
+- `client/src/App.tsx` - Main router (role-based routing)
+- `client/src/lib/auth.tsx` - Auth context
+- `client/src/lib/cart.tsx` - Cart context
+- `client/src/lib/websocket.ts` - WebSocket client
 
-## Screens
-1. Home - Search, categories, promo banner, restaurant list
-2. Restaurant - Restaurant detail with menu items, category tabs
-3. Cart - Shopping cart with grouped items, quantity controls
-4. Checkout - Address, payment method selection (Mobile Money, Cash, Card)
-5. Order Success - Confirmation with order ID
-6. Tracking - Step-by-step order tracking simulation
+## Pages
+### Client
+- HomePage - Restaurant listing, search, categories, promo
+- RestaurantPage - Menu with categories, add to cart
+- CartPage - Cart management
+- CheckoutPage - Address, payment selection, order placement
+- OrdersPage - Order history
+- TrackingPage - Real-time order tracking
+- WalletPage - Wallet balance, top-up, transaction history
 
-## Restaurants
-Aldar, KFC, Hunga Busta, City Market, Hilton Kinshasa, Golden Tulip, Kin Marché, La Terrasse Gombe
+### Driver
+- DriverDashboard - Available/active orders, stats
+- DriverOrders - Delivery history
+- DriverEarnings - Revenue tracking
+
+### Admin Dashboard
+- AdminDashboard - KPIs, recent orders, performance
+- AdminOrders - Order management with status/driver assignment
+- AdminDrivers - Driver management, online status, stats
+- AdminRestaurants - Restaurant management
+- AdminCustomers - Customer management, wallet/points
+- AdminChat - Messaging with clients and drivers
+- AdminSettings - App configuration
+
+## Demo Accounts
+- Client: client@test.cd / test123
+- Driver: driver1@maweja.cd / driver123
+- Admin: admin@maweja.cd / admin123
 
 ## Payment Methods
-Airtel Money, M-PESA, Orange Money, AfriMoney, Illico Cash, Cash, Credit Card
+Mobile Money, Cash, Illico Cash, Wallet MAWEJA, Points de fidelite, Carte Bancaire
 
-## Building APK
-- Development: `npx expo start --web --port 5000`
-- APK Build: `eas build --platform android --profile preview`
-- Production: `eas build --platform android --profile production`
+## Restaurants
+Aldar, KFC, Hunga Busta, Hilton Kinshasa, Golden Tulip, Kin Marche, La Terrasse Gombe, City Market

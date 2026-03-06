@@ -1,0 +1,134 @@
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import AdminLayout from "../../components/AdminLayout";
+import { onWSMessage } from "../../lib/websocket";
+import { queryClient } from "../../lib/queryClient";
+import { useToast } from "../../hooks/use-toast";
+import { Package, Truck, Users, DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ArrowUpRight } from "lucide-react";
+import { formatPrice } from "../../lib/utils";
+import { statusLabels, statusColors, formatDate } from "../../lib/utils";
+import type { Order } from "@shared/schema";
+
+export default function AdminDashboard() {
+  const { toast } = useToast();
+
+  const { data: stats } = useQuery<any>({ queryKey: ["/api/dashboard/stats"] });
+  const { data: recentOrders = [] } = useQuery<Order[]>({
+    queryKey: ["/api/orders"],
+    queryFn: () => fetch("/api/orders").then((r) => r.json()),
+  });
+
+  useEffect(() => {
+    return onWSMessage((data) => {
+      if (data.type === "new_order") {
+        toast({ title: "Nouvelle commande!", description: `Commande ${data.order.orderNumber} recue` });
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      }
+      if (data.type === "order_updated") {
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      }
+    });
+  }, [toast]);
+
+  const statCards = [
+    { label: "Commandes totales", value: stats?.orders?.total || 0, icon: Package, color: "bg-red-50 text-red-600", trend: "+15%" },
+    { label: "Commandes actives", value: stats?.orders?.active || 0, icon: Clock, color: "bg-orange-50 text-orange-600", trend: "" },
+    { label: "Livreurs en ligne", value: `${stats?.drivers?.online || 0}/${stats?.drivers?.total || 0}`, icon: Truck, color: "bg-green-50 text-green-600", trend: "" },
+    { label: "Revenus", value: formatPrice(Number(stats?.orders?.revenue) || 0), icon: DollarSign, color: "bg-blue-50 text-blue-600", trend: "+22%" },
+    { label: "Livrees", value: stats?.orders?.delivered || 0, icon: CheckCircle2, color: "bg-emerald-50 text-emerald-600", trend: "" },
+    { label: "Clients", value: stats?.clients?.total || 0, icon: Users, color: "bg-purple-50 text-purple-600", trend: "+8%" },
+  ];
+
+  return (
+    <AdminLayout title="Dashboard">
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {statCards.map((card) => (
+          <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm" data-testid={`stat-${card.label.toLowerCase().replace(/\s/g, "-")}`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className={`w-11 h-11 ${card.color.split(" ")[0]} rounded-xl flex items-center justify-center`}>
+                <card.icon size={20} className={card.color.split(" ")[1]} />
+              </div>
+              {card.trend && (
+                <span className="text-xs font-semibold text-green-600 flex items-center gap-0.5">
+                  <ArrowUpRight size={12} /> {card.trend}
+                </span>
+              )}
+            </div>
+            <p className="text-2xl font-black text-gray-900">{card.value}</p>
+            <p className="text-xs text-gray-500 font-medium mt-1">{card.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="font-bold text-gray-900">Commandes recentes</h3>
+            <span className="text-xs text-gray-400">{recentOrders.length} commandes</span>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+            {recentOrders.slice(0, 10).map((order) => (
+              <div key={order.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid={`recent-order-${order.id}`}>
+                <div>
+                  <p className="font-semibold text-sm text-gray-900">{order.orderNumber}</p>
+                  <p className="text-xs text-gray-400">{formatDate(order.createdAt!)}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-sm">{formatPrice(order.total)}</span>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h3 className="font-bold text-gray-900 mb-4">Performance</h3>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-500">Taux de livraison</span>
+                  <span className="font-bold">
+                    {stats?.orders?.total ? Math.round((Number(stats.orders.delivered) / Number(stats.orders.total)) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full transition-all"
+                    style={{ width: `${stats?.orders?.total ? (Number(stats.orders.delivered) / Number(stats.orders.total)) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-gray-500">Livreurs actifs</span>
+                  <span className="font-bold">
+                    {stats?.drivers?.total ? Math.round((Number(stats.drivers.online) / Number(stats.drivers.total)) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${stats?.drivers?.total ? (Number(stats.drivers.online) / Number(stats.drivers.total)) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-2xl p-5 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp size={18} />
+              <span className="font-bold text-sm">MAWEJA Pro</span>
+            </div>
+            <p className="text-2xl font-black">{formatPrice(Number(stats?.orders?.revenue) || 0)}</p>
+            <p className="text-red-200 text-xs mt-1">Chiffre d'affaires total</p>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
