@@ -37,7 +37,7 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ## Database Tables
 - **users**: email, password, name, phone, role, isBlocked, vehicleType, vehiclePlate, driverLicense, commissionRate, lat/lng, walletBalance, loyaltyPoints, sex, dateOfBirth, fullAddress, idPhotoUrl, profilePhotoUrl, verificationStatus, rejectedFields
-- **restaurants**: name, description, cuisine, image, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours
+- **restaurants**: name, description, cuisine, image, logoUrl, coverVideoUrl, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours
 - **menu_items**: restaurantId, name, description, price, image, category, isAvailable, popular
 - **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery
 - **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
@@ -102,7 +102,8 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ## API Endpoints
 - POST /api/auth/login, /api/auth/register, /api/auth/logout, GET /api/auth/me
-- POST /api/upload (file upload, auth required)
+- POST /api/upload (image upload, auth required, max 5MB)
+- POST /api/upload-media (image/video upload, auth required, max 20MB, returns {url, type})
 - POST /api/driver/onboarding (driver profile completion)
 - GET /api/admin/verifications (pending/rejected drivers)
 - POST /api/admin/verify/:driverId (approve/reject with field-level rejection)

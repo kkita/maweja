@@ -104,8 +104,19 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h4 className="font-bold text-gray-900">{r.name}</h4>
-                  <p className="text-gray-500 text-xs mt-1 line-clamp-1">{r.description}</p>
+                  <div className="flex items-center gap-2.5">
+                    {r.logoUrl ? (
+                      <img src={r.logoUrl} alt={`${r.name} logo`} className="w-9 h-9 rounded-xl object-cover border border-gray-100 flex-shrink-0" data-testid={`restaurant-logo-${r.id}`} />
+                    ) : (
+                      <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 border border-red-100">
+                        <span className="text-red-600 font-black text-sm">{r.name.charAt(0)}</span>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-gray-900">{r.name}</h4>
+                      <p className="text-gray-500 text-xs line-clamp-1">{r.description}</p>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-4 mt-3">
                     <div className="flex items-center gap-1 text-gray-500">
                       <Clock size={12} />

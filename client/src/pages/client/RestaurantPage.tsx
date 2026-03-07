@@ -3,8 +3,9 @@ import { useRoute, useLocation } from "wouter";
 import { useCart } from "../../lib/cart";
 import { authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus } from "lucide-react";
+import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus, Play } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
+import { useState, useRef } from "react";
 import type { Restaurant, MenuItem } from "@shared/schema";
 
 export default function RestaurantPage() {
@@ -13,6 +14,8 @@ export default function RestaurantPage() {
   const { addItem, items, updateQuantity, itemCount, total } = useCart();
   const { toast } = useToast();
   const id = Number(params?.id);
+  const [showVideo, setShowVideo] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const { data: restaurant } = useQuery<Restaurant>({ queryKey: ["/api/restaurants", id], queryFn: () => authFetch(`/api/restaurants/${id}`).then(r => r.json()) });
   const { data: menu = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/restaurants", id, "menu"], queryFn: () => authFetch(`/api/restaurants/${id}/menu`).then(r => r.json()) });
@@ -24,18 +27,53 @@ export default function RestaurantPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-32">
       <div className="relative h-56">
-        {restaurant && <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />}
+        {restaurant && !showVideo && (
+          <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
+        )}
+        {restaurant?.coverVideoUrl && showVideo && (
+          <video
+            ref={videoRef}
+            src={restaurant.coverVideoUrl}
+            className="w-full h-full object-cover"
+            autoPlay
+            muted
+            playsInline
+            onEnded={() => setShowVideo(false)}
+            data-testid="restaurant-cover-video"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <button
           onClick={() => navigate("/")}
           data-testid="button-back"
-          className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg"
+          className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg z-10"
         >
           <ArrowLeft size={18} className="text-gray-900" />
         </button>
-        <div className="absolute bottom-4 left-4 right-4 text-white">
-          <h1 className="text-2xl font-black">{restaurant?.name}</h1>
-          <p className="text-white/80 text-sm mt-1">{restaurant?.description}</p>
+        {restaurant?.coverVideoUrl && !showVideo && (
+          <button
+            onClick={() => setShowVideo(true)}
+            data-testid="button-play-video"
+            className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg z-10"
+          >
+            <Play size={14} className="text-red-600 fill-red-600" />
+            <span className="text-xs font-bold text-gray-900">Video</span>
+          </button>
+        )}
+        <div className="absolute bottom-4 left-4 right-4 text-white z-10">
+          <div className="flex items-center gap-3">
+            {restaurant?.logoUrl ? (
+              <img src={restaurant.logoUrl} alt={`${restaurant.name} logo`} className="w-12 h-12 rounded-xl object-cover border-2 border-white/30 flex-shrink-0 shadow-lg" data-testid="restaurant-detail-logo" />
+            ) : (
+              <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border-2 border-white/30">
+                <span className="text-white font-black text-lg">{restaurant?.name?.charAt(0)}</span>
+              </div>
+            )}
+            <div>
+              <h1 className="text-2xl font-black">{restaurant?.name}</h1>
+              <p className="text-white/80 text-sm mt-0.5">{restaurant?.description}</p>
+            </div>
+          </div>
           <div className="flex items-center gap-4 mt-2">
             <span className="flex items-center gap-1 text-sm"><Star size={14} className="fill-yellow-400 text-yellow-400" /> {restaurant?.rating}</span>
             <span className="flex items-center gap-1 text-sm"><Clock size={14} /> {restaurant?.deliveryTime}</span>

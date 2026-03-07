@@ -9,15 +9,30 @@ import fs from "fs";
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
+const mediaStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname)}`),
+});
+
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadsDir),
-    filename: (_req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname)}`),
-  }),
+  storage: mediaStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = /jpeg|jpg|png|webp/;
     cb(null, allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype.replace("image/", "")));
+  },
+});
+
+const uploadMedia = multer({
+  storage: mediaStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const imageExts = /jpeg|jpg|png|webp/;
+    const videoExts = /mp4|webm|mov/;
+    const ext = path.extname(file.originalname).toLowerCase().replace(".", "");
+    const isImage = imageExts.test(ext) && file.mimetype.startsWith("image/");
+    const isVideo = videoExts.test(ext) && file.mimetype.startsWith("video/");
+    cb(null, isImage || isVideo);
   },
 });
 
@@ -129,6 +144,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.file) return res.status(400).json({ message: "Fichier requis (jpg, png, webp, max 5MB)" });
     const url = `/uploads/${req.file.filename}`;
     res.json({ url });
+  });
+
+  app.post("/api/upload-media", requireAuth, uploadMedia.single("file"), (req: any, res) => {
+    if (!req.file) return res.status(400).json({ message: "Fichier requis (image ou video mp4/webm/mov, max 20MB)" });
+    const url = `/uploads/${req.file.filename}`;
+    const isVideo = req.file.mimetype.startsWith("video/");
+    res.json({ url, type: isVideo ? "video" : "image" });
   });
 
   app.post("/api/driver/onboarding", requireAuth, async (req, res) => {

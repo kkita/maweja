@@ -37,6 +37,8 @@ export const restaurants = pgTable("restaurants", {
   description: text("description").notNull(),
   cuisine: text("cuisine").notNull(),
   image: text("image").notNull(),
+  logoUrl: text("logo_url"),
+  coverVideoUrl: text("cover_video_url"),
   address: text("address").notNull(),
   rating: doublePrecision("rating").notNull().default(4.5),
   deliveryTime: text("delivery_time").notNull().default("30-45 min"),

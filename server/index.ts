@@ -86,6 +86,8 @@ app.use((req: any, res, next) => {
   `);
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS phone TEXT`);
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS opening_hours TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS logo_url TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS cover_video_url TEXT`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS menu_items (
