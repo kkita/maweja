@@ -17,7 +17,9 @@ import CartPage from "./pages/client/CartPage";
 import CheckoutPage from "./pages/client/CheckoutPage";
 import OrdersPage from "./pages/client/OrdersPage";
 import TrackingPage from "./pages/client/TrackingPage";
+import OrderDetailPage from "./pages/client/OrderDetailPage";
 import WalletPage from "./pages/client/WalletPage";
+import AddressPage from "./pages/client/AddressPage";
 
 import DriverDashboard from "./pages/driver/DriverDashboard";
 import DriverOrders from "./pages/driver/DriverOrders";
@@ -94,8 +96,10 @@ function AppRoutes() {
           <Route path="/cart" component={CartPage} />
           <Route path="/checkout" component={CheckoutPage} />
           <Route path="/orders" component={OrdersPage} />
+          <Route path="/order/:id" component={OrderDetailPage} />
           <Route path="/tracking/:id" component={TrackingPage} />
           <Route path="/wallet" component={WalletPage} />
+          <Route path="/addresses" component={AddressPage} />
           <Route component={ClientHome} />
         </Switch>
         <ClientContactBubble />
@@ -112,6 +116,9 @@ function AppRoutes() {
       <Route path="/login" component={LoginPage} />
       <Route path="/driver/login" component={DriverLoginPage} />
       <Route path="/admin/login" component={AdminLoginPage} />
+      <Route path="/order/:id" component={OrderDetailPage} />
+      <Route path="/tracking/:id" component={TrackingPage} />
+      <Route path="/addresses" component={AddressPage} />
       <Route component={ClientHome} />
     </Switch>
   );

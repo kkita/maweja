@@ -304,18 +304,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/orders/:id", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
     const order = await storage.getOrder(Number(req.params.id));
     if (!order) return res.status(404).json({ message: "Commande non trouvee" });
+    if (user?.role === "client" && order.clientId !== userId) return res.status(403).json({ message: "Acces refuse" });
+    if (user?.role === "driver" && order.driverId !== userId) return res.status(403).json({ message: "Acces refuse" });
     res.json(order);
   });
 
   app.post("/api/orders", requireAuth, async (req, res) => {
+    const sessionUserId = (req.session as any).userId;
     const orderNumber = `MAW-${Date.now().toString(36).toUpperCase()}`;
     const commission = Math.round(req.body.subtotal * 0.15);
     const restaurant = await storage.getRestaurant(req.body.restaurantId);
     const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
     const estimatedDelivery = new Date(Date.now() + deliveryMinutes * 60 * 1000).toISOString();
-    const order = await storage.createOrder({ ...req.body, orderNumber, commission, estimatedDelivery });
+    const order = await storage.createOrder({ ...req.body, clientId: sessionUserId, orderNumber, commission, estimatedDelivery });
 
     // Record finance entries
     await storage.createFinance({
@@ -369,6 +374,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Debit loyalty points if used
+    if (req.body.pointsUsed && req.body.pointsUsed > 0) {
+      const client = await storage.getUser(order.clientId);
+      if (client) {
+        const newPoints = Math.max(0, (client.loyaltyPoints || 0) - req.body.pointsUsed);
+        await storage.updateUser(client.id, { loyaltyPoints: newPoints });
+      }
+    }
+
     // Award loyalty points
     const points = Math.floor(order.total / 1000);
     if (points > 0) {
@@ -382,6 +396,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/orders/:id", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
+    if (!user || (user.role !== "admin" && user.role !== "driver")) {
+      return res.status(403).json({ message: "Acces refuse" });
+    }
     const order = await storage.updateOrder(Number(req.params.id), req.body);
     if (!order) return res.status(404).json({ message: "Commande non trouvee" });
 
@@ -464,6 +483,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { rating, feedback } = req.body;
     const order = await storage.updateOrder(Number(req.params.id), { rating, feedback });
     res.json(order);
+  });
+
+  // Cancel order with reason
+  app.patch("/api/orders/:id/cancel", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const order = await storage.getOrder(Number(req.params.id));
+    if (!order) return res.status(404).json({ message: "Commande non trouvee" });
+    if (order.clientId !== userId) return res.status(403).json({ message: "Acces refuse" });
+    if (!["pending", "confirmed"].includes(order.status)) {
+      return res.status(400).json({ message: "Cette commande ne peut plus etre annulee" });
+    }
+    const { reason } = req.body;
+    if (!reason) return res.status(400).json({ message: "Raison requise" });
+    const updated = await storage.updateOrder(order.id, { status: "cancelled", cancelReason: reason });
+    if (order.paymentMethod === "wallet" || order.paymentStatus === "paid") {
+      await storage.updateUser(order.clientId, { walletBalance: (await storage.getUser(order.clientId))!.walletBalance + order.total });
+      await storage.createWalletTransaction({ userId: order.clientId, amount: order.total, type: "refund", description: `Remboursement commande ${order.orderNumber}` });
+      await storage.createFinance({ type: "expense", category: "refund", amount: order.total, description: `Remboursement ${order.orderNumber}`, orderId: order.id });
+    }
+    broadcast({ type: "order_cancelled", order: updated });
+    res.json(updated);
+  });
+
+  // Promo code validation
+  app.post("/api/promo/validate", requireAuth, async (req, res) => {
+    const { code, subtotal } = req.body;
+    if (!code) return res.status(400).json({ message: "Code promo requis" });
+    const promoCodes: Record<string, { type: string; value: number; description: string }> = {
+      "MAWEJA10": { type: "percent", value: 10, description: "10% de reduction" },
+      "MAWEJA20": { type: "percent", value: 20, description: "20% de reduction" },
+      "LIVRAISON": { type: "delivery", value: 100, description: "Livraison gratuite" },
+      "BIENVENUE": { type: "fixed", value: 2000, description: "2000 FC de reduction" },
+    };
+    const promo = promoCodes[code.toUpperCase()];
+    if (!promo) return res.status(400).json({ message: "Code promo invalide" });
+    let discount = 0;
+    if (promo.type === "percent") discount = Math.floor((subtotal || 0) * promo.value / 100);
+    else if (promo.type === "fixed") discount = promo.value;
+    else if (promo.type === "delivery") discount = 2500;
+    res.json({ valid: true, code: code.toUpperCase(), discount, description: promo.description, type: promo.type });
+  });
+
+  // Saved addresses
+  app.get("/api/saved-addresses", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const addresses = await storage.getSavedAddresses(userId);
+    res.json(addresses);
+  });
+
+  app.post("/api/saved-addresses", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const { label, address, lat, lng, isDefault } = req.body;
+    if (!label || !address) return res.status(400).json({ message: "Label et adresse requis" });
+    if (isDefault) await storage.setDefaultAddress(userId, -1);
+    const addr = await storage.createSavedAddress({ userId, label, address, lat, lng, isDefault: isDefault || false });
+    res.json(addr);
+  });
+
+  app.patch("/api/saved-addresses/:id", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const existing = await storage.getSavedAddresses(userId);
+    if (!existing.find(a => a.id === Number(req.params.id))) return res.status(403).json({ message: "Acces refuse" });
+    const addr = await storage.updateSavedAddress(Number(req.params.id), req.body);
+    if (!addr) return res.status(404).json({ message: "Adresse non trouvee" });
+    res.json(addr);
+  });
+
+  app.delete("/api/saved-addresses/:id", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const existing = await storage.getSavedAddresses(userId);
+    if (!existing.find(a => a.id === Number(req.params.id))) return res.status(403).json({ message: "Acces refuse" });
+    await storage.deleteSavedAddress(Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  app.patch("/api/saved-addresses/:id/default", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    await storage.setDefaultAddress(userId, Number(req.params.id));
+    res.json({ ok: true });
   });
 
   // Drivers CRUD

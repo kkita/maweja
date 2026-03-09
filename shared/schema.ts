@@ -84,6 +84,10 @@ export const orders = pgTable("orders", {
   estimatedDelivery: text("estimated_delivery"),
   rating: integer("rating"),
   feedback: text("feedback"),
+  cancelReason: text("cancel_reason"),
+  taxAmount: integer("tax_amount").notNull().default(0),
+  promoCode: text("promo_code"),
+  promoDiscount: integer("promo_discount").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -132,6 +136,19 @@ export const finances = pgTable("finances", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const savedAddresses = pgTable("saved_addresses", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  label: text("label").notNull(),
+  address: text("address").notNull(),
+  lat: doublePrecision("lat"),
+  lng: doublePrecision("lng"),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSavedAddressSchema = createInsertSchema(savedAddresses).omit({ id: true, createdAt: true });
+
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertRestaurantSchema = createInsertSchema(restaurants).omit({ id: true });
 export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: true });
@@ -157,3 +174,5 @@ export type WalletTransaction = typeof walletTransactions.$inferSelect;
 export type InsertWalletTransaction = z.infer<typeof insertWalletTransactionSchema>;
 export type Finance = typeof finances.$inferSelect;
 export type InsertFinance = z.infer<typeof insertFinanceSchema>;
+export type SavedAddress = typeof savedAddresses.$inferSelect;
+export type InsertSavedAddress = z.infer<typeof insertSavedAddressSchema>;

@@ -46,4 +46,7 @@ export const paymentLabels: Record<string, string> = {
   wallet: "Wallet MAWEJA",
   loyalty: "Points de fidelite",
   card: "Carte Bancaire",
+  google_pay: "Google Pay",
+  pos: "POS",
+  credit_card: "Carte de Credit",
 };

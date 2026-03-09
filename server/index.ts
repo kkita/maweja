@@ -132,6 +132,10 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS commission INTEGER NOT NULL DEFAULT 0`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS rating INTEGER`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS feedback TEXT`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancel_reason TEXT`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount INTEGER NOT NULL DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_code TEXT`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_discount INTEGER NOT NULL DEFAULT 0`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS notifications (
@@ -171,6 +175,19 @@ app.use((req: any, res, next) => {
     )
   `);
   await db.execute(sql`ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS order_id INTEGER`);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS saved_addresses (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      label TEXT NOT NULL,
+      address TEXT NOT NULL,
+      lat DOUBLE PRECISION,
+      lng DOUBLE PRECISION,
+      is_default BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS finances (

@@ -39,7 +39,8 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - **users**: email, password, name, phone, role, isBlocked, vehicleType, vehiclePlate, driverLicense, commissionRate, lat/lng, walletBalance, loyaltyPoints, sex, dateOfBirth, fullAddress, idPhotoUrl, profilePhotoUrl, verificationStatus, rejectedFields
 - **restaurants**: name, description, cuisine, image, logoUrl, coverVideoUrl, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours
 - **menu_items**: restaurantId, name, description, price, image, category, isAvailable, popular
-- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery
+- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery, cancelReason, taxAmount, promoCode, promoDiscount
+- **saved_addresses**: userId, label, address, lat, lng, isDefault
 - **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
 - **notifications**, **chat_messages**, **wallet_transactions**
 
@@ -70,9 +71,11 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 ### Client
 - HomePage - Restaurant listing, search, categories, promo (guest accessible)
 - RestaurantPage - Menu with categories, add to cart (guest accessible)
-- CartPage - Cart management (guest accessible)
-- CheckoutPage - Address, payment selection, order placement (auth required - inline auth gate)
-- OrdersPage - Order history
+- CartPage - Cart items with qty controls, client info, special instructions, delivery address selection, confirmation modal (guest accessible)
+- CheckoutPage - Professional invoice, promo codes (MAWEJA10/MAWEJA20/LIVRAISON/BIENVENUE), loyalty points, 7 payment methods (Cash, Mobile Money, Wallet, Google Pay, POS, IllicoCash, Carte de Credit), auth required
+- OrdersPage - Active/history tabs with status filters, order cards linking to detail
+- OrderDetailPage - 6-step status stepper, order summary, cancel with reason modal, star rating + feedback, driver info
+- AddressPage - Leaflet map with draggable marker, Nominatim reverse geocoding, saved addresses CRUD with labels (Maison/Bureau/Eglise/Autre)
 - TrackingPage - Real-time order tracking
 - WalletPage - Wallet balance, top-up, transaction history
 
@@ -108,7 +111,9 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - GET /api/admin/verifications (pending/rejected drivers)
 - POST /api/admin/verify/:driverId (approve/reject with field-level rejection)
 - CRUD /api/restaurants, /api/restaurants/:id/menu, /api/menu-items
-- GET/POST/PATCH /api/orders, POST /api/orders/:id/rate
+- GET/POST/PATCH /api/orders, POST /api/orders/:id/rate, PATCH /api/orders/:id/cancel
+- CRUD /api/saved-addresses, PATCH /api/saved-addresses/:id/default
+- POST /api/promo/validate (codes: MAWEJA10, MAWEJA20, LIVRAISON, BIENVENUE)
 - GET/POST/PATCH/DELETE /api/drivers, PATCH /api/drivers/:id/block, /api/drivers/:id/location, /api/drivers/:id/status, POST /api/drivers/:id/alarm
 - GET/POST /api/finance, GET /api/finance/summary, GET /api/finance/export (CSV)
 - GET /api/orders/export (CSV)
@@ -121,4 +126,17 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - Drivers: driver1-4@maweja.cd / driver123 (pre-approved)
 
 ## Payment Methods
-Mobile Money, Cash, Illico Cash, Wallet MAWEJA, Points de fidelite, Carte Bancaire
+Cash, Mobile Money (M-Pesa/Orange Money/Airtel), Wallet MAWEJA, Google Pay, POS, IllicoCash, Carte de Credit
+
+## Promo Codes
+- MAWEJA10: 10% off
+- MAWEJA20: 20% off
+- LIVRAISON: Free delivery
+- BIENVENUE: 2000 FC off
+
+## Checkout Flow
+- Cart stores checkout data in sessionStorage("maweja_checkout") → CheckoutPage reads it
+- Loyalty points: 1 point = 100 FC, toggle to apply at checkout
+- Tax: 5% of subtotal
+- Order cancellation: Only pending/confirmed orders, requires reason, auto-refund to wallet if paid
+- Saved addresses: Kinshasa default center [-4.325, 15.322], Nominatim reverse geocoding

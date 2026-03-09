@@ -1,12 +1,13 @@
 import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
-  users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances,
+  users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
   type WalletTransaction, type InsertWalletTransaction,
   type Finance, type InsertFinance,
+  type SavedAddress, type InsertSavedAddress,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -53,6 +54,12 @@ export interface IStorage {
   getFinances(filters?: { type?: string; dateFrom?: Date; dateTo?: Date }): Promise<Finance[]>;
   createFinance(f: InsertFinance): Promise<Finance>;
   getFinanceSummary(dateFrom?: Date, dateTo?: Date): Promise<any>;
+
+  getSavedAddresses(userId: number): Promise<SavedAddress[]>;
+  createSavedAddress(addr: InsertSavedAddress): Promise<SavedAddress>;
+  updateSavedAddress(id: number, data: Partial<SavedAddress>): Promise<SavedAddress | undefined>;
+  deleteSavedAddress(id: number): Promise<void>;
+  setDefaultAddress(userId: number, addressId: number): Promise<void>;
 
   getDashboardStats(): Promise<any>;
 }
@@ -300,6 +307,29 @@ export class DatabaseStorage implements IStorage {
     }).from(restaurants);
 
     return { orders: orderStats, drivers: driverStats, clients: clientStats, restaurants: restaurantStats };
+  }
+
+  async getSavedAddresses(userId: number) {
+    return db.select().from(savedAddresses).where(eq(savedAddresses.userId, userId)).orderBy(desc(savedAddresses.createdAt));
+  }
+
+  async createSavedAddress(addr: InsertSavedAddress) {
+    const [created] = await db.insert(savedAddresses).values(addr).returning();
+    return created;
+  }
+
+  async updateSavedAddress(id: number, data: Partial<SavedAddress>) {
+    const [updated] = await db.update(savedAddresses).set(data).where(eq(savedAddresses.id, id)).returning();
+    return updated;
+  }
+
+  async deleteSavedAddress(id: number) {
+    await db.delete(savedAddresses).where(eq(savedAddresses.id, id));
+  }
+
+  async setDefaultAddress(userId: number, addressId: number) {
+    await db.update(savedAddresses).set({ isDefault: false }).where(eq(savedAddresses.userId, userId));
+    await db.update(savedAddresses).set({ isDefault: true }).where(and(eq(savedAddresses.id, addressId), eq(savedAddresses.userId, userId)));
   }
 }
 

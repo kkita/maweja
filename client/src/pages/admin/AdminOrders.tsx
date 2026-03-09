@@ -114,7 +114,52 @@ export default function AdminOrders() {
                     <span className="font-medium">{formatPrice(item.price * item.qty)}</span>
                   </div>
                 ))}
+                <div className="border-t border-gray-50 pt-2 mt-2 space-y-1">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Sous-total</span>
+                    <span>{formatPrice(selectedOrder.subtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Livraison</span>
+                    <span>{formatPrice(selectedOrder.deliveryFee)}</span>
+                  </div>
+                  {selectedOrder.taxAmount > 0 && (
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Taxes</span>
+                      <span>{formatPrice(selectedOrder.taxAmount)}</span>
+                    </div>
+                  )}
+                  {selectedOrder.promoCode && (
+                    <div className="flex justify-between text-xs text-green-600">
+                      <span>Promo ({selectedOrder.promoCode})</span>
+                      <span>-{formatPrice(selectedOrder.promoDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm font-bold text-red-600 pt-1">
+                    <span>Total</span>
+                    <span>{formatPrice(selectedOrder.total)}</span>
+                  </div>
+                </div>
               </div>
+
+              {selectedOrder.status === "cancelled" && selectedOrder.cancelReason && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-4">
+                  <p className="text-xs font-semibold text-red-700 mb-1">Raison d'annulation</p>
+                  <p className="text-sm text-red-600">{selectedOrder.cancelReason}</p>
+                </div>
+              )}
+
+              {selectedOrder.rating && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-4">
+                  <p className="text-xs font-semibold text-yellow-700 mb-1">Evaluation client</p>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map(s => (
+                      <span key={s} className={`text-lg ${s <= selectedOrder.rating! ? "text-yellow-500" : "text-gray-300"}`}>★</span>
+                    ))}
+                  </div>
+                  {selectedOrder.feedback && <p className="text-sm text-yellow-700 mt-1">{selectedOrder.feedback}</p>}
+                </div>
+              )}
 
               <div className="border-t border-gray-100 pt-4 space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Actions</p>
