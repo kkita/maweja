@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
+import AdBanner from "../../components/AdBanner";
 import { useAuth } from "../../lib/auth";
 import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
@@ -39,6 +40,8 @@ export default function HomePage() {
             className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
           />
         </div>
+
+        <AdBanner />
 
         <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-5 mb-6 text-white relative overflow-hidden">
           <div className="relative z-10">

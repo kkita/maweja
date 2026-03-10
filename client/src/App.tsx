@@ -37,6 +37,11 @@ import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminVerifications from "./pages/admin/AdminVerifications";
 import AdminMarketing from "./pages/admin/AdminMarketing";
+import AdminServices from "./pages/admin/AdminServices";
+import AdminAds from "./pages/admin/AdminAds";
+import AdminNotifications from "./pages/admin/AdminNotifications";
+import ServicesPage from "./pages/client/ServicesPage";
+import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -69,6 +74,9 @@ function AppRoutes() {
         <Route path="/admin/settings" component={AdminSettings} />
         <Route path="/admin/verifications" component={AdminVerifications} />
         <Route path="/admin/marketing" component={AdminMarketing} />
+        <Route path="/admin/services" component={AdminServices} />
+        <Route path="/admin/ads" component={AdminAds} />
+        <Route path="/admin/notifications" component={AdminNotifications} />
         <Route component={AdminDashboard} />
       </Switch>
     );
@@ -102,6 +110,9 @@ function AppRoutes() {
           <Route path="/tracking/:id" component={TrackingPage} />
           <Route path="/wallet" component={WalletPage} />
           <Route path="/addresses" component={AddressPage} />
+          <Route path="/services" component={ServicesPage} />
+          <Route path="/services/new" component={ServiceRequestPage} />
+          <Route path="/services/request/:id" component={ServiceRequestPage} />
           <Route component={ClientHome} />
         </Switch>
         <ClientContactBubble />

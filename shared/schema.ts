@@ -154,6 +154,51 @@ export const savedAddresses = pgTable("saved_addresses", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const serviceCategories = pgTable("service_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  icon: text("icon").notNull().default("Briefcase"),
+  description: text("description").notNull().default(""),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const serviceRequests = pgTable("service_requests", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull(),
+  categoryId: integer("category_id").notNull(),
+  categoryName: text("category_name").notNull(),
+  status: text("status").notNull().default("pending"),
+  scheduledType: text("scheduled_type").notNull().default("asap"),
+  scheduledDate: text("scheduled_date"),
+  scheduledTime: text("scheduled_time"),
+  fullName: text("full_name").notNull(),
+  phone: text("phone").notNull(),
+  address: text("address").notNull(),
+  serviceType: text("service_type"),
+  budget: text("budget"),
+  photoUrl: text("photo_url"),
+  additionalInfo: text("additional_info"),
+  contactMethod: text("contact_method").notNull().default("phone"),
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const advertisements = pgTable("advertisements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  mediaUrl: text("media_url").notNull(),
+  mediaType: text("media_type").notNull().default("image"),
+  linkUrl: text("link_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({ id: true, createdAt: true });
+export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertAdvertisementSchema = createInsertSchema(advertisements).omit({ id: true, createdAt: true });
 export const insertSavedAddressSchema = createInsertSchema(savedAddresses).omit({ id: true, createdAt: true });
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
@@ -183,3 +228,9 @@ export type Finance = typeof finances.$inferSelect;
 export type InsertFinance = z.infer<typeof insertFinanceSchema>;
 export type SavedAddress = typeof savedAddresses.$inferSelect;
 export type InsertSavedAddress = z.infer<typeof insertSavedAddressSchema>;
+export type ServiceCategory = typeof serviceCategories.$inferSelect;
+export type InsertServiceCategory = z.infer<typeof insertServiceCategorySchema>;
+export type ServiceRequest = typeof serviceRequests.$inferSelect;
+export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
+export type Advertisement = typeof advertisements.$inferSelect;
+export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;

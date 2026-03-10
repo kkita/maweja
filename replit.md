@@ -37,11 +37,14 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ## Database Tables
 - **users**: email, password, name, phone, role, isBlocked, vehicleType, vehiclePlate, driverLicense, commissionRate, lat/lng, walletBalance, loyaltyPoints, sex, dateOfBirth, fullAddress, idPhotoUrl, profilePhotoUrl, verificationStatus, rejectedFields
-- **restaurants**: name, description, cuisine, image, logoUrl, coverVideoUrl, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours
+- **restaurants**: name, description, cuisine, image, logoUrl, coverVideoUrl, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours, email, managerName, brandName, hqAddress, prepTime
 - **menu_items**: restaurantId, name, description, price, image, category, isAvailable, popular
-- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery, cancelReason, taxAmount, promoCode, promoDiscount
+- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery, cancelReason, taxAmount, promoCode, promoDiscount, deviceType, auditLog
 - **saved_addresses**: userId, label, address, lat, lng, isDefault
 - **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
+- **service_categories**: name, icon, description, isActive
+- **service_requests**: clientId, categoryId, categoryName, status, scheduledType, scheduledDate, scheduledTime, fullName, phone, address, serviceType, budget, photoUrl, additionalInfo, contactMethod, adminNotes
+- **advertisements**: title, mediaUrl, mediaType, linkUrl, isActive, sortOrder
 - **notifications**, **chat_messages**, **wallet_transactions**
 
 ## Driver Onboarding & Verification
@@ -78,6 +81,8 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - AddressPage - Leaflet map with draggable marker, Nominatim reverse geocoding, saved addresses CRUD with labels (Maison/Bureau/Eglise/Autre)
 - TrackingPage - Real-time order tracking
 - WalletPage - Wallet balance, top-up, transaction history
+- ServicesPage - Browse service categories, view own service requests
+- ServiceRequestPage - Create a devis/quote with scheduling, contact preference, budget
 
 ### Driver
 - DriverOnboarding - First-login profile completion + waiting screen (gates unverified drivers)
@@ -97,6 +102,9 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - AdminFinance - Revenue/expense tracking, category breakdown, daily chart, CSV export
 - AdminSettings - App configuration, WhatsApp number setting
 - AdminVerifications - Review driver onboarding submissions, approve or reject fields individually
+- AdminServices - Manage service categories + view/update service requests with notes/status
+- AdminAds - CRUD advertisements (images/videos), toggle active, reorder
+- AdminNotifications - Broadcast push notifications with client segmentation (frequent buyers, service users, inactive, high value, new clients)
 
 ## Chat System
 - Admin ↔ Driver: Admin can message any driver from AdminChat (dynamic contact list). Driver has dedicated chat page (/driver/chat) to message admins.
@@ -121,6 +129,10 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - GET /api/dashboard/stats
 - GET /api/analytics/marketing?dateFrom=&dateTo= (KPIs, charts, top products, client/driver analytics)
 - GET/POST /api/notifications, /api/wallet
+- CRUD /api/service-categories, GET/POST /api/service-requests, PATCH /api/service-requests/:id
+- CRUD /api/advertisements (with file upload)
+- POST /api/notifications/broadcast (targeted push notifications with segments)
+- GET /api/analytics/client-segments (user segmentation analytics)
 - Chat: GET /api/chat/contacts/:userId, GET /api/chat/users-by-role/:role, GET /api/chat/unread/:userId, PATCH /api/chat/read/:senderId/:receiverId, GET /api/chat/:userId1/:userId2, POST /api/chat
 
 ## Accounts (seed data)

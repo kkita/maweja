@@ -2,7 +2,8 @@ import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
 import {
-  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield, BarChart3
+  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield, BarChart3,
+  Briefcase, Image, Megaphone
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Notification as Notif } from "@shared/schema";
@@ -44,6 +45,9 @@ export default function AdminSidebar() {
     { path: "/admin/chat", icon: MessageCircle, label: "Messages" },
     { path: "/admin/finance", icon: DollarSign, label: "Finance" },
     { path: "/admin/marketing", icon: BarChart3, label: "Marketing" },
+    { path: "/admin/services", icon: Briefcase, label: "Services" },
+    { path: "/admin/ads", icon: Image, label: "Publicites" },
+    { path: "/admin/notifications", icon: Megaphone, label: "Notifications" },
     { path: "/admin/settings", icon: Settings, label: "Parametres" },
   ];
 

@@ -299,12 +299,25 @@ export default function OrderDetailPage() {
         )}
 
         <button
-          onClick={() => window.open(`https://wa.me/243812345678?text=Bonjour MAWEJA, j'ai une question concernant ma commande ${order.orderNumber}`, "_blank")}
+          onClick={() => {
+            const dateStr = new Date(order.createdAt!).toLocaleDateString("fr-CD", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+            const restName = restaurant?.name || "Restaurant";
+            const msg = encodeURIComponent(
+              `Bonjour MAWEJA,\n\nJe vous contacte au sujet de ma commande:\n` +
+              `- N° de commande: ${order.orderNumber}\n` +
+              `- Date: ${dateStr}\n` +
+              `- Restaurant: ${restName}\n` +
+              `- Montant: ${formatPrice(order.total)}\n` +
+              `- Statut actuel: ${statusLabels[order.status] || order.status}\n\n` +
+              `Merci de votre aide.`
+            );
+            window.open(`https://wa.me/243812345678?text=${msg}`, "_blank");
+          }}
           data-testid="button-whatsapp-order"
-          className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-green-200 mt-4"
+          className="w-full py-3.5 rounded-2xl bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-green-200 mt-4 hover:bg-green-700 transition-all"
         >
-          <SiWhatsapp size={16} />
-          Contacter via WhatsApp
+          <SiWhatsapp size={18} />
+          Contacter le service client via WhatsApp
         </button>
 
         <div className="flex flex-col gap-3 mt-4">

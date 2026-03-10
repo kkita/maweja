@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
-import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn, MessageCircle } from "lucide-react";
+import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn, MessageCircle, Briefcase } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -37,6 +37,7 @@ export default function ClientNav() {
         { path: "/", icon: Home, label: "Accueil", badge: 0 },
         { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
         { path: "/orders", icon: ClipboardList, label: "Commandes", badge: 0 },
+        { path: "/services", icon: Briefcase, label: "Services", badge: 0 },
         { path: "/wallet", icon: Wallet, label: "Wallet", badge: 0 },
       ]
     : [

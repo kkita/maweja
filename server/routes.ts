@@ -679,7 +679,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Notifications
   app.get("/api/notifications/:userId", requireAuth, async (req, res) => {
-    const notifs = await storage.getNotifications(Number(req.params.userId));
+    const sessionUserId = (req.session as any)?.userId;
+    const targetUserId = Number(req.params.userId);
+    const sessionUser = await storage.getUser(sessionUserId);
+    if (!sessionUser || (sessionUser.role !== "admin" && sessionUserId !== targetUserId)) {
+      return res.status(403).json({ message: "Acces refuse" });
+    }
+    const notifs = await storage.getNotifications(targetUserId);
     res.json(notifs);
   });
 
@@ -689,7 +695,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/notifications/read-all/:userId", requireAuth, async (req, res) => {
-    await storage.markAllNotificationsRead(Number(req.params.userId));
+    const sessionUserId = (req.session as any)?.userId;
+    const targetUserId = Number(req.params.userId);
+    const sessionUser = await storage.getUser(sessionUserId);
+    if (!sessionUser || (sessionUser.role !== "admin" && sessionUserId !== targetUserId)) {
+      return res.status(403).json({ message: "Acces refuse" });
+    }
+    await storage.markAllNotificationsRead(targetUserId);
     res.json({ ok: true });
   });
 
@@ -999,6 +1011,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
       paymentBreakdown,
       statusBreakdown,
     });
+  });
+
+  // ===== SERVICE CATEGORIES =====
+  app.get("/api/service-categories", async (_req, res) => {
+    const cats = await storage.getServiceCategories();
+    res.json(cats);
+  });
+
+  app.post("/api/service-categories", requireAdmin, async (req, res) => {
+    const cat = await storage.createServiceCategory(req.body);
+    res.json(cat);
+  });
+
+  app.patch("/api/service-categories/:id", requireAdmin, async (req, res) => {
+    const updated = await storage.updateServiceCategory(Number(req.params.id), req.body);
+    res.json(updated);
+  });
+
+  app.delete("/api/service-categories/:id", requireAdmin, async (req, res) => {
+    await storage.deleteServiceCategory(Number(req.params.id));
+    res.json({ success: true });
+  });
+
+  // ===== SERVICE REQUESTS =====
+  app.get("/api/service-requests", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
+    if (!user) return res.status(401).json({ message: "Non autorise" });
+    const filters: any = {};
+    if (user.role === "client") filters.clientId = userId;
+    if (req.query.status) filters.status = req.query.status as string;
+    if (req.query.categoryId) filters.categoryId = Number(req.query.categoryId);
+    const requests = await storage.getServiceRequests(filters);
+    res.json(requests);
+  });
+
+  app.get("/api/service-requests/:id", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
+    if (!user) return res.status(401).json({ message: "Non autorise" });
+    const sr = await storage.getServiceRequest(Number(req.params.id));
+    if (!sr) return res.status(404).json({ message: "Non trouve" });
+    if (user.role === "client" && sr.clientId !== userId) return res.status(403).json({ message: "Acces refuse" });
+    res.json(sr);
+  });
+
+  app.post("/api/service-requests", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
+    if (!user || user.role !== "client") return res.status(403).json({ message: "Acces interdit" });
+    const sr = await storage.createServiceRequest({ ...req.body, clientId: userId });
+    const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
+    for (const admin of admins) {
+      await storage.createNotification({
+        userId: admin.id,
+        title: "Nouvelle demande de service",
+        message: `Demande de ${sr.categoryName} par ${sr.fullName}`,
+        type: "service_request",
+        data: { serviceRequestId: sr.id },
+      });
+    }
+    for (const admin of admins) {
+      const ws = clients.get(admin.id);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "service_request", data: sr }));
+      }
+    }
+    res.json(sr);
+  });
+
+  app.patch("/api/service-requests/:id", requireAdmin, async (req, res) => {
+    const updated = await storage.updateServiceRequest(Number(req.params.id), req.body);
+    if (!updated) return res.status(404).json({ message: "Non trouve" });
+    if (updated.clientId) {
+      await storage.createNotification({
+        userId: updated.clientId,
+        title: "Mise a jour de votre demande",
+        message: `Votre demande de ${updated.categoryName} est maintenant: ${updated.status}`,
+        type: "service_update",
+        data: { serviceRequestId: updated.id, status: updated.status },
+      });
+      const ws = clients.get(updated.clientId);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "service_update", data: updated }));
+      }
+    }
+    res.json(updated);
+  });
+
+  // ===== ADVERTISEMENTS =====
+  app.get("/api/advertisements", async (req, res) => {
+    const activeOnly = req.query.active === "true";
+    const ads = await storage.getAdvertisements(activeOnly);
+    res.json(ads);
+  });
+
+  app.post("/api/advertisements", requireAdmin, uploadMedia.single("media"), async (req, res) => {
+    const existingAds = await storage.getAdvertisements(true);
+    if (existingAds.length >= 5) {
+      return res.status(400).json({ message: "Maximum 5 publicites actives autorisees" });
+    }
+    let mediaUrl = req.body.mediaUrl || "";
+    if (req.file) mediaUrl = `/uploads/${req.file.filename}`;
+    const ad = await storage.createAdvertisement({ ...req.body, mediaUrl });
+    res.json(ad);
+  });
+
+  app.patch("/api/advertisements/:id", requireAdmin, uploadMedia.single("media"), async (req, res) => {
+    const data: any = { ...req.body };
+    if (req.file) data.mediaUrl = `/uploads/${req.file.filename}`;
+    if (data.isActive !== undefined) data.isActive = data.isActive === "true" || data.isActive === true;
+    if (data.sortOrder !== undefined) data.sortOrder = Number(data.sortOrder);
+    const updated = await storage.updateAdvertisement(Number(req.params.id), data);
+    res.json(updated);
+  });
+
+  app.delete("/api/advertisements/:id", requireAdmin, async (req, res) => {
+    await storage.deleteAdvertisement(Number(req.params.id));
+    res.json({ success: true });
+  });
+
+  // ===== PUSH NOTIFICATIONS (Broadcast) =====
+  app.post("/api/notifications/broadcast", requireAdmin, async (req, res) => {
+    const { title, message, type, targetSegment, targetUserIds } = req.body;
+    let targetUsers: any[] = [];
+    if (targetUserIds && targetUserIds.length > 0) {
+      const allUsers = await storage.getAllUsers();
+      targetUsers = allUsers.filter((u: any) => targetUserIds.includes(u.id));
+    } else if (targetSegment === "all_clients") {
+      targetUsers = await storage.getClients();
+    } else if (targetSegment === "frequent_food") {
+      const allClients = await storage.getClients();
+      const allOrders = await storage.getOrders({});
+      const orderCounts: Record<number, number> = {};
+      for (const o of allOrders) {
+        orderCounts[o.clientId] = (orderCounts[o.clientId] || 0) + 1;
+      }
+      targetUsers = allClients.filter((c: any) => (orderCounts[c.id] || 0) >= 3);
+    } else if (targetSegment === "service_users") {
+      const allRequests = await storage.getServiceRequests({});
+      const clientIds = [...new Set(allRequests.map((r: any) => r.clientId))];
+      const allUsers = await storage.getAllUsers();
+      targetUsers = allUsers.filter((u: any) => clientIds.includes(u.id));
+    } else if (targetSegment === "inactive") {
+      const allClients = await storage.getClients();
+      const allOrders = await storage.getOrders({});
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const activeClientIds = new Set(allOrders.filter((o: any) => new Date(o.createdAt!) > thirtyDaysAgo).map((o: any) => o.clientId));
+      targetUsers = allClients.filter((c: any) => !activeClientIds.has(c.id));
+    } else if (targetSegment === "high_value") {
+      const allClients = await storage.getClients();
+      const allOrders = await storage.getOrders({});
+      const spending: Record<number, number> = {};
+      for (const o of allOrders) if (o.status === "delivered") spending[o.clientId] = (spending[o.clientId] || 0) + o.total;
+      targetUsers = allClients.filter((c: any) => (spending[c.id] || 0) >= 50000);
+    } else if (targetSegment === "new_clients") {
+      const allClients = await storage.getClients();
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      targetUsers = allClients.filter((c: any) => new Date(c.createdAt!) > sevenDaysAgo);
+    } else {
+      targetUsers = await storage.getClients();
+    }
+    let sent = 0;
+    for (const u of targetUsers) {
+      await storage.createNotification({
+        userId: u.id,
+        title: title || "Notification MAWEJA",
+        message: message || "",
+        type: type || "promo",
+        data: { broadcast: true },
+      });
+      const ws = clients.get(u.id);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "notification", data: { title, message } }));
+      }
+      sent++;
+    }
+    res.json({ success: true, sent });
+  });
+
+  // ===== CLIENT SEGMENTS ANALYTICS =====
+  app.get("/api/analytics/client-segments", requireAdmin, async (req, res) => {
+    const allClients = await storage.getClients();
+    const allOrders = await storage.getOrders({});
+    const allServiceRequests = await storage.getServiceRequests({});
+    const orderCounts: Record<number, number> = {};
+    const spending: Record<number, number> = {};
+    const lastOrder: Record<number, Date> = {};
+    for (const o of allOrders) {
+      orderCounts[o.clientId] = (orderCounts[o.clientId] || 0) + 1;
+      if (o.status === "delivered") spending[o.clientId] = (spending[o.clientId] || 0) + o.total;
+      const d = new Date(o.createdAt!);
+      if (!lastOrder[o.clientId] || d > lastOrder[o.clientId]) lastOrder[o.clientId] = d;
+    }
+    const serviceRequestClients = new Set(allServiceRequests.map((r: any) => r.clientId));
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const segments = {
+      all_clients: { label: "Tous les clients", count: allClients.length },
+      frequent_food: { label: "Commandes frequentes (3+)", count: allClients.filter((c: any) => (orderCounts[c.id] || 0) >= 3).length },
+      service_users: { label: "Utilisateurs services", count: allClients.filter((c: any) => serviceRequestClients.has(c.id)).length },
+      inactive: { label: "Clients inactifs (30j)", count: allClients.filter((c: any) => !lastOrder[c.id] || lastOrder[c.id] < thirtyDaysAgo).length },
+      high_value: { label: "Haute valeur (50k+ FC)", count: allClients.filter((c: any) => (spending[c.id] || 0) >= 50000).length },
+      new_clients: { label: "Nouveaux clients (7j)", count: allClients.filter((c: any) => { const d = new Date(c.createdAt!); return d > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); }).length },
+    };
+    res.json(segments);
   });
 
   const httpServer = createServer(app);

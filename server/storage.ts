@@ -2,12 +2,16 @@ import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
+  serviceCategories, serviceRequests, advertisements,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
   type WalletTransaction, type InsertWalletTransaction,
   type Finance, type InsertFinance,
   type SavedAddress, type InsertSavedAddress,
+  type ServiceCategory, type InsertServiceCategory,
+  type ServiceRequest, type InsertServiceRequest,
+  type Advertisement, type InsertAdvertisement,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -60,6 +64,23 @@ export interface IStorage {
   updateSavedAddress(id: number, data: Partial<SavedAddress>): Promise<SavedAddress | undefined>;
   deleteSavedAddress(id: number): Promise<void>;
   setDefaultAddress(userId: number, addressId: number): Promise<void>;
+
+  getServiceCategories(): Promise<ServiceCategory[]>;
+  getServiceCategory(id: number): Promise<ServiceCategory | undefined>;
+  createServiceCategory(cat: InsertServiceCategory): Promise<ServiceCategory>;
+  updateServiceCategory(id: number, data: Partial<ServiceCategory>): Promise<ServiceCategory | undefined>;
+  deleteServiceCategory(id: number): Promise<void>;
+
+  getServiceRequests(filters?: { clientId?: number; status?: string; categoryId?: number }): Promise<ServiceRequest[]>;
+  getServiceRequest(id: number): Promise<ServiceRequest | undefined>;
+  createServiceRequest(req: InsertServiceRequest): Promise<ServiceRequest>;
+  updateServiceRequest(id: number, data: Partial<ServiceRequest>): Promise<ServiceRequest | undefined>;
+
+  getAdvertisements(activeOnly?: boolean): Promise<Advertisement[]>;
+  getAdvertisement(id: number): Promise<Advertisement | undefined>;
+  createAdvertisement(ad: InsertAdvertisement): Promise<Advertisement>;
+  updateAdvertisement(id: number, data: Partial<Advertisement>): Promise<Advertisement | undefined>;
+  deleteAdvertisement(id: number): Promise<void>;
 
   getDashboardStats(): Promise<any>;
 }
@@ -330,6 +351,77 @@ export class DatabaseStorage implements IStorage {
   async setDefaultAddress(userId: number, addressId: number) {
     await db.update(savedAddresses).set({ isDefault: false }).where(eq(savedAddresses.userId, userId));
     await db.update(savedAddresses).set({ isDefault: true }).where(and(eq(savedAddresses.id, addressId), eq(savedAddresses.userId, userId)));
+  }
+
+  async getServiceCategories() {
+    return db.select().from(serviceCategories).orderBy(serviceCategories.name);
+  }
+
+  async getServiceCategory(id: number) {
+    const [cat] = await db.select().from(serviceCategories).where(eq(serviceCategories.id, id));
+    return cat;
+  }
+
+  async createServiceCategory(cat: InsertServiceCategory) {
+    const [created] = await db.insert(serviceCategories).values(cat).returning();
+    return created;
+  }
+
+  async updateServiceCategory(id: number, data: Partial<ServiceCategory>) {
+    const [updated] = await db.update(serviceCategories).set(data).where(eq(serviceCategories.id, id)).returning();
+    return updated;
+  }
+
+  async deleteServiceCategory(id: number) {
+    await db.delete(serviceCategories).where(eq(serviceCategories.id, id));
+  }
+
+  async getServiceRequests(filters?: { clientId?: number; status?: string; categoryId?: number }) {
+    const conditions: any[] = [];
+    if (filters?.clientId) conditions.push(eq(serviceRequests.clientId, filters.clientId));
+    if (filters?.status) conditions.push(eq(serviceRequests.status, filters.status));
+    if (filters?.categoryId) conditions.push(eq(serviceRequests.categoryId, filters.categoryId));
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+    return db.select().from(serviceRequests).where(where).orderBy(desc(serviceRequests.createdAt));
+  }
+
+  async getServiceRequest(id: number) {
+    const [req] = await db.select().from(serviceRequests).where(eq(serviceRequests.id, id));
+    return req;
+  }
+
+  async createServiceRequest(req: InsertServiceRequest) {
+    const [created] = await db.insert(serviceRequests).values(req).returning();
+    return created;
+  }
+
+  async updateServiceRequest(id: number, data: Partial<ServiceRequest>) {
+    const [updated] = await db.update(serviceRequests).set({ ...data, updatedAt: new Date() }).where(eq(serviceRequests.id, id)).returning();
+    return updated;
+  }
+
+  async getAdvertisements(activeOnly?: boolean) {
+    const where = activeOnly ? eq(advertisements.isActive, true) : undefined;
+    return db.select().from(advertisements).where(where).orderBy(advertisements.sortOrder);
+  }
+
+  async getAdvertisement(id: number) {
+    const [ad] = await db.select().from(advertisements).where(eq(advertisements.id, id));
+    return ad;
+  }
+
+  async createAdvertisement(ad: InsertAdvertisement) {
+    const [created] = await db.insert(advertisements).values(ad).returning();
+    return created;
+  }
+
+  async updateAdvertisement(id: number, data: Partial<Advertisement>) {
+    const [updated] = await db.update(advertisements).set(data).where(eq(advertisements.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAdvertisement(id: number) {
+    await db.delete(advertisements).where(eq(advertisements.id, id));
   }
 }
 
