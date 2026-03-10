@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useCart } from "../../lib/cart";
 import { authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus, Play } from "lucide-react";
+import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus, Play, ChefHat } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { useState, useRef } from "react";
 import type { Restaurant, MenuItem } from "@shared/schema";
@@ -74,8 +74,9 @@ export default function RestaurantPage() {
               <p className="text-white/80 text-sm mt-0.5">{restaurant?.description}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-4 mt-2 flex-wrap">
             <span className="flex items-center gap-1 text-sm"><Star size={14} className="fill-yellow-400 text-yellow-400" /> {restaurant?.rating}</span>
+            <span className="flex items-center gap-1 text-sm" data-testid="restaurant-prep-time"><ChefHat size={14} /> {restaurant?.prepTime || restaurant?.deliveryTime}</span>
             <span className="flex items-center gap-1 text-sm"><Clock size={14} /> {restaurant?.deliveryTime}</span>
             <span className="flex items-center gap-1 text-sm"><MapPin size={14} /> {restaurant?.address?.split(",")[0]}</span>
           </div>
@@ -83,6 +84,12 @@ export default function RestaurantPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4">
+        {restaurant?.prepTime && (
+          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
+            <ChefHat size={16} className="text-orange-600 flex-shrink-0" />
+            <span className="text-sm font-semibold text-orange-800">Temps de preparation: {restaurant.prepTime}</span>
+          </div>
+        )}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
           {categories.map((c) => (
             <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all">

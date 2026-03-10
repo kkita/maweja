@@ -315,12 +315,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/orders", requireAuth, async (req, res) => {
     const sessionUserId = (req.session as any).userId;
+    const sessionUser = await storage.getUser(sessionUserId);
+    let clientId = sessionUserId;
+    if (sessionUser?.role === "admin" && req.body.clientId) {
+      clientId = req.body.clientId;
+    }
     const orderNumber = `MAW-${Date.now().toString(36).toUpperCase()}`;
     const commission = Math.round(req.body.subtotal * 0.15);
     const restaurant = await storage.getRestaurant(req.body.restaurantId);
     const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
     const estimatedDelivery = new Date(Date.now() + deliveryMinutes * 60 * 1000).toISOString();
-    const order = await storage.createOrder({ ...req.body, clientId: sessionUserId, orderNumber, commission, estimatedDelivery });
+    const order = await storage.createOrder({ ...req.body, clientId, orderNumber, commission, estimatedDelivery });
 
     // Record finance entries
     await storage.createFinance({
@@ -401,6 +406,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!user || (user.role !== "admin" && user.role !== "driver")) {
       return res.status(403).json({ message: "Acces refuse" });
     }
+    const existingOrder = await storage.getOrder(Number(req.params.id));
+    if (!existingOrder) return res.status(404).json({ message: "Commande non trouvee" });
+
+    const auditEntry = {
+      action: req.body.status ? `status_${req.body.status}` : req.body.driverId ? "driver_assigned" : "modified",
+      by: user.name,
+      byId: user.id,
+      role: user.role,
+      timestamp: new Date().toISOString(),
+      details: req.body.status ? `Statut: ${existingOrder.status} → ${req.body.status}` : req.body.driverId ? `Livreur assigne: ${req.body.driverId}` : "Modification",
+    };
+    const currentLog = (existingOrder.auditLog as any[]) || [];
+    req.body.auditLog = [...currentLog, auditEntry];
+
     const order = await storage.updateOrder(Number(req.params.id), req.body);
     if (!order) return res.status(404).json({ message: "Commande non trouvee" });
 
@@ -836,11 +855,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (req.query.status) filters.status = req.query.status;
     if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
     if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
-    const data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
+    let data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
+    if (req.query.restaurantId) {
+      data = data.filter(o => o.restaurantId === Number(req.query.restaurantId));
+    }
+
+    const allUsers = await storage.getAllUsers();
+    const allRestaurants = await storage.getRestaurants();
+    const getUserName = (id: number) => allUsers.find(u => u.id === id)?.name || "";
+    const getRestName = (id: number) => allRestaurants.find(r => r.id === id)?.name || "";
 
     const csv = [
-      "Numero,Statut,Client ID,Restaurant ID,Livreur ID,Total (FC),Frais Livraison,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
-      ...data.map(o => `${o.orderNumber},${o.status},${o.clientId},${o.restaurantId},${o.driverId || ""},${o.total},${o.deliveryFee},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
+      "Numero,Statut,Client,Restaurant,Livreur,Total (FC),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
+      ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
     ].join("\n");
 
     res.setHeader("Content-Type", "text/csv");
@@ -852,6 +879,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/stats", requireAdmin, async (_req, res) => {
     const stats = await storage.getDashboardStats();
     res.json(stats);
+  });
+
+  app.get("/api/analytics/marketing", requireAdmin, async (req, res) => {
+    const dateFrom = req.query.dateFrom ? new Date(req.query.dateFrom as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const dateTo = req.query.dateTo ? new Date(req.query.dateTo as string) : new Date();
+
+    const allOrders = await storage.getOrders();
+    const allUsers = await storage.getAllUsers();
+    const allRestaurants = await storage.getRestaurants();
+    const allMenuItems: any[] = [];
+    for (const r of allRestaurants) {
+      const items = await storage.getMenuItems(r.id);
+      allMenuItems.push(...items);
+    }
+
+    const periodOrders = allOrders.filter(o => {
+      const d = new Date(o.createdAt!);
+      return d >= dateFrom && d <= dateTo;
+    });
+
+    const deliveredOrders = periodOrders.filter(o => o.status === "delivered");
+    const ratedOrders = deliveredOrders.filter(o => o.rating);
+    const cancelledOrders = periodOrders.filter(o => o.status === "cancelled");
+
+    const onTimeDelivered = deliveredOrders.filter(o => {
+      if (!o.estimatedDelivery || !o.updatedAt) return false;
+      return new Date(o.updatedAt) <= new Date(o.estimatedDelivery);
+    });
+
+    const avgRating = ratedOrders.length > 0
+      ? ratedOrders.reduce((s, o) => s + (o.rating || 0), 0) / ratedOrders.length : 0;
+    const totalRevenue = periodOrders.reduce((s, o) => s + o.total, 0);
+    const avgOrderAmount = periodOrders.length > 0 ? Math.round(totalRevenue / periodOrders.length) : 0;
+    const avgDeliveryCost = periodOrders.length > 0
+      ? Math.round(periodOrders.reduce((s, o) => s + o.deliveryFee, 0) / periodOrders.length) : 0;
+
+    const productCounts: Record<string, { name: string; count: number; revenue: number }> = {};
+    periodOrders.forEach(o => {
+      const items = typeof o.items === "string" ? JSON.parse(o.items) : o.items as any[];
+      items.forEach((item: any) => {
+        const key = item.name;
+        if (!productCounts[key]) productCounts[key] = { name: key, count: 0, revenue: 0 };
+        productCounts[key].count += item.qty || 1;
+        productCounts[key].revenue += (item.price || 0) * (item.qty || 1);
+      });
+    });
+    const topProducts = Object.values(productCounts).sort((a, b) => b.count - a.count).slice(0, 10);
+
+    const ordersByDay: Record<string, { date: string; orders: number; revenue: number }> = {};
+    periodOrders.forEach(o => {
+      const day = new Date(o.createdAt!).toISOString().split("T")[0];
+      if (!ordersByDay[day]) ordersByDay[day] = { date: day, orders: 0, revenue: 0 };
+      ordersByDay[day].orders++;
+      ordersByDay[day].revenue += o.total;
+    });
+    const dailyTrend = Object.values(ordersByDay).sort((a, b) => a.date.localeCompare(b.date));
+
+    const ordersByHour: number[] = new Array(24).fill(0);
+    periodOrders.forEach(o => {
+      const hour = new Date(o.createdAt!).getHours();
+      ordersByHour[hour]++;
+    });
+
+    const clients = allUsers.filter(u => u.role === "client");
+    const clientsWithOrders = clients.map(c => {
+      const userOrders = periodOrders.filter(o => o.clientId === c.id);
+      return {
+        id: c.id, name: c.name, email: c.email, phone: c.phone,
+        orderCount: userOrders.length,
+        totalSpent: userOrders.reduce((s, o) => s + o.total, 0),
+        avgOrder: userOrders.length > 0 ? Math.round(userOrders.reduce((s, o) => s + o.total, 0) / userOrders.length) : 0,
+      };
+    }).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 20);
+
+    const drivers = allUsers.filter(u => u.role === "driver");
+    const driverPerformance = drivers.map(d => {
+      const driverDelivered = deliveredOrders.filter(o => o.driverId === d.id);
+      const driverOnTime = driverDelivered.filter(o => {
+        if (!o.estimatedDelivery || !o.updatedAt) return false;
+        return new Date(o.updatedAt) <= new Date(o.estimatedDelivery);
+      });
+      const driverRated = driverDelivered.filter(o => o.rating);
+      return {
+        id: d.id, name: d.name, deliveries: driverDelivered.length,
+        onTimeRate: driverDelivered.length > 0 ? Math.round(driverOnTime.length / driverDelivered.length * 100) : 0,
+        avgRating: driverRated.length > 0 ? +(driverRated.reduce((s, o) => s + (o.rating || 0), 0) / driverRated.length).toFixed(1) : 0,
+        isOnline: d.isOnline,
+      };
+    }).sort((a, b) => b.deliveries - a.deliveries);
+
+    const paymentBreakdown: Record<string, number> = {};
+    periodOrders.forEach(o => {
+      paymentBreakdown[o.paymentMethod] = (paymentBreakdown[o.paymentMethod] || 0) + 1;
+    });
+
+    const statusBreakdown: Record<string, number> = {};
+    allOrders.filter(o => !["delivered", "cancelled"].includes(o.status)).forEach(o => {
+      statusBreakdown[o.status] = (statusBreakdown[o.status] || 0) + 1;
+    });
+
+    res.json({
+      kpis: {
+        totalOrders: periodOrders.length,
+        deliveredOrders: deliveredOrders.length,
+        cancelledOrders: cancelledOrders.length,
+        onTimeRate: deliveredOrders.length > 0 ? Math.round(onTimeDelivered.length / deliveredOrders.length * 100) : 0,
+        avgRating: +avgRating.toFixed(1),
+        totalRevenue,
+        avgOrderAmount,
+        avgDeliveryCost,
+        totalClients: clients.length,
+      },
+      topProducts,
+      dailyTrend,
+      ordersByHour,
+      topClients: clientsWithOrders,
+      driverPerformance,
+      paymentBreakdown,
+      statusBreakdown,
+    });
   });
 
   const httpServer = createServer(app);

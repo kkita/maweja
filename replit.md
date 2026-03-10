@@ -88,18 +88,19 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 
 ### Admin Dashboard
 - AdminDashboard - KPIs, recent orders, performance metrics
-- AdminOrders - Order management with status/driver assignment
-- AdminDrivers - 3-column layout: driver details (left), real-time map (center), driver list (right). CRUD, block, alarm, quick chat, countdown timers
-- AdminRestaurants - Restaurant management
+- AdminOrders - Full order management: status/driver assignment, restaurant/date/payment/search filters, manual order creation modal, print invoice, order audit log timeline, new order sound notification (Web Audio API), enhanced CSV export with filters, device type tracking
+- AdminDrivers - 3-column layout + dispatch dashboard with 7 tabs: Gestion (map/list/details), Non attribuees (unassigned orders), Attribuees (assigned by driver), Completees (on-time vs late), Disponibles (free drivers), Occupes (busy with order count), Hors ligne. 45-min countdown + URGENT badges
+- AdminMarketing - Full analytics: 8 KPIs, revenue/order trend charts (Recharts BarChart), orders by hour (AreaChart), top 10 products, payment method breakdown (PieChart), top clients table, driver performance ranking. Date range filter
+- AdminRestaurants - Restaurant management with extended fields (email, manager, brand, HQ address, prep time), commission auto-calculation, media management
 - AdminCustomers - Customer management, wallet/points
 - AdminChat - Messaging with clients and drivers
 - AdminFinance - Revenue/expense tracking, category breakdown, daily chart, CSV export
-- AdminSettings - App configuration
+- AdminSettings - App configuration, WhatsApp number setting
 - AdminVerifications - Review driver onboarding submissions, approve or reject fields individually
 
 ## Chat System
 - Admin ↔ Driver: Admin can message any driver from AdminChat (dynamic contact list). Driver has dedicated chat page (/driver/chat) to message admins.
-- Client → Admin: Floating "Contactez-nous" bubble on client pages with live chat and structured complaint form (predefined subjects).
+- Client → Admin: Floating "Contactez-nous" bubble on client pages with live chat, structured complaint form, and WhatsApp contact option (wa.me link).
 - Real-time: WebSocket notifications + polling fallback. Unread message counts shown per contact.
 - Security: All chat endpoints enforce session ownership (users can only access their own messages/unread counts). Sender ID validated against session.
 
@@ -118,6 +119,7 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - GET/POST /api/finance, GET /api/finance/summary, GET /api/finance/export (CSV)
 - GET /api/orders/export (CSV)
 - GET /api/dashboard/stats
+- GET /api/analytics/marketing?dateFrom=&dateTo= (KPIs, charts, top products, client/driver analytics)
 - GET/POST /api/notifications, /api/wallet
 - Chat: GET /api/chat/contacts/:userId, GET /api/chat/users-by-role/:role, GET /api/chat/unread/:userId, PATCH /api/chat/read/:senderId/:receiverId, GET /api/chat/:userId1/:userId2, POST /api/chat
 

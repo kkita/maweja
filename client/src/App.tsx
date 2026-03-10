@@ -36,6 +36,7 @@ import AdminChat from "./pages/admin/AdminChat";
 import AdminFinance from "./pages/admin/AdminFinance";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminVerifications from "./pages/admin/AdminVerifications";
+import AdminMarketing from "./pages/admin/AdminMarketing";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -67,6 +68,7 @@ function AppRoutes() {
         <Route path="/admin/finance" component={AdminFinance} />
         <Route path="/admin/settings" component={AdminSettings} />
         <Route path="/admin/verifications" component={AdminVerifications} />
+        <Route path="/admin/marketing" component={AdminMarketing} />
         <Route component={AdminDashboard} />
       </Switch>
     );

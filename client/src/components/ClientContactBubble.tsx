@@ -5,6 +5,7 @@ import { apiRequest, queryClient, authFetch } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
 import { useToast } from "../hooks/use-toast";
 import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import type { ChatMessage, User as UserType } from "@shared/schema";
 
 type SafeUser = Omit<UserType, "password">;
@@ -154,6 +155,16 @@ export default function ClientContactBubble() {
                       {totalUnread}
                     </span>
                   )}
+                </button>
+                <button onClick={() => window.open("https://wa.me/243812345678?text=Bonjour MAWEJA, j'ai besoin d'aide.", "_blank")} data-testid="button-whatsapp"
+                  className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                  <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
+                    <SiWhatsapp size={18} className="text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-900">WhatsApp</p>
+                    <p className="text-[10px] text-gray-400">Ecrivez-nous sur WhatsApp</p>
+                  </div>
                 </button>
                 <button onClick={() => { setView("complaint"); setComplaintSent(false); }} data-testid="button-start-complaint"
                   className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">

@@ -49,6 +49,11 @@ export const restaurants = pgTable("restaurants", {
   lng: doublePrecision("lng"),
   phone: text("phone"),
   openingHours: text("opening_hours"),
+  email: text("email"),
+  managerName: text("manager_name"),
+  brandName: text("brand_name"),
+  hqAddress: text("hq_address"),
+  prepTime: text("prep_time").default("20-30 min"),
 });
 
 export const menuItems = pgTable("menu_items", {
@@ -88,6 +93,8 @@ export const orders = pgTable("orders", {
   taxAmount: integer("tax_amount").notNull().default(0),
   promoCode: text("promo_code"),
   promoDiscount: integer("promo_discount").notNull().default(0),
+  deviceType: text("device_type").default("web"),
+  auditLog: jsonb("audit_log"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

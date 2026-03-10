@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import { Settings, Bell, Globe, Shield, Palette, Save } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { useToast } from "../../hooks/use-toast";
 
 export default function AdminSettings() {
@@ -15,6 +16,7 @@ export default function AdminSettings() {
     loyaltyEnabled: true,
     pointsPerOrder: 10,
     currency: "FC",
+    whatsappNumber: "",
   });
 
   const handleSave = () => {
@@ -128,6 +130,29 @@ export default function AdminSettings() {
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center">
+              <SiWhatsapp size={20} className="text-green-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900">WhatsApp</h3>
+              <p className="text-xs text-gray-500">Numero WhatsApp pour le contact client</p>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">Numero WhatsApp</label>
+            <input
+              type="text"
+              value={settings.whatsappNumber}
+              onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
+              placeholder="+243 812 345 678"
+              data-testid="input-whatsapp-number"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+            />
           </div>
         </div>
 

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
-import { Star, Clock, MapPin, Search, ChevronRight, Flame } from "lucide-react";
+import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Restaurant } from "@shared/schema";
 
@@ -117,7 +117,11 @@ export default function HomePage() {
                       <p className="text-gray-500 text-xs line-clamp-1">{r.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-4 mt-3 flex-wrap">
+                    <div className="flex items-center gap-1 text-gray-500" data-testid={`restaurant-prep-time-${r.id}`}>
+                      <ChefHat size={12} />
+                      <span className="text-xs font-medium">Prep: {r.prepTime || r.deliveryTime}</span>
+                    </div>
                     <div className="flex items-center gap-1 text-gray-500">
                       <Clock size={12} />
                       <span className="text-xs font-medium">{r.deliveryTime}</span>

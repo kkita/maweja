@@ -88,6 +88,11 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS opening_hours TEXT`);
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS logo_url TEXT`);
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS cover_video_url TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS email TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS manager_name TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS brand_name TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS hq_address TEXT`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS prep_time TEXT DEFAULT '20-30 min'`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS menu_items (
@@ -136,6 +141,8 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount INTEGER NOT NULL DEFAULT 0`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_code TEXT`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_discount INTEGER NOT NULL DEFAULT 0`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS device_type TEXT DEFAULT 'web'`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS audit_log JSONB`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS notifications (

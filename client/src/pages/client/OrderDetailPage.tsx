@@ -10,6 +10,7 @@ import {
   ArrowLeft, Clock, CheckCircle, ChefHat, Package, Truck, MapPin,
   Star, X, Phone, MessageCircle, AlertTriangle, Ban,
 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import type { Order, User, Restaurant } from "@shared/schema";
 
 const steps = [
@@ -296,6 +297,15 @@ export default function OrderDetailPage() {
             </div>
           </div>
         )}
+
+        <button
+          onClick={() => window.open(`https://wa.me/243812345678?text=Bonjour MAWEJA, j'ai une question concernant ma commande ${order.orderNumber}`, "_blank")}
+          data-testid="button-whatsapp-order"
+          className="w-full py-3 rounded-xl bg-green-600 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-green-200 mt-4"
+        >
+          <SiWhatsapp size={16} />
+          Contacter via WhatsApp
+        </button>
 
         <div className="flex flex-col gap-3 mt-4">
           {canCancel && (

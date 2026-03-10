@@ -69,3 +69,29 @@
 .leaflet-container {
   z-index: 0 !important;
 }
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #print-invoice,
+  #print-invoice * {
+    visibility: visible !important;
+    display: block !important;
+  }
+  #print-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  #print-invoice table,
+  #print-invoice thead,
+  #print-invoice tbody,
+  #print-invoice tr,
+  #print-invoice th,
+  #print-invoice td {
+    display: revert !important;
+    visibility: visible !important;
+  }
+}
