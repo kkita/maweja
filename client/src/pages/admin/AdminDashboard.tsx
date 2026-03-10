@@ -4,7 +4,7 @@ import AdminLayout from "../../components/AdminLayout";
 import { onWSMessage } from "../../lib/websocket";
 import { queryClient, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { Package, Truck, Users, DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ArrowUpRight } from "lucide-react";
+import { Package, Truck, Users, DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ArrowUpRight, Store, UtensilsCrossed } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { statusLabels, statusColors, formatDate } from "../../lib/utils";
 import type { Order } from "@shared/schema";
@@ -126,6 +126,59 @@ export default function AdminDashboard() {
             </div>
             <p className="text-2xl font-black">{formatPrice(Number(stats?.orders?.revenue) || 0)}</p>
             <p className="text-red-200 text-xs mt-1">Chiffre d'affaires total</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <UtensilsCrossed size={16} className="text-red-600" />
+            <h3 className="font-bold text-gray-900">Categories de restaurants</h3>
+          </div>
+          <div className="p-5 space-y-3">
+            {(() => {
+              const breakdown = stats?.cuisineBreakdown || [];
+              const total = breakdown.reduce((s: number, x: any) => s + Number(x.count), 0);
+              return breakdown.map((c: any) => {
+              const pct = total > 0 ? Math.round((Number(c.count) / total) * 100) : 0;
+              return (
+                <div key={c.cuisine} data-testid={`cuisine-breakdown-${c.cuisine?.toLowerCase().replace(/\s/g, "-")}`}>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-700 font-medium">{c.cuisine}</span>
+                    <span className="text-gray-500 text-xs">{c.count} restaurant{Number(c.count) > 1 ? "s" : ""} ({pct}%)</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2">
+                    <div className="bg-red-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            });
+            })()}
+            {(!stats?.cuisineBreakdown || stats.cuisineBreakdown.length === 0) && (
+              <p className="text-gray-400 text-sm text-center py-4">Aucune donnee disponible</p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+            <Store size={16} className="text-red-600" />
+            <h3 className="font-bold text-gray-900">Commandes par categorie</h3>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {(stats?.cuisineOrders || []).map((c: any) => (
+              <div key={c.cuisine} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid={`cuisine-orders-${c.cuisine?.toLowerCase().replace(/\s/g, "-")}`}>
+                <div>
+                  <p className="font-semibold text-sm text-gray-900">{c.cuisine}</p>
+                  <p className="text-xs text-gray-400">{c.orderCount} commande{Number(c.orderCount) > 1 ? "s" : ""}</p>
+                </div>
+                <span className="font-bold text-sm text-red-600">{formatPrice(Number(c.revenue))}</span>
+              </div>
+            ))}
+            {(!stats?.cuisineOrders || stats.cuisineOrders.length === 0) && (
+              <p className="text-gray-400 text-sm text-center py-8">Aucune commande par categorie</p>
+            )}
           </div>
         </div>
       </div>

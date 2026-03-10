@@ -1,25 +1,46 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/AdBanner";
 import { useAuth } from "../../lib/auth";
-import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat } from "lucide-react";
+import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Restaurant } from "@shared/schema";
+
+const categories = [
+  { name: "Tous", cuisine: null },
+  { name: "Burgers", cuisine: "Burgers" },
+  { name: "Congolais", cuisine: "Congolais" },
+  { name: "Grillades", cuisine: "Grillades" },
+  { name: "Fast Food", cuisine: "Fast Food" },
+  { name: "Gastronomique", cuisine: "Gastronomique" },
+  { name: "Libanais", cuisine: "Libanais" },
+  { name: "International", cuisine: "International" },
+  { name: "Supermarche", cuisine: "Supermarche" },
+];
 
 export default function HomePage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
-  const categories = [
-    { name: "Tous", icon: "grid", active: true },
-    { name: "Burgers", icon: "burger" },
-    { name: "Congolais", icon: "pot" },
-    { name: "Grillades", icon: "flame" },
-    { name: "Fast Food", icon: "zap" },
-    { name: "Gastronomique", icon: "star" },
-  ];
+  const availableCuisines = new Set(restaurants.map(r => r.cuisine));
+  const visibleCategories = categories.filter(c => c.cuisine === null || availableCuisines.has(c.cuisine));
+
+  const filtered = restaurants.filter(r => {
+    if (activeCategory && r.cuisine !== activeCategory) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return r.name.toLowerCase().includes(q) || r.cuisine.toLowerCase().includes(q) || r.description.toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  const displayedRestaurants = showAll || activeCategory || searchQuery.trim() ? filtered : filtered.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -36,9 +57,16 @@ export default function HomePage() {
           <input
             type="text"
             placeholder="Rechercher un restaurant ou un plat..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="input-search"
-            className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
+            className="w-full pl-11 pr-10 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
           />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-testid="button-clear-search">
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         <AdBanner />
@@ -58,27 +86,38 @@ export default function HomePage() {
           <div className="absolute right-0 top-0 w-32 h-full bg-red-500/30 rounded-l-full" />
         </div>
 
-        <div className="flex gap-3 overflow-x-auto no-scrollbar mb-6 -mx-1 px-1">
-          {categories.map((c) => (
-            <button
-              key={c.name}
-              data-testid={`category-${c.name.toLowerCase()}`}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
-                c.active
-                  ? "bg-red-600 text-white shadow-lg shadow-red-200"
-                  : "bg-white text-gray-600 border border-gray-200"
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 -mx-1 px-1">
+          {visibleCategories.map((c) => {
+            const isActive = activeCategory === c.cuisine;
+            return (
+              <button
+                key={c.name}
+                onClick={() => { setActiveCategory(isActive ? null : c.cuisine); setShowAll(false); }}
+                data-testid={`category-${c.name.toLowerCase().replace(/\s/g, "-")}`}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
+                  isActive
+                    ? "bg-red-600 text-white shadow-lg shadow-red-200"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-red-300 hover:text-red-600"
+                }`}
+              >
+                {c.name}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">Restaurants populaires</h3>
-          <button className="text-red-600 text-xs font-semibold flex items-center gap-0.5" data-testid="button-see-all">
-            Voir tout <ChevronRight size={14} />
-          </button>
+          <h3 className="text-lg font-bold text-gray-900">
+            {activeCategory ? activeCategory : searchQuery ? "Resultats" : "Restaurants populaires"}
+          </h3>
+          {!showAll && !activeCategory && !searchQuery && filtered.length > 6 && (
+            <button onClick={() => setShowAll(true)} className="text-red-600 text-xs font-semibold flex items-center gap-0.5" data-testid="button-see-all">
+              Voir tout <ChevronRight size={14} />
+            </button>
+          )}
+          {(showAll || activeCategory || searchQuery) && (
+            <span className="text-xs text-gray-400 font-medium" data-testid="text-result-count">{filtered.length} restaurant{filtered.length !== 1 ? "s" : ""}</span>
+          )}
         </div>
 
         {isLoading ? (
@@ -87,9 +126,24 @@ export default function HomePage() {
               <div key={i} className="bg-white rounded-2xl h-48 animate-pulse" />
             ))}
           </div>
+        ) : displayedRestaurants.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100" data-testid="text-no-results">
+            <Search size={40} className="text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500 font-medium">Aucun restaurant trouve</p>
+            <p className="text-gray-400 text-sm mt-1">
+              {searchQuery ? "Essayez un autre terme de recherche" : "Aucun restaurant dans cette categorie"}
+            </p>
+            <button
+              onClick={() => { setActiveCategory(null); setSearchQuery(""); setShowAll(false); }}
+              className="mt-4 text-red-600 text-sm font-semibold"
+              data-testid="button-reset-filters"
+            >
+              Voir tous les restaurants
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
-            {restaurants.map((r) => (
+            {displayedRestaurants.map((r) => (
               <button
                 key={r.id}
                 onClick={() => navigate(`/restaurant/${r.id}`)}

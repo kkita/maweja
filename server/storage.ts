@@ -327,7 +327,18 @@ export class DatabaseStorage implements IStorage {
       active: sql<number>`count(*) filter (where ${restaurants.isActive} = true)`,
     }).from(restaurants);
 
-    return { orders: orderStats, drivers: driverStats, clients: clientStats, restaurants: restaurantStats };
+    const cuisineBreakdown = await db.select({
+      cuisine: restaurants.cuisine,
+      count: sql<number>`count(*)`,
+    }).from(restaurants).groupBy(restaurants.cuisine).orderBy(desc(sql`count(*)`));
+
+    const cuisineOrders = await db.select({
+      cuisine: restaurants.cuisine,
+      orderCount: sql<number>`count(${orders.id})`,
+      revenue: sql<number>`coalesce(sum(${orders.total}) filter (where ${orders.status} = 'delivered'), 0)`,
+    }).from(orders).innerJoin(restaurants, eq(orders.restaurantId, restaurants.id)).groupBy(restaurants.cuisine).orderBy(desc(sql`count(${orders.id})`));
+
+    return { orders: orderStats, drivers: driverStats, clients: clientStats, restaurants: restaurantStats, cuisineBreakdown, cuisineOrders };
   }
 
   async getSavedAddresses(userId: number) {
