@@ -291,7 +291,7 @@ export default function AdminRestaurants() {
 
   return (
     <AdminLayout title="Gestion des restaurants">
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="w-11 h-11 bg-red-50 rounded-xl flex items-center justify-center mb-3">
             <Store size={20} className="text-red-600" />

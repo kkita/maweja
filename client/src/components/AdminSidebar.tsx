@@ -76,7 +76,7 @@ export default function AdminSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {links.map((l) => {
           const isActive = location === l.path;
           const badge = getBadge(l.label);

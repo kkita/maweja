@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import AdminSidebar from "../../components/AdminSidebar";
+import AdminLayout from "../../components/AdminLayout";
 import { apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
@@ -87,17 +87,12 @@ export default function AdminServices() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900" data-testid="text-admin-services-title">Services</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Gerez les demandes de services et les categories</p>
-          </div>
+    <AdminLayout title="Services">
+        <div className="mb-6">
+          <p className="text-sm text-gray-500" data-testid="text-admin-services-title">Gerez les demandes de services et les categories</p>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
             { label: "Total demandes", value: stats.total, color: "bg-blue-50 text-blue-700" },
             { label: "En attente", value: stats.pending, color: "bg-amber-50 text-amber-700" },
@@ -199,7 +194,7 @@ export default function AdminServices() {
               className="mb-4 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-red-700">
               <Plus size={16} /> Nouvelle categorie
             </button>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {categories.map(cat => (
                 <div key={cat.id} className="bg-white rounded-xl border border-gray-100 p-4" data-testid={`admin-cat-${cat.id}`}>
                   <div className="flex items-start justify-between">
@@ -318,7 +313,6 @@ export default function AdminServices() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

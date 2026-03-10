@@ -106,6 +106,11 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - AdminAds - CRUD advertisements (images/videos), toggle active, reorder
 - AdminNotifications - Broadcast push notifications with client segmentation (frequent buyers, service users, inactive, high value, new clients)
 
+## Responsiveness
+- **Admin Dashboard**: Desktop-first layout with fixed w-64 sidebar + ml-64 content area. Sidebar nav has `overflow-y-auto` for scrollability. All admin pages use AdminLayout (sticky header, p-8 content, footer). Stat card grids use responsive breakpoints (grid-cols-1 → sm/md/lg increases).
+- **Client App**: Mobile-first with max-w-lg centered content, sticky top header, fixed bottom nav (5 items when logged in), all pages have pb-24 for bottom nav clearance.
+- **Driver App**: Mobile-first same pattern as Client, 4 bottom nav items, all pages have pb-24.
+
 ## Chat System
 - Admin ↔ Driver: Admin can message any driver from AdminChat (dynamic contact list). Driver has dedicated chat page (/driver/chat) to message admins.
 - Client → Admin: Floating "Contactez-nous" bubble on client pages with live chat, structured complaint form, and WhatsApp contact option (wa.me link).

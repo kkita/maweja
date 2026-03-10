@@ -21,7 +21,7 @@ export default function AdminCustomers() {
 
   return (
     <AdminLayout title="Gestion des clients">
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center mb-3"><Users size={20} className="text-purple-600" /></div>
           <p className="text-3xl font-black">{clients.length}</p>

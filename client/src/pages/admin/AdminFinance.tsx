@@ -76,7 +76,7 @@ export default function AdminFinance() {
 
   return (
     <AdminLayout title="Finance & Comptabilite">
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center"><TrendingUp size={20} className="text-green-600" /></div>
@@ -139,7 +139,7 @@ export default function AdminFinance() {
             <h3 className="font-bold">Nouvelle entree financiere</h3>
             <button onClick={() => setShowAddForm(false)}><X size={20} className="text-gray-400" /></button>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Type</label>
               <select value={newEntry.type} onChange={e => setNewEntry({ ...newEntry, type: e.target.value })} data-testid="select-finance-type" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm">
@@ -174,7 +174,7 @@ export default function AdminFinance() {
       )}
 
       {summary?.byCategory && summary.byCategory.length > 0 && (
-        <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <h3 className="font-bold text-sm mb-4 flex items-center gap-2"><BarChart3 size={16} className="text-red-600" /> Repartition par categorie</h3>
             <div className="space-y-3">

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import AdminSidebar from "../../components/AdminSidebar";
+import AdminLayout from "../../components/AdminLayout";
 import { apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { Image, Plus, Trash2, Edit2, X, Eye, EyeOff, ArrowUp, ArrowDown, Film } from "lucide-react";
@@ -88,13 +88,10 @@ export default function AdminAds() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
-      <main className="flex-1 p-6 ml-64">
+    <AdminLayout title="Publicites">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-gray-900" data-testid="text-admin-ads-title">Publicites</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Gerez les bannieres publicitaires de l'application</p>
+            <p className="text-sm text-gray-500 mt-0.5" data-testid="text-admin-ads-title">Gerez les bannieres publicitaires de l'application</p>
           </div>
           <button onClick={() => { setShowModal(true); setEditing(null); setTitle(""); setMediaUrl(""); setMediaType("image"); setLinkUrl(""); setFile(null); }}
             data-testid="button-new-ad"
@@ -118,7 +115,7 @@ export default function AdminAds() {
             <p className="text-xs text-gray-400 mt-1">Cliquez "Nouvelle publicite" pour commencer</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {ads.map(ad => (
               <div key={ad.id} className={`bg-white rounded-xl border overflow-hidden ${ad.isActive ? "border-green-200" : "border-gray-200 opacity-60"}`}
                 data-testid={`admin-ad-${ad.id}`}>
@@ -217,7 +214,6 @@ export default function AdminAds() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

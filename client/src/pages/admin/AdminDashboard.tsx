@@ -43,7 +43,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title="Dashboard">
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {statCards.map((card) => (
           <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm" data-testid={`stat-${card.label.toLowerCase().replace(/\s/g, "-")}`}>
             <div className="flex items-center justify-between mb-3">
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <h3 className="font-bold text-gray-900">Commandes recentes</h3>

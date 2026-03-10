@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import AdminSidebar from "../../components/AdminSidebar";
+import AdminLayout from "../../components/AdminLayout";
 import { apiRequest } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
@@ -74,18 +74,13 @@ export default function AdminNotifications() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <AdminSidebar />
-      <main className="flex-1 p-6 ml-64">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900" data-testid="text-admin-notif-title">Notifications Push</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Envoyez des notifications ciblees a vos clients</p>
-          </div>
+    <AdminLayout title="Notifications Push">
+        <div className="mb-6">
+          <p className="text-sm text-gray-500" data-testid="text-admin-notif-title">Envoyez des notifications ciblees a vos clients</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
             <div className="bg-white rounded-xl border border-gray-100 p-5">
               <h3 className="font-bold text-sm text-gray-900 mb-4 flex items-center gap-2">
                 <Megaphone size={16} className="text-red-500" />
@@ -197,7 +192,6 @@ export default function AdminNotifications() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </AdminLayout>
   );
 }

@@ -36,7 +36,7 @@ export default function AdminSettings() {
               <p className="text-xs text-gray-500">Parametres de base de l'application</p>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-gray-500 mb-1 block">Nom de l'application</label>
               <input
