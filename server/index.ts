@@ -302,6 +302,24 @@ app.use((req: any, res, next) => {
     )
   `);
 
+  // Colonnes supplémentaires utilisateurs (ajoutées progressivement)
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS sex TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS full_address TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS id_photo_url TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'not_started'`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rejected_fields JSONB`);
+
+  // Seed admin par défaut — crée les comptes s'ils n'existent pas encore
+  await db.execute(sql`
+    INSERT INTO users (email, password, name, phone, role, is_online, verification_status)
+    VALUES
+      ('admin@maweja.cd', 'admin123', 'Super Admin', '0819994041', 'admin', true, 'not_started'),
+      ('admin@maweja.net', 'Maweja2026', 'Admin MAWEJA', '0819994041', 'admin', true, 'not_started')
+    ON CONFLICT (email) DO NOTHING
+  `);
+
   // Seed default service categories
   const existingCats = await db.execute(sql`SELECT COUNT(*) as count FROM service_categories`);
   if (Number((existingCats.rows[0] as any).count) === 0) {
