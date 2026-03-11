@@ -4,6 +4,7 @@ import AdminLayout from "../../components/AdminLayout";
 import { onWSMessage } from "../../lib/websocket";
 import { queryClient, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
+import { useI18n } from "../../lib/i18n";
 import { Package, Truck, Users, DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ArrowUpRight, Store, UtensilsCrossed } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { statusLabels, statusColors, formatDate } from "../../lib/utils";
@@ -11,6 +12,7 @@ import type { Order } from "@shared/schema";
 
 export default function AdminDashboard() {
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const { data: stats } = useQuery<any>({ queryKey: ["/api/dashboard/stats"] });
   const { data: recentOrders = [] } = useQuery<Order[]>({
@@ -21,7 +23,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     return onWSMessage((data) => {
       if (data.type === "new_order") {
-        toast({ title: "Nouvelle commande!", description: `Commande ${data.order.orderNumber} recue` });
+        toast({ title: t.admin.orders + "!", description: `${t.common.order} ${data.order.orderNumber}` });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
         queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       }
@@ -30,19 +32,19 @@ export default function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       }
     });
-  }, [toast]);
+  }, [toast, t]);
 
   const statCards = [
-    { label: "Commandes totales", value: stats?.orders?.total || 0, icon: Package, color: "bg-red-50 text-red-600", trend: "+15%" },
-    { label: "Commandes actives", value: stats?.orders?.active || 0, icon: Clock, color: "bg-orange-50 text-orange-600", trend: "" },
-    { label: "Livreurs en ligne", value: `${stats?.drivers?.online || 0}/${stats?.drivers?.total || 0}`, icon: Truck, color: "bg-green-50 text-green-600", trend: "" },
-    { label: "Revenus", value: formatPrice(Number(stats?.orders?.revenue) || 0), icon: DollarSign, color: "bg-blue-50 text-blue-600", trend: "+22%" },
-    { label: "Livrees", value: stats?.orders?.delivered || 0, icon: CheckCircle2, color: "bg-emerald-50 text-emerald-600", trend: "" },
-    { label: "Clients", value: stats?.clients?.total || 0, icon: Users, color: "bg-purple-50 text-purple-600", trend: "+8%" },
+    { label: t.admin.totalOrders, value: stats?.orders?.total || 0, icon: Package, color: "bg-red-50 text-red-600", trend: "+15%" },
+    { label: t.admin.activeOrders, value: stats?.orders?.active || 0, icon: Clock, color: "bg-orange-50 text-orange-600", trend: "" },
+    { label: t.admin.driversOnline, value: `${stats?.drivers?.online || 0}/${stats?.drivers?.total || 0}`, icon: Truck, color: "bg-green-50 text-green-600", trend: "" },
+    { label: t.admin.revenue, value: formatPrice(Number(stats?.orders?.revenue) || 0), icon: DollarSign, color: "bg-blue-50 text-blue-600", trend: "+22%" },
+    { label: t.admin.delivered, value: stats?.orders?.delivered || 0, icon: CheckCircle2, color: "bg-emerald-50 text-emerald-600", trend: "" },
+    { label: t.admin.clients, value: stats?.clients?.total || 0, icon: Users, color: "bg-purple-50 text-purple-600", trend: "+8%" },
   ];
 
   return (
-    <AdminLayout title="Dashboard">
+    <AdminLayout title={t.admin.dashboard}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {statCards.map((card) => (
           <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm" data-testid={`stat-${card.label.toLowerCase().replace(/\s/g, "-")}`}>
@@ -65,8 +67,8 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-bold text-gray-900">Commandes recentes</h3>
-            <span className="text-xs text-gray-400">{recentOrders.length} commandes</span>
+            <h3 className="font-bold text-gray-900">{t.admin.recentOrders}</h3>
+            <span className="text-xs text-gray-400">{recentOrders.length} {t.common.orders}</span>
           </div>
           <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
             {recentOrders.slice(0, 10).map((order) => (
@@ -86,11 +88,11 @@ export default function AdminDashboard() {
 
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h3 className="font-bold text-gray-900 mb-4">Performance</h3>
+            <h3 className="font-bold text-gray-900 mb-4">{t.admin.performance}</h3>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-500">Taux de livraison</span>
+                  <span className="text-gray-500">{t.admin.deliveryRate}</span>
                   <span className="font-bold">
                     {stats?.orders?.total ? Math.round((Number(stats.orders.delivered) / Number(stats.orders.total)) * 100) : 0}%
                   </span>
@@ -104,7 +106,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-500">Livreurs actifs</span>
+                  <span className="text-gray-500">{t.admin.activeDrivers}</span>
                   <span className="font-bold">
                     {stats?.drivers?.total ? Math.round((Number(stats.drivers.online) / Number(stats.drivers.total)) * 100) : 0}%
                   </span>
@@ -125,7 +127,7 @@ export default function AdminDashboard() {
               <span className="font-bold text-sm">MAWEJA Pro</span>
             </div>
             <p className="text-2xl font-black">{formatPrice(Number(stats?.orders?.revenue) || 0)}</p>
-            <p className="text-red-200 text-xs mt-1">Chiffre d'affaires total</p>
+            <p className="text-red-200 text-xs mt-1">{t.admin.totalRevenue}</p>
           </div>
         </div>
       </div>
@@ -134,7 +136,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
             <UtensilsCrossed size={16} className="text-red-600" />
-            <h3 className="font-bold text-gray-900">Categories de restaurants</h3>
+            <h3 className="font-bold text-gray-900">{t.admin.cuisineCategories}</h3>
           </div>
           <div className="p-5 space-y-3">
             {(() => {
@@ -146,7 +148,7 @@ export default function AdminDashboard() {
                 <div key={c.cuisine} data-testid={`cuisine-breakdown-${c.cuisine?.toLowerCase().replace(/\s/g, "-")}`}>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-gray-700 font-medium">{c.cuisine}</span>
-                    <span className="text-gray-500 text-xs">{c.count} restaurant{Number(c.count) > 1 ? "s" : ""} ({pct}%)</span>
+                    <span className="text-gray-500 text-xs">{c.count} {t.common.restaurant}{Number(c.count) > 1 ? "s" : ""} ({pct}%)</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
                     <div className="bg-red-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -156,7 +158,7 @@ export default function AdminDashboard() {
             });
             })()}
             {(!stats?.cuisineBreakdown || stats.cuisineBreakdown.length === 0) && (
-              <p className="text-gray-400 text-sm text-center py-4">Aucune donnee disponible</p>
+              <p className="text-gray-400 text-sm text-center py-4">{t.admin.noDataAvailable}</p>
             )}
           </div>
         </div>
@@ -164,20 +166,20 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
             <Store size={16} className="text-red-600" />
-            <h3 className="font-bold text-gray-900">Commandes par categorie</h3>
+            <h3 className="font-bold text-gray-900">{t.admin.ordersByCategory}</h3>
           </div>
           <div className="divide-y divide-gray-50">
             {(stats?.cuisineOrders || []).map((c: any) => (
               <div key={c.cuisine} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid={`cuisine-orders-${c.cuisine?.toLowerCase().replace(/\s/g, "-")}`}>
                 <div>
                   <p className="font-semibold text-sm text-gray-900">{c.cuisine}</p>
-                  <p className="text-xs text-gray-400">{c.orderCount} commande{Number(c.orderCount) > 1 ? "s" : ""}</p>
+                  <p className="text-xs text-gray-400">{c.orderCount} {t.common.order}{Number(c.orderCount) > 1 ? "s" : ""}</p>
                 </div>
                 <span className="font-bold text-sm text-red-600">{formatPrice(Number(c.revenue))}</span>
               </div>
             ))}
             {(!stats?.cuisineOrders || stats.cuisineOrders.length === 0) && (
-              <p className="text-gray-400 text-sm text-center py-8">Aucune commande par categorie</p>
+              <p className="text-gray-400 text-sm text-center py-8">{t.admin.noOrdersByCategory}</p>
             )}
           </div>
         </div>

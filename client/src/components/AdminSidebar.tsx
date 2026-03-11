@@ -1,6 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
+import { useI18n } from "../lib/i18n";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield, BarChart3,
   Briefcase, Image, Megaphone
@@ -12,6 +13,7 @@ import logoImg from "@assets/image_1772833363714.png";
 export default function AdminSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
+  const { t } = useI18n();
 
   const { data: notifications = [] } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
@@ -36,29 +38,29 @@ export default function AdminSidebar() {
   });
 
   const links = [
-    { path: "/", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/admin/orders", icon: Package, label: "Commandes" },
-    { path: "/admin/drivers", icon: Truck, label: "Livreurs" },
-    { path: "/admin/verifications", icon: Shield, label: "Verifications" },
-    { path: "/admin/restaurants", icon: Store, label: "Restaurants" },
-    { path: "/admin/customers", icon: Users, label: "Clients" },
-    { path: "/admin/chat", icon: MessageCircle, label: "Messages" },
-    { path: "/admin/finance", icon: DollarSign, label: "Finance" },
-    { path: "/admin/marketing", icon: BarChart3, label: "Marketing" },
-    { path: "/admin/services", icon: Briefcase, label: "Services" },
-    { path: "/admin/ads", icon: Image, label: "Publicites" },
-    { path: "/admin/notifications", icon: Megaphone, label: "Notifications" },
-    { path: "/admin/settings", icon: Settings, label: "Parametres" },
+    { path: "/", icon: LayoutDashboard, label: t.admin.dashboard, badgeKey: "dashboard" },
+    { path: "/admin/orders", icon: Package, label: t.admin.orders, badgeKey: "orders" },
+    { path: "/admin/drivers", icon: Truck, label: t.admin.drivers, badgeKey: "drivers" },
+    { path: "/admin/verifications", icon: Shield, label: t.admin.verifications, badgeKey: "verifications" },
+    { path: "/admin/restaurants", icon: Store, label: t.admin.restaurants, badgeKey: "restaurants" },
+    { path: "/admin/customers", icon: Users, label: t.admin.customers, badgeKey: "customers" },
+    { path: "/admin/chat", icon: MessageCircle, label: t.admin.chat, badgeKey: "chat" },
+    { path: "/admin/finance", icon: DollarSign, label: t.admin.finance, badgeKey: "finance" },
+    { path: "/admin/marketing", icon: BarChart3, label: t.admin.marketing, badgeKey: "marketing" },
+    { path: "/admin/services", icon: Briefcase, label: t.admin.services, badgeKey: "services" },
+    { path: "/admin/ads", icon: Image, label: t.admin.ads, badgeKey: "ads" },
+    { path: "/admin/notifications", icon: Megaphone, label: t.admin.notifications, badgeKey: "notifications" },
+    { path: "/admin/settings", icon: Settings, label: t.admin.settings, badgeKey: "settings" },
   ];
 
-  const getBadge = (label: string) => {
-    if (label === "Messages" && unreadChatCount > 0) {
+  const getBadge = (badgeKey: string) => {
+    if (badgeKey === "chat" && unreadChatCount > 0) {
       return { count: unreadChatCount, color: "bg-red-600" };
     }
-    if (label === "Dashboard" && unreadNotifCount > 0) {
+    if (badgeKey === "dashboard" && unreadNotifCount > 0) {
       return { count: unreadNotifCount, color: "bg-red-600" };
     }
-    if (label === "Verifications" && pendingVerifications.length > 0) {
+    if (badgeKey === "verifications" && pendingVerifications.length > 0) {
       return { count: pendingVerifications.length, color: "bg-orange-500" };
     }
     return null;
@@ -71,7 +73,7 @@ export default function AdminSidebar() {
           <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
           <div>
             <h1 className="text-lg font-black text-gray-900">MAWEJA</h1>
-            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Admin Panel</p>
+            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{t.admin.adminPanel}</p>
           </div>
         </div>
       </div>
@@ -79,12 +81,12 @@ export default function AdminSidebar() {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {links.map((l) => {
           const isActive = location === l.path;
-          const badge = getBadge(l.label);
+          const badge = getBadge(l.badgeKey);
           return (
             <button
               key={l.path}
               onClick={() => navigate(l.path)}
-              data-testid={`admin-nav-${l.label.toLowerCase()}`}
+              data-testid={`admin-nav-${l.badgeKey}`}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? "bg-red-50 text-red-700 font-semibold"
@@ -94,7 +96,7 @@ export default function AdminSidebar() {
               <l.icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
               {l.label}
               {badge && (
-                <span className={`ml-auto ${badge.color} text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center`} data-testid={`badge-${l.label.toLowerCase()}`}>
+                <span className={`ml-auto ${badge.color} text-white text-[10px] font-bold min-w-5 h-5 px-1 rounded-full flex items-center justify-center`} data-testid={`badge-${l.badgeKey}`}>
                   {badge.count > 99 ? "99+" : badge.count}
                 </span>
               )}
@@ -110,7 +112,7 @@ export default function AdminSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-            <p className="text-[10px] text-gray-400">Administrateur</p>
+            <p className="text-[10px] text-gray-400">Admin</p>
           </div>
           <button onClick={logout} className="text-gray-400 hover:text-red-600 transition-colors" data-testid="admin-logout">
             <LogOut size={16} />
