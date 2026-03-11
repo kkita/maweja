@@ -208,6 +208,19 @@ export const advertisements = pgTable("advertisements", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const promoBanners = pgTable("promo_banners", {
+  id: serial("id").primaryKey(),
+  tagText: text("tag_text").notNull().default("Offre Spéciale"),
+  title: text("title").notNull().default("Livraison gratuite"),
+  subtitle: text("subtitle").notNull().default("Sur votre première commande"),
+  buttonText: text("button_text").notNull().default("Commander maintenant"),
+  linkUrl: text("link_url"),
+  bgColorFrom: text("bg_color_from").notNull().default("#dc2626"),
+  bgColorTo: text("bg_color_to").notNull().default("#b91c1c"),
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({ id: true, createdAt: true });
 export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertServiceCatalogItemSchema = createInsertSchema(serviceCatalogItems).omit({ id: true, createdAt: true });
@@ -247,5 +260,9 @@ export type ServiceRequest = typeof serviceRequests.$inferSelect;
 export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
 export type ServiceCatalogItem = typeof serviceCatalogItems.$inferSelect;
 export type InsertServiceCatalogItem = z.infer<typeof insertServiceCatalogItemSchema>;
+export const insertPromoBannerSchema = createInsertSchema(promoBanners).omit({ id: true, updatedAt: true });
+
 export type Advertisement = typeof advertisements.$inferSelect;
 export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;
+export type PromoBanner = typeof promoBanners.$inferSelect;
+export type InsertPromoBanner = z.infer<typeof insertPromoBannerSchema>;

@@ -7,7 +7,59 @@ import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
 import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
-import type { Restaurant } from "@shared/schema";
+import type { Restaurant, PromoBanner } from "@shared/schema";
+
+function PromoBannerBlock() {
+  const { data: banner } = useQuery<PromoBanner>({
+    queryKey: ["/api/promo-banner"],
+  });
+
+  const defaults = {
+    tagText: "Offre Spéciale",
+    title: "Livraison gratuite",
+    subtitle: "Sur votre première commande",
+    buttonText: "Commander maintenant",
+    bgColorFrom: "#dc2626",
+    bgColorTo: "#b91c1c",
+    isActive: true,
+    linkUrl: null as string | null,
+  };
+  const b = { ...defaults, ...banner };
+
+  if (!b.isActive) return null;
+
+  const content = (
+    <div
+      className="rounded-2xl p-5 mb-6 text-white relative overflow-hidden"
+      style={{ background: `linear-gradient(to right, ${b.bgColorFrom}, ${b.bgColorTo})` }}
+      data-testid="promo-banner"
+    >
+      <div className="relative z-10">
+        <div className="flex items-center gap-1 mb-2">
+          <Flame size={16} />
+          <span className="text-xs font-bold uppercase tracking-wider">{b.tagText}</span>
+        </div>
+        <h3 className="text-xl font-bold">{b.title}</h3>
+        <p className="text-white/80 text-sm mt-1">{b.subtitle}</p>
+        {b.buttonText && (
+          <button
+            className="mt-3 bg-white px-4 py-2 rounded-xl text-xs font-bold"
+            style={{ color: b.bgColorFrom }}
+            data-testid="button-promo"
+          >
+            {b.buttonText}
+          </button>
+        )}
+      </div>
+      <div className="absolute right-0 top-0 w-32 h-full rounded-l-full" style={{ background: "rgba(255,255,255,0.1)" }} />
+    </div>
+  );
+
+  if (b.linkUrl) {
+    return <a href={b.linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>;
+  }
+  return content;
+}
 
 const categories = [
   { name: "Tous", nameEn: "All", cuisine: null },
@@ -72,20 +124,7 @@ export default function HomePage() {
 
         <AdBanner />
 
-        <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-5 mb-6 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center gap-1 mb-2">
-              <Flame size={16} />
-              <span className="text-xs font-bold uppercase tracking-wider">{t.client.specialOffer}</span>
-            </div>
-            <h3 className="text-xl font-bold">{t.client.freeDelivery}</h3>
-            <p className="text-red-100 text-sm mt-1">{t.client.firstOrder}</p>
-            <button className="mt-3 bg-white text-red-600 px-4 py-2 rounded-xl text-xs font-bold" data-testid="button-promo">
-              {t.client.orderNow}
-            </button>
-          </div>
-          <div className="absolute right-0 top-0 w-32 h-full bg-red-500/30 rounded-l-full" />
-        </div>
+        <PromoBannerBlock />
 
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 -mx-1 px-1">
           {visibleCategories.map((c) => {

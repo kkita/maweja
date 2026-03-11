@@ -1154,6 +1154,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ success: true });
   });
 
+  // ===== PROMO BANNER =====
+  app.get("/api/promo-banner", async (_req, res) => {
+    const banner = await storage.getPromoBanner();
+    res.json(banner || {
+      tagText: "Offre Spéciale",
+      title: "Livraison gratuite",
+      subtitle: "Sur votre première commande",
+      buttonText: "Commander maintenant",
+      bgColorFrom: "#dc2626",
+      bgColorTo: "#b91c1c",
+      isActive: true,
+      linkUrl: null,
+    });
+  });
+
+  app.patch("/api/promo-banner", requireAdmin, async (req, res) => {
+    const { tagText, title, subtitle, buttonText, linkUrl, bgColorFrom, bgColorTo, isActive } = req.body;
+    const banner = await storage.upsertPromoBanner({ tagText, title, subtitle, buttonText, linkUrl, bgColorFrom, bgColorTo, isActive });
+    res.json(banner);
+  });
+
   // ===== PUSH NOTIFICATIONS (Broadcast) =====
   app.post("/api/notifications/broadcast", requireAdmin, async (req, res) => {
     const { title, message, type, targetSegment, targetUserIds } = req.body;

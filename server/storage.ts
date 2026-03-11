@@ -2,7 +2,7 @@ import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
-  serviceCategories, serviceRequests, serviceCatalogItems, advertisements,
+  serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -13,6 +13,7 @@ import {
   type ServiceRequest, type InsertServiceRequest,
   type ServiceCatalogItem, type InsertServiceCatalogItem,
   type Advertisement, type InsertAdvertisement,
+  type PromoBanner, type InsertPromoBanner,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -88,6 +89,8 @@ export interface IStorage {
   createAdvertisement(ad: InsertAdvertisement): Promise<Advertisement>;
   updateAdvertisement(id: number, data: Partial<Advertisement>): Promise<Advertisement | undefined>;
   deleteAdvertisement(id: number): Promise<void>;
+  getPromoBanner(): Promise<PromoBanner | undefined>;
+  upsertPromoBanner(data: Partial<InsertPromoBanner>): Promise<PromoBanner>;
 
   getDashboardStats(): Promise<any>;
 }
@@ -464,6 +467,31 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAdvertisement(id: number) {
     await db.delete(advertisements).where(eq(advertisements.id, id));
+  }
+
+  async getPromoBanner() {
+    const [banner] = await db.select().from(promoBanners).limit(1);
+    return banner;
+  }
+
+  async upsertPromoBanner(data: Partial<InsertPromoBanner>) {
+    const existing = await this.getPromoBanner();
+    if (existing) {
+      const [updated] = await db.update(promoBanners).set({ ...data, updatedAt: new Date() }).where(eq(promoBanners.id, existing.id)).returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(promoBanners).values({
+        tagText: "Offre Spéciale",
+        title: "Livraison gratuite",
+        subtitle: "Sur votre première commande",
+        buttonText: "Commander maintenant",
+        bgColorFrom: "#dc2626",
+        bgColorTo: "#b91c1c",
+        isActive: true,
+        ...data,
+      }).returning();
+      return created;
+    }
   }
 }
 
