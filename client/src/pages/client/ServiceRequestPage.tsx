@@ -272,6 +272,39 @@ export default function ServiceRequestPage() {
           <p className="text-xs text-gray-400 mb-4 px-1">{t.services.quickRequestDesc}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h3 className="font-bold text-sm text-gray-900 mb-4 flex items-center gap-2">
+                <Calendar size={16} className="text-red-500" />
+                {t.services.dateTime}
+              </h3>
+              <div className="flex gap-2 mb-3">
+                <button type="button" onClick={() => setScheduledType("asap")}
+                  data-testid="button-asap"
+                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${scheduledType === "asap" ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 text-gray-600 border border-gray-200"}`}>
+                  <Clock size={14} className="inline mr-1.5" />{t.services.asap}
+                </button>
+                <button type="button" onClick={() => setScheduledType("scheduled")}
+                  data-testid="button-schedule"
+                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${scheduledType === "scheduled" ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 text-gray-600 border border-gray-200"}`}>
+                  <Calendar size={14} className="inline mr-1.5" />{t.services.schedule}
+                </button>
+              </div>
+              {scheduledType === "scheduled" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">{t.common.date}</label>
+                    <input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)}
+                      data-testid="input-date" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">Heure</label>
+                    <input type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)}
+                      data-testid="input-time" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
               <div>
                 <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">{t.common.phone} *</label>
