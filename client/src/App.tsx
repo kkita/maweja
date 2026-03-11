@@ -47,6 +47,7 @@ import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import ServicesPage from "./pages/client/ServicesPage";
 import ServiceRequestPage from "./pages/client/ServiceRequestPage";
+import PresentationPage from "./pages/PresentationPage";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -149,6 +150,7 @@ function AppRoutes() {
       <Route path="/tracking/:id" component={TrackingPage} />
       <Route path="/addresses" component={AddressPage} />
       <Route path="/services" component={ServicesPage} />
+      <Route path="/presentation" component={PresentationPage} />
       <Route component={ClientHome} />
     </Switch>
   );
