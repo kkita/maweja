@@ -93,7 +93,7 @@ export default function AdminMarketing() {
     <div className="space-y-6" data-testid="loading-skeleton">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-2/3 mb-3" />
             <div className="h-8 bg-gray-200 rounded w-1/2" />
           </div>
@@ -101,7 +101,7 @@ export default function AdminMarketing() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse">
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 animate-pulse">
             <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
             <div className="h-64 bg-gray-100 rounded-xl" />
           </div>
@@ -156,23 +156,23 @@ export default function AdminMarketing() {
                 return (
                   <div
                     key={i}
-                    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5"
+                    className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5"
                     data-testid={`kpi-card-${i}`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="text-xs font-medium text-gray-500">{kpi.label}</span>
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{kpi.label}</span>
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${kpi.color}`}>
                         <Icon size={16} />
                       </div>
                     </div>
-                    <p className="text-xl font-bold text-gray-900" data-testid={`kpi-value-${i}`}>{kpi.value}</p>
+                    <p className="text-xl font-bold text-gray-900 dark:text-white" data-testid={`kpi-value-${i}`}>{kpi.value}</p>
                   </div>
                 );
               })}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Tendance Revenus & Commandes</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={data?.dailyTrend || []}>
@@ -186,7 +186,7 @@ export default function AdminMarketing() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Commandes par Heure</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <AreaChart data={hourData}>
@@ -205,7 +205,7 @@ export default function AdminMarketing() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Top 10 Produits</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={(data?.topProducts || []).slice(0, 10)} layout="vertical">
@@ -224,7 +224,7 @@ export default function AdminMarketing() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">Modes de Paiement</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -248,12 +248,12 @@ export default function AdminMarketing() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Top Clients</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" data-testid="table-top-clients">
                   <thead>
-                    <tr className="border-b border-gray-100">
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
                       <th className="text-left py-3 px-4 text-gray-500 font-medium">Rang</th>
                       <th className="text-left py-3 px-4 text-gray-500 font-medium">Nom</th>
                       <th className="text-left py-3 px-4 text-gray-500 font-medium">Email</th>
@@ -269,12 +269,12 @@ export default function AdminMarketing() {
                         className={i % 2 === 0 ? "bg-gray-50/50" : "bg-white"}
                         data-testid={`row-client-${client.id}`}
                       >
-                        <td className="py-3 px-4 font-semibold text-gray-900">{i + 1}</td>
-                        <td className="py-3 px-4 text-gray-900">{client.name}</td>
-                        <td className="py-3 px-4 text-gray-500">{client.email}</td>
-                        <td className="py-3 px-4 text-right text-gray-900">{client.orderCount}</td>
-                        <td className="py-3 px-4 text-right text-gray-900">{formatPrice(client.totalSpent)}</td>
-                        <td className="py-3 px-4 text-right text-gray-900">{formatPrice(client.avgOrder)}</td>
+                        <td className="py-3 px-4 font-semibold text-gray-900 dark:text-white">{i + 1}</td>
+                        <td className="py-3 px-4 text-gray-900 dark:text-white">{client.name}</td>
+                        <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{client.email}</td>
+                        <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{client.orderCount}</td>
+                        <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{formatPrice(client.totalSpent)}</td>
+                        <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{formatPrice(client.avgOrder)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -282,12 +282,12 @@ export default function AdminMarketing() {
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-4">Performance des Livreurs</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" data-testid="table-driver-performance">
                   <thead>
-                    <tr className="border-b border-gray-100">
+                    <tr className="border-b border-gray-100 dark:border-gray-800">
                       <th className="text-left py-3 px-4 text-gray-500 font-medium">Nom</th>
                       <th className="text-right py-3 px-4 text-gray-500 font-medium">Livraisons</th>
                       <th className="text-right py-3 px-4 text-gray-500 font-medium">Taux ponctualite</th>
@@ -310,7 +310,7 @@ export default function AdminMarketing() {
                           data-testid={`row-driver-${driver.id}`}
                         >
                           <td className="py-3 px-4 text-gray-900 font-medium">{driver.name}</td>
-                          <td className="py-3 px-4 text-right text-gray-900">{driver.deliveries}</td>
+                          <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{driver.deliveries}</td>
                           <td className={`py-3 px-4 text-right font-semibold ${rateColor}`}>
                             {driver.onTimeRate}%
                           </td>
@@ -325,7 +325,7 @@ export default function AdminMarketing() {
                               className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
                                 driver.isOnline
                                   ? "bg-green-50 text-green-700"
-                                  : "bg-gray-100 text-gray-500"
+                                  : "bg-gray-100 text-gray-500 dark:text-gray-400"
                               }`}
                               data-testid={`status-driver-${driver.id}`}
                             >

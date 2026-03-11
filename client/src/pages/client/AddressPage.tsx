@@ -145,15 +145,15 @@ export default function AddressPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50" data-testid="address-page">
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-950" data-testid="address-page">
       <div className="relative flex-1 min-h-[50vh]">
         <div className="absolute top-4 left-4 z-[1000]">
           <button
-            className="w-10 h-10 rounded-full shadow-lg bg-white flex items-center justify-center"
+            className="w-10 h-10 rounded-full shadow-lg bg-white dark:bg-gray-900 flex items-center justify-center"
             onClick={() => navigate("/cart")}
             data-testid="button-back-cart"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
+            <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-white" />
           </button>
         </div>
 
@@ -190,10 +190,10 @@ export default function AddressPage() {
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-t-3xl shadow-2xl border-t border-gray-100 p-5 space-y-4" data-testid="form-address">
-          <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto" />
+        <div className="bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 p-5 space-y-4" data-testid="form-address">
+          <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full mx-auto" />
 
-          <h3 className="text-lg font-bold text-gray-900">Nouvelle adresse</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Nouvelle adresse</h3>
 
           <div className="flex gap-2 flex-wrap">
             {labelOptions.map((opt) => {
@@ -206,7 +206,7 @@ export default function AddressPage() {
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                     isSelected
                       ? "bg-red-600 text-white"
-                      : "bg-gray-100 text-gray-700"
+                      : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                   }`}
                   data-testid={`button-label-${opt.key.toLowerCase()}`}
                 >
@@ -217,21 +217,21 @@ export default function AddressPage() {
             })}
           </div>
 
-          <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+          <div className="flex items-start gap-3 bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
             <MapPin className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
             <input
               type="text"
               value={addressText}
               onChange={(e) => setAddressText(e.target.value)}
               placeholder="Adresse detectee automatiquement..."
-              className="flex-1 bg-transparent text-sm text-gray-800 outline-none"
+              className="flex-1 bg-transparent text-sm text-gray-800 dark:text-white outline-none placeholder:text-gray-400"
               data-testid="input-address-text"
             />
           </div>
 
           <div className="flex gap-3">
             <button
-              className="flex-1 rounded-xl border border-gray-300 py-2.5 text-sm font-medium text-gray-700"
+              className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300"
               onClick={() => setShowForm(false)}
               data-testid="button-cancel-address"
             >
@@ -249,8 +249,8 @@ export default function AddressPage() {
         </div>
       )}
 
-      <div className="bg-white p-4 space-y-3 overflow-y-auto max-h-[35vh]" data-testid="saved-addresses-list">
-        <h3 className="text-base font-bold text-gray-900">Adresses sauvegardees</h3>
+      <div className="bg-white dark:bg-gray-900 p-4 space-y-3 overflow-y-auto max-h-[35vh]" data-testid="saved-addresses-list">
+        <h3 className="text-base font-bold text-gray-900 dark:text-white">Adresses sauvegardees</h3>
 
         {isLoading && (
           <div className="flex items-center justify-center py-6">
@@ -259,7 +259,7 @@ export default function AddressPage() {
         )}
 
         {!isLoading && addresses.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-6" data-testid="text-no-addresses">
+          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6" data-testid="text-no-addresses">
             Aucune adresse sauvegardee. Touchez la carte pour en ajouter.
           </p>
         )}
@@ -268,16 +268,16 @@ export default function AddressPage() {
           <div
             key={addr.id}
             className={`p-3 flex items-center gap-3 rounded-xl border ${
-              addr.isDefault ? "border-red-200 bg-red-50/50" : "border-gray-200 bg-white"
+              addr.isDefault ? "border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
             }`}
             data-testid={`card-address-${addr.id}`}
           >
-            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
               <MapPin className="w-5 h-5 text-red-600" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-sm text-gray-900" data-testid={`text-label-${addr.id}`}>
+                <span className="font-semibold text-sm text-gray-900 dark:text-white" data-testid={`text-label-${addr.id}`}>
                   {addr.label}
                 </span>
                 {addr.isDefault && (
@@ -286,7 +286,7 @@ export default function AddressPage() {
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-500 truncate" data-testid={`text-address-${addr.id}`}>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate" data-testid={`text-address-${addr.id}`}>
                 {addr.address}
               </p>
             </div>

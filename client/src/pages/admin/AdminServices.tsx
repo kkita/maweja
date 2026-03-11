@@ -140,7 +140,7 @@ export default function AdminServices() {
   return (
     <AdminLayout title={t.admin.services}>
       <div className="mb-6">
-        <p className="text-sm text-gray-500" data-testid="text-admin-services-title">{t.admin.manageServiceRequests}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="text-admin-services-title">{t.admin.manageServiceRequests}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -150,7 +150,7 @@ export default function AdminServices() {
           { label: t.admin.reviewing, value: stats.reviewing, color: "bg-purple-50 text-purple-700" },
           { label: t.admin.accepted, value: stats.accepted, color: "bg-green-50 text-green-700" },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-100 p-4" data-testid={`stat-card-${i}`}>
+          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4" data-testid={`stat-card-${i}`}>
             <p className="text-xs text-gray-500 font-medium">{s.label}</p>
             <p className={`text-2xl font-black mt-1 ${s.color.split(" ")[1]}`}>{s.value}</p>
           </div>
@@ -159,17 +159,17 @@ export default function AdminServices() {
 
       <div className="flex gap-2 mb-6 flex-wrap">
         <button onClick={() => setTab("requests")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "requests" ? "bg-red-600 text-white" : "bg-white text-gray-600 border border-gray-200"}`}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "requests" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
           data-testid="tab-requests">
           {t.admin.requests} ({requests.length})
         </button>
         <button onClick={() => setTab("categories")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "categories" ? "bg-red-600 text-white" : "bg-white text-gray-600 border border-gray-200"}`}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "categories" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
           data-testid="tab-categories">
           {t.admin.categories} ({categories.length})
         </button>
         <button onClick={() => setTab("catalog")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "catalog" ? "bg-red-600 text-white" : "bg-white text-gray-600 border border-gray-200"}`}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "catalog" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
           data-testid="tab-catalog">
           {t.admin.catalog} ({catalogItems.length})
         </button>
@@ -197,28 +197,28 @@ export default function AdminServices() {
           </div>
 
           {filteredRequests.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
               <Briefcase size={32} className="text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{t.admin.noRequests}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t.admin.noRequests}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {filteredRequests.map(req => {
                 const status = statusConfig[req.status] || statusConfig.pending;
                 return (
-                  <div key={req.id} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow"
+                  <div key={req.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-md transition-shadow"
                     data-testid={`admin-request-${req.id}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-sm text-gray-900">#{req.id} - {req.categoryName}</h3>
+                          <h3 className="font-bold text-sm text-gray-900 dark:text-white">#{req.id} - {req.categoryName}</h3>
                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${status.bg} ${status.color}`}>
                             {status.label}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500">{req.fullName} • {req.phone}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{req.address}</p>
-                        <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{req.fullName} • {req.phone}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{req.address}</p>
+                        <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-500 dark:text-gray-400">
                           {req.serviceType && <span>{t.services.type}: {req.serviceType}</span>}
                           {req.budget && <span>{t.admin.budget}: {req.budget}</span>}
                           <span>{req.scheduledType === "asap" ? t.services.asap : `${req.scheduledDate} ${req.scheduledTime}`}</span>
@@ -248,19 +248,19 @@ export default function AdminServices() {
           </button>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {categories.map(cat => (
-              <div key={cat.id} className="bg-white rounded-xl border border-gray-100 p-4" data-testid={`admin-cat-${cat.id}`}>
+              <div key={cat.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4" data-testid={`admin-cat-${cat.id}`}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-gray-900">{cat.name}</h3>
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white">{cat.name}</h3>
                     <p className="text-xs text-gray-500 mt-0.5">{cat.description}</p>
-                    <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold ${cat.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                    <span className={`inline-block mt-2 px-2 py-0.5 rounded text-[10px] font-bold ${cat.isActive ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500 dark:text-gray-400"}`}>
                       {cat.isActive ? t.common.active : t.common.inactive}
                     </span>
                   </div>
                   <div className="flex gap-1">
                     <button onClick={() => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatDesc(cat.description); }}
                       className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-gray-100" data-testid={`button-edit-cat-${cat.id}`}>
-                      <Edit2 size={14} className="text-gray-500" />
+                      <Edit2 size={14} className="text-gray-500 dark:text-gray-400" />
                     </button>
                     <button onClick={() => { if (confirm(t.common.confirm + "?")) deleteCatMutation.mutate(cat.id); }}
                       className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-red-50" data-testid={`button-delete-cat-${cat.id}`}>
@@ -294,16 +294,16 @@ export default function AdminServices() {
           </div>
 
           {filteredCatalog.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
               <Image size={32} className="text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">{t.admin.noCatalogItems}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t.admin.noCatalogItems}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCatalog.map(item => {
                 const cat = categories.find(c => c.id === item.categoryId);
                 return (
-                  <div key={item.id} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow" data-testid={`catalog-item-${item.id}`}>
+                  <div key={item.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition-shadow" data-testid={`catalog-item-${item.id}`}>
                     <div className="relative h-40">
                       <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                       <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
@@ -314,7 +314,7 @@ export default function AdminServices() {
                       )}
                     </div>
                     <div className="p-3">
-                      <h4 className="font-bold text-sm text-gray-900">{item.name}</h4>
+                      <h4 className="font-bold text-sm text-gray-900 dark:text-white">{item.name}</h4>
                       {item.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
                       {item.price && <p className="text-xs font-semibold text-red-600 mt-1">{item.price}</p>}
                       <div className="flex gap-1 mt-2">
@@ -345,7 +345,7 @@ export default function AdminServices() {
 
       {selectedRequest && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" data-testid="modal-manage-request">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" data-testid="modal-manage-request">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{t.services.request} #{selectedRequest.id}</h3>
               <button onClick={() => setSelectedRequest(null)} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
@@ -364,7 +364,7 @@ export default function AdminServices() {
               <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.statusLabel}</label>
               <select value={newStatus} onChange={e => setNewStatus(e.target.value)}
                 data-testid="select-new-status"
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
                 <option value="pending">{t.status.pending}</option>
                 <option value="reviewing">{t.status.reviewing}</option>
                 <option value="accepted">{t.status.accepted}</option>
@@ -376,7 +376,7 @@ export default function AdminServices() {
               <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.adminNotes}</label>
               <textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} placeholder={t.admin.adminNotesPlaceholder}
                 data-testid="input-admin-notes"
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm h-24 resize-none" />
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-24 resize-none" />
             </div>
             <button onClick={() => updateRequestMutation.mutate({ id: selectedRequest.id, data: { status: newStatus, adminNotes } })}
               disabled={updateRequestMutation.isPending}
@@ -390,7 +390,7 @@ export default function AdminServices() {
 
       {(showCatModal || editingCat) && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6" data-testid="modal-category">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6" data-testid="modal-category">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{editingCat ? t.admin.editCategory : t.admin.newCategory}</h3>
               <button onClick={() => { setShowCatModal(false); setEditingCat(null); }} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
@@ -400,13 +400,13 @@ export default function AdminServices() {
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryName}</label>
                 <input type="text" value={catName} onChange={e => setCatName(e.target.value)}
                   data-testid="input-cat-name"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryIcon}</label>
                 <select value={catIcon} onChange={e => setCatIcon(e.target.value)}
                   data-testid="select-cat-icon"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
                   {["Briefcase","Hotel","Car","Sparkles","Package","PartyPopper","Wrench","Bike","HelpCircle"].map(i => (
                     <option key={i} value={i}>{i}</option>
                   ))}
@@ -416,7 +416,7 @@ export default function AdminServices() {
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryDesc}</label>
                 <textarea value={catDesc} onChange={e => setCatDesc(e.target.value)}
                   data-testid="input-cat-desc"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm h-20 resize-none" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-20 resize-none" />
               </div>
               <button onClick={() => {
                 if (!catName.trim()) return;
@@ -436,7 +436,7 @@ export default function AdminServices() {
 
       {showItemModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6" data-testid="modal-catalog-item">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6" data-testid="modal-catalog-item">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{editingItem ? t.admin.editCatalogItem : t.admin.addCatalogItem}</h3>
               <button onClick={() => { setShowItemModal(false); setEditingItem(null); resetItemForm(); }} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
@@ -446,7 +446,7 @@ export default function AdminServices() {
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogCategory}</label>
                 <select value={itemCategoryId} onChange={e => setItemCategoryId(Number(e.target.value))}
                   data-testid="select-item-category"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
                   {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                 </select>
               </div>
@@ -454,28 +454,28 @@ export default function AdminServices() {
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemName}</label>
                 <input type="text" value={itemName} onChange={e => setItemName(e.target.value)}
                   data-testid="input-item-name"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemDesc}</label>
                 <textarea value={itemDesc} onChange={e => setItemDesc(e.target.value)}
                   data-testid="input-item-desc"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm h-16 resize-none" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-16 resize-none" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemImage}</label>
                 <input type="url" value={itemImage} onChange={e => setItemImage(e.target.value)}
                   data-testid="input-item-image" placeholder="https://..."
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
                 {itemImage && (
-                  <img src={itemImage} alt="preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-gray-200" />
+                  <img src={itemImage} alt="preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-gray-700" />
                 )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemPrice}</label>
                 <input type="text" value={itemPrice} onChange={e => setItemPrice(e.target.value)}
                   data-testid="input-item-price" placeholder="$25 - $50"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
               </div>
               <button onClick={() => {
                 if (!itemName.trim() || !itemImage.trim() || !itemCategoryId) return;

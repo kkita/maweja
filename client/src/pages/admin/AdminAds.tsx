@@ -164,7 +164,7 @@ export default function AdminAds() {
       {activeTab === "ads" && (
         <>
           <div className="flex items-center justify-between mb-6">
-            <p className="text-sm text-gray-500" data-testid="text-admin-ads-title">Gérez les bannières publicitaires (1ère bannière de l'app)</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="text-admin-ads-title">Gérez les bannières publicitaires (1ère bannière de l'app)</p>
             <button
               onClick={() => { setShowModal(true); setEditing(null); setTitle(""); setMediaUrl(""); setMediaType("image"); setLinkUrl(""); setFile(null); }}
               data-testid="button-new-ad"
@@ -183,9 +183,9 @@ export default function AdminAds() {
           </div>
 
           {ads.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
               <Image size={40} className="text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">Aucune publicité</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Aucune publicité</p>
               <p className="text-xs text-gray-400 mt-1">Cliquez "Nouvelle publicité" pour commencer</p>
             </div>
           ) : (
@@ -203,13 +203,13 @@ export default function AdminAds() {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ad.mediaType === "video" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
                         {ad.mediaType === "video" ? "Vidéo" : "Image"}
                       </span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ad.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${ad.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500 dark:text-gray-400"}`}>
                         {ad.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
                   </div>
                   <div className="p-3">
-                    <h3 className="font-bold text-sm text-gray-900">{ad.title || "Sans titre"}</h3>
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white">{ad.title || "Sans titre"}</h3>
                     <div className="flex items-center gap-1.5 mt-3">
                       <button
                         onClick={() => { setEditing(ad); setShowModal(true); setTitle(ad.title); setMediaUrl(ad.mediaUrl); setMediaType(ad.mediaType); setLinkUrl(ad.linkUrl || ""); }}
@@ -220,7 +220,7 @@ export default function AdminAds() {
                       <button onClick={() => toggleAdMutation.mutate({ id: ad.id, isActive: !ad.isActive })}
                         className="py-1.5 px-2.5 bg-gray-50 rounded-lg hover:bg-gray-100"
                         data-testid={`button-toggle-ad-${ad.id}`}>
-                        {ad.isActive ? <EyeOff size={14} className="text-gray-500" /> : <Eye size={14} className="text-green-600" />}
+                        {ad.isActive ? <EyeOff size={14} className="text-gray-500 dark:text-gray-400" /> : <Eye size={14} className="text-green-600" />}
                       </button>
                       <button onClick={() => { if (confirm("Supprimer cette publicité ?")) deleteMutation.mutate(ad.id); }}
                         className="py-1.5 px-2.5 bg-gray-50 rounded-lg hover:bg-red-50"
@@ -236,7 +236,7 @@ export default function AdminAds() {
 
           {showModal && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl w-full max-w-md p-6" data-testid="modal-ad">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6" data-testid="modal-ad">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-lg">{editing ? "Modifier" : "Nouvelle"} publicité</h3>
                   <button onClick={closeModal} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
@@ -246,17 +246,17 @@ export default function AdminAds() {
                     <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Titre</label>
                     <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Titre de la publicité"
                       data-testid="input-ad-title"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Type de média</label>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => setMediaType("image")}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${mediaType === "image" ? "bg-red-600 text-white" : "bg-gray-50 text-gray-600 border border-gray-200"}`}>
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${mediaType === "image" ? "bg-red-600 text-white" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
                         <Image size={14} /> Image
                       </button>
                       <button type="button" onClick={() => setMediaType("video")}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${mediaType === "video" ? "bg-red-600 text-white" : "bg-gray-50 text-gray-600 border border-gray-200"}`}>
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${mediaType === "video" ? "bg-red-600 text-white" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
                         <Film size={14} /> Vidéo
                       </button>
                     </div>
@@ -271,13 +271,13 @@ export default function AdminAds() {
                     <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Ou URL du média</label>
                     <input type="url" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} placeholder="https://..."
                       data-testid="input-ad-url"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Lien (optionnel)</label>
                     <input type="url" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://..."
                       data-testid="input-ad-link"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
                   </div>
                   <button onClick={handleSaveAd} disabled={createMutation.isPending || updateAdMutation.isPending}
                     data-testid="button-save-ad"
@@ -322,7 +322,7 @@ export default function AdminAds() {
           </div>
 
           {/* Form */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 dark:border-gray-800 p-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Tag / Étiquette</label>
@@ -332,7 +332,7 @@ export default function AdminAds() {
                   onChange={e => setPromoTagText(e.target.value)}
                   placeholder="Offre Spéciale"
                   data-testid="input-promo-tag"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 />
               </div>
               <div>
@@ -343,7 +343,7 @@ export default function AdminAds() {
                   onChange={e => setPromoButtonText(e.target.value)}
                   placeholder="Commander maintenant"
                   data-testid="input-promo-button"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 />
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function AdminAds() {
                 onChange={e => setPromoTitle(e.target.value)}
                 placeholder="Livraison gratuite"
                 data-testid="input-promo-title"
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
 
@@ -368,7 +368,7 @@ export default function AdminAds() {
                 onChange={e => setPromoSubtitle(e.target.value)}
                 placeholder="Sur votre première commande"
                 data-testid="input-promo-subtitle"
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
 
@@ -380,7 +380,7 @@ export default function AdminAds() {
                 onChange={e => setPromoLinkUrl(e.target.value)}
                 placeholder="https://..."
                 data-testid="input-promo-link"
-                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
 

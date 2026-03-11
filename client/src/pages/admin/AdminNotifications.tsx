@@ -76,13 +76,13 @@ export default function AdminNotifications() {
   return (
     <AdminLayout title="Notifications Push">
         <div className="mb-6">
-          <p className="text-sm text-gray-500" data-testid="text-admin-notif-title">Envoyez des notifications ciblees a vos clients</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="text-admin-notif-title">Envoyez des notifications ciblees a vos clients</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
-              <h3 className="font-bold text-sm text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Megaphone size={16} className="text-red-500" />
                 Composer une notification
               </h3>
@@ -93,7 +93,7 @@ export default function AdminNotifications() {
                   {templates.map((t, i) => (
                     <button key={i} onClick={() => { setTitle(t.title); setMessage(t.message); setNotifType(t.type); }}
                       data-testid={`template-${i}`}
-                      className="px-3 py-1.5 bg-gray-50 rounded-lg text-xs font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200 transition-all">
+                      className="px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 border border-gray-200 dark:border-gray-700 transition-all">
                       {t.title}
                     </button>
                   ))}
@@ -110,7 +110,7 @@ export default function AdminNotifications() {
                       { key: "service", label: "Service", icon: Zap },
                     ].map(t => (
                       <button key={t.key} type="button" onClick={() => setNotifType(t.key)}
-                        className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${notifType === t.key ? "bg-red-600 text-white" : "bg-gray-50 text-gray-600 border border-gray-200"}`}>
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 ${notifType === t.key ? "bg-red-600 text-white" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
                         <t.icon size={14} /> {t.label}
                       </button>
                     ))}
@@ -120,13 +120,13 @@ export default function AdminNotifications() {
                   <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Titre</label>
                   <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Titre de la notification"
                     data-testid="input-notif-title"
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Message</label>
                   <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Contenu de la notification..."
                     data-testid="input-notif-message"
-                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm h-28 resize-none focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                    className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-28 resize-none focus:ring-2 focus:ring-red-500 focus:outline-none" />
                 </div>
               </div>
 
@@ -150,8 +150,8 @@ export default function AdminNotifications() {
           </div>
 
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-100 p-5">
-              <h3 className="font-bold text-sm text-gray-900 mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
+              <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <Target size={16} className="text-red-500" />
                 Segment cible
               </h3>
@@ -162,13 +162,13 @@ export default function AdminNotifications() {
                   return (
                     <button key={key} onClick={() => setTargetSegment(key)}
                       data-testid={`segment-${key}`}
-                      className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all text-left ${targetSegment === key ? "bg-red-50 border-2 border-red-500" : "bg-gray-50 border-2 border-transparent hover:bg-gray-100"}`}>
+                      className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all text-left ${targetSegment === key ? "bg-red-50 border-2 border-red-500" : "bg-gray-50 dark:bg-gray-800 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700"}`}>
                       <div className={`w-9 h-9 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center`}>
                         <Icon size={16} className="text-white" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-xs font-bold text-gray-900">{seg.label}</p>
-                        <p className="text-[10px] text-gray-500">{seg.count} client{seg.count !== 1 ? "s" : ""}</p>
+                        <p className="text-xs font-bold text-gray-900 dark:text-white">{seg.label}</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400">{seg.count} client{seg.count !== 1 ? "s" : ""}</p>
                       </div>
                       {targetSegment === key && (
                         <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center">

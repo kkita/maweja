@@ -96,12 +96,12 @@ export default function AdminChat() {
 
   return (
     <AdminLayout title="Messagerie">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex" style={{ height: "calc(100vh - 200px)" }}>
-        <div className="w-80 border-r border-gray-100 flex flex-col">
-          <div className="p-3 border-b border-gray-100">
-            <div className="flex gap-1 mb-3 bg-gray-100 rounded-xl p-0.5">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden flex" style={{ height: "calc(100vh - 200px)" }}>
+        <div className="w-80 border-r border-gray-100 dark:border-gray-800 flex flex-col">
+          <div className="p-3 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex gap-1 mb-3 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
               <button onClick={() => setTab("drivers")} data-testid="chat-tab-drivers"
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${tab === "drivers" ? "bg-red-600 text-white shadow" : "text-gray-500"}`}>
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${tab === "drivers" ? "bg-red-600 text-white shadow" : "text-gray-500 dark:text-gray-400"}`}>
                 <Truck size={12} />
                 Livreurs
                 {Object.entries(unreadCounts).filter(([id]) => drivers.some((d: any) => d.id === Number(id))).reduce((s, [, n]) => s + n, 0) > 0 && (
@@ -111,7 +111,7 @@ export default function AdminChat() {
                 )}
               </button>
               <button onClick={() => setTab("clients")} data-testid="chat-tab-clients"
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${tab === "clients" ? "bg-red-600 text-white shadow" : "text-gray-500"}`}>
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${tab === "clients" ? "bg-red-600 text-white shadow" : "text-gray-500 dark:text-gray-400"}`}>
                 <MessageSquare size={12} />
                 Clients
                 {Object.entries(unreadCounts).filter(([id]) => clientContacts.some((c: any) => c.id === Number(id))).reduce((s, [, n]) => s + n, 0) > 0 && (
@@ -124,7 +124,7 @@ export default function AdminChat() {
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
-                data-testid="chat-search" className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500" />
+                data-testid="chat-search" className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -139,7 +139,7 @@ export default function AdminChat() {
                 key={c.id}
                 onClick={() => setSelectedContact(c)}
                 data-testid={`chat-contact-${c.id}`}
-                className={`w-full p-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 ${
+                className={`w-full p-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left border-b border-gray-50 ${
                   selectedContact?.id === c.id ? "bg-red-50" : ""
                 }`}
               >
@@ -168,7 +168,7 @@ export default function AdminChat() {
         <div className="flex-1 flex flex-col">
           {selectedContact ? (
             <>
-              <div className="p-4 border-b border-gray-100 flex items-center gap-3">
+              <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
                     <span className="text-red-600 font-bold text-sm">{selectedContact.name?.[0]}</span>
@@ -198,7 +198,7 @@ export default function AdminChat() {
                     <div className={`max-w-xs px-4 py-2.5 rounded-2xl text-sm ${
                       msg.senderId === user?.id
                         ? "bg-red-600 text-white rounded-br-md"
-                        : "bg-gray-100 text-gray-900 rounded-bl-md"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md"
                     }`}>
                       <p>{msg.message}</p>
                       <p className={`text-[9px] mt-1 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400"}`}>
@@ -210,7 +210,7 @@ export default function AdminChat() {
                 <div ref={messagesEnd} />
               </div>
 
-              <div className="p-4 border-t border-gray-100">
+              <div className="p-4 border-t border-gray-100 dark:border-gray-800">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -219,7 +219,7 @@ export default function AdminChat() {
                     onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                     placeholder="Tapez votre message..."
                     data-testid="input-chat-message"
-                    className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                   <button
                     onClick={sendMessage}

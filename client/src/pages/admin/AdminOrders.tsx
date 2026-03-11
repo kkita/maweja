@@ -229,7 +229,7 @@ export default function AdminOrders() {
           <button
             onClick={handleExport}
             data-testid="button-export"
-            className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold"
+            className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-semibold"
           >
             <Download size={16} /> Exporter
           </button>
@@ -237,7 +237,7 @@ export default function AdminOrders() {
             <button
               onClick={handlePrint}
               data-testid="button-print"
-              className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold"
+              className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-semibold"
             >
               <Printer size={16} /> Imprimer
             </button>
@@ -245,7 +245,7 @@ export default function AdminOrders() {
           <button
             onClick={() => setFiltersOpen(!filtersOpen)}
             data-testid="button-toggle-filters"
-            className="flex items-center gap-1 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-semibold"
+            className="flex items-center gap-1 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 rounded-xl text-sm font-semibold"
           >
             <Filter size={16} /> Filtres {filtersOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
@@ -253,10 +253,10 @@ export default function AdminOrders() {
       </div>
 
       {filtersOpen && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4" data-testid="filter-panel">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4" data-testid="filter-panel">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Rechercher</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Rechercher</label>
               <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
@@ -265,17 +265,17 @@ export default function AdminOrders() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   data-testid="input-search-order"
-                  className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 />
               </div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Restaurant</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Restaurant</label>
               <select
                 value={restaurantFilter}
                 onChange={(e) => setRestaurantFilter(e.target.value)}
                 data-testid="select-restaurant-filter"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               >
                 <option value="">Tous les restaurants</option>
                 {restaurants.map((r) => (
@@ -284,12 +284,12 @@ export default function AdminOrders() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Paiement</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Paiement</label>
               <select
                 value={paymentFilter}
                 onChange={(e) => setPaymentFilter(e.target.value)}
                 data-testid="select-payment-filter"
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               >
                 <option value="">Tous</option>
                 {Object.entries(paymentLabels).map(([k, v]) => (
@@ -299,23 +299,23 @@ export default function AdminOrders() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Du</label>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Du</label>
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
                   data-testid="input-date-from"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Au</label>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Au</label>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
                   data-testid="input-date-to"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 />
               </div>
             </div>
@@ -330,7 +330,7 @@ export default function AdminOrders() {
             onClick={() => setFilter(s)}
             data-testid={`filter-${s}`}
             className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-              filter === s ? "bg-red-600 text-white shadow-lg" : "bg-white text-gray-600 border border-gray-200"
+              filter === s ? "bg-red-600 text-white shadow-lg" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
             }`}
           >
             {s === "all" ? "Toutes" : statusLabels[s]} ({s === "all" ? orders.length : orders.filter((o) => o.status === s).length})
@@ -340,8 +340,8 @@ export default function AdminOrders() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="divide-y divide-gray-50">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800 dark:divide-gray-800">
               {filteredOrders.length === 0 && (
                 <div className="p-8 text-center text-gray-400 text-sm" data-testid="text-no-orders">
                   Aucune commande trouvee
@@ -352,7 +352,7 @@ export default function AdminOrders() {
                   key={order.id}
                   onClick={() => setSelectedOrder(order)}
                   data-testid={`admin-order-${order.id}`}
-                  className={`w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors text-left ${
+                  className={`w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left ${
                     selectedOrder?.id === order.id ? "bg-red-50" : ""
                   }`}
                 >
@@ -383,13 +383,13 @@ export default function AdminOrders() {
 
         <div>
           {selectedOrder ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sticky top-24">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 sticky top-24">
               <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
                 <h3 className="font-bold text-lg" data-testid="text-selected-order-number">{selectedOrder.orderNumber}</h3>
                 <button
                   onClick={handlePrint}
                   data-testid="button-print-detail"
-                  className="flex items-center gap-1 text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1"
+                  className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1"
                 >
                   <Printer size={12} /> Imprimer
                 </button>
@@ -397,38 +397,38 @@ export default function AdminOrders() {
 
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm gap-2 flex-wrap">
-                  <span className="text-gray-500">Statut</span>
+                  <span className="text-gray-500 dark:text-gray-400">Statut</span>
                   <span className={`font-bold px-2 py-0.5 rounded ${statusColors[selectedOrder.status]}`}>
                     {statusLabels[selectedOrder.status]}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Restaurant</span>
+                  <span className="text-gray-500 dark:text-gray-400">Restaurant</span>
                   <span className="font-medium">{getRestaurantName(selectedOrder.restaurantId)}</span>
                 </div>
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Total</span>
+                  <span className="text-gray-500 dark:text-gray-400">Total</span>
                   <span className="font-bold text-red-600">{formatPrice(selectedOrder.total)}</span>
                 </div>
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Paiement</span>
+                  <span className="text-gray-500 dark:text-gray-400">Paiement</span>
                   <span className="font-medium">{paymentLabels[selectedOrder.paymentMethod]}</span>
                 </div>
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Appareil</span>
+                  <span className="text-gray-500 dark:text-gray-400">Appareil</span>
                   <span className="flex items-center gap-1 font-medium">
                     <DeviceIcon type={selectedOrder.deviceType} /> {selectedOrder.deviceType || "web"}
                   </span>
                 </div>
                 <div className="text-sm">
-                  <span className="text-gray-500">Adresse</span>
+                  <span className="text-gray-500 dark:text-gray-400">Adresse</span>
                   <p className="font-medium mt-1 flex items-start gap-1">
                     <MapPin size={14} className="text-red-500 mt-0.5 flex-shrink-0" /> {selectedOrder.deliveryAddress}
                   </p>
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4 space-y-2 mb-4">
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-2 mb-4">
                 <p className="text-xs font-semibold text-gray-500 uppercase">Articles</p>
                 {parseItems(selectedOrder.items).map((item: any, i: number) => (
                   <div key={i} className="flex justify-between text-sm gap-2">
@@ -486,7 +486,7 @@ export default function AdminOrders() {
               )}
 
               {parseAuditLog(selectedOrder.auditLog).length > 0 && (
-                <div className="border-t border-gray-100 pt-4 mb-4">
+                <div className="border-t border-gray-100 dark:border-gray-800 pt-4 mb-4">
                   <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Historique</p>
                   <div className="space-y-2" data-testid="audit-log">
                     {parseAuditLog(selectedOrder.auditLog).map((entry, i) => (
@@ -501,7 +501,7 @@ export default function AdminOrders() {
                               {formatDate(entry.timestamp)}
                             </span>
                           )}
-                          {entry.details && <p className="text-gray-400 mt-0.5">{entry.details}</p>}
+                          {entry.details && <p className="text-gray-400 dark:text-gray-500 mt-0.5">{entry.details}</p>}
                         </div>
                       </div>
                     ))}
@@ -509,13 +509,13 @@ export default function AdminOrders() {
                 </div>
               )}
 
-              <div className="border-t border-gray-100 pt-4 space-y-2">
+              <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Actions</p>
                 <select
                   onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value)}
                   value={selectedOrder.status}
                   data-testid="select-status"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 >
                   {Object.entries(statusLabels).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
@@ -527,7 +527,7 @@ export default function AdminOrders() {
                     onChange={(e) => assignDriver(selectedOrder.id, Number(e.target.value))}
                     defaultValue=""
                     data-testid="select-driver"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                   >
                     <option value="" disabled>Assigner un livreur</option>
                     {drivers.map((d: any) => (
@@ -540,7 +540,7 @@ export default function AdminOrders() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-8 text-center">
               <Package size={40} className="text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 text-sm">Selectionnez une commande</p>
             </div>
@@ -610,7 +610,7 @@ export default function AdminOrders() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Restaurant</label>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Restaurant</label>
                 <select
                   value={newOrderRestaurant || ""}
                   onChange={(e) => {
@@ -618,7 +618,7 @@ export default function AdminOrders() {
                     setNewOrderItems({});
                   }}
                   data-testid="select-new-order-restaurant"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 >
                   <option value="">Choisir un restaurant</option>
                   {restaurants.map((r) => (
@@ -629,7 +629,7 @@ export default function AdminOrders() {
 
               {newOrderRestaurant && menuItems.length > 0 && (
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Articles</label>
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Articles</label>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {menuItems.map((item) => (
                       <div key={item.id} className="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded-xl">
@@ -674,48 +674,48 @@ export default function AdminOrders() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Nom du client</label>
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Nom du client</label>
                   <input
                     type="text"
                     value={newOrderClientName}
                     onChange={(e) => setNewOrderClientName(e.target.value)}
                     data-testid="input-client-name"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                     placeholder="Nom complet"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Telephone</label>
+                  <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Telephone</label>
                   <input
                     type="text"
                     value={newOrderClientPhone}
                     onChange={(e) => setNewOrderClientPhone(e.target.value)}
                     data-testid="input-client-phone"
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                     placeholder="+243..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Adresse de livraison</label>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Adresse de livraison</label>
                 <input
                   type="text"
                   value={newOrderAddress}
                   onChange={(e) => setNewOrderAddress(e.target.value)}
                   data-testid="input-delivery-address"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                   placeholder="Adresse complete"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-500 mb-1 block">Mode de paiement</label>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Mode de paiement</label>
                 <select
                   value={newOrderPayment}
                   onChange={(e) => setNewOrderPayment(e.target.value)}
                   data-testid="select-new-order-payment"
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                 >
                   {Object.entries(paymentLabels).map(([k, v]) => (
                     <option key={k} value={k}>{v}</option>
@@ -725,15 +725,15 @@ export default function AdminOrders() {
 
               <div className="bg-gray-50 rounded-xl p-3 space-y-1">
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Sous-total</span>
+                  <span className="text-gray-500 dark:text-gray-400">Sous-total</span>
                   <span data-testid="text-new-subtotal">{formatPrice(newOrderSubtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Livraison</span>
+                  <span className="text-gray-500 dark:text-gray-400">Livraison</span>
                   <span>{formatPrice(newOrderDeliveryFee)}</span>
                 </div>
                 <div className="flex justify-between text-sm gap-2">
-                  <span className="text-gray-500">Taxes (5%)</span>
+                  <span className="text-gray-500 dark:text-gray-400">Taxes (5%)</span>
                   <span data-testid="text-new-tax">{formatPrice(newOrderTax)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-red-600 pt-1 border-t border-gray-200 gap-2">

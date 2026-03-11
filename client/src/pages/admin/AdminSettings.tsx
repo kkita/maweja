@@ -26,88 +26,88 @@ export default function AdminSettings() {
   return (
     <AdminLayout title="Parametres">
       <div className="max-w-2xl space-y-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 bg-red-50 rounded-xl flex items-center justify-center">
               <Settings size={20} className="text-red-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Configuration generale</h3>
-              <p className="text-xs text-gray-500">Parametres de base de l'application</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">Configuration generale</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Parametres de base de l'application</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Nom de l'application</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Nom de l'application</label>
               <input
                 type="text"
                 value={settings.appName}
                 onChange={(e) => setSettings({ ...settings, appName: e.target.value })}
                 data-testid="setting-app-name"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Devise</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Devise</label>
               <input
                 type="text"
                 value={settings.currency}
                 onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
                 data-testid="setting-currency"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Frais de livraison par defaut ($)</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Frais de livraison par defaut ($)</label>
               <input
                 type="number"
                 value={settings.defaultDeliveryFee}
                 onChange={(e) => setSettings({ ...settings, defaultDeliveryFee: Number(e.target.value) })}
                 data-testid="setting-delivery-fee"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Commande minimum ($)</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Commande minimum ($)</label>
               <input
                 type="number"
                 value={settings.minOrder}
                 onChange={(e) => setSettings({ ...settings, minOrder: Number(e.target.value) })}
                 data-testid="setting-min-order"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Rayon de livraison max (km)</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Rayon de livraison max (km)</label>
               <input
                 type="number"
                 value={settings.maxRadius}
                 onChange={(e) => setSettings({ ...settings, maxRadius: Number(e.target.value) })}
                 data-testid="setting-max-radius"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Points par commande</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Points par commande</label>
               <input
                 type="number"
                 value={settings.pointsPerOrder}
                 onChange={(e) => setSettings({ ...settings, pointsPerOrder: Number(e.target.value) })}
                 data-testid="setting-points"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center">
               <Bell size={20} className="text-blue-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Notifications et automatisation</h3>
-              <p className="text-xs text-gray-500">Gerer les alertes et l'attribution automatique</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">Notifications et automatisation</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Gerer les alertes et l'attribution automatique</p>
             </div>
           </div>
           <div className="space-y-4">
@@ -118,8 +118,8 @@ export default function AdminSettings() {
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
                 <div>
-                  <p className="font-semibold text-sm text-gray-900">{item.label}</p>
-                  <p className="text-xs text-gray-500">{item.desc}</p>
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white">{item.label}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.desc}</p>
                 </div>
                 <button
                   onClick={() => setSettings({ ...settings, [item.key]: !(settings as any)[item.key] })}
@@ -133,25 +133,25 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center">
               <SiWhatsapp size={20} className="text-green-600" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">WhatsApp</h3>
-              <p className="text-xs text-gray-500">Numero WhatsApp pour le contact client</p>
+              <h3 className="font-bold text-gray-900 dark:text-white">WhatsApp</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Numero WhatsApp pour le contact client</p>
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">Numero WhatsApp</label>
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Numero WhatsApp</label>
             <input
               type="text"
               value={settings.whatsappNumber}
               onChange={(e) => setSettings({ ...settings, whatsappNumber: e.target.value })}
               placeholder="+243 812 345 678"
               data-testid="input-whatsapp-number"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
             />
           </div>
         </div>

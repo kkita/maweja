@@ -44,7 +44,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
   };
 
   return (
-    <div className={`rounded-2xl border-2 transition-all ${rejected ? "border-red-300 bg-red-50" : value ? "border-green-300 bg-green-50" : "border-dashed border-gray-200 bg-gray-50"} ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+    <div className={`rounded-2xl border-2 transition-all ${rejected ? "border-red-300 bg-red-50 dark:bg-red-950/30" : value ? "border-green-300 bg-green-50 dark:bg-green-950/30" : "border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"} ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
       {rejected && (
         <div className="px-4 pt-3 flex items-center gap-1.5">
           <AlertCircle size={12} className="text-red-500" />
@@ -52,7 +52,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
         </div>
       )}
       <div className="p-4">
-        <p className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
           <Icon size={14} className={rejected ? "text-red-500" : value ? "text-green-600" : "text-gray-400"} />
           {label} <span className="text-red-500">*</span>
         </p>
@@ -61,9 +61,9 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
             <img src={value} alt={label} className="w-full h-40 object-cover rounded-xl" />
             {!disabled && (
               <button onClick={() => { onChange(""); inputRef.current?.click(); }}
-                className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white"
+                className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white dark:hover:bg-gray-800"
                 data-testid={`change-${label.toLowerCase().replace(/\s/g, "-")}`}>
-                <X size={12} className="text-gray-600" />
+                <X size={12} className="text-gray-600 dark:text-gray-300" />
               </button>
             )}
             {!rejected && <CheckCircle2 size={20} className="absolute bottom-2 right-2 text-green-600 bg-white rounded-full" />}
@@ -71,13 +71,13 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
         ) : (
           <button onClick={() => inputRef.current?.click()} disabled={uploading}
             data-testid={`upload-${label.toLowerCase().replace(/\s/g, "-")}`}
-            className="w-full py-8 border border-dashed border-gray-300 rounded-xl flex flex-col items-center gap-2 hover:bg-white transition-colors">
+            className="w-full py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-gray-700 transition-colors">
             {uploading ? (
               <Loader2 size={24} className="text-red-500 animate-spin" />
             ) : (
               <Camera size={24} className="text-gray-400" />
             )}
-            <span className="text-xs text-gray-500">{uploading ? "Envoi en cours..." : "Cliquez pour choisir une photo"}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{uploading ? "Envoi en cours..." : "Cliquez pour choisir une photo"}</span>
           </button>
         )}
       </div>
@@ -157,49 +157,51 @@ export default function DriverOnboarding() {
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-b from-red-50 to-white dark:from-gray-950 dark:to-gray-950 flex items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">
-          <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock size={36} className="text-orange-500" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900 mb-2">En attente de verification</h1>
-          <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">En attente de verification</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
             Vos informations ont ete envoyees avec succes. L'administration est en train de les examiner.
             Vous serez notifie des que votre compte sera valide.
           </p>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 mb-6">
             <div className="flex items-center gap-3">
               {form.profilePhotoUrl && (
                 <img src={form.profilePhotoUrl} alt="Profile" className="w-12 h-12 rounded-xl object-cover" />
               )}
               <div className="text-left">
-                <p className="font-bold text-sm text-gray-900">{form.name}</p>
-                <p className="text-xs text-gray-500">{form.email}</p>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">{form.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{form.email}</p>
               </div>
             </div>
           </div>
-          <div className="bg-orange-50 rounded-xl p-3 border border-orange-200">
-            <p className="text-xs text-orange-700 flex items-center gap-2 justify-center">
+          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 border border-orange-200 dark:border-orange-800">
+            <p className="text-xs text-orange-700 dark:text-orange-400 flex items-center gap-2 justify-center">
               <Loader2 size={14} className="animate-spin" /> Verification en cours...
             </p>
           </div>
-          <p className="text-[10px] text-gray-400 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
         </div>
       </div>
     );
   }
 
+  const inputClass = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white dark:from-gray-950 dark:to-gray-950">
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-200">
             <Shield size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900 mb-1">
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">
             {isRejected ? "Corrections requises" : "Completez votre profil"}
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {isRejected
               ? "Certaines informations doivent etre corrigees avant la validation"
               : "Remplissez vos informations pour activer votre compte livreur"}
@@ -207,14 +209,14 @@ export default function DriverOnboarding() {
         </div>
 
         {isRejected && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
               <AlertCircle size={16} className="text-red-600" />
-              <span className="font-bold text-sm text-red-700">Champs a corriger</span>
+              <span className="font-bold text-sm text-red-700 dark:text-red-400">Champs a corriger</span>
             </div>
             <ul className="space-y-1">
               {rejectedFields.map(f => (
-                <li key={f} className="text-xs text-red-600 flex items-center gap-1.5">
+                <li key={f} className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1.5">
                   <ChevronRight size={10} /> {FIELD_LABELS[f] || f}
                 </li>
               ))}
@@ -223,103 +225,103 @@ export default function DriverOnboarding() {
         )}
 
         <div className="space-y-4">
-          <div className={`bg-white rounded-2xl border ${isFieldRejected("name") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+          <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("name") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
             {isFieldRejected("name") && (
               <div className="flex items-center gap-1.5 mb-2">
                 <AlertCircle size={12} className="text-red-500" />
                 <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
               </div>
             )}
-            <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
               <User size={12} /> Nom complet <span className="text-red-500">*</span>
             </label>
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
               disabled={isFieldDisabled("name")} data-testid="input-onboard-name"
               placeholder="Ex: Jean-Baptiste Mukoko"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" />
+              className={inputClass} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("sex") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("sex") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("sex") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Users size={12} /> Sexe <span className="text-red-500">*</span>
               </label>
               <select value={form.sex} onChange={e => setForm({ ...form, sex: e.target.value })}
                 disabled={isFieldDisabled("sex")} data-testid="select-onboard-sex"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50">
+                className={inputClass}>
                 <option value="">Choisir...</option>
                 <option value="homme">Homme</option>
                 <option value="femme">Femme</option>
               </select>
             </div>
 
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("dateOfBirth") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("dateOfBirth") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("dateOfBirth") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Calendar size={12} /> Date de naissance <span className="text-red-500">*</span>
               </label>
               <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
                 disabled={isFieldDisabled("dateOfBirth")} data-testid="input-onboard-dob"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50" />
+                className={inputClass} />
             </div>
           </div>
 
-          <div className={`bg-white rounded-2xl border ${isFieldRejected("fullAddress") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+          <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("fullAddress") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
             {isFieldRejected("fullAddress") && (
               <div className="flex items-center gap-1.5 mb-2">
                 <AlertCircle size={12} className="text-red-500" />
                 <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
               </div>
             )}
-            <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
               <MapPin size={12} /> Adresse complete <span className="text-red-500">*</span>
             </label>
             <input type="text" value={form.fullAddress} onChange={e => setForm({ ...form, fullAddress: e.target.value })}
               disabled={isFieldDisabled("fullAddress")} data-testid="input-onboard-address"
               placeholder="Ex: 12 Avenue Kasa-Vubu, Commune de Lingwala, Kinshasa"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50" />
+              className={inputClass} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("email") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("email") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("email") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Mail size={12} /> Email <span className="text-red-500">*</span>
               </label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                 disabled={isFieldDisabled("email")} data-testid="input-onboard-email"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50" />
+                className={inputClass} />
             </div>
 
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("phone") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("phone") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("phone") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Phone size={12} /> Telephone <span className="text-red-500">*</span>
               </label>
               <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                 disabled={isFieldDisabled("phone")} data-testid="input-onboard-phone"
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50" />
+                className={inputClass} />
             </div>
           </div>
 
@@ -349,7 +351,7 @@ export default function DriverOnboarding() {
           {submitting ? "Envoi en cours..." : isRejected ? "Renvoyer les corrections" : "Envoyer pour verification"}
         </button>
 
-        <p className="text-center text-[10px] text-gray-400 mt-6">Made By Khevin Andrew Kita - Ed Corporation</p>
+        <p className="text-center text-[10px] text-gray-400 dark:text-gray-600 mt-6">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
     </div>
   );

@@ -45,7 +45,7 @@ export default function WalletPage() {
   const topupMethods = ["Airtel Money", "M-PESA", "Orange Money", "AfriMoney", "Illico Cash"];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="bg-gradient-to-br from-red-600 to-red-800 rounded-3xl p-6 text-white mb-6 relative overflow-hidden">
@@ -66,26 +66,26 @@ export default function WalletPage() {
         <button
           onClick={() => setShowTopup(!showTopup)}
           data-testid="button-topup"
-          className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-3 mb-4 hover:shadow-md transition-all"
+          className="w-full bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 flex items-center gap-3 mb-4 hover:shadow-md transition-all"
         >
-          <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
             <Plus size={20} className="text-green-600" />
           </div>
           <div className="text-left">
-            <p className="font-semibold text-sm text-gray-900">Recharger mon wallet</p>
-            <p className="text-xs text-gray-500">Via Mobile Money ou Illico Cash</p>
+            <p className="font-semibold text-sm text-gray-900 dark:text-white">Recharger mon wallet</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Via Mobile Money ou Illico Cash</p>
           </div>
         </button>
 
         {showTopup && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 animate-in slide-in-from-top">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4 animate-in slide-in-from-top">
             <input
               type="number"
               placeholder="Montant en $"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               data-testid="input-topup-amount"
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm mb-3 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
             />
             <div className="flex flex-wrap gap-2 mb-3">
               {topupMethods.map((m) => (
@@ -94,7 +94,7 @@ export default function WalletPage() {
                   onClick={() => setMethod(m)}
                   data-testid={`topup-method-${m.toLowerCase().replace(/\s/g, "-")}`}
                   className={`px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
-                    method === m ? "border-red-500 bg-red-50 text-red-700" : "border-gray-200 text-gray-600"
+                    method === m ? "border-red-500 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
                   }`}
                 >
                   {m}
@@ -112,26 +112,26 @@ export default function WalletPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h3 className="font-semibold text-sm text-gray-900">Historique des transactions</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Historique des transactions</h3>
           </div>
           {transactions.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-400 text-sm">Aucune transaction</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm">Aucune transaction</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-50">
+            <div className="divide-y divide-gray-50 dark:divide-gray-800">
               {transactions.map((t) => (
                 <div key={t.id} className="p-4 flex items-center gap-3" data-testid={`transaction-${t.id}`}>
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    t.type === "topup" ? "bg-green-50" : "bg-red-50"
+                    t.type === "topup" ? "bg-green-50 dark:bg-green-900/30" : "bg-red-50 dark:bg-red-900/30"
                   }`}>
                     {t.type === "topup" ? <ArrowDownLeft size={18} className="text-green-600" /> : <ArrowUpRight size={18} className="text-red-600" />}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{t.description}</p>
-                    <p className="text-xs text-gray-500">{formatDate(t.createdAt!)}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{t.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(t.createdAt!)}</p>
                   </div>
                   <span className={`font-bold text-sm ${t.type === "topup" ? "text-green-600" : "text-red-600"}`}>
                     {t.type === "topup" ? "+" : "-"}{formatPrice(Math.abs(t.amount))}

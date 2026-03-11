@@ -147,23 +147,23 @@ export default function CheckoutPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-40">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-40">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <button
           onClick={() => navigate("/cart")}
           data-testid="button-back-cart"
-          className="flex items-center gap-2 text-gray-500 text-sm mb-4"
+          className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-4"
         >
           <ArrowLeft size={16} />
           <span>Retour au panier</span>
         </button>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-4">
           <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
             <div className="flex items-center gap-2">
               <Receipt size={20} className="text-red-600" />
-              <h2 className="text-lg font-bold text-gray-900">Facture</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Facture</h2>
             </div>
             <span className="text-xs font-semibold text-red-600 tracking-widest">MAWEJA</span>
           </div>
@@ -171,21 +171,21 @@ export default function CheckoutPage() {
           <div className="space-y-2 mb-3">
             {items.map((item) => (
               <div key={item.id} className="flex items-center justify-between gap-2 text-sm" data-testid={`invoice-item-${item.id}`}>
-                <span className="text-gray-700 flex-1 min-w-0 truncate">{item.name}</span>
-                <span className="text-gray-400 whitespace-nowrap">{item.quantity} x {formatPrice(item.price)}</span>
-                <span className="font-medium text-gray-900 whitespace-nowrap">{formatPrice(item.price * item.quantity)}</span>
+                <span className="text-gray-700 dark:text-gray-300 flex-1 min-w-0 truncate">{item.name}</span>
+                <span className="text-gray-400 dark:text-gray-500 whitespace-nowrap">{item.quantity} x {formatPrice(item.price)}</span>
+                <span className="font-medium text-gray-900 dark:text-white whitespace-nowrap">{formatPrice(item.price * item.quantity)}</span>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-gray-100 pt-3 space-y-2">
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-3 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Sous-total</span>
-              <span className="text-gray-900">{formatPrice(subtotal)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Sous-total</span>
+              <span className="text-gray-900 dark:text-white">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Frais de livraison</span>
-              <span className={deliveryFee === 0 ? "text-green-600 line-through" : "text-gray-900"}>
+              <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
+              <span className={deliveryFee === 0 ? "text-green-600 line-through" : "text-gray-900 dark:text-white"}>
                 {deliveryFee === 0 ? formatPrice(baseDeliveryFee) : formatPrice(deliveryFee)}
               </span>
             </div>
@@ -195,8 +195,8 @@ export default function CheckoutPage() {
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Taxes (5%)</span>
-              <span className="text-gray-900">{formatPrice(taxAmount)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Taxes (5%)</span>
+              <span className="text-gray-900 dark:text-white">{formatPrice(taxAmount)}</span>
             </div>
             {effectivePromoDiscount > 0 && (
               <div className="flex justify-between text-sm">
@@ -214,16 +214,16 @@ export default function CheckoutPage() {
 
           <div className="border-t-2 border-red-600 mt-3 pt-3">
             <div className="flex justify-between items-center gap-2">
-              <span className="text-base font-bold text-gray-900">TOTAL NET A PAYER</span>
+              <span className="text-base font-bold text-gray-900 dark:text-white">TOTAL NET A PAYER</span>
               <span className="text-xl font-bold text-red-600" data-testid="text-net-total">{formatPrice(netTotal)}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Tag size={18} className="text-red-600" />
-            <h3 className="font-bold text-sm text-gray-900">Code Promo</h3>
+            <h3 className="font-bold text-sm text-gray-900 dark:text-white">Code Promo</h3>
           </div>
           <div className="flex gap-2">
             <input
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
               onChange={(e) => setPromoInput(e.target.value)}
               placeholder="Entrez votre code"
               data-testid="input-promo-code"
-              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
               disabled={!!promoCode}
             />
             <button
@@ -245,27 +245,27 @@ export default function CheckoutPage() {
             </button>
           </div>
           {promoCode && (
-            <div className="mt-3 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2" data-testid="promo-success">
+            <div className="mt-3 flex items-center gap-2 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2" data-testid="promo-success">
               <Check size={14} className="text-green-600" />
-              <span className="text-green-700 text-xs font-medium">{promoDescription}{promoType === "delivery" ? "" : ` (-${formatPrice(effectivePromoDiscount)})`}</span>
+              <span className="text-green-700 dark:text-green-400 text-xs font-medium">{promoDescription}{promoType === "delivery" ? "" : ` (-${formatPrice(effectivePromoDiscount)})`}</span>
             </div>
           )}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Star size={18} className="text-red-600" />
-            <h3 className="font-bold text-sm text-gray-900">Points de fidelite</h3>
+            <h3 className="font-bold text-sm text-gray-900 dark:text-white">Points de fidelite</h3>
           </div>
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
             <div>
-              <p className="text-sm text-gray-700" data-testid="text-loyalty-points">{user.loyaltyPoints} points disponibles</p>
-              <p className="text-xs text-gray-400">= {formatPrice(pointsValue)}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300" data-testid="text-loyalty-points">{user.loyaltyPoints} points disponibles</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500">= {formatPrice(pointsValue)}</p>
             </div>
             <label className="flex items-center gap-2 cursor-pointer" data-testid="toggle-use-points">
-              <span className="text-xs text-gray-500">Utiliser</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Utiliser</span>
               <div
-                className={`relative w-10 h-5 rounded-full transition-colors ${usePoints ? "bg-red-600" : "bg-gray-300"}`}
+                className={`relative w-10 h-5 rounded-full transition-colors ${usePoints ? "bg-red-600" : "bg-gray-300 dark:bg-gray-600"}`}
                 onClick={() => setUsePoints(!usePoints)}
               >
                 <div
@@ -275,8 +275,8 @@ export default function CheckoutPage() {
             </label>
           </div>
           {usePoints && pointsDiscount > 0 && (
-            <div className="bg-green-50 border border-green-200 rounded-xl px-3 py-2">
-              <p className="text-green-700 text-xs font-medium" data-testid="text-points-discount">
+            <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2">
+              <p className="text-green-700 dark:text-green-400 text-xs font-medium" data-testid="text-points-discount">
                 <Gift size={12} className="inline mr-1" />
                 -{formatPrice(pointsDiscount)} appliques
               </p>
@@ -284,10 +284,10 @@ export default function CheckoutPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <CreditCard size={18} className="text-red-600" />
-            <h3 className="font-bold text-sm text-gray-900">Mode de paiement</h3>
+            <h3 className="font-bold text-sm text-gray-900 dark:text-white">Mode de paiement</h3>
           </div>
           <div className="space-y-2">
             {paymentOptions.map((opt) => {
@@ -301,18 +301,18 @@ export default function CheckoutPage() {
                   data-testid={`payment-${opt.id}`}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
                     paymentMethod === opt.id
-                      ? "border-red-500 bg-red-50"
+                      ? "border-red-500 bg-red-50 dark:bg-red-950/30"
                       : disabled
-                      ? "border-gray-100 opacity-50 cursor-not-allowed"
-                      : "border-gray-100"
+                      ? "border-gray-100 dark:border-gray-800 opacity-50 cursor-not-allowed"
+                      : "border-gray-100 dark:border-gray-800"
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0">
-                    <opt.Icon size={18} className="text-gray-600" />
+                  <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center shrink-0">
+                    <opt.Icon size={18} className="text-gray-600 dark:text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900">{opt.label}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">{opt.label}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {isWallet ? `Solde: ${formatPrice(user.walletBalance || 0)}` : opt.desc}
                     </p>
                     {isWallet && walletInsufficient && (
@@ -331,7 +331,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100 z-50">
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800 z-50">
         <div className="max-w-lg mx-auto">
           <button
             onClick={() => orderMutation.mutate()}

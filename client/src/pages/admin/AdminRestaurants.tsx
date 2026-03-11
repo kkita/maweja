@@ -47,7 +47,7 @@ function MediaUploadButton({ label, accept, onUploaded, current, icon: Icon, tes
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
           data-testid={testId}
-          className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50"
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} />}
           {uploading ? "Upload..." : current ? "Changer" : "Choisir"}
@@ -94,10 +94,10 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="font-bold text-gray-900">Modifier - {restaurant.name}</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white">Modifier - {restaurant.name}</h3>
             <p className="text-xs text-gray-500 mt-0.5">Informations du restaurant</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600" data-testid="close-edit-modal"><X size={18} /></button>
@@ -105,7 +105,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
 
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Email</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 block">Email</label>
             <div className="relative">
               <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -114,13 +114,13 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="email@restaurant.com"
                 data-testid="input-restaurant-email"
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Nom du manager</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 block">Nom du manager</label>
             <div className="relative">
               <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -129,13 +129,13 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
                 onChange={(e) => setManagerName(e.target.value)}
                 placeholder="Nom du manager"
                 data-testid="input-restaurant-manager-name"
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Marque</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 block">Marque</label>
             <div className="relative">
               <Building size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -144,13 +144,13 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder="Nom de la marque"
                 data-testid="input-restaurant-brand-name"
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Adresse du siege</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 block">Adresse du siege</label>
             <div className="relative">
               <MapPinned size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -159,13 +159,13 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
                 onChange={(e) => setHqAddress(e.target.value)}
                 placeholder="Adresse du siege social"
                 data-testid="input-restaurant-hq-address"
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Temps de preparation</label>
+            <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5 block">Temps de preparation</label>
             <div className="relative">
               <ChefHat size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -174,7 +174,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
                 onChange={(e) => setPrepTime(e.target.value)}
                 placeholder="20-30 min"
                 data-testid="input-restaurant-prep-time"
-                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -222,10 +222,10 @@ function EditMediaModal({ restaurant, onClose }: { restaurant: Restaurant; onClo
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="font-bold text-gray-900">Medias - {restaurant.name}</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white">Medias - {restaurant.name}</h3>
             <p className="text-xs text-gray-500 mt-0.5">Logo, image de couverture et video</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600" data-testid="close-media-modal"><X size={18} /></button>
@@ -292,36 +292,36 @@ export default function AdminRestaurants() {
   return (
     <AdminLayout title="Gestion des restaurants">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="w-11 h-11 bg-red-50 rounded-xl flex items-center justify-center mb-3">
             <Store size={20} className="text-red-600" />
           </div>
-          <p className="text-3xl font-black text-gray-900">{restaurants.length}</p>
-          <p className="text-sm text-gray-500">Total restaurants</p>
+          <p className="text-3xl font-black text-gray-900 dark:text-white">{restaurants.length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Total restaurants</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-3">
             <Star size={20} className="text-green-600" />
           </div>
-          <p className="text-3xl font-black text-gray-900">
+          <p className="text-3xl font-black text-gray-900 dark:text-white">
             {restaurants.length > 0 ? (restaurants.reduce((s, r) => s + r.rating, 0) / restaurants.length).toFixed(1) : 0}
           </p>
-          <p className="text-sm text-gray-500">Note moyenne</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Note moyenne</p>
         </div>
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center mb-3">
             <Clock size={20} className="text-blue-600" />
           </div>
-          <p className="text-3xl font-black text-gray-900">{restaurants.filter((r) => r.isActive).length}</p>
-          <p className="text-sm text-gray-500">Actifs</p>
+          <p className="text-3xl font-black text-gray-900 dark:text-white">{restaurants.filter((r) => r.isActive).length}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Actifs</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Tous les restaurants</h3>
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="font-bold text-gray-900 dark:text-white">Tous les restaurants</h3>
         </div>
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-gray-50 dark:divide-gray-800 dark:divide-gray-800">
           {restaurants.map((r) => (
             <div key={r.id} data-testid={`restaurant-row-${r.id}`}>
               <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
@@ -336,8 +336,8 @@ export default function AdminRestaurants() {
                   <img src={r.image} alt={r.name} className="w-16 h-16 rounded-xl object-cover" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-gray-900">{r.name}</p>
-                  <p className="text-xs text-gray-500">{r.cuisine} - {r.address}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{r.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{r.cuisine} - {r.address}</p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {r.logoUrl && <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-medium">Logo</span>}
                     {r.coverVideoUrl && <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium">Video</span>}
@@ -373,7 +373,7 @@ export default function AdminRestaurants() {
                 </span>
               </div>
               {expandedId === r.id && (
-                <div className="px-4 pb-4 bg-gray-50 border-t border-gray-100" data-testid={`restaurant-details-${r.id}`}>
+                <div className="px-4 pb-4 bg-gray-50 border-t border-gray-100 dark:border-gray-800" data-testid={`restaurant-details-${r.id}`}>
                   <div className="grid grid-cols-2 gap-4 py-3">
                     <div>
                       <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Email</p>

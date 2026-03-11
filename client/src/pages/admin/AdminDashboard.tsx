@@ -47,7 +47,7 @@ export default function AdminDashboard() {
     <AdminLayout title={t.admin.dashboard}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {statCards.map((card) => (
-          <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm" data-testid={`stat-${card.label.toLowerCase().replace(/\s/g, "-")}`}>
+          <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid={`stat-${card.label.toLowerCase().replace(/\s/g, "-")}`}>
             <div className="flex items-center justify-between mb-3">
               <div className={`w-11 h-11 ${card.color.split(" ")[0]} rounded-xl flex items-center justify-center`}>
                 <card.icon size={20} className={card.color.split(" ")[1]} />
@@ -58,23 +58,23 @@ export default function AdminDashboard() {
                 </span>
               )}
             </div>
-            <p className="text-2xl font-black text-gray-900">{card.value}</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white">{card.value}</p>
             <p className="text-xs text-gray-500 font-medium mt-1">{card.label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-bold text-gray-900">{t.admin.recentOrders}</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+            <h3 className="font-bold text-gray-900 dark:text-white">{t.admin.recentOrders}</h3>
             <span className="text-xs text-gray-400">{recentOrders.length} {t.common.orders}</span>
           </div>
-          <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800 max-h-96 overflow-y-auto">
             {recentOrders.slice(0, 10).map((order) => (
-              <div key={order.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid={`recent-order-${order.id}`}>
+              <div key={order.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" data-testid={`recent-order-${order.id}`}>
                 <div>
-                  <p className="font-semibold text-sm text-gray-900">{order.orderNumber}</p>
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
                   <p className="text-xs text-gray-400">{formatDate(order.createdAt!)}</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -87,17 +87,17 @@ export default function AdminDashboard() {
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5">
             <h3 className="font-bold text-gray-900 mb-4">{t.admin.performance}</h3>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-500">{t.admin.deliveryRate}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t.admin.deliveryRate}</span>
                   <span className="font-bold">
                     {stats?.orders?.total ? Math.round((Number(stats.orders.delivered) / Number(stats.orders.total)) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
+                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-green-500 h-2 rounded-full transition-all"
                     style={{ width: `${stats?.orders?.total ? (Number(stats.orders.delivered) / Number(stats.orders.total)) * 100 : 0}%` }}
@@ -106,12 +106,12 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-500">{t.admin.activeDrivers}</span>
+                  <span className="text-gray-500 dark:text-gray-400">{t.admin.activeDrivers}</span>
                   <span className="font-bold">
                     {stats?.drivers?.total ? Math.round((Number(stats.drivers.online) / Number(stats.drivers.total)) * 100) : 0}%
                   </span>
                 </div>
-                <div className="w-full bg-gray-100 rounded-full h-2">
+                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                   <div
                     className="bg-blue-500 h-2 rounded-full transition-all"
                     style={{ width: `${stats?.drivers?.total ? (Number(stats.drivers.online) / Number(stats.drivers.total)) * 100 : 0}%` }}
@@ -133,10 +133,10 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
             <UtensilsCrossed size={16} className="text-red-600" />
-            <h3 className="font-bold text-gray-900">{t.admin.cuisineCategories}</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white">{t.admin.cuisineCategories}</h3>
           </div>
           <div className="p-5 space-y-3">
             {(() => {
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
                     <span className="text-gray-700 font-medium">{c.cuisine}</span>
                     <span className="text-gray-500 text-xs">{c.count} {t.common.restaurant}{Number(c.count) > 1 ? "s" : ""} ({pct}%)</span>
                   </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
                     <div className="bg-red-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -163,16 +163,16 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2">
             <Store size={16} className="text-red-600" />
-            <h3 className="font-bold text-gray-900">{t.admin.ordersByCategory}</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white">{t.admin.ordersByCategory}</h3>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800 dark:divide-gray-800">
             {(stats?.cuisineOrders || []).map((c: any) => (
-              <div key={c.cuisine} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors" data-testid={`cuisine-orders-${c.cuisine?.toLowerCase().replace(/\s/g, "-")}`}>
+              <div key={c.cuisine} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" data-testid={`cuisine-orders-${c.cuisine?.toLowerCase().replace(/\s/g, "-")}`}>
                 <div>
-                  <p className="font-semibold text-sm text-gray-900">{c.cuisine}</p>
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white">{c.cuisine}</p>
                   <p className="text-xs text-gray-400">{c.orderCount} {t.common.order}{Number(c.orderCount) > 1 ? "s" : ""}</p>
                 </div>
                 <span className="font-bold text-sm text-red-600">{formatPrice(Number(c.revenue))}</span>

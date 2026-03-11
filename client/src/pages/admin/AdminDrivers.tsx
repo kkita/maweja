@@ -106,7 +106,7 @@ function ElapsedTime({ createdAt }: { createdAt: string | Date | null }) {
   }, [createdAt]);
 
   return (
-    <span className={`text-[10px] font-semibold ${isUrgent ? "text-red-600" : "text-gray-500"}`} data-testid="elapsed-time">
+    <span className={`text-[10px] font-semibold ${isUrgent ? "text-red-600" : "text-gray-500 dark:text-gray-400"}`} data-testid="elapsed-time">
       <Clock size={9} className="inline mr-0.5" />{elapsed}
       {isUrgent && <span className="ml-1 px-1 py-0.5 bg-red-600 text-white text-[8px] font-bold rounded">URGENT</span>}
     </span>
@@ -360,7 +360,7 @@ export default function AdminDrivers() {
     const todayCount = getDriverTodayDeliveries(d.id);
 
     return (
-      <div key={d.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid={`dispatch-driver-card-${d.id}`}>
+      <div key={d.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4" data-testid={`dispatch-driver-card-${d.id}`}>
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
@@ -375,7 +375,7 @@ export default function AdminDrivers() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-bold text-sm text-gray-900 truncate" data-testid={`driver-name-${d.id}`}>{d.name}</p>
-              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${d.isOnline ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${d.isOnline ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500 dark:text-gray-400"}`}>
                 {d.isOnline ? "EN LIGNE" : "HORS LIGNE"}
               </span>
             </div>
@@ -394,9 +394,9 @@ export default function AdminDrivers() {
         {showActiveOrder && active.length > 0 && (
           <div className="mt-3 space-y-2">
             {active.map(order => (
-              <div key={order.id} className="bg-gray-50 rounded-xl p-2.5 border border-gray-100" data-testid={`dispatch-driver-order-${order.id}`}>
+              <div key={order.id} className="bg-gray-50 rounded-xl p-2.5 border border-gray-100 dark:border-gray-800" data-testid={`dispatch-driver-order-${order.id}`}>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="font-bold text-[10px] text-gray-900">{order.orderNumber}</span>
+                  <span className="font-bold text-[10px] text-gray-900 dark:text-white">{order.orderNumber}</span>
                   <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
                 </div>
                 <p className="text-[9px] text-gray-500 mt-1 truncate"><MapPin size={8} className="inline mr-0.5" />{order.deliveryAddress}</p>
@@ -414,10 +414,10 @@ export default function AdminDrivers() {
     const isApproaching = elapsed >= 30 && elapsed < 45;
 
     return (
-      <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid={`dispatch-order-card-${order.id}`}>
+      <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4" data-testid={`dispatch-order-card-${order.id}`}>
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-sm text-gray-900" data-testid={`order-number-${order.id}`}>{order.orderNumber}</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-white" data-testid={`order-number-${order.id}`}>{order.orderNumber}</span>
             <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
             {isUrgent && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-red-600 text-white animate-pulse" data-testid={`urgent-badge-${order.id}`}>URGENT</span>}
             {isApproaching && !isUrgent && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700">BIENTOT</span>}
@@ -433,7 +433,7 @@ export default function AdminDrivers() {
           {order.estimatedDelivery && <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />}
         </div>
         {showAssign && (
-          <div className="mt-3 border-t border-gray-100 pt-3">
+          <div className="mt-3 border-t border-gray-100 dark:border-gray-800 pt-3">
             {assigningOrderId === order.id ? (
               <div className="space-y-1.5">
                 <p className="text-[10px] text-gray-500 font-semibold">Attribuer a :</p>
@@ -470,7 +470,7 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900" data-testid="tab-title-unassigned">Commandes non attribuees ({unassignedOrders.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-unassigned">Commandes non attribuees ({unassignedOrders.length})</h2>
             </div>
             {unassignedOrders.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
@@ -489,7 +489,7 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900" data-testid="tab-title-assigned">Commandes attribuees ({assignedOrders.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-assigned">Commandes attribuees ({assignedOrders.length})</h2>
             </div>
             {assignedByDriver.size === 0 ? (
               <div className="text-center py-16 text-gray-400">
@@ -501,22 +501,22 @@ export default function AdminDrivers() {
                 {Array.from(assignedByDriver.entries()).map(([driverId, driverOrders]) => {
                   const driver = drivers.find((d: any) => d.id === driverId);
                   return (
-                    <div key={driverId} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" data-testid={`assigned-driver-group-${driverId}`}>
-                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-3 flex-wrap">
+                    <div key={driverId} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden" data-testid={`assigned-driver-group-${driverId}`}>
+                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3 flex-wrap">
                         <div className={`w-9 h-9 rounded-lg flex items-center justify-center bg-orange-100`}>
                           <Truck size={14} className="text-orange-600" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-bold text-sm text-gray-900 truncate">{driver?.name || `Livreur #${driverId}`}</p>
-                          <p className="text-[10px] text-gray-500">{driver?.phone} - {driver?.vehicleType || "Moto"}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400">{driver?.phone} - {driver?.vehicleType || "Moto"}</p>
                         </div>
                         <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-lg">{driverOrders.length} commande(s)</span>
                       </div>
                       <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
                         {driverOrders.map(order => (
-                          <div key={order.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100" data-testid={`assigned-order-${order.id}`}>
+                          <div key={order.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 dark:border-gray-800" data-testid={`assigned-order-${order.id}`}>
                             <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className="font-bold text-xs text-gray-900">{order.orderNumber}</span>
+                              <span className="font-bold text-xs text-gray-900 dark:text-white">{order.orderNumber}</span>
                               <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
                             </div>
                             <p className="text-[10px] text-gray-600 mt-1">{getRestaurantName(order.restaurantId)}</p>
@@ -540,7 +540,7 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900" data-testid="tab-title-completed">Commandes completees ({completedOrders.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-completed">Commandes completees ({completedOrders.length})</h2>
             </div>
             {completedOrders.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
@@ -556,9 +556,9 @@ export default function AdminDrivers() {
                   const driver = order.driverId ? drivers.find((d: any) => d.id === order.driverId) : null;
 
                   return (
-                    <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4" data-testid={`completed-order-${order.id}`}>
+                    <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4" data-testid={`completed-order-${order.id}`}>
                       <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="font-bold text-sm text-gray-900">{order.orderNumber}</span>
+                        <span className="font-bold text-sm text-gray-900 dark:text-white">{order.orderNumber}</span>
                         {isOnTime === true && (
                           <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-green-100 text-green-700" data-testid={`ontime-badge-${order.id}`}>A l'heure</span>
                         )}
@@ -566,14 +566,14 @@ export default function AdminDrivers() {
                           <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-700" data-testid={`late-badge-${order.id}`}>En retard</span>
                         )}
                         {isOnTime === null && (
-                          <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500">--</span>
+                          <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 dark:text-gray-400">--</span>
                         )}
                       </div>
                       <p className="text-xs text-gray-600 mt-1.5">{getRestaurantName(order.restaurantId)}</p>
                       <p className="text-[10px] text-gray-500 mt-1 truncate"><MapPin size={9} className="inline mr-0.5" />{order.deliveryAddress}</p>
                       <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
                         <span className="text-xs font-bold text-red-600">{formatPrice(order.total)}</span>
-                        {driver && <span className="text-[10px] text-gray-500"><Truck size={9} className="inline mr-0.5" />{driver.name}</span>}
+                        {driver && <span className="text-[10px] text-gray-500 dark:text-gray-400"><Truck size={9} className="inline mr-0.5" />{driver.name}</span>}
                       </div>
                       {order.updatedAt && <p className="text-[9px] text-gray-400 mt-1.5">{formatDate(order.updatedAt)}</p>}
                     </div>
@@ -588,7 +588,7 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900" data-testid="tab-title-free">Livreurs disponibles ({freeDrivers.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-free">Livreurs disponibles ({freeDrivers.length})</h2>
             </div>
             {freeDrivers.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
@@ -607,7 +607,7 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900" data-testid="tab-title-busy">Livreurs occupes ({busyDrivers.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-busy">Livreurs occupes ({busyDrivers.length})</h2>
             </div>
             {busyDrivers.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
@@ -622,10 +622,10 @@ export default function AdminDrivers() {
                   const isExpanded = expandedBusyDriver === d.id;
 
                   return (
-                    <div key={d.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" data-testid={`busy-driver-card-${d.id}`}>
+                    <div key={d.id} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden" data-testid={`busy-driver-card-${d.id}`}>
                       <button onClick={() => setExpandedBusyDriver(isExpanded ? null : d.id)}
                         data-testid={`toggle-busy-driver-${d.id}`}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left">
+                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left">
                         <div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-orange-100 shrink-0`}>
                           <Truck size={18} className="text-orange-600" />
                         </div>
@@ -635,7 +635,7 @@ export default function AdminDrivers() {
                             <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">({active.length} commandes)</span>
                           </div>
                           <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                            <span className="text-[10px] text-gray-500"><Phone size={9} className="inline mr-0.5" />{d.phone}</span>
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400"><Phone size={9} className="inline mr-0.5" />{d.phone}</span>
                             <span className="text-[10px] text-gray-500 capitalize">{d.vehicleType || "Moto"}</span>
                             <span className="text-[10px] text-gray-400">{todayCount} livr. aujourd'hui</span>
                           </div>
@@ -643,11 +643,11 @@ export default function AdminDrivers() {
                         {isExpanded ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />}
                       </button>
                       {isExpanded && (
-                        <div className="px-4 pb-3 border-t border-gray-100 pt-3 space-y-2">
+                        <div className="px-4 pb-3 border-t border-gray-100 dark:border-gray-800 pt-3 space-y-2">
                           {active.map(order => (
-                            <div key={order.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100" data-testid={`busy-driver-order-${order.id}`}>
+                            <div key={order.id} className="bg-gray-50 rounded-xl p-3 border border-gray-100 dark:border-gray-800" data-testid={`busy-driver-order-${order.id}`}>
                               <div className="flex items-center justify-between gap-2 flex-wrap">
-                                <span className="font-bold text-xs text-gray-900">{order.orderNumber}</span>
+                                <span className="font-bold text-xs text-gray-900 dark:text-white">{order.orderNumber}</span>
                                 <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
                               </div>
                               <p className="text-[10px] text-gray-600 mt-1">{getRestaurantName(order.restaurantId)}</p>
@@ -672,7 +672,7 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900" data-testid="tab-title-offline">Livreurs hors ligne ({offlineDrivers.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-offline">Livreurs hors ligne ({offlineDrivers.length})</h2>
             </div>
             {offlineDrivers.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
@@ -704,12 +704,12 @@ export default function AdminDrivers() {
               className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                 dispatchTab === tab.key
                   ? "bg-red-600 text-white shadow-sm"
-                  : "bg-white text-gray-600 border border-gray-100 hover:bg-gray-50"
+                  : "bg-white text-gray-600 border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               {tab.label}
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
-                dispatchTab === tab.key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
+                dispatchTab === tab.key ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500 dark:text-gray-400"
               }`}>{tab.count}</span>
             </button>
           ))}
@@ -725,10 +725,10 @@ export default function AdminDrivers() {
               { label: "Total", value: drivers.length, icon: Truck, bg: "bg-blue-50", fg: "text-blue-600" },
               { label: "Disponibles", value: statusCounts.online, icon: CheckCircle2, bg: "bg-green-50", fg: "text-green-600" },
               { label: "En livraison", value: statusCounts.busy, icon: Package, bg: "bg-orange-50", fg: "text-orange-600" },
-              { label: "Hors ligne", value: statusCounts.offline, icon: Circle, bg: "bg-gray-50", fg: "text-gray-500" },
+              { label: "Hors ligne", value: statusCounts.offline, icon: Circle, bg: "bg-gray-50", fg: "text-gray-500 dark:text-gray-400" },
               { label: "Bloques", value: statusCounts.blocked, icon: Ban, bg: "bg-red-50", fg: "text-red-600" },
             ].map(s => (
-              <div key={s.label} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm flex items-center gap-3" data-testid={`stat-${s.label.toLowerCase()}`}>
+              <div key={s.label} className="bg-white rounded-xl p-3 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3" data-testid={`stat-${s.label.toLowerCase()}`}>
                 <div className={`w-9 h-9 ${s.bg} rounded-lg flex items-center justify-center shrink-0`}>
                   <s.icon size={16} className={s.fg} />
                 </div>
@@ -740,14 +740,14 @@ export default function AdminDrivers() {
             ))}
           </div>
 
-          <div className="flex lg:hidden gap-1 mb-3 bg-white rounded-xl p-1 border border-gray-100">
+          <div className="flex lg:hidden gap-1 mb-3 bg-white rounded-xl p-1 border border-gray-100 dark:border-gray-800">
             {([
               { key: "list" as const, label: "Liste", icon: Menu },
               { key: "info" as const, label: "Details", icon: Truck },
               { key: "map" as const, label: "Carte", icon: Navigation },
             ]).map(tab => (
               <button key={tab.key} onClick={() => setMobilePanel(tab.key)} data-testid={`tab-${tab.key}`}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${mobilePanel === tab.key ? "bg-red-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-50"}`}>
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${mobilePanel === tab.key ? "bg-red-600 text-white shadow-sm" : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"}`}>
                 <tab.icon size={14} />{tab.label}
               </button>
             ))}
@@ -755,7 +755,7 @@ export default function AdminDrivers() {
 
           {showForm && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={() => { setShowForm(false); setEditingDriver(null); }}>
-              <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 10000 }} onClick={e => e.stopPropagation()}>
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 10000 }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-bold text-base">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h3>
                   <button onClick={() => { setShowForm(false); setEditingDriver(null); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
@@ -772,20 +772,20 @@ export default function AdminDrivers() {
                     <div key={f.key}>
                       <label className="text-[10px] font-semibold text-gray-500 mb-1 block">{f.label}</label>
                       <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                        data-testid={f.testid} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                        data-testid={f.testid} className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none" />
                     </div>
                   ))}
                   <div>
                     <label className="text-[10px] font-semibold text-gray-500 mb-1 block">Vehicule</label>
                     <select value={form.vehicleType} onChange={e => setForm({ ...form, vehicleType: e.target.value })}
-                      data-testid="select-vehicle-type" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                      data-testid="select-vehicle-type" className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
                       <option value="moto">Moto</option><option value="velo">Velo</option><option value="voiture">Voiture</option><option value="scooter">Scooter</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-semibold text-gray-500 mb-1 block">Commission (%)</label>
                     <input type="number" value={form.commissionRate} onChange={e => setForm({ ...form, commissionRate: Number(e.target.value) })}
-                      data-testid="input-commission" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                      data-testid="input-commission" className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-red-500 focus:outline-none" />
                   </div>
                 </div>
                 <div className="flex gap-2 mt-5">
@@ -801,16 +801,16 @@ export default function AdminDrivers() {
 
           {showAlarmModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-              <div className="bg-white rounded-2xl shadow-2xl p-5 w-full max-w-md" style={{ zIndex: 10000 }}>
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-full max-w-md" style={{ zIndex: 10000 }}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center"><Bell size={18} className="text-red-600" /></div>
                   <div>
-                    <h3 className="font-bold text-sm text-gray-900">Envoyer une alarme</h3>
-                    <p className="text-[10px] text-gray-500">a {showAlarmModal.name}</p>
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-white">Envoyer une alarme</h3>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">a {showAlarmModal.name}</p>
                   </div>
                 </div>
                 <select value={alarmReason} onChange={e => setAlarmReason(e.target.value)}
-                  data-testid="alarm-reason-select" className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm mb-2">
+                  data-testid="alarm-reason-select" className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white mb-2">
                   <option value="">Choisir un motif...</option>
                   <option value="Retard de livraison detecte - Accelerez votre course">Retard de livraison</option>
                   <option value="Client en attente - Merci de vous depecher">Client en attente</option>
@@ -820,7 +820,7 @@ export default function AdminDrivers() {
                 </select>
                 <input type="text" value={alarmReason} onChange={e => setAlarmReason(e.target.value)}
                   placeholder="Ou tapez un message personnalise..." data-testid="alarm-reason-input"
-                  className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-red-500" />
+                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white mb-4 focus:outline-none focus:ring-2 focus:ring-red-500" />
                 <div className="flex gap-2">
                   <button onClick={() => sendAlarm(showAlarmModal.id)} data-testid="button-send-alarm"
                     className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
@@ -835,10 +835,10 @@ export default function AdminDrivers() {
 
           <div className="flex gap-3" style={{ height: "calc(100vh - 340px)", minHeight: 400 }}>
 
-            <div className={`${mobilePanel === "info" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
+            <div className={`${mobilePanel === "info" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden`}>
               {sd ? (
                 <div className="flex-1 overflow-y-auto">
-                  <div className="p-4 border-b border-gray-100">
+                  <div className="p-4 border-b border-gray-100 dark:border-gray-800">
                     <button onClick={() => { setSelectedDriver(null); setMobilePanel("list"); }}
                       className="lg:hidden flex items-center gap-1 text-xs text-gray-500 mb-3 hover:text-gray-700" data-testid="back-to-list">
                       <ChevronLeft size={14} /> Retour a la liste
@@ -865,7 +865,7 @@ export default function AdminDrivers() {
                           getDriverStatus(sd) === "busy" ? "bg-orange-100 text-orange-700" :
                           getDriverStatus(sd) === "online" ? "bg-green-100 text-green-700" :
                           getDriverStatus(sd) === "blocked" ? "bg-red-100 text-red-700" :
-                          "bg-gray-100 text-gray-500"
+                          "bg-gray-100 text-gray-500 dark:text-gray-400"
                         }`}>
                           {getDriverStatus(sd) === "busy" ? "EN LIVRAISON" : getDriverStatus(sd) === "online" ? "DISPONIBLE" : getDriverStatus(sd) === "blocked" ? "BLOQUE" : "HORS LIGNE"}
                         </span>
@@ -873,22 +873,22 @@ export default function AdminDrivers() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-0 border-b border-gray-100">
-                    <div className="p-3 text-center border-r border-gray-100">
+                  <div className="grid grid-cols-3 gap-0 border-b border-gray-100 dark:border-gray-800">
+                    <div className="p-3 text-center border-r border-gray-100 dark:border-gray-800">
                       <p className="text-base font-black text-green-600">{formatPrice(sdDelivered.reduce((s, o) => s + o.deliveryFee, 0))}</p>
-                      <p className="text-[8px] text-gray-400 mt-0.5">GAINS</p>
+                      <p className="text-[8px] text-gray-400 dark:text-gray-500 mt-0.5">GAINS</p>
                     </div>
-                    <div className="p-3 text-center border-r border-gray-100">
+                    <div className="p-3 text-center border-r border-gray-100 dark:border-gray-800">
                       <p className="text-base font-black text-blue-600">{sdDelivered.length}</p>
-                      <p className="text-[8px] text-gray-400 mt-0.5">LIVREES</p>
+                      <p className="text-[8px] text-gray-400 dark:text-gray-500 mt-0.5">LIVREES</p>
                     </div>
                     <div className="p-3 text-center">
                       <p className="text-base font-black text-orange-600">{sdOrders.length}</p>
-                      <p className="text-[8px] text-gray-400 mt-0.5">EN COURS</p>
+                      <p className="text-[8px] text-gray-400 dark:text-gray-500 mt-0.5">EN COURS</p>
                     </div>
                   </div>
 
-                  <div className="p-3 border-b border-gray-100">
+                  <div className="p-3 border-b border-gray-100 dark:border-gray-800">
                     <p className="text-[10px] text-gray-500 mb-2 font-semibold">INFORMATIONS</p>
                     <div className="space-y-1.5 text-xs text-gray-700">
                       <div className="flex items-center justify-between">
@@ -918,7 +918,7 @@ export default function AdminDrivers() {
                     </div>
                   </div>
 
-                  <div className="p-3 border-b border-gray-100">
+                  <div className="p-3 border-b border-gray-100 dark:border-gray-800">
                     <p className="text-[10px] text-gray-500 mb-2 font-semibold">ACTIONS RAPIDES</p>
                     <div className="grid grid-cols-4 gap-1.5">
                       <button onClick={() => setShowAlarmModal(sd)} data-testid="button-alarm-driver"
@@ -944,7 +944,7 @@ export default function AdminDrivers() {
                     </div>
                   </div>
 
-                  <div className="p-3 border-b border-gray-100">
+                  <div className="p-3 border-b border-gray-100 dark:border-gray-800">
                     <p className="text-[10px] text-gray-500 mb-2 font-semibold">MESSAGE RAPIDE</p>
                     <div className="flex gap-1.5">
                       <input type="text" value={chatMessage} onChange={e => setChatMessage(e.target.value)}
@@ -966,9 +966,9 @@ export default function AdminDrivers() {
                       </p>
                       <div className="space-y-2">
                         {sdOrders.map(order => (
-                          <div key={order.id} className="bg-gray-50 rounded-xl p-2.5 border border-gray-100" data-testid={`driver-order-${order.id}`}>
+                          <div key={order.id} className="bg-gray-50 rounded-xl p-2.5 border border-gray-100 dark:border-gray-800" data-testid={`driver-order-${order.id}`}>
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-bold text-[10px] text-gray-900">{order.orderNumber}</span>
+                              <span className="font-bold text-[10px] text-gray-900 dark:text-white">{order.orderNumber}</span>
                               <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />
                             </div>
                             <p className="text-[9px] text-gray-500 flex items-center gap-1 truncate">
@@ -985,7 +985,7 @@ export default function AdminDrivers() {
                   )}
 
                   {sd.lat && sd.lng && (
-                    <div className="p-3 border-t border-gray-100">
+                    <div className="p-3 border-t border-gray-100 dark:border-gray-800">
                       <p className="text-[9px] text-gray-400 flex items-center gap-1">
                         <Navigation size={9} /> GPS: {sd.lat.toFixed(4)}, {sd.lng.toFixed(4)}
                       </p>
@@ -996,15 +996,15 @@ export default function AdminDrivers() {
                 <div className="flex-1 flex items-center justify-center p-6">
                   <div className="text-center text-gray-400">
                     <Truck size={32} className="mx-auto mb-2 opacity-20" />
-                    <p className="text-xs font-semibold text-gray-500">Selectionnez un livreur</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Selectionnez un livreur</p>
                     <p className="text-[10px] mt-1">dans la liste pour voir ses details</p>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className={`${mobilePanel === "map" ? "flex" : "hidden"} lg:flex flex-1 flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
-              <div className="px-4 py-2.5 border-b border-gray-100 flex items-center justify-between shrink-0">
+            <div className={`${mobilePanel === "map" ? "flex" : "hidden"} lg:flex flex-1 flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden`}>
+              <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
                 <h3 className="font-bold text-xs text-gray-900 flex items-center gap-2">
                   <Navigation size={12} className="text-red-600" /> Carte en temps reel
                 </h3>
@@ -1035,7 +1035,7 @@ export default function AdminDrivers() {
                       <Popup>
                         <div className="text-xs min-w-[120px]">
                           <p className="font-bold text-sm">{d.name}</p>
-                          <p className="text-gray-500">{d.phone}</p>
+                          <p className="text-gray-500 dark:text-gray-400">{d.phone}</p>
                           <p className="capitalize text-gray-400">{d.vehicleType || "Moto"}</p>
                           {getDriverActiveOrders(d.id).length > 0 && (
                             <p className="text-orange-600 font-semibold mt-1">{getDriverActiveOrders(d.id).length} livraison(s)</p>
@@ -1048,10 +1048,10 @@ export default function AdminDrivers() {
               </div>
             </div>
 
-            <div className={`${mobilePanel === "list" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden`}>
-              <div className="p-3 border-b border-gray-100 space-y-2 shrink-0">
+            <div className={`${mobilePanel === "list" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden`}>
+              <div className="p-3 border-b border-gray-100 dark:border-gray-800 space-y-2 shrink-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-gray-900">Livreurs ({filteredDrivers.length})</h3>
+                  <h3 className="font-bold text-sm text-gray-900 dark:text-white">Livreurs ({filteredDrivers.length})</h3>
                   <button onClick={() => { setShowForm(true); setEditingDriver(null); setForm({ name: "", email: "", phone: "", password: "", vehicleType: "moto", vehiclePlate: "", driverLicense: "", commissionRate: 15 }); }}
                     data-testid="button-add-driver" className="bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-700 shadow-lg shadow-red-200">
                     <Plus size={14} />
@@ -1104,7 +1104,7 @@ export default function AdminDrivers() {
                               status === "busy" ? "bg-orange-100 text-orange-700" :
                               status === "online" ? "bg-green-100 text-green-700" :
                               status === "blocked" ? "bg-red-100 text-red-700" :
-                              "bg-gray-100 text-gray-500"
+                              "bg-gray-100 text-gray-500 dark:text-gray-400"
                             }`}>
                               {status === "busy" ? "OCCUPE" : status === "online" ? "DISPO" : status === "blocked" ? "BLOQUE" : "OFF"}
                             </span>

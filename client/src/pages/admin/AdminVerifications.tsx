@@ -89,33 +89,33 @@ export default function AdminVerifications() {
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
               <Clock size={18} className="text-orange-600" />
             </div>
             <div>
-              <p className="text-2xl font-black text-gray-900">{pendingDrivers.filter(d => d.verificationStatus === "pending").length}</p>
-              <p className="text-[10px] text-gray-500">En attente</p>
+              <p className="text-2xl font-black text-gray-900 dark:text-white">{pendingDrivers.filter(d => d.verificationStatus === "pending").length}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">En attente</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
               <AlertCircle size={18} className="text-red-600" />
             </div>
             <div>
-              <p className="text-2xl font-black text-gray-900">{pendingDrivers.filter(d => d.verificationStatus === "rejected").length}</p>
-              <p className="text-[10px] text-gray-500">Rejetes</p>
+              <p className="text-2xl font-black text-gray-900 dark:text-white">{pendingDrivers.filter(d => d.verificationStatus === "rejected").length}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400">Rejetes</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="flex gap-4" style={{ height: "calc(100vh - 240px)", minHeight: 400 }}>
-        <div className="w-[320px] shrink-0 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="px-4 py-3 border-b border-gray-100">
+        <div className="w-[320px] shrink-0 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
             <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
               <Shield size={14} className="text-red-600" /> Demandes ({pendingDrivers.length})
             </h3>
@@ -141,7 +141,7 @@ export default function AdminVerifications() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-xs text-gray-900 truncate">{d.name}</p>
-                      <p className="text-[10px] text-gray-500">{d.email}</p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">{d.email}</p>
                       <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full mt-1 inline-block ${
                         d.verificationStatus === "pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"
                       }`}>
@@ -156,10 +156,10 @@ export default function AdminVerifications() {
           </div>
         </div>
 
-        <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="flex-1 bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden flex flex-col">
           {selected ? (
             <div className="flex-1 overflow-y-auto">
-              <div className="p-5 border-b border-gray-100">
+              <div className="p-5 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-4">
                   {selected.profilePhotoUrl ? (
                     <img src={selected.profilePhotoUrl} alt="" className="w-16 h-16 rounded-2xl object-cover cursor-pointer hover:opacity-80"
@@ -170,8 +170,8 @@ export default function AdminVerifications() {
                     </div>
                   )}
                   <div>
-                    <h2 className="text-lg font-black text-gray-900" data-testid="verification-driver-name">{selected.name}</h2>
-                    <p className="text-xs text-gray-500">{selected.email} - {selected.phone}</p>
+                    <h2 className="text-lg font-black text-gray-900 dark:text-white" data-testid="verification-driver-name">{selected.name}</h2>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{selected.email} - {selected.phone}</p>
                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full mt-1 inline-block ${
                       selected.verificationStatus === "pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"
                     }`}>
@@ -215,7 +215,7 @@ export default function AdminVerifications() {
                                 <p className="text-xs text-red-500 italic">Non fourni</p>
                               )
                             ) : (
-                              <p className="text-sm text-gray-900">{value || <span className="text-red-500 italic">Non renseigne</span>}</p>
+                              <p className="text-sm text-gray-900 dark:text-white">{value || <span className="text-red-500 italic">Non renseigne</span>}</p>
                             )}
                           </div>
                         </div>
@@ -224,7 +224,7 @@ export default function AdminVerifications() {
                   })}
                 </div>
 
-                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                   <button onClick={() => handleApprove(selected.id)} disabled={submitting} data-testid="button-approve-driver"
                     className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-200 flex items-center justify-center gap-2 disabled:opacity-50">
                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
@@ -242,7 +242,7 @@ export default function AdminVerifications() {
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <Eye size={48} className="mx-auto mb-3 opacity-20" />
-                <p className="font-bold text-gray-500">Selectionnez une demande</p>
+                <p className="font-bold text-gray-500 dark:text-gray-400">Selectionnez une demande</p>
                 <p className="text-xs mt-1">pour examiner les informations du livreur</p>
               </div>
             </div>
