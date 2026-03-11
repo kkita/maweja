@@ -2,7 +2,8 @@ import express from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
-import { seedDatabase } from "./seed";
+// seedDatabase importé mais désactivé — données de production uniquement
+// import { seedDatabase } from "./seed";
 import { db } from "./db";
 import { sql } from "drizzle-orm";
 
@@ -296,8 +297,6 @@ app.use((req: any, res, next) => {
       ('Autre', 'HelpCircle', 'Autres services sur demande')
     `);
   }
-
-  await seedDatabase();
 
   const server = await registerRoutes(app);
 
