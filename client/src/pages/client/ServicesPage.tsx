@@ -67,7 +67,15 @@ export default function ServicesPage() {
       setPreviewItem(null);
       return;
     }
-    navigate(`/services/new?categoryId=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`);
+    sessionStorage.setItem("maweja_service_request", JSON.stringify({
+      categoryId: cat.id,
+      categoryName: cat.name,
+      catalogItemId: null,
+      catalogItemName: null,
+      catalogItemPrice: null,
+      catalogItemImage: null,
+    }));
+    navigate("/services/new");
   };
 
   const handleSelectModel = (item: ServiceCatalogItem) => {
@@ -76,16 +84,16 @@ export default function ServicesPage() {
 
   const handleRequestQuote = () => {
     if (!selectedCatalogCategory) return;
-    const params = new URLSearchParams({
-      categoryId: String(selectedCatalogCategory.id),
+    const catalogData = {
+      categoryId: selectedCatalogCategory.id,
       categoryName: selectedCatalogCategory.name,
-    });
-    if (selectedItem) {
-      params.set("catalogItemId", String(selectedItem.id));
-      params.set("catalogItemName", selectedItem.name);
-      if (selectedItem.price) params.set("catalogItemPrice", selectedItem.price);
-    }
-    navigate(`/services/new?${params.toString()}`);
+      catalogItemId: selectedItem?.id || null,
+      catalogItemName: selectedItem?.name || null,
+      catalogItemPrice: selectedItem?.price || null,
+      catalogItemImage: selectedItem?.imageUrl || null,
+    };
+    sessionStorage.setItem("maweja_service_request", JSON.stringify(catalogData));
+    navigate("/services/new");
   };
 
   const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {

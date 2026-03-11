@@ -194,6 +194,13 @@ export const fr = {
     selectedModel: "Modele choisi",
     browseCatalog: "Voir le catalogue",
     noCatalogItems: "Aucun modele disponible pour le moment",
+    priceTooLow: "Le prix ne peut pas etre inferieur au prix minimum du modele",
+    yourPrice: "Votre prix propose",
+    quickRequest: "Demande rapide",
+    quickRequestDesc: "Remplissez les informations essentielles pour recevoir votre devis",
+    optionalNotes: "Notes supplementaires (optionnel)",
+    optionalNotesPlaceholder: "Ajoutez des precisions si necessaire...",
+    minPrice: "Prix minimum",
   },
   driver: {
     dashboard: "Tableau de bord",

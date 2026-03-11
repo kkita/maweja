@@ -8,26 +8,37 @@ import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   ArrowLeft, Calendar, Clock, User, Phone, MapPin, Tag, DollarSign,
-  Camera, FileText, MessageCircle, Send, CheckCircle2, Loader2
+  Camera, FileText, MessageCircle, Send, CheckCircle2, Loader2, AlertTriangle
 } from "lucide-react";
 import type { ServiceRequest } from "@shared/schema";
 
+function parseMinPrice(priceStr: string): number | null {
+  const match = priceStr.match(/\$(\d+)/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
 export default function ServiceRequestPage() {
-  const [, navigate] = useLocation();
+  const [currentPath, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useI18n();
 
-  const params = new URLSearchParams(window.location.search);
-  const categoryId = params.get("categoryId");
-  const categoryName = params.get("categoryName") || "";
-  const catalogItemId = params.get("catalogItemId");
-  const catalogItemName = params.get("catalogItemName");
-  const catalogItemPrice = params.get("catalogItemPrice");
-
-  const pathParts = window.location.pathname.split("/");
+  const pathParts = currentPath.split("/");
   const requestId = pathParts[pathParts.length - 1];
   const isViewMode = pathParts.includes("request") && requestId && !isNaN(Number(requestId));
+
+  const stored = sessionStorage.getItem("maweja_service_request");
+  const catalogData = stored ? JSON.parse(stored) : null;
+
+  const categoryId = catalogData?.categoryId || null;
+  const categoryName = catalogData?.categoryName || "";
+  const catalogItemId = catalogData?.catalogItemId || null;
+  const catalogItemName = catalogData?.catalogItemName || null;
+  const catalogItemPrice = catalogData?.catalogItemPrice || null;
+  const catalogItemImage = catalogData?.catalogItemImage || null;
+
+  const hasCatalogModel = !!catalogItemName;
+  const minPrice = catalogItemPrice ? parseMinPrice(catalogItemPrice) : null;
 
   const { data: existingRequest } = useQuery<ServiceRequest>({
     queryKey: ["/api/service-requests", requestId],
@@ -42,12 +53,11 @@ export default function ServiceRequestPage() {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [serviceType, setServiceType] = useState("");
-  const [budget, setBudget] = useState(catalogItemPrice || "");
-  const [additionalInfo, setAdditionalInfo] = useState(
-    catalogItemName ? `${t.services.selectedModel}: ${catalogItemName}${catalogItemPrice ? ` (${catalogItemPrice})` : ""}` : ""
-  );
+  const [budget, setBudget] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
   const [contactMethod, setContactMethod] = useState("phone");
   const [submitted, setSubmitted] = useState(false);
+  const [priceError, setPriceError] = useState("");
 
   useEffect(() => {
     if (user && !fullName) {
@@ -79,24 +89,55 @@ export default function ServiceRequestPage() {
     },
   });
 
+  const validatePrice = (value: string): boolean => {
+    if (!minPrice || !value.trim()) return true;
+    const numMatch = value.match(/(\d+)/);
+    if (!numMatch) return true;
+    const enteredPrice = parseInt(numMatch[1], 10);
+    if (enteredPrice < minPrice) {
+      setPriceError(`${t.services.priceTooLow} (${t.services.minPrice}: $${minPrice})`);
+      return false;
+    }
+    setPriceError("");
+    return true;
+  };
+
+  const handleBudgetChange = (value: string) => {
+    setBudget(value);
+    if (priceError) validatePrice(value);
+  };
+
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    if (!fullName.trim() || !phone.trim() || !address.trim()) {
+
+    if (!phone.trim()) {
+      toast({ title: t.common.error, description: t.common.phone, variant: "destructive" });
+      return;
+    }
+
+    if (hasCatalogModel && budget.trim() && !validatePrice(budget)) {
+      return;
+    }
+
+    if (!hasCatalogModel && (!fullName.trim() || !phone.trim() || !address.trim())) {
       toast({ title: t.common.error, description: t.common.error, variant: "destructive" });
       return;
     }
+
     createMutation.mutate({
       categoryId: Number(categoryId),
       categoryName,
       scheduledType,
       scheduledDate: scheduledType === "scheduled" ? scheduledDate : null,
       scheduledTime: scheduledType === "scheduled" ? scheduledTime : null,
-      fullName,
+      fullName: fullName || user?.name || "",
       phone,
-      address,
+      address: address || user?.address || "",
       serviceType: catalogItemName ? `${catalogItemName}${serviceType ? ` - ${serviceType}` : ""}` : serviceType,
-      budget,
-      additionalInfo,
+      budget: budget || catalogItemPrice || "",
+      additionalInfo: hasCatalogModel
+        ? `[${t.services.selectedModel}: ${catalogItemName}${catalogItemPrice ? ` (${catalogItemPrice})` : ""}]${catalogItemImage ? `\n[Image: ${catalogItemImage}]` : ""}${additionalInfo ? `\n${additionalInfo}` : ""}`
+        : additionalInfo,
       contactMethod,
     });
   };
@@ -112,12 +153,19 @@ export default function ServiceRequestPage() {
             </div>
             <h2 className="text-xl font-black text-gray-900 mb-2" data-testid="text-request-sent">{t.services.requestSent}</h2>
             <p className="text-sm text-gray-500 mb-6">{t.services.requestSentDesc}</p>
+
+            {hasCatalogModel && catalogItemImage && (
+              <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100">
+                <img src={catalogItemImage} alt={catalogItemName || ""} className="w-full h-48 object-cover" />
+              </div>
+            )}
+
             <div className="bg-gray-50 rounded-2xl p-4 mb-6 text-left">
               <p className="text-xs font-semibold text-gray-500 mb-2">{t.services.summary}</p>
               <div className="space-y-1">
                 <p className="text-sm text-gray-700"><strong>{t.services.service}:</strong> {categoryName}</p>
                 {catalogItemName && <p className="text-sm text-gray-700"><strong>{t.services.selectedModel}:</strong> {catalogItemName}</p>}
-                {serviceType && <p className="text-sm text-gray-700"><strong>{t.services.type}:</strong> {serviceType}</p>}
+                {(budget || catalogItemPrice) && <p className="text-sm text-gray-700"><strong>{t.services.yourPrice}:</strong> {budget || catalogItemPrice}</p>}
                 <p className="text-sm text-gray-700"><strong>{t.services.contact}:</strong> {contactMethod === "whatsapp" ? "WhatsApp" : contactMethod === "phone" ? t.services.telephone : t.common.email}</p>
               </div>
             </div>
@@ -189,6 +237,127 @@ export default function ServiceRequestPage() {
     );
   }
 
+  if (hasCatalogModel) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <ClientNav />
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="flex items-center gap-3 mb-4">
+            <button onClick={() => navigate("/services")} className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200" data-testid="button-back">
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900" data-testid="text-form-title">{t.services.quickRequest}</h2>
+              <p className="text-xs text-gray-500">{categoryName}</p>
+            </div>
+          </div>
+
+          {catalogItemImage && (
+            <div className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm mb-4">
+              <img src={catalogItemImage} alt={catalogItemName || ""} className="w-full h-56 object-cover" data-testid="img-selected-model" />
+            </div>
+          )}
+
+          <div className="bg-red-50 rounded-2xl border border-red-200 p-4 mb-4 flex items-center gap-3">
+            {catalogItemImage && (
+              <img src={catalogItemImage} alt={catalogItemName || ""} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300" />
+            )}
+            <div className="flex-1">
+              <p className="text-[10px] font-semibold text-red-500 uppercase">{t.services.selectedModel}</p>
+              <p className="font-bold text-sm text-gray-900" data-testid="text-model-name">{catalogItemName}</p>
+              {catalogItemPrice && <p className="text-xs text-red-600 font-semibold">{catalogItemPrice}</p>}
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-400 mb-4 px-1">{t.services.quickRequestDesc}</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+              <div>
+                <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">{t.common.phone} *</label>
+                <div className="relative">
+                  <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
+                    data-testid="input-phone" placeholder={t.services.phonePlaceholder}
+                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">{t.common.address}</label>
+                <div className="relative">
+                  <MapPin size={14} className="absolute left-3 top-3 text-gray-400" />
+                  <input type="text" value={address} onChange={e => setAddress(e.target.value)}
+                    data-testid="input-address" placeholder={t.services.addressPlaceholder}
+                    className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                  <DollarSign size={12} />
+                  {t.services.yourPrice}
+                  {minPrice && <span className="text-gray-400 font-normal">({t.services.minPrice}: ${minPrice})</span>}
+                </label>
+                <div className="relative">
+                  <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="text" value={budget} onChange={e => handleBudgetChange(e.target.value)}
+                    onBlur={() => validatePrice(budget)}
+                    data-testid="input-budget"
+                    placeholder={catalogItemPrice ? `${t.services.minPrice}: ${catalogItemPrice}` : t.services.budgetPlaceholder}
+                    className={`w-full pl-9 pr-3 py-2.5 bg-gray-50 border rounded-xl text-sm focus:ring-2 focus:outline-none ${
+                      priceError ? "border-red-400 focus:ring-red-500 bg-red-50" : "border-gray-200 focus:ring-red-500"
+                    }`} />
+                </div>
+                {priceError && (
+                  <div className="flex items-center gap-1.5 mt-1.5 text-red-600" data-testid="text-price-error">
+                    <AlertTriangle size={12} />
+                    <p className="text-[11px] font-semibold">{priceError}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">{t.services.optionalNotes}</label>
+              <textarea value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)}
+                data-testid="input-additional-info" placeholder={t.services.optionalNotesPlaceholder}
+                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm resize-none h-20 focus:ring-2 focus:ring-red-500 focus:outline-none" />
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <MessageCircle size={16} className="text-red-500" />
+                {t.services.preferredContact}
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: "phone", label: t.services.telephone, icon: Phone },
+                  { key: "whatsapp", label: t.services.whatsapp, icon: MessageCircle },
+                  { key: "email", label: t.common.email, icon: FileText },
+                ].map(opt => (
+                  <button key={opt.key} type="button" onClick={() => setContactMethod(opt.key)}
+                    data-testid={`button-contact-${opt.key}`}
+                    className={`py-3 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${contactMethod === opt.key ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 text-gray-600 border border-gray-200"}`}>
+                    <opt.icon size={16} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button type="submit" disabled={createMutation.isPending}
+              data-testid="button-submit-request"
+              className="w-full bg-red-600 text-white py-4 rounded-2xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 shadow-xl shadow-red-200 flex items-center justify-center gap-2">
+              {createMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={16} />}
+              {createMutation.isPending ? t.services.sending : t.services.sendRequest}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   const typeOptions = serviceTypeOptions[categoryName] || serviceTypeOptions["Autre"];
 
   return (
@@ -204,14 +373,6 @@ export default function ServiceRequestPage() {
             <p className="text-xs text-gray-500">{categoryName}</p>
           </div>
         </div>
-
-        {catalogItemName && (
-          <div className="bg-red-50 rounded-2xl border border-red-200 p-4 mb-4">
-            <p className="text-xs font-semibold text-red-700 mb-1">{t.services.selectedModel}</p>
-            <p className="font-bold text-sm text-gray-900">{catalogItemName}</p>
-            {catalogItemPrice && <p className="text-xs text-red-600 font-semibold mt-0.5">{catalogItemPrice}</p>}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">

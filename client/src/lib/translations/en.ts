@@ -194,6 +194,13 @@ export const en = {
     selectedModel: "Selected model",
     browseCatalog: "Browse catalog",
     noCatalogItems: "No models available at the moment",
+    priceTooLow: "The price cannot be lower than the model's minimum price",
+    yourPrice: "Your proposed price",
+    quickRequest: "Quick request",
+    quickRequestDesc: "Fill in the essential information to receive your quote",
+    optionalNotes: "Additional notes (optional)",
+    optionalNotesPlaceholder: "Add any details if needed...",
+    minPrice: "Minimum price",
   },
   driver: {
     dashboard: "Dashboard",
