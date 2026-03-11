@@ -145,6 +145,7 @@ function AppRoutes() {
       <Route path="/order/:id" component={OrderDetailPage} />
       <Route path="/tracking/:id" component={TrackingPage} />
       <Route path="/addresses" component={AddressPage} />
+      <Route path="/services" component={ServicesPage} />
       <Route component={ClientHome} />
     </Switch>
   );

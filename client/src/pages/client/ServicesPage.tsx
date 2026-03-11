@@ -7,12 +7,12 @@ import { useI18n } from "../../lib/i18n";
 import { authFetch } from "../../lib/queryClient";
 import {
   Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle,
-  Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, Plus, X, Image
+  Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, ArrowLeft, Image, Scissors, X
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 
 const iconMap: Record<string, any> = {
-  Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle, Briefcase,
+  Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle, Briefcase, Scissors,
 };
 
 const categoryColors = [
@@ -32,6 +32,7 @@ export default function ServicesPage() {
   const { t } = useI18n();
   const [selectedCatalogCategory, setSelectedCatalogCategory] = useState<ServiceCategory | null>(null);
   const [selectedItem, setSelectedItem] = useState<ServiceCatalogItem | null>(null);
+  const [previewItem, setPreviewItem] = useState<ServiceCatalogItem | null>(null);
 
   const { data: categories = [], isLoading: catsLoading } = useQuery<ServiceCategory[]>({
     queryKey: ["/api/service-categories"],
@@ -56,17 +57,21 @@ export default function ServicesPage() {
   const categoryHasCatalogItems = (catId: number) =>
     allCatalogItems.some(item => item.categoryId === catId && item.isActive);
 
+  const catalogItemCount = (catId: number) =>
+    allCatalogItems.filter(item => item.categoryId === catId && item.isActive).length;
+
   const handleCategoryClick = (cat: ServiceCategory) => {
     if (categoryHasCatalogItems(cat.id)) {
       setSelectedCatalogCategory(cat);
       setSelectedItem(null);
+      setPreviewItem(null);
       return;
     }
     navigate(`/services/new?categoryId=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`);
   };
 
   const handleSelectModel = (item: ServiceCatalogItem) => {
-    setSelectedItem(item);
+    setSelectedItem(prev => prev?.id === item.id ? null : item);
   };
 
   const handleRequestQuote = () => {
@@ -91,21 +96,76 @@ export default function ServicesPage() {
     completed: { label: t.services.statusCompleted, color: "text-gray-600", bg: "bg-gray-50", icon: CheckCircle },
   };
 
+  if (previewItem) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <ClientNav />
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="flex items-center gap-3 mb-4">
+            <button onClick={() => setPreviewItem(null)}
+              className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200" data-testid="button-back-preview">
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">{previewItem.name}</h2>
+              <p className="text-xs text-gray-500">{selectedCatalogCategory?.name}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+            <div className="relative w-full" style={{ paddingBottom: "100%" }}>
+              <img src={previewItem.imageUrl} alt={previewItem.name}
+                className="absolute inset-0 w-full h-full object-cover" data-testid="img-preview-full" />
+            </div>
+            <div className="p-5">
+              <h3 className="text-xl font-black text-gray-900">{previewItem.name}</h3>
+              {previewItem.description && <p className="text-sm text-gray-500 mt-2">{previewItem.description}</p>}
+              {previewItem.price && (
+                <div className="mt-3 inline-block bg-red-50 text-red-700 font-bold text-lg px-4 py-2 rounded-xl">
+                  {previewItem.price}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setSelectedItem(previewItem);
+              setPreviewItem(null);
+            }}
+            data-testid="button-select-from-preview"
+            className="w-full bg-red-600 text-white py-4 rounded-2xl text-sm font-bold hover:bg-red-700 shadow-xl shadow-red-200 mb-3"
+          >
+            {t.services.selectModel}
+          </button>
+          <button
+            onClick={() => setPreviewItem(null)}
+            className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl text-sm font-semibold"
+          >
+            {t.common.back}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (selectedCatalogCategory) {
     return (
       <div className="min-h-screen bg-gray-50 pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-2">
             <button onClick={() => { setSelectedCatalogCategory(null); setSelectedItem(null); }}
               className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200" data-testid="button-back-catalog">
-              <X size={18} />
+              <ArrowLeft size={18} />
             </button>
-            <div>
+            <div className="flex-1">
               <h2 className="text-lg font-bold text-gray-900" data-testid="text-catalog-title">{selectedCatalogCategory.name}</h2>
-              <p className="text-xs text-gray-500">{t.services.catalog}</p>
+              <p className="text-xs text-gray-500">{t.services.catalog} • {catalogItemsForCategory.length} {t.services.catalog.toLowerCase().includes("model") ? "" : "modèles"}</p>
             </div>
           </div>
+
+          <p className="text-sm text-gray-400 mb-5 ml-[52px]">{t.services.browseCatalog}</p>
 
           {catalogItemsForCategory.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
@@ -114,52 +174,78 @@ export default function ServicesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 mb-6">
-              {catalogItemsForCategory.map(item => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelectModel(item)}
-                  data-testid={`catalog-item-${item.id}`}
-                  className={`bg-white rounded-2xl border-2 overflow-hidden text-left transition-all ${
-                    selectedItem?.id === item.id ? "border-red-500 shadow-lg shadow-red-100" : "border-gray-100 hover:border-red-200"
-                  }`}
-                >
-                  <div className="relative h-32">
-                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                    {selectedItem?.id === item.id && (
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
-                        <CheckCircle size={14} className="text-white" />
+              {catalogItemsForCategory.map(item => {
+                const isSelected = selectedItem?.id === item.id;
+                return (
+                  <div key={item.id} className={`bg-white rounded-2xl border-2 overflow-hidden transition-all ${
+                    isSelected ? "border-red-500 shadow-lg shadow-red-100 scale-[1.02]" : "border-gray-100 hover:border-red-200 hover:shadow-md"
+                  }`} data-testid={`catalog-item-${item.id}`}>
+                    <button
+                      onClick={() => setPreviewItem(item)}
+                      className="w-full text-left"
+                      data-testid={`catalog-preview-${item.id}`}
+                    >
+                      <div className="relative h-40">
+                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
+                            <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+                              <CheckCircle size={22} className="text-white" />
+                            </div>
+                          </div>
+                        )}
+                        {item.price && (
+                          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-lg">
+                            {item.price}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </button>
+                    <div className="p-3">
+                      <h4 className="font-bold text-xs text-gray-900 line-clamp-1">{item.name}</h4>
+                      {item.description && <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{item.description}</p>}
+                      <button
+                        onClick={() => handleSelectModel(item)}
+                        data-testid={`catalog-select-${item.id}`}
+                        className={`w-full mt-2 py-2 rounded-xl text-[11px] font-bold transition-all ${
+                          isSelected
+                            ? "bg-red-600 text-white"
+                            : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                        }`}
+                      >
+                        {isSelected ? "✓ " + t.services.selectedModel : t.services.selectModel}
+                      </button>
+                    </div>
                   </div>
-                  <div className="p-3">
-                    <h4 className="font-bold text-xs text-gray-900 line-clamp-1">{item.name}</h4>
-                    {item.description && <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
-                    {item.price && <p className="text-xs font-semibold text-red-600 mt-1">{item.price}</p>}
-                  </div>
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
 
           {selectedItem && (
-            <div className="bg-red-50 rounded-2xl border border-red-200 p-4 mb-4">
-              <p className="text-xs font-semibold text-red-700 mb-1">{t.services.selectedModel}</p>
-              <div className="flex items-center gap-3">
-                <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-12 h-12 rounded-xl object-cover" />
-                <div>
-                  <p className="font-bold text-sm text-gray-900">{selectedItem.name}</p>
-                  {selectedItem.price && <p className="text-xs text-red-600 font-semibold">{selectedItem.price}</p>}
-                </div>
+            <div className="bg-red-50 rounded-2xl border border-red-200 p-4 mb-4 flex items-center gap-3">
+              <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300" />
+              <div className="flex-1">
+                <p className="text-[10px] font-semibold text-red-500 uppercase">{t.services.selectedModel}</p>
+                <p className="font-bold text-sm text-gray-900">{selectedItem.name}</p>
+                {selectedItem.price && <p className="text-xs text-red-600 font-semibold">{selectedItem.price}</p>}
               </div>
+              <button onClick={() => setSelectedItem(null)} className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center" data-testid="button-deselect">
+                <X size={14} className="text-red-600" />
+              </button>
             </div>
           )}
 
           <button
             onClick={handleRequestQuote}
             data-testid="button-request-quote"
-            className="w-full bg-red-600 text-white py-4 rounded-2xl text-sm font-bold hover:bg-red-700 shadow-xl shadow-red-200"
+            className={`w-full py-4 rounded-2xl text-sm font-bold shadow-xl transition-all ${
+              selectedItem
+                ? "bg-red-600 text-white hover:bg-red-700 shadow-red-200"
+                : "bg-gray-800 text-white hover:bg-gray-900 shadow-gray-200"
+            }`}
           >
-            {t.services.requestQuote}
+            {selectedItem ? `${t.services.requestQuote} — ${selectedItem.name}` : t.services.requestQuote}
           </button>
         </div>
       </div>
@@ -183,7 +269,8 @@ export default function ServicesPage() {
           <div className="grid grid-cols-2 gap-3 mb-8">
             {activeCategories.map((cat, i) => {
               const Icon = iconMap[cat.icon] || Briefcase;
-              const showCatalogBadge = categoryHasCatalogItems(cat.id);
+              const hasCatalog = categoryHasCatalogItems(cat.id);
+              const itemCount = catalogItemCount(cat.id);
               return (
                 <button
                   key={cat.id}
@@ -196,9 +283,9 @@ export default function ServicesPage() {
                   </div>
                   <h3 className="font-bold text-sm text-gray-900">{cat.name}</h3>
                   <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{cat.description}</p>
-                  {showCatalogBadge && (
-                    <span className="inline-block mt-2 text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                      {t.services.browseCatalog}
+                  {hasCatalog && (
+                    <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                      📸 {itemCount} modèles
                     </span>
                   )}
                   <ChevronRight size={16} className="absolute top-4 right-3 text-gray-300 group-hover:text-red-500 transition-colors" />
