@@ -39,7 +39,6 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const isProduction = process.env.NODE_ENV === "production";
 const PgSession = connectPgSimple(session);
 
 const pgStore = new PgSession({
@@ -54,9 +53,10 @@ const sessionOpts = {
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: isProduction,
+    // Replit gère HTTPS au niveau du proxy — secure: false est correct ici
+    secure: false,
     httpOnly: true,
-    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    sameSite: "lax" as const,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 };
