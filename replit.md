@@ -21,6 +21,24 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - **State**: TanStack React Query + Context API
 - **File uploads**: multer (uploads/ directory, 5MB limit, jpg/png/webp)
 
+## i18n (Internationalization)
+- Full French/English support across all interfaces
+- Translation files: `client/src/lib/translations/fr.ts` and `en.ts`
+- i18n context: `client/src/lib/i18n.tsx` with `useI18n()` hook returning `{ lang, setLang, t, hasChosenLanguage, setHasChosenLanguage }`
+- Language stored in localStorage: `maweja_lang` (value) + `maweja_lang_chosen` (flag)
+- Splash screen: Shows on first visit for non-admin users, requires language selection before app access
+- Admin: Language flag dropdown in header (AdminLayout), no splash screen
+- Client/Driver: Language selector in Settings page, splash screen on first visit
+- All nav labels, page titles, form fields, status labels, and UI text use translation keys
+
+## Service Catalog
+- Table: `service_catalog_items` (id, categoryId, name, description, imageUrl, price, isActive, sortOrder)
+- Admin manages catalog items via "Catalogue" tab in AdminServices page
+- Client: Categories with active catalog items show "Browse catalog" badge; clicking opens image gallery grid
+- Client can select a model from gallery, then request a quote with the selection pre-filled
+- Data-driven: Any category with active catalog items gets catalog browsing (not hardcoded by name)
+- API: CRUD at `/api/service-catalog`
+
 ## Key Files
 - `server/index.ts` - Server entry, DB setup, table creation with ALTER TABLE migrations
 - `server/routes.ts` - API routes (auth, restaurants, orders, drivers CRUD, chat, wallet, finance, CSV export, file upload, driver onboarding/verification)
@@ -81,8 +99,10 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - AddressPage - Leaflet map with draggable marker, Nominatim reverse geocoding, saved addresses CRUD with labels (Maison/Bureau/Eglise/Autre)
 - TrackingPage - Real-time order tracking
 - WalletPage - Wallet balance, top-up, transaction history
-- ServicesPage - Browse service categories, view own service requests
-- ServiceRequestPage - Create a devis/quote with scheduling, contact preference, budget
+- ServicesPage - Browse service categories, catalog image gallery for categories with catalog items, view own service requests
+- ServiceRequestPage - Create a devis/quote with scheduling, contact preference, budget, selected catalog model info
+- ClientSettings - Language selector (FR/EN), notifications, privacy, support, about
+- DriverSettings - Driver profile info, language selector, notifications, privacy, support
 
 ### Driver
 - DriverOnboarding - First-login profile completion + waiting screen (gates unverified drivers)
@@ -102,7 +122,7 @@ Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Cli
 - AdminFinance - Revenue/expense tracking, category breakdown, daily chart, CSV export
 - AdminSettings - App configuration, WhatsApp number setting
 - AdminVerifications - Review driver onboarding submissions, approve or reject fields individually
-- AdminServices - Manage service categories + view/update service requests with notes/status
+- AdminServices - Manage service categories + view/update service requests with notes/status + catalog management (add/edit/delete catalog items with images, filter by category)
 - AdminAds - CRUD advertisements (images/videos), toggle active, reorder
 - AdminNotifications - Broadcast push notifications with client segmentation (frequent buyers, service users, inactive, high value, new clients)
 
@@ -151,7 +171,7 @@ Cash, Mobile Money (M-Pesa/Orange Money/Airtel), Wallet MAWEJA, Google Pay, POS,
 - MAWEJA10: 10% off
 - MAWEJA20: 20% off
 - LIVRAISON: Free delivery
-- BIENVENUE: 2000 FC off
+- BIENVENUE: $2000 off
 
 ## Checkout Flow
 - Cart stores checkout data in sessionStorage("maweja_checkout") → CheckoutPage reads it

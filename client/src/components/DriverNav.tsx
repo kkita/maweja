@@ -1,17 +1,19 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
-import { Home, Package, DollarSign, LogOut, Power, MessageCircle, Bell } from "lucide-react";
+import { Home, Package, DollarSign, LogOut, Power, MessageCircle, Settings } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
 import type { Notification as Notif } from "@shared/schema";
+import { useI18n } from "../lib/i18n";
 
 export default function DriverNav() {
   const [location, navigate] = useLocation();
   const { user, logout, setUser } = useAuth();
+  const { t } = useI18n();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
 
   const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
@@ -51,10 +53,11 @@ export default function DriverNav() {
   };
 
   const links = [
-    { path: "/", icon: Home, label: "Accueil", badge: unreadNotifCount },
-    { path: "/driver/orders", icon: Package, label: "Livraisons", badge: 0 },
-    { path: "/driver/chat", icon: MessageCircle, label: "Messages", badge: unreadChatCount },
-    { path: "/driver/earnings", icon: DollarSign, label: "Revenus", badge: 0 },
+    { path: "/", icon: Home, label: t.driver.home, badge: unreadNotifCount },
+    { path: "/driver/orders", icon: Package, label: t.driver.orders, badge: 0 },
+    { path: "/driver/chat", icon: MessageCircle, label: t.driver.messages, badge: unreadChatCount },
+    { path: "/driver/earnings", icon: DollarSign, label: t.driver.revenue, badge: 0 },
+    { path: "/driver/settings", icon: Settings, label: t.driver.settings, badge: 0 },
   ];
 
   return (
@@ -65,7 +68,7 @@ export default function DriverNav() {
             <img src={logoImg} alt="MAWEJA" className="w-9 h-9 rounded-xl object-cover" />
             <div>
               <h1 className="text-lg font-black text-gray-900 leading-tight">MAWEJA</h1>
-              <p className="text-[10px] text-gray-400 font-medium -mt-0.5">Espace Livreur</p>
+              <p className="text-[10px] text-gray-400 font-medium -mt-0.5">{t.driver.dashboard}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -77,7 +80,7 @@ export default function DriverNav() {
               }`}
             >
               <Power size={12} />
-              {isOnline ? "En ligne" : "Hors ligne"}
+              {isOnline ? t.driver.online : t.driver.offline}
             </button>
             <button onClick={logout} className="text-gray-400 hover:text-red-600" data-testid="button-logout">
               <LogOut size={18} />
@@ -94,13 +97,13 @@ export default function DriverNav() {
               <button
                 key={l.path}
                 onClick={() => navigate(l.path)}
-                data-testid={`driver-nav-${l.label.toLowerCase()}`}
+                data-testid={`driver-nav-${l.path.replace(/\//g, "") || "home"}`}
                 className={`flex-1 flex flex-col items-center py-2.5 transition-colors ${isActive ? "text-red-600" : "text-gray-400"}`}
               >
                 <div className="relative">
                   <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
                   {l.badge > 0 && (
-                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`driver-badge-${l.label.toLowerCase()}`}>
+                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`driver-badge-${l.path.replace(/\//g, "") || "home"}`}>
                       {l.badge > 99 ? "99+" : l.badge}
                     </span>
                   )}

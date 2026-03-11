@@ -2,7 +2,7 @@ import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
-  serviceCategories, serviceRequests, advertisements,
+  serviceCategories, serviceRequests, serviceCatalogItems, advertisements,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -11,6 +11,7 @@ import {
   type SavedAddress, type InsertSavedAddress,
   type ServiceCategory, type InsertServiceCategory,
   type ServiceRequest, type InsertServiceRequest,
+  type ServiceCatalogItem, type InsertServiceCatalogItem,
   type Advertisement, type InsertAdvertisement,
 } from "@shared/schema";
 
@@ -75,6 +76,12 @@ export interface IStorage {
   getServiceRequest(id: number): Promise<ServiceRequest | undefined>;
   createServiceRequest(req: InsertServiceRequest): Promise<ServiceRequest>;
   updateServiceRequest(id: number, data: Partial<ServiceRequest>): Promise<ServiceRequest | undefined>;
+
+  getServiceCatalogItems(categoryId?: number): Promise<ServiceCatalogItem[]>;
+  getServiceCatalogItem(id: number): Promise<ServiceCatalogItem | undefined>;
+  createServiceCatalogItem(item: InsertServiceCatalogItem): Promise<ServiceCatalogItem>;
+  updateServiceCatalogItem(id: number, data: Partial<ServiceCatalogItem>): Promise<ServiceCatalogItem | undefined>;
+  deleteServiceCatalogItem(id: number): Promise<void>;
 
   getAdvertisements(activeOnly?: boolean): Promise<Advertisement[]>;
   getAdvertisement(id: number): Promise<Advertisement | undefined>;
@@ -409,6 +416,30 @@ export class DatabaseStorage implements IStorage {
   async updateServiceRequest(id: number, data: Partial<ServiceRequest>) {
     const [updated] = await db.update(serviceRequests).set({ ...data, updatedAt: new Date() }).where(eq(serviceRequests.id, id)).returning();
     return updated;
+  }
+
+  async getServiceCatalogItems(categoryId?: number) {
+    const where = categoryId ? eq(serviceCatalogItems.categoryId, categoryId) : undefined;
+    return db.select().from(serviceCatalogItems).where(where).orderBy(serviceCatalogItems.sortOrder);
+  }
+
+  async getServiceCatalogItem(id: number) {
+    const [item] = await db.select().from(serviceCatalogItems).where(eq(serviceCatalogItems.id, id));
+    return item;
+  }
+
+  async createServiceCatalogItem(item: InsertServiceCatalogItem) {
+    const [created] = await db.insert(serviceCatalogItems).values(item).returning();
+    return created;
+  }
+
+  async updateServiceCatalogItem(id: number, data: Partial<ServiceCatalogItem>) {
+    const [updated] = await db.update(serviceCatalogItems).set(data).where(eq(serviceCatalogItems.id, id)).returning();
+    return updated;
+  }
+
+  async deleteServiceCatalogItem(id: number) {
+    await db.delete(serviceCatalogItems).where(eq(serviceCatalogItems.id, id));
   }
 
   async getAdvertisements(activeOnly?: boolean) {

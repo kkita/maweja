@@ -308,12 +308,17 @@ export async function registerRoutes(app) {
     });
     app.post("/api/orders", requireAuth, async (req, res) => {
         const sessionUserId = req.session.userId;
+        const sessionUser = await storage.getUser(sessionUserId);
+        let clientId = sessionUserId;
+        if (sessionUser?.role === "admin" && req.body.clientId) {
+            clientId = req.body.clientId;
+        }
         const orderNumber = `MAW-${Date.now().toString(36).toUpperCase()}`;
         const commission = Math.round(req.body.subtotal * 0.15);
         const restaurant = await storage.getRestaurant(req.body.restaurantId);
         const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
         const estimatedDelivery = new Date(Date.now() + deliveryMinutes * 60 * 1000).toISOString();
-        const order = await storage.createOrder({ ...req.body, clientId: sessionUserId, orderNumber, commission, estimatedDelivery });
+        const order = await storage.createOrder({ ...req.body, clientId, orderNumber, commission, estimatedDelivery });
         // Record finance entries
         await storage.createFinance({
             type: "revenue", category: "order", amount: order.total,
@@ -333,7 +338,7 @@ export async function registerRoutes(app) {
             await storage.createNotification({
                 userId: admin.id,
                 title: "Nouvelle commande",
-                message: `Commande ${orderNumber} recue - ${order.total} FC`,
+                message: `Commande ${orderNumber} recue - $${order.total}`,
                 type: "order",
                 data: { orderId: order.id },
                 isRead: false,
@@ -507,7 +512,7 @@ export async function registerRoutes(app) {
             "MAWEJA10": { type: "percent", value: 10, description: "10% de reduction" },
             "MAWEJA20": { type: "percent", value: 20, description: "20% de reduction" },
             "LIVRAISON": { type: "delivery", value: 100, description: "Livraison gratuite" },
-            "BIENVENUE": { type: "fixed", value: 2000, description: "2000 FC de reduction" },
+            "BIENVENUE": { type: "fixed", value: 2000, description: "$2000 de reduction" },
         };
         const promo = promoCodes[code.toUpperCase()];
         if (!promo)
@@ -653,7 +658,13 @@ export async function registerRoutes(app) {
     });
     // Notifications
     app.get("/api/notifications/:userId", requireAuth, async (req, res) => {
-        const notifs = await storage.getNotifications(Number(req.params.userId));
+        const sessionUserId = req.session?.userId;
+        const targetUserId = Number(req.params.userId);
+        const sessionUser = await storage.getUser(sessionUserId);
+        if (!sessionUser || (sessionUser.role !== "admin" && sessionUserId !== targetUserId)) {
+            return res.status(403).json({ message: "Acces refuse" });
+        }
+        const notifs = await storage.getNotifications(targetUserId);
         res.json(notifs);
     });
     app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
@@ -661,7 +672,13 @@ export async function registerRoutes(app) {
         res.json({ ok: true });
     });
     app.patch("/api/notifications/read-all/:userId", requireAuth, async (req, res) => {
-        await storage.markAllNotificationsRead(Number(req.params.userId));
+        const sessionUserId = req.session?.userId;
+        const targetUserId = Number(req.params.userId);
+        const sessionUser = await storage.getUser(sessionUserId);
+        if (!sessionUser || (sessionUser.role !== "admin" && sessionUserId !== targetUserId)) {
+            return res.status(403).json({ message: "Acces refuse" });
+        }
+        await storage.markAllNotificationsRead(targetUserId);
         res.json({ ok: true });
     });
     // Chat
@@ -816,7 +833,7 @@ export async function registerRoutes(app) {
             filters.dateTo = new Date(req.query.dateTo);
         const data = await storage.getFinances(Object.keys(filters).length ? filters : undefined);
         const csv = [
-            "ID,Type,Categorie,Montant (FC),Description,Reference,Date",
+            "ID,Type,Categorie,Montant ($),Description,Reference,Date",
             ...data.map(f => `${f.id},${f.type},${f.category},${f.amount},"${f.description}",${f.reference || ""},${f.createdAt}`),
         ].join("\n");
         res.setHeader("Content-Type", "text/csv");
@@ -831,10 +848,17 @@ export async function registerRoutes(app) {
             filters.dateFrom = new Date(req.query.dateFrom);
         if (req.query.dateTo)
             filters.dateTo = new Date(req.query.dateTo);
-        const data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
+        let data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
+        if (req.query.restaurantId) {
+            data = data.filter(o => o.restaurantId === Number(req.query.restaurantId));
+        }
+        const allUsers = await storage.getAllUsers();
+        const allRestaurants = await storage.getRestaurants();
+        const getUserName = (id) => allUsers.find(u => u.id === id)?.name || "";
+        const getRestName = (id) => allRestaurants.find(r => r.id === id)?.name || "";
         const csv = [
-            "Numero,Statut,Client ID,Restaurant ID,Livreur ID,Total (FC),Frais Livraison,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
-            ...data.map(o => `${o.orderNumber},${o.status},${o.clientId},${o.restaurantId},${o.driverId || ""},${o.total},${o.deliveryFee},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
+            "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
+            ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
         ].join("\n");
         res.setHeader("Content-Type", "text/csv");
         res.setHeader("Content-Disposition", `attachment; filename=commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`);
@@ -954,6 +978,239 @@ export async function registerRoutes(app) {
             paymentBreakdown,
             statusBreakdown,
         });
+    });
+    // ===== SERVICE CATEGORIES =====
+    app.get("/api/service-categories", async (_req, res) => {
+        const cats = await storage.getServiceCategories();
+        res.json(cats);
+    });
+    app.post("/api/service-categories", requireAdmin, async (req, res) => {
+        const cat = await storage.createServiceCategory(req.body);
+        res.json(cat);
+    });
+    app.patch("/api/service-categories/:id", requireAdmin, async (req, res) => {
+        const updated = await storage.updateServiceCategory(Number(req.params.id), req.body);
+        res.json(updated);
+    });
+    app.delete("/api/service-categories/:id", requireAdmin, async (req, res) => {
+        await storage.deleteServiceCategory(Number(req.params.id));
+        res.json({ success: true });
+    });
+    // ===== SERVICE CATALOG ITEMS =====
+    app.get("/api/service-catalog", async (req, res) => {
+        const categoryId = req.query.categoryId ? Number(req.query.categoryId) : undefined;
+        const items = await storage.getServiceCatalogItems(categoryId);
+        res.json(items);
+    });
+    app.post("/api/service-catalog", requireAdmin, async (req, res) => {
+        const item = await storage.createServiceCatalogItem(req.body);
+        res.json(item);
+    });
+    app.patch("/api/service-catalog/:id", requireAdmin, async (req, res) => {
+        const updated = await storage.updateServiceCatalogItem(Number(req.params.id), req.body);
+        res.json(updated);
+    });
+    app.delete("/api/service-catalog/:id", requireAdmin, async (req, res) => {
+        await storage.deleteServiceCatalogItem(Number(req.params.id));
+        res.json({ success: true });
+    });
+    // ===== SERVICE REQUESTS =====
+    app.get("/api/service-requests", requireAuth, async (req, res) => {
+        const userId = req.session.userId;
+        const user = await storage.getUser(userId);
+        if (!user)
+            return res.status(401).json({ message: "Non autorise" });
+        const filters = {};
+        if (user.role === "client")
+            filters.clientId = userId;
+        if (req.query.status)
+            filters.status = req.query.status;
+        if (req.query.categoryId)
+            filters.categoryId = Number(req.query.categoryId);
+        const requests = await storage.getServiceRequests(filters);
+        res.json(requests);
+    });
+    app.get("/api/service-requests/:id", requireAuth, async (req, res) => {
+        const userId = req.session.userId;
+        const user = await storage.getUser(userId);
+        if (!user)
+            return res.status(401).json({ message: "Non autorise" });
+        const sr = await storage.getServiceRequest(Number(req.params.id));
+        if (!sr)
+            return res.status(404).json({ message: "Non trouve" });
+        if (user.role === "client" && sr.clientId !== userId)
+            return res.status(403).json({ message: "Acces refuse" });
+        res.json(sr);
+    });
+    app.post("/api/service-requests", requireAuth, async (req, res) => {
+        const userId = req.session.userId;
+        const user = await storage.getUser(userId);
+        if (!user || user.role !== "client")
+            return res.status(403).json({ message: "Acces interdit" });
+        const sr = await storage.createServiceRequest({ ...req.body, clientId: userId });
+        const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
+        for (const admin of admins) {
+            await storage.createNotification({
+                userId: admin.id,
+                title: "Nouvelle demande de service",
+                message: `Demande de ${sr.categoryName} par ${sr.fullName}`,
+                type: "service_request",
+                data: { serviceRequestId: sr.id },
+            });
+        }
+        for (const admin of admins) {
+            const ws = clients.get(admin.id);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "service_request", data: sr }));
+            }
+        }
+        res.json(sr);
+    });
+    app.patch("/api/service-requests/:id", requireAdmin, async (req, res) => {
+        const updated = await storage.updateServiceRequest(Number(req.params.id), req.body);
+        if (!updated)
+            return res.status(404).json({ message: "Non trouve" });
+        if (updated.clientId) {
+            await storage.createNotification({
+                userId: updated.clientId,
+                title: "Mise a jour de votre demande",
+                message: `Votre demande de ${updated.categoryName} est maintenant: ${updated.status}`,
+                type: "service_update",
+                data: { serviceRequestId: updated.id, status: updated.status },
+            });
+            const ws = clients.get(updated.clientId);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "service_update", data: updated }));
+            }
+        }
+        res.json(updated);
+    });
+    // ===== ADVERTISEMENTS =====
+    app.get("/api/advertisements", async (req, res) => {
+        const activeOnly = req.query.active === "true";
+        const ads = await storage.getAdvertisements(activeOnly);
+        res.json(ads);
+    });
+    app.post("/api/advertisements", requireAdmin, uploadMedia.single("media"), async (req, res) => {
+        const existingAds = await storage.getAdvertisements(true);
+        if (existingAds.length >= 5) {
+            return res.status(400).json({ message: "Maximum 5 publicites actives autorisees" });
+        }
+        let mediaUrl = req.body.mediaUrl || "";
+        if (req.file)
+            mediaUrl = `/uploads/${req.file.filename}`;
+        const ad = await storage.createAdvertisement({ ...req.body, mediaUrl });
+        res.json(ad);
+    });
+    app.patch("/api/advertisements/:id", requireAdmin, uploadMedia.single("media"), async (req, res) => {
+        const data = { ...req.body };
+        if (req.file)
+            data.mediaUrl = `/uploads/${req.file.filename}`;
+        if (data.isActive !== undefined)
+            data.isActive = data.isActive === "true" || data.isActive === true;
+        if (data.sortOrder !== undefined)
+            data.sortOrder = Number(data.sortOrder);
+        const updated = await storage.updateAdvertisement(Number(req.params.id), data);
+        res.json(updated);
+    });
+    app.delete("/api/advertisements/:id", requireAdmin, async (req, res) => {
+        await storage.deleteAdvertisement(Number(req.params.id));
+        res.json({ success: true });
+    });
+    // ===== PUSH NOTIFICATIONS (Broadcast) =====
+    app.post("/api/notifications/broadcast", requireAdmin, async (req, res) => {
+        const { title, message, type, targetSegment, targetUserIds } = req.body;
+        let targetUsers = [];
+        if (targetUserIds && targetUserIds.length > 0) {
+            const allUsers = await storage.getAllUsers();
+            targetUsers = allUsers.filter((u) => targetUserIds.includes(u.id));
+        }
+        else if (targetSegment === "all_clients") {
+            targetUsers = await storage.getClients();
+        }
+        else if (targetSegment === "frequent_food") {
+            const allClients = await storage.getClients();
+            const allOrders = await storage.getOrders({});
+            const orderCounts = {};
+            for (const o of allOrders) {
+                orderCounts[o.clientId] = (orderCounts[o.clientId] || 0) + 1;
+            }
+            targetUsers = allClients.filter((c) => (orderCounts[c.id] || 0) >= 3);
+        }
+        else if (targetSegment === "service_users") {
+            const allRequests = await storage.getServiceRequests({});
+            const clientIds = [...new Set(allRequests.map((r) => r.clientId))];
+            const allUsers = await storage.getAllUsers();
+            targetUsers = allUsers.filter((u) => clientIds.includes(u.id));
+        }
+        else if (targetSegment === "inactive") {
+            const allClients = await storage.getClients();
+            const allOrders = await storage.getOrders({});
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            const activeClientIds = new Set(allOrders.filter((o) => new Date(o.createdAt) > thirtyDaysAgo).map((o) => o.clientId));
+            targetUsers = allClients.filter((c) => !activeClientIds.has(c.id));
+        }
+        else if (targetSegment === "high_value") {
+            const allClients = await storage.getClients();
+            const allOrders = await storage.getOrders({});
+            const spending = {};
+            for (const o of allOrders)
+                if (o.status === "delivered")
+                    spending[o.clientId] = (spending[o.clientId] || 0) + o.total;
+            targetUsers = allClients.filter((c) => (spending[c.id] || 0) >= 50000);
+        }
+        else if (targetSegment === "new_clients") {
+            const allClients = await storage.getClients();
+            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            targetUsers = allClients.filter((c) => new Date(c.createdAt) > sevenDaysAgo);
+        }
+        else {
+            targetUsers = await storage.getClients();
+        }
+        let sent = 0;
+        for (const u of targetUsers) {
+            await storage.createNotification({
+                userId: u.id,
+                title: title || "Notification MAWEJA",
+                message: message || "",
+                type: type || "promo",
+                data: { broadcast: true },
+            });
+            const ws = clients.get(u.id);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: "notification", data: { title, message } }));
+            }
+            sent++;
+        }
+        res.json({ success: true, sent });
+    });
+    // ===== CLIENT SEGMENTS ANALYTICS =====
+    app.get("/api/analytics/client-segments", requireAdmin, async (req, res) => {
+        const allClients = await storage.getClients();
+        const allOrders = await storage.getOrders({});
+        const allServiceRequests = await storage.getServiceRequests({});
+        const orderCounts = {};
+        const spending = {};
+        const lastOrder = {};
+        for (const o of allOrders) {
+            orderCounts[o.clientId] = (orderCounts[o.clientId] || 0) + 1;
+            if (o.status === "delivered")
+                spending[o.clientId] = (spending[o.clientId] || 0) + o.total;
+            const d = new Date(o.createdAt);
+            if (!lastOrder[o.clientId] || d > lastOrder[o.clientId])
+                lastOrder[o.clientId] = d;
+        }
+        const serviceRequestClients = new Set(allServiceRequests.map((r) => r.clientId));
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const segments = {
+            all_clients: { label: "Tous les clients", count: allClients.length },
+            frequent_food: { label: "Commandes frequentes (3+)", count: allClients.filter((c) => (orderCounts[c.id] || 0) >= 3).length },
+            service_users: { label: "Utilisateurs services", count: allClients.filter((c) => serviceRequestClients.has(c.id)).length },
+            inactive: { label: "Clients inactifs (30j)", count: allClients.filter((c) => !lastOrder[c.id] || lastOrder[c.id] < thirtyDaysAgo).length },
+            high_value: { label: "Haute valeur ($50k+)", count: allClients.filter((c) => (spending[c.id] || 0) >= 50000).length },
+            new_clients: { label: "Nouveaux clients (7j)", count: allClients.filter((c) => { const d = new Date(c.createdAt); return d > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); }).length },
+        };
+        res.json(segments);
     });
     const httpServer = createServer(app);
     // WebSocket

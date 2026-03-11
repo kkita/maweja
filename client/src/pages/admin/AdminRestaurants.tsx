@@ -400,7 +400,7 @@ export default function AdminRestaurants() {
                     <div>
                       <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Commission</p>
                       <p className="text-sm text-gray-700 mt-0.5" data-testid={`restaurant-commission-${r.id}`}>
-                        15% = {formatPrice(Math.round(r.deliveryFee * 0.15))} FC
+                        15% = {formatPrice(Math.round(r.deliveryFee * 0.15))}
                       </p>
                     </div>
                   </div>

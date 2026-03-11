@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte } from "drizzle-orm";
-import { users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses, } from "@shared/schema";
+import { users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses, serviceCategories, serviceRequests, serviceCatalogItems, advertisements, } from "@shared/schema";
 export class DatabaseStorage {
     async getUser(id) {
         const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -204,7 +204,16 @@ export class DatabaseStorage {
             total: sql `count(*)`,
             active: sql `count(*) filter (where ${restaurants.isActive} = true)`,
         }).from(restaurants);
-        return { orders: orderStats, drivers: driverStats, clients: clientStats, restaurants: restaurantStats };
+        const cuisineBreakdown = await db.select({
+            cuisine: restaurants.cuisine,
+            count: sql `count(*)`,
+        }).from(restaurants).groupBy(restaurants.cuisine).orderBy(desc(sql `count(*)`));
+        const cuisineOrders = await db.select({
+            cuisine: restaurants.cuisine,
+            orderCount: sql `count(${orders.id})`,
+            revenue: sql `coalesce(sum(${orders.total}) filter (where ${orders.status} = 'delivered'), 0)`,
+        }).from(orders).innerJoin(restaurants, eq(orders.restaurantId, restaurants.id)).groupBy(restaurants.cuisine).orderBy(desc(sql `count(${orders.id})`));
+        return { orders: orderStats, drivers: driverStats, clients: clientStats, restaurants: restaurantStats, cuisineBreakdown, cuisineOrders };
     }
     async getSavedAddresses(userId) {
         return db.select().from(savedAddresses).where(eq(savedAddresses.userId, userId)).orderBy(desc(savedAddresses.createdAt));
@@ -223,6 +232,85 @@ export class DatabaseStorage {
     async setDefaultAddress(userId, addressId) {
         await db.update(savedAddresses).set({ isDefault: false }).where(eq(savedAddresses.userId, userId));
         await db.update(savedAddresses).set({ isDefault: true }).where(and(eq(savedAddresses.id, addressId), eq(savedAddresses.userId, userId)));
+    }
+    async getServiceCategories() {
+        return db.select().from(serviceCategories).orderBy(serviceCategories.name);
+    }
+    async getServiceCategory(id) {
+        const [cat] = await db.select().from(serviceCategories).where(eq(serviceCategories.id, id));
+        return cat;
+    }
+    async createServiceCategory(cat) {
+        const [created] = await db.insert(serviceCategories).values(cat).returning();
+        return created;
+    }
+    async updateServiceCategory(id, data) {
+        const [updated] = await db.update(serviceCategories).set(data).where(eq(serviceCategories.id, id)).returning();
+        return updated;
+    }
+    async deleteServiceCategory(id) {
+        await db.delete(serviceCategories).where(eq(serviceCategories.id, id));
+    }
+    async getServiceRequests(filters) {
+        const conditions = [];
+        if (filters?.clientId)
+            conditions.push(eq(serviceRequests.clientId, filters.clientId));
+        if (filters?.status)
+            conditions.push(eq(serviceRequests.status, filters.status));
+        if (filters?.categoryId)
+            conditions.push(eq(serviceRequests.categoryId, filters.categoryId));
+        const where = conditions.length > 0 ? and(...conditions) : undefined;
+        return db.select().from(serviceRequests).where(where).orderBy(desc(serviceRequests.createdAt));
+    }
+    async getServiceRequest(id) {
+        const [req] = await db.select().from(serviceRequests).where(eq(serviceRequests.id, id));
+        return req;
+    }
+    async createServiceRequest(req) {
+        const [created] = await db.insert(serviceRequests).values(req).returning();
+        return created;
+    }
+    async updateServiceRequest(id, data) {
+        const [updated] = await db.update(serviceRequests).set({ ...data, updatedAt: new Date() }).where(eq(serviceRequests.id, id)).returning();
+        return updated;
+    }
+    async getServiceCatalogItems(categoryId) {
+        const where = categoryId ? eq(serviceCatalogItems.categoryId, categoryId) : undefined;
+        return db.select().from(serviceCatalogItems).where(where).orderBy(serviceCatalogItems.sortOrder);
+    }
+    async getServiceCatalogItem(id) {
+        const [item] = await db.select().from(serviceCatalogItems).where(eq(serviceCatalogItems.id, id));
+        return item;
+    }
+    async createServiceCatalogItem(item) {
+        const [created] = await db.insert(serviceCatalogItems).values(item).returning();
+        return created;
+    }
+    async updateServiceCatalogItem(id, data) {
+        const [updated] = await db.update(serviceCatalogItems).set(data).where(eq(serviceCatalogItems.id, id)).returning();
+        return updated;
+    }
+    async deleteServiceCatalogItem(id) {
+        await db.delete(serviceCatalogItems).where(eq(serviceCatalogItems.id, id));
+    }
+    async getAdvertisements(activeOnly) {
+        const where = activeOnly ? eq(advertisements.isActive, true) : undefined;
+        return db.select().from(advertisements).where(where).orderBy(advertisements.sortOrder);
+    }
+    async getAdvertisement(id) {
+        const [ad] = await db.select().from(advertisements).where(eq(advertisements.id, id));
+        return ad;
+    }
+    async createAdvertisement(ad) {
+        const [created] = await db.insert(advertisements).values(ad).returning();
+        return created;
+    }
+    async updateAdvertisement(id, data) {
+        const [updated] = await db.update(advertisements).set(data).where(eq(advertisements.id, id)).returning();
+        return updated;
+    }
+    async deleteAdvertisement(id) {
+        await db.delete(advertisements).where(eq(advertisements.id, id));
     }
 }
 export const storage = new DatabaseStorage();

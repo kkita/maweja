@@ -15,7 +15,7 @@ export default function AdminSettings() {
     autoAssign: true,
     loyaltyEnabled: true,
     pointsPerOrder: 10,
-    currency: "FC",
+    currency: "USD",
     whatsappNumber: "",
   });
 
@@ -58,7 +58,7 @@ export default function AdminSettings() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Frais de livraison par defaut (FC)</label>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Frais de livraison par defaut ($)</label>
               <input
                 type="number"
                 value={settings.defaultDeliveryFee}
@@ -68,7 +68,7 @@ export default function AdminSettings() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Commande minimum (FC)</label>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Commande minimum ($)</label>
               <input
                 type="number"
                 value={settings.minOrder}

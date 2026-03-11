@@ -199,6 +199,65 @@ app.use((req, res, next) => {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
+    await db.execute(sql `
+    CREATE TABLE IF NOT EXISTS service_categories (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      icon TEXT NOT NULL DEFAULT 'Briefcase',
+      description TEXT NOT NULL DEFAULT '',
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+    await db.execute(sql `
+    CREATE TABLE IF NOT EXISTS service_requests (
+      id SERIAL PRIMARY KEY,
+      client_id INTEGER NOT NULL,
+      category_id INTEGER NOT NULL,
+      category_name TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      scheduled_type TEXT NOT NULL DEFAULT 'asap',
+      scheduled_date TEXT,
+      scheduled_time TEXT,
+      full_name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      address TEXT NOT NULL,
+      service_type TEXT,
+      budget TEXT,
+      photo_url TEXT,
+      additional_info TEXT,
+      contact_method TEXT NOT NULL DEFAULT 'phone',
+      admin_notes TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+    await db.execute(sql `
+    CREATE TABLE IF NOT EXISTS advertisements (
+      id SERIAL PRIMARY KEY,
+      title TEXT NOT NULL,
+      media_url TEXT NOT NULL,
+      media_type TEXT NOT NULL DEFAULT 'image',
+      link_url TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+    // Seed default service categories
+    const existingCats = await db.execute(sql `SELECT COUNT(*) as count FROM service_categories`);
+    if (Number(existingCats.rows[0].count) === 0) {
+        await db.execute(sql `INSERT INTO service_categories (name, icon, description) VALUES
+      ('Hotellerie', 'Hotel', 'Services hôteliers et hébergement'),
+      ('Transport', 'Car', 'Services de transport et logistique'),
+      ('Nettoyage', 'Sparkles', 'Services de nettoyage et entretien'),
+      ('Demenagement', 'Package', 'Services de déménagement'),
+      ('Evenementiel', 'PartyPopper', 'Organisation d''événements'),
+      ('Reparation', 'Wrench', 'Services de réparation et maintenance'),
+      ('Coursier', 'Bike', 'Services de coursier et livraison express'),
+      ('Autre', 'HelpCircle', 'Autres services sur demande')
+    `);
+    }
     await seedDatabase();
     const server = await registerRoutes(app);
     app.use((err, _req, res, _next) => {

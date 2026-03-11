@@ -4,25 +4,27 @@ import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/AdBanner";
 import { useAuth } from "../../lib/auth";
+import { useI18n } from "../../lib/i18n";
 import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Restaurant } from "@shared/schema";
 
 const categories = [
-  { name: "Tous", cuisine: null },
-  { name: "Burgers", cuisine: "Burgers" },
-  { name: "Congolais", cuisine: "Congolais" },
-  { name: "Grillades", cuisine: "Grillades" },
-  { name: "Fast Food", cuisine: "Fast Food" },
-  { name: "Gastronomique", cuisine: "Gastronomique" },
-  { name: "Libanais", cuisine: "Libanais" },
-  { name: "International", cuisine: "International" },
-  { name: "Supermarche", cuisine: "Supermarche" },
+  { name: "Tous", nameEn: "All", cuisine: null },
+  { name: "Burgers", nameEn: "Burgers", cuisine: "Burgers" },
+  { name: "Congolais", nameEn: "Congolese", cuisine: "Congolais" },
+  { name: "Grillades", nameEn: "Grills", cuisine: "Grillades" },
+  { name: "Fast Food", nameEn: "Fast Food", cuisine: "Fast Food" },
+  { name: "Gastronomique", nameEn: "Fine Dining", cuisine: "Gastronomique" },
+  { name: "Libanais", nameEn: "Lebanese", cuisine: "Libanais" },
+  { name: "International", nameEn: "International", cuisine: "International" },
+  { name: "Supermarche", nameEn: "Supermarket", cuisine: "Supermarche" },
 ];
 
 export default function HomePage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { t, lang } = useI18n();
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,18 +47,17 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <ClientNav />
-
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="mb-6">
-          <p className="text-gray-500 text-sm font-medium">Bonjour {user?.name?.split(" ")[0]} 👋</p>
-          <h2 className="text-2xl font-black text-gray-900 mt-1">Que voulez-vous manger ?</h2>
+          <p className="text-gray-500 text-sm font-medium">{t.client.hello} {user?.name?.split(" ")[0]} 👋</p>
+          <h2 className="text-2xl font-black text-gray-900 mt-1">{t.client.whatToEat}</h2>
         </div>
 
         <div className="relative mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Rechercher un restaurant ou un plat..."
+            placeholder={t.client.searchPlaceholder}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="input-search"
@@ -75,12 +76,12 @@ export default function HomePage() {
           <div className="relative z-10">
             <div className="flex items-center gap-1 mb-2">
               <Flame size={16} />
-              <span className="text-xs font-bold uppercase tracking-wider">Offre Speciale</span>
+              <span className="text-xs font-bold uppercase tracking-wider">{t.client.specialOffer}</span>
             </div>
-            <h3 className="text-xl font-bold">Livraison gratuite</h3>
-            <p className="text-red-100 text-sm mt-1">Sur votre premiere commande</p>
+            <h3 className="text-xl font-bold">{t.client.freeDelivery}</h3>
+            <p className="text-red-100 text-sm mt-1">{t.client.firstOrder}</p>
             <button className="mt-3 bg-white text-red-600 px-4 py-2 rounded-xl text-xs font-bold" data-testid="button-promo">
-              Commander maintenant
+              {t.client.orderNow}
             </button>
           </div>
           <div className="absolute right-0 top-0 w-32 h-full bg-red-500/30 rounded-l-full" />
@@ -100,7 +101,7 @@ export default function HomePage() {
                     : "bg-white text-gray-600 border border-gray-200 hover:border-red-300 hover:text-red-600"
                 }`}
               >
-                {c.name}
+                {lang === "en" ? c.nameEn : c.name}
               </button>
             );
           })}
@@ -108,15 +109,15 @@ export default function HomePage() {
 
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-gray-900">
-            {activeCategory ? activeCategory : searchQuery ? "Resultats" : "Restaurants populaires"}
+            {activeCategory ? activeCategory : searchQuery ? t.client.results : t.client.popularRestaurants}
           </h3>
           {!showAll && !activeCategory && !searchQuery && filtered.length > 6 && (
             <button onClick={() => setShowAll(true)} className="text-red-600 text-xs font-semibold flex items-center gap-0.5" data-testid="button-see-all">
-              Voir tout <ChevronRight size={14} />
+              {t.common.seeAll} <ChevronRight size={14} />
             </button>
           )}
           {(showAll || activeCategory || searchQuery) && (
-            <span className="text-xs text-gray-400 font-medium" data-testid="text-result-count">{filtered.length} restaurant{filtered.length !== 1 ? "s" : ""}</span>
+            <span className="text-xs text-gray-400 font-medium" data-testid="text-result-count">{filtered.length} {t.common.restaurant}{filtered.length !== 1 ? "s" : ""}</span>
           )}
         </div>
 
@@ -129,16 +130,16 @@ export default function HomePage() {
         ) : displayedRestaurants.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center border border-gray-100" data-testid="text-no-results">
             <Search size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">Aucun restaurant trouve</p>
+            <p className="text-gray-500 font-medium">{t.client.noRestaurant}</p>
             <p className="text-gray-400 text-sm mt-1">
-              {searchQuery ? "Essayez un autre terme de recherche" : "Aucun restaurant dans cette categorie"}
+              {searchQuery ? t.client.tryOtherSearch : t.client.noInCategory}
             </p>
             <button
               onClick={() => { setActiveCategory(null); setSearchQuery(""); setShowAll(false); }}
               className="mt-4 text-red-600 text-sm font-semibold"
               data-testid="button-reset-filters"
             >
-              Voir tous les restaurants
+              {t.client.seeAllRestaurants}
             </button>
           </div>
         ) : (
@@ -177,7 +178,7 @@ export default function HomePage() {
                   <div className="flex items-center gap-4 mt-3 flex-wrap">
                     <div className="flex items-center gap-1 text-gray-500" data-testid={`restaurant-prep-time-${r.id}`}>
                       <ChefHat size={12} />
-                      <span className="text-xs font-medium">Prep: {r.prepTime || r.deliveryTime}</span>
+                      <span className="text-xs font-medium">{t.client.prep}: {r.prepTime || r.deliveryTime}</span>
                     </div>
                     <div className="flex items-center gap-1 text-gray-500">
                       <Clock size={12} />
@@ -188,7 +189,7 @@ export default function HomePage() {
                       <span className="text-xs font-medium">{r.address.split(",")[0]}</span>
                     </div>
                     <div className="ml-auto text-xs font-semibold text-red-600">
-                      {formatPrice(r.deliveryFee)} livraison
+                      {formatPrice(r.deliveryFee)} {t.client.deliveryFee}
                     </div>
                   </div>
                 </div>

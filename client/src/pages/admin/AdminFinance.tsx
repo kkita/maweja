@@ -161,7 +161,7 @@ export default function AdminFinance() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Montant (FC)</label>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Montant ($)</label>
               <input type="number" value={newEntry.amount} onChange={e => setNewEntry({ ...newEntry, amount: Number(e.target.value) })} data-testid="input-finance-amount" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm" />
             </div>
             <div>

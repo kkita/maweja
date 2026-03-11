@@ -1,0 +1,21 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useQuery } from "@tanstack/react-query";
+import AdminLayout from "../../components/AdminLayout";
+import { Users, Award, Wallet } from "lucide-react";
+import { formatPrice } from "../../lib/utils";
+export default function AdminCustomers() {
+    const { data: orders = [] } = useQuery({ queryKey: ["/api/orders"] });
+    const clientOrders = orders.reduce((acc, o) => {
+        if (!acc[o.clientId])
+            acc[o.clientId] = { count: 0, total: 0 };
+        acc[o.clientId].count++;
+        acc[o.clientId].total += o.total;
+        return acc;
+    }, {});
+    const clients = [
+        { id: 2, name: "Patrick Kabongo", phone: "0812345678", email: "client@test.cd", walletBalance: 15000, loyaltyPoints: 250 },
+        { id: 3, name: "Marie Lukusa", phone: "0898765432", email: "client2@test.cd", walletBalance: 8000, loyaltyPoints: 120 },
+    ];
+    return (_jsxs(AdminLayout, { title: "Gestion des clients", children: [_jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8", children: [_jsxs("div", { className: "bg-white rounded-2xl p-5 border border-gray-100 shadow-sm", children: [_jsx("div", { className: "w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center mb-3", children: _jsx(Users, { size: 20, className: "text-purple-600" }) }), _jsx("p", { className: "text-3xl font-black", children: clients.length }), _jsx("p", { className: "text-sm text-gray-500", children: "Total clients" })] }), _jsxs("div", { className: "bg-white rounded-2xl p-5 border border-gray-100 shadow-sm", children: [_jsx("div", { className: "w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center mb-3", children: _jsx(Wallet, { size: 20, className: "text-green-600" }) }), _jsx("p", { className: "text-3xl font-black", children: formatPrice(clients.reduce((s, c) => s + c.walletBalance, 0)) }), _jsx("p", { className: "text-sm text-gray-500", children: "Solde total wallets" })] }), _jsxs("div", { className: "bg-white rounded-2xl p-5 border border-gray-100 shadow-sm", children: [_jsx("div", { className: "w-11 h-11 bg-yellow-50 rounded-xl flex items-center justify-center mb-3", children: _jsx(Award, { size: 20, className: "text-yellow-600" }) }), _jsx("p", { className: "text-3xl font-black", children: clients.reduce((s, c) => s + c.loyaltyPoints, 0) }), _jsx("p", { className: "text-sm text-gray-500", children: "Points de fidelite" })] })] }), _jsxs("div", { className: "bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden", children: [_jsx("div", { className: "px-5 py-4 border-b border-gray-100", children: _jsx("h3", { className: "font-bold text-gray-900", children: "Liste des clients" }) }), _jsx("div", { className: "divide-y divide-gray-50", children: clients.map((client) => (_jsxs("div", { className: "p-5 flex items-center gap-4", "data-testid": `client-row-${client.id}`, children: [_jsx("div", { className: "w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center", children: _jsx("span", { className: "text-red-600 font-bold", children: client.name[0] }) }), _jsxs("div", { className: "flex-1", children: [_jsx("p", { className: "font-semibold text-gray-900", children: client.name }), _jsxs("p", { className: "text-xs text-gray-500", children: [client.email, " - ", client.phone] })] }), _jsxs("div", { className: "text-center px-4", children: [_jsx("p", { className: "font-black text-gray-900", children: clientOrders[client.id]?.count || 0 }), _jsx("p", { className: "text-[10px] text-gray-400", children: "Commandes" })] }), _jsxs("div", { className: "text-center px-4", children: [_jsx("p", { className: "font-black text-gray-900", children: formatPrice(clientOrders[client.id]?.total || 0) }), _jsx("p", { className: "text-[10px] text-gray-400", children: "Depenses" })] }), _jsxs("div", { className: "text-center px-4", children: [_jsx("p", { className: "font-black text-green-600", children: formatPrice(client.walletBalance) }), _jsx("p", { className: "text-[10px] text-gray-400", children: "Wallet" })] }), _jsxs("div", { className: "text-center px-4", children: [_jsx("p", { className: "font-black text-yellow-600", children: client.loyaltyPoints }), _jsx("p", { className: "text-[10px] text-gray-400", children: "Points" })] })] }, client.id))) })] })] }));
+}
+//# sourceMappingURL=AdminCustomers.js.map

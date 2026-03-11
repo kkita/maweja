@@ -347,7 +347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.createNotification({
         userId: admin.id,
         title: "Nouvelle commande",
-        message: `Commande ${orderNumber} recue - ${order.total} FC`,
+        message: `Commande ${orderNumber} recue - $${order.total}`,
         type: "order",
         data: { orderId: order.id },
         isRead: false,
@@ -533,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       "MAWEJA10": { type: "percent", value: 10, description: "10% de reduction" },
       "MAWEJA20": { type: "percent", value: 20, description: "20% de reduction" },
       "LIVRAISON": { type: "delivery", value: 100, description: "Livraison gratuite" },
-      "BIENVENUE": { type: "fixed", value: 2000, description: "2000 FC de reduction" },
+      "BIENVENUE": { type: "fixed", value: 2000, description: "$2000 de reduction" },
     };
     const promo = promoCodes[code.toUpperCase()];
     if (!promo) return res.status(400).json({ message: "Code promo invalide" });
@@ -853,7 +853,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const data = await storage.getFinances(Object.keys(filters).length ? filters : undefined);
 
     const csv = [
-      "ID,Type,Categorie,Montant (FC),Description,Reference,Date",
+      "ID,Type,Categorie,Montant ($),Description,Reference,Date",
       ...data.map(f => `${f.id},${f.type},${f.category},${f.amount},"${f.description}",${f.reference || ""},${f.createdAt}`),
     ].join("\n");
 
@@ -878,7 +878,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const getRestName = (id: number) => allRestaurants.find(r => r.id === id)?.name || "";
 
     const csv = [
-      "Numero,Statut,Client,Restaurant,Livreur,Total (FC),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
+      "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
       ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
     ].join("\n");
 
@@ -1031,6 +1031,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/service-categories/:id", requireAdmin, async (req, res) => {
     await storage.deleteServiceCategory(Number(req.params.id));
+    res.json({ success: true });
+  });
+
+  // ===== SERVICE CATALOG ITEMS =====
+  app.get("/api/service-catalog", async (req, res) => {
+    const categoryId = req.query.categoryId ? Number(req.query.categoryId) : undefined;
+    const items = await storage.getServiceCatalogItems(categoryId);
+    res.json(items);
+  });
+
+  app.post("/api/service-catalog", requireAdmin, async (req, res) => {
+    const item = await storage.createServiceCatalogItem(req.body);
+    res.json(item);
+  });
+
+  app.patch("/api/service-catalog/:id", requireAdmin, async (req, res) => {
+    const updated = await storage.updateServiceCatalogItem(Number(req.params.id), req.body);
+    res.json(updated);
+  });
+
+  app.delete("/api/service-catalog/:id", requireAdmin, async (req, res) => {
+    await storage.deleteServiceCatalogItem(Number(req.params.id));
     res.json({ success: true });
   });
 
@@ -1212,7 +1234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       frequent_food: { label: "Commandes frequentes (3+)", count: allClients.filter((c: any) => (orderCounts[c.id] || 0) >= 3).length },
       service_users: { label: "Utilisateurs services", count: allClients.filter((c: any) => serviceRequestClients.has(c.id)).length },
       inactive: { label: "Clients inactifs (30j)", count: allClients.filter((c: any) => !lastOrder[c.id] || lastOrder[c.id] < thirtyDaysAgo).length },
-      high_value: { label: "Haute valeur (50k+ FC)", count: allClients.filter((c: any) => (spending[c.id] || 0) >= 50000).length },
+      high_value: { label: "Haute valeur ($50k+)", count: allClients.filter((c: any) => (spending[c.id] || 0) >= 50000).length },
       new_clients: { label: "Nouveaux clients (7j)", count: allClients.filter((c: any) => { const d = new Date(c.createdAt!); return d > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); }).length },
     };
     res.json(segments);

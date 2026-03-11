@@ -81,7 +81,7 @@ export default function WalletPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 animate-in slide-in-from-top">
             <input
               type="number"
-              placeholder="Montant en FC"
+              placeholder="Montant en $"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               data-testid="input-topup-amount"

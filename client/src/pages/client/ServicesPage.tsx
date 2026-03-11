@@ -1,24 +1,18 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
+import { useI18n } from "../../lib/i18n";
 import { authFetch } from "../../lib/queryClient";
 import {
   Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle,
-  Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, Plus
+  Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, Plus, X, Image
 } from "lucide-react";
-import type { ServiceCategory, ServiceRequest } from "@shared/schema";
+import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 
 const iconMap: Record<string, any> = {
   Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle, Briefcase,
-};
-
-const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  pending: { label: "En attente", color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
-  reviewing: { label: "En cours d'examen", color: "text-blue-600", bg: "bg-blue-50", icon: Loader2 },
-  accepted: { label: "Acceptee", color: "text-green-600", bg: "bg-green-50", icon: CheckCircle },
-  rejected: { label: "Refusee", color: "text-red-600", bg: "bg-red-50", icon: AlertCircle },
-  completed: { label: "Terminee", color: "text-gray-600", bg: "bg-gray-50", icon: CheckCircle },
 };
 
 const categoryColors = [
@@ -35,6 +29,9 @@ const categoryColors = [
 export default function ServicesPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { t } = useI18n();
+  const [selectedCatalogCategory, setSelectedCatalogCategory] = useState<ServiceCategory | null>(null);
+  const [selectedItem, setSelectedItem] = useState<ServiceCatalogItem | null>(null);
 
   const { data: categories = [], isLoading: catsLoading } = useQuery<ServiceCategory[]>({
     queryKey: ["/api/service-categories"],
@@ -46,15 +43,136 @@ export default function ServicesPage() {
     enabled: !!user,
   });
 
+  const { data: allCatalogItems = [] } = useQuery<ServiceCatalogItem[]>({
+    queryKey: ["/api/service-catalog"],
+  });
+
   const activeCategories = categories.filter(c => c.isActive);
+
+  const catalogItemsForCategory = selectedCatalogCategory
+    ? allCatalogItems.filter(item => item.categoryId === selectedCatalogCategory.id && item.isActive)
+    : [];
+
+  const categoryHasCatalogItems = (catId: number) =>
+    allCatalogItems.some(item => item.categoryId === catId && item.isActive);
+
+  const handleCategoryClick = (cat: ServiceCategory) => {
+    if (categoryHasCatalogItems(cat.id)) {
+      setSelectedCatalogCategory(cat);
+      setSelectedItem(null);
+      return;
+    }
+    navigate(`/services/new?categoryId=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`);
+  };
+
+  const handleSelectModel = (item: ServiceCatalogItem) => {
+    setSelectedItem(item);
+  };
+
+  const handleRequestQuote = () => {
+    if (!selectedCatalogCategory) return;
+    const params = new URLSearchParams({
+      categoryId: String(selectedCatalogCategory.id),
+      categoryName: selectedCatalogCategory.name,
+    });
+    if (selectedItem) {
+      params.set("catalogItemId", String(selectedItem.id));
+      params.set("catalogItemName", selectedItem.name);
+      if (selectedItem.price) params.set("catalogItemPrice", selectedItem.price);
+    }
+    navigate(`/services/new?${params.toString()}`);
+  };
+
+  const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+    pending: { label: t.services.statusPending, color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
+    reviewing: { label: t.services.statusReviewing, color: "text-blue-600", bg: "bg-blue-50", icon: Loader2 },
+    accepted: { label: t.services.statusAccepted, color: "text-green-600", bg: "bg-green-50", icon: CheckCircle },
+    rejected: { label: t.services.statusRejected, color: "text-red-600", bg: "bg-red-50", icon: AlertCircle },
+    completed: { label: t.services.statusCompleted, color: "text-gray-600", bg: "bg-gray-50", icon: CheckCircle },
+  };
+
+  if (selectedCatalogCategory) {
+    return (
+      <div className="min-h-screen bg-gray-50 pb-24">
+        <ClientNav />
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="flex items-center gap-3 mb-6">
+            <button onClick={() => { setSelectedCatalogCategory(null); setSelectedItem(null); }}
+              className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200" data-testid="button-back-catalog">
+              <X size={18} />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900" data-testid="text-catalog-title">{selectedCatalogCategory.name}</h2>
+              <p className="text-xs text-gray-500">{t.services.catalog}</p>
+            </div>
+          </div>
+
+          {catalogItemsForCategory.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+              <Image size={32} className="text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">{t.services.noCatalogItems}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {catalogItemsForCategory.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelectModel(item)}
+                  data-testid={`catalog-item-${item.id}`}
+                  className={`bg-white rounded-2xl border-2 overflow-hidden text-left transition-all ${
+                    selectedItem?.id === item.id ? "border-red-500 shadow-lg shadow-red-100" : "border-gray-100 hover:border-red-200"
+                  }`}
+                >
+                  <div className="relative h-32">
+                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    {selectedItem?.id === item.id && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
+                        <CheckCircle size={14} className="text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <h4 className="font-bold text-xs text-gray-900 line-clamp-1">{item.name}</h4>
+                    {item.description && <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
+                    {item.price && <p className="text-xs font-semibold text-red-600 mt-1">{item.price}</p>}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {selectedItem && (
+            <div className="bg-red-50 rounded-2xl border border-red-200 p-4 mb-4">
+              <p className="text-xs font-semibold text-red-700 mb-1">{t.services.selectedModel}</p>
+              <div className="flex items-center gap-3">
+                <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-12 h-12 rounded-xl object-cover" />
+                <div>
+                  <p className="font-bold text-sm text-gray-900">{selectedItem.name}</p>
+                  {selectedItem.price && <p className="text-xs text-red-600 font-semibold">{selectedItem.price}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleRequestQuote}
+            data-testid="button-request-quote"
+            className="w-full bg-red-600 text-white py-4 rounded-2xl text-sm font-bold hover:bg-red-700 shadow-xl shadow-red-200"
+          >
+            {t.services.requestQuote}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="mb-6">
-          <h2 className="text-2xl font-black text-gray-900" data-testid="text-services-title">Services</h2>
-          <p className="text-sm text-gray-500 mt-1">Demandez un devis pour nos services professionnels</p>
+          <h2 className="text-2xl font-black text-gray-900" data-testid="text-services-title">{t.services.title}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t.services.subtitle}</p>
         </div>
 
         {catsLoading ? (
@@ -65,10 +183,11 @@ export default function ServicesPage() {
           <div className="grid grid-cols-2 gap-3 mb-8">
             {activeCategories.map((cat, i) => {
               const Icon = iconMap[cat.icon] || Briefcase;
+              const showCatalogBadge = categoryHasCatalogItems(cat.id);
               return (
                 <button
                   key={cat.id}
-                  onClick={() => navigate(`/services/new?categoryId=${cat.id}&categoryName=${encodeURIComponent(cat.name)}`)}
+                  onClick={() => handleCategoryClick(cat)}
                   data-testid={`card-service-${cat.id}`}
                   className="group relative bg-white rounded-2xl border border-gray-100 p-4 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
                 >
@@ -77,6 +196,11 @@ export default function ServicesPage() {
                   </div>
                   <h3 className="font-bold text-sm text-gray-900">{cat.name}</h3>
                   <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2">{cat.description}</p>
+                  {showCatalogBadge && (
+                    <span className="inline-block mt-2 text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                      {t.services.browseCatalog}
+                    </span>
+                  )}
                   <ChevronRight size={16} className="absolute top-4 right-3 text-gray-300 group-hover:text-red-500 transition-colors" />
                 </button>
               );
@@ -87,8 +211,8 @@ export default function ServicesPage() {
         {user && (
           <>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900" data-testid="text-my-requests">Mes demandes</h3>
-              <span className="text-xs text-gray-400 font-medium">{myRequests.length} demande{myRequests.length !== 1 ? "s" : ""}</span>
+              <h3 className="text-lg font-bold text-gray-900" data-testid="text-my-requests">{t.services.myRequests}</h3>
+              <span className="text-xs text-gray-400 font-medium">{myRequests.length} {t.services.request}{myRequests.length !== 1 ? "s" : ""}</span>
             </div>
 
             {reqsLoading ? (
@@ -100,8 +224,8 @@ export default function ServicesPage() {
                 <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <Briefcase size={28} className="text-gray-300" />
                 </div>
-                <p className="text-sm font-semibold text-gray-900 mb-1">Aucune demande</p>
-                <p className="text-xs text-gray-400">Selectionnez un service ci-dessus pour creer votre premiere demande</p>
+                <p className="text-sm font-semibold text-gray-900 mb-1">{t.services.noRequests}</p>
+                <p className="text-xs text-gray-400">{t.services.noRequestsDesc}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -128,13 +252,13 @@ export default function ServicesPage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-4 text-[11px] text-gray-500">
-                        {req.serviceType && <span>Type: {req.serviceType}</span>}
-                        {req.budget && <span>Budget: {req.budget}</span>}
+                        {req.serviceType && <span>{t.services.type}: {req.serviceType}</span>}
+                        {req.budget && <span>{t.admin.budget}: {req.budget}</span>}
                         <span className="capitalize">{req.contactMethod}</span>
                       </div>
                       {req.adminNotes && (
                         <div className="mt-2 bg-blue-50 rounded-lg p-2">
-                          <p className="text-[10px] font-semibold text-blue-700">Note de l'equipe:</p>
+                          <p className="text-[10px] font-semibold text-blue-700">{t.services.teamNote}:</p>
                           <p className="text-[11px] text-blue-600 mt-0.5">{req.adminNotes}</p>
                         </div>
                       )}
@@ -148,13 +272,13 @@ export default function ServicesPage() {
 
         {!user && (
           <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
-            <p className="text-sm text-gray-500">Connectez-vous pour creer une demande de service</p>
+            <p className="text-sm text-gray-500">{t.services.loginToRequest}</p>
             <button
               onClick={() => navigate("/login")}
               data-testid="button-login-services"
               className="mt-3 bg-red-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-red-700"
             >
-              Se connecter
+              {t.common.login}
             </button>
           </div>
         )}

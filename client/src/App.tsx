@@ -2,11 +2,13 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { CartProvider } from "./lib/cart";
+import { I18nProvider, useI18n } from "./lib/i18n";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { connectWS } from "./lib/websocket";
 import { Toaster } from "./components/Toaster";
 import ClientContactBubble from "./components/ClientContactBubble";
+import SplashScreen from "./components/SplashScreen";
 
 import LoginPage from "./pages/LoginPage";
 import DriverLoginPage from "./pages/DriverLoginPage";
@@ -20,12 +22,14 @@ import TrackingPage from "./pages/client/TrackingPage";
 import OrderDetailPage from "./pages/client/OrderDetailPage";
 import WalletPage from "./pages/client/WalletPage";
 import AddressPage from "./pages/client/AddressPage";
+import ClientSettings from "./pages/client/ClientSettings";
 
 import DriverDashboard from "./pages/driver/DriverDashboard";
 import DriverOrders from "./pages/driver/DriverOrders";
 import DriverEarnings from "./pages/driver/DriverEarnings";
 import DriverChat from "./pages/driver/DriverChat";
 import DriverOnboarding from "./pages/driver/DriverOnboarding";
+import DriverSettings from "./pages/driver/DriverSettings";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -45,6 +49,7 @@ import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 
 function AppRoutes() {
   const { user, loading } = useAuth();
+  const { hasChosenLanguage, t } = useI18n();
 
   useEffect(() => {
     if (user?.id) connectWS(user.id);
@@ -55,7 +60,7 @@ function AppRoutes() {
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Chargement...</p>
+          <p className="text-gray-600 font-medium">{t.common.loading}</p>
         </div>
       </div>
     );
@@ -82,7 +87,12 @@ function AppRoutes() {
     );
   }
 
+  if (!hasChosenLanguage && !user) {
+    return <SplashScreen />;
+  }
+
   if (user?.role === "driver") {
+    if (!hasChosenLanguage) return <SplashScreen />;
     if (user.verificationStatus !== "approved") {
       return <DriverOnboarding />;
     }
@@ -92,12 +102,14 @@ function AppRoutes() {
         <Route path="/driver/orders" component={DriverOrders} />
         <Route path="/driver/chat" component={DriverChat} />
         <Route path="/driver/earnings" component={DriverEarnings} />
+        <Route path="/driver/settings" component={DriverSettings} />
         <Route component={DriverDashboard} />
       </Switch>
     );
   }
 
   if (user?.role === "client") {
+    if (!hasChosenLanguage) return <SplashScreen />;
     return (
       <>
         <Switch>
@@ -113,6 +125,7 @@ function AppRoutes() {
           <Route path="/services" component={ServicesPage} />
           <Route path="/services/new" component={ServiceRequestPage} />
           <Route path="/services/request/:id" component={ServiceRequestPage} />
+          <Route path="/settings" component={ClientSettings} />
           <Route component={ClientHome} />
         </Switch>
         <ClientContactBubble />
@@ -140,12 +153,14 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <CartProvider>
-          <AppRoutes />
-          <Toaster />
-        </CartProvider>
-      </AuthProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <CartProvider>
+            <AppRoutes />
+            <Toaster />
+          </CartProvider>
+        </AuthProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 }

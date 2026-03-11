@@ -46,7 +46,7 @@ export default function DriverEarnings() {
               <Clock size={18} className="text-blue-600" />
             </div>
             <p className="text-2xl font-black">{delivered.length > 0 ? Math.round(totalEarnings / delivered.length) : 0}</p>
-            <p className="text-xs text-gray-500">Moy. par livraison (FC)</p>
+            <p className="text-xs text-gray-500">Moy. par livraison ($)</p>
           </div>
         </div>
 

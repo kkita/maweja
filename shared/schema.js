@@ -143,6 +143,60 @@ export const savedAddresses = pgTable("saved_addresses", {
     isDefault: boolean("is_default").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow(),
 });
+export const serviceCategories = pgTable("service_categories", {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    icon: text("icon").notNull().default("Briefcase"),
+    description: text("description").notNull().default(""),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const serviceRequests = pgTable("service_requests", {
+    id: serial("id").primaryKey(),
+    clientId: integer("client_id").notNull(),
+    categoryId: integer("category_id").notNull(),
+    categoryName: text("category_name").notNull(),
+    status: text("status").notNull().default("pending"),
+    scheduledType: text("scheduled_type").notNull().default("asap"),
+    scheduledDate: text("scheduled_date"),
+    scheduledTime: text("scheduled_time"),
+    fullName: text("full_name").notNull(),
+    phone: text("phone").notNull(),
+    address: text("address").notNull(),
+    serviceType: text("service_type"),
+    budget: text("budget"),
+    photoUrl: text("photo_url"),
+    additionalInfo: text("additional_info"),
+    contactMethod: text("contact_method").notNull().default("phone"),
+    adminNotes: text("admin_notes"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+});
+export const serviceCatalogItems = pgTable("service_catalog_items", {
+    id: serial("id").primaryKey(),
+    categoryId: integer("category_id").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    imageUrl: text("image_url").notNull(),
+    price: text("price"),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const advertisements = pgTable("advertisements", {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    mediaUrl: text("media_url").notNull(),
+    mediaType: text("media_type").notNull().default("image"),
+    linkUrl: text("link_url"),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({ id: true, createdAt: true });
+export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertServiceCatalogItemSchema = createInsertSchema(serviceCatalogItems).omit({ id: true, createdAt: true });
+export const insertAdvertisementSchema = createInsertSchema(advertisements).omit({ id: true, createdAt: true });
 export const insertSavedAddressSchema = createInsertSchema(savedAddresses).omit({ id: true, createdAt: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });
 export const insertRestaurantSchema = createInsertSchema(restaurants).omit({ id: true });

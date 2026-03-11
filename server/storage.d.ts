@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Restaurant, type InsertRestaurant, type MenuItem, type InsertMenuItem, type Order, type InsertOrder, type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage, type WalletTransaction, type InsertWalletTransaction, type Finance, type InsertFinance, type SavedAddress, type InsertSavedAddress } from "@shared/schema";
+import { type User, type InsertUser, type Restaurant, type InsertRestaurant, type MenuItem, type InsertMenuItem, type Order, type InsertOrder, type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage, type WalletTransaction, type InsertWalletTransaction, type Finance, type InsertFinance, type SavedAddress, type InsertSavedAddress, type ServiceCategory, type InsertServiceCategory, type ServiceRequest, type InsertServiceRequest, type ServiceCatalogItem, type InsertServiceCatalogItem, type Advertisement, type InsertAdvertisement } from "@shared/schema";
 export interface IStorage {
     getUser(id: number): Promise<User | undefined>;
     getUserByEmail(email: string): Promise<User | undefined>;
@@ -51,6 +51,29 @@ export interface IStorage {
     updateSavedAddress(id: number, data: Partial<SavedAddress>): Promise<SavedAddress | undefined>;
     deleteSavedAddress(id: number): Promise<void>;
     setDefaultAddress(userId: number, addressId: number): Promise<void>;
+    getServiceCategories(): Promise<ServiceCategory[]>;
+    getServiceCategory(id: number): Promise<ServiceCategory | undefined>;
+    createServiceCategory(cat: InsertServiceCategory): Promise<ServiceCategory>;
+    updateServiceCategory(id: number, data: Partial<ServiceCategory>): Promise<ServiceCategory | undefined>;
+    deleteServiceCategory(id: number): Promise<void>;
+    getServiceRequests(filters?: {
+        clientId?: number;
+        status?: string;
+        categoryId?: number;
+    }): Promise<ServiceRequest[]>;
+    getServiceRequest(id: number): Promise<ServiceRequest | undefined>;
+    createServiceRequest(req: InsertServiceRequest): Promise<ServiceRequest>;
+    updateServiceRequest(id: number, data: Partial<ServiceRequest>): Promise<ServiceRequest | undefined>;
+    getServiceCatalogItems(categoryId?: number): Promise<ServiceCatalogItem[]>;
+    getServiceCatalogItem(id: number): Promise<ServiceCatalogItem | undefined>;
+    createServiceCatalogItem(item: InsertServiceCatalogItem): Promise<ServiceCatalogItem>;
+    updateServiceCatalogItem(id: number, data: Partial<ServiceCatalogItem>): Promise<ServiceCatalogItem | undefined>;
+    deleteServiceCatalogItem(id: number): Promise<void>;
+    getAdvertisements(activeOnly?: boolean): Promise<Advertisement[]>;
+    getAdvertisement(id: number): Promise<Advertisement | undefined>;
+    createAdvertisement(ad: InsertAdvertisement): Promise<Advertisement>;
+    updateAdvertisement(id: number, data: Partial<Advertisement>): Promise<Advertisement | undefined>;
+    deleteAdvertisement(id: number): Promise<void>;
     getDashboardStats(): Promise<any>;
 }
 export declare class DatabaseStorage implements IStorage {
@@ -702,6 +725,15 @@ export declare class DatabaseStorage implements IStorage {
             total: number;
             active: number;
         };
+        cuisineBreakdown: {
+            cuisine: string;
+            count: number;
+        }[];
+        cuisineOrders: {
+            cuisine: string;
+            orderCount: number;
+            revenue: number;
+        }[];
     }>;
     getSavedAddresses(userId: number): Promise<{
         id: number;
@@ -735,6 +767,213 @@ export declare class DatabaseStorage implements IStorage {
     }>;
     deleteSavedAddress(id: number): Promise<void>;
     setDefaultAddress(userId: number, addressId: number): Promise<void>;
+    getServiceCategories(): Promise<{
+        id: number;
+        name: string;
+        icon: string;
+        description: string;
+        isActive: boolean;
+        createdAt: Date | null;
+    }[]>;
+    getServiceCategory(id: number): Promise<{
+        id: number;
+        name: string;
+        icon: string;
+        description: string;
+        isActive: boolean;
+        createdAt: Date | null;
+    }>;
+    createServiceCategory(cat: InsertServiceCategory): Promise<{
+        id: number;
+        name: string;
+        createdAt: Date | null;
+        description: string;
+        isActive: boolean;
+        icon: string;
+    }>;
+    updateServiceCategory(id: number, data: Partial<ServiceCategory>): Promise<{
+        id: number;
+        name: string;
+        icon: string;
+        description: string;
+        isActive: boolean;
+        createdAt: Date | null;
+    }>;
+    deleteServiceCategory(id: number): Promise<void>;
+    getServiceRequests(filters?: {
+        clientId?: number;
+        status?: string;
+        categoryId?: number;
+    }): Promise<{
+        id: number;
+        clientId: number;
+        categoryId: number;
+        categoryName: string;
+        status: string;
+        scheduledType: string;
+        scheduledDate: string | null;
+        scheduledTime: string | null;
+        fullName: string;
+        phone: string;
+        address: string;
+        serviceType: string | null;
+        budget: string | null;
+        photoUrl: string | null;
+        additionalInfo: string | null;
+        contactMethod: string;
+        adminNotes: string | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+    }[]>;
+    getServiceRequest(id: number): Promise<{
+        id: number;
+        clientId: number;
+        categoryId: number;
+        categoryName: string;
+        status: string;
+        scheduledType: string;
+        scheduledDate: string | null;
+        scheduledTime: string | null;
+        fullName: string;
+        phone: string;
+        address: string;
+        serviceType: string | null;
+        budget: string | null;
+        photoUrl: string | null;
+        additionalInfo: string | null;
+        contactMethod: string;
+        adminNotes: string | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+    }>;
+    createServiceRequest(req: InsertServiceRequest): Promise<{
+        id: number;
+        phone: string;
+        address: string;
+        createdAt: Date | null;
+        clientId: number;
+        status: string;
+        updatedAt: Date | null;
+        categoryId: number;
+        categoryName: string;
+        scheduledType: string;
+        scheduledDate: string | null;
+        scheduledTime: string | null;
+        fullName: string;
+        serviceType: string | null;
+        budget: string | null;
+        photoUrl: string | null;
+        additionalInfo: string | null;
+        contactMethod: string;
+        adminNotes: string | null;
+    }>;
+    updateServiceRequest(id: number, data: Partial<ServiceRequest>): Promise<{
+        id: number;
+        clientId: number;
+        categoryId: number;
+        categoryName: string;
+        status: string;
+        scheduledType: string;
+        scheduledDate: string | null;
+        scheduledTime: string | null;
+        fullName: string;
+        phone: string;
+        address: string;
+        serviceType: string | null;
+        budget: string | null;
+        photoUrl: string | null;
+        additionalInfo: string | null;
+        contactMethod: string;
+        adminNotes: string | null;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+    }>;
+    getServiceCatalogItems(categoryId?: number): Promise<{
+        id: number;
+        categoryId: number;
+        name: string;
+        description: string;
+        imageUrl: string;
+        price: string | null;
+        isActive: boolean;
+        sortOrder: number;
+        createdAt: Date | null;
+    }[]>;
+    getServiceCatalogItem(id: number): Promise<{
+        id: number;
+        categoryId: number;
+        name: string;
+        description: string;
+        imageUrl: string;
+        price: string | null;
+        isActive: boolean;
+        sortOrder: number;
+        createdAt: Date | null;
+    }>;
+    createServiceCatalogItem(item: InsertServiceCatalogItem): Promise<{
+        id: number;
+        name: string;
+        createdAt: Date | null;
+        description: string;
+        isActive: boolean;
+        price: string | null;
+        categoryId: number;
+        imageUrl: string;
+        sortOrder: number;
+    }>;
+    updateServiceCatalogItem(id: number, data: Partial<ServiceCatalogItem>): Promise<{
+        id: number;
+        categoryId: number;
+        name: string;
+        description: string;
+        imageUrl: string;
+        price: string | null;
+        isActive: boolean;
+        sortOrder: number;
+        createdAt: Date | null;
+    }>;
+    deleteServiceCatalogItem(id: number): Promise<void>;
+    getAdvertisements(activeOnly?: boolean): Promise<{
+        id: number;
+        title: string;
+        mediaUrl: string;
+        mediaType: string;
+        linkUrl: string | null;
+        isActive: boolean;
+        sortOrder: number;
+        createdAt: Date | null;
+    }[]>;
+    getAdvertisement(id: number): Promise<{
+        id: number;
+        title: string;
+        mediaUrl: string;
+        mediaType: string;
+        linkUrl: string | null;
+        isActive: boolean;
+        sortOrder: number;
+        createdAt: Date | null;
+    }>;
+    createAdvertisement(ad: InsertAdvertisement): Promise<{
+        id: number;
+        createdAt: Date | null;
+        isActive: boolean;
+        title: string;
+        sortOrder: number;
+        mediaUrl: string;
+        mediaType: string;
+        linkUrl: string | null;
+    }>;
+    updateAdvertisement(id: number, data: Partial<Advertisement>): Promise<{
+        id: number;
+        title: string;
+        mediaUrl: string;
+        mediaType: string;
+        linkUrl: string | null;
+        isActive: boolean;
+        sortOrder: number;
+        createdAt: Date | null;
+    }>;
+    deleteAdvertisement(id: number): Promise<void>;
 }
 export declare const storage: DatabaseStorage;
 //# sourceMappingURL=storage.d.ts.map

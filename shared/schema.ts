@@ -185,6 +185,18 @@ export const serviceRequests = pgTable("service_requests", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const serviceCatalogItems = pgTable("service_catalog_items", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").notNull(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  imageUrl: text("image_url").notNull(),
+  price: text("price"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const advertisements = pgTable("advertisements", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -198,6 +210,7 @@ export const advertisements = pgTable("advertisements", {
 
 export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({ id: true, createdAt: true });
 export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertServiceCatalogItemSchema = createInsertSchema(serviceCatalogItems).omit({ id: true, createdAt: true });
 export const insertAdvertisementSchema = createInsertSchema(advertisements).omit({ id: true, createdAt: true });
 export const insertSavedAddressSchema = createInsertSchema(savedAddresses).omit({ id: true, createdAt: true });
 
@@ -232,5 +245,7 @@ export type ServiceCategory = typeof serviceCategories.$inferSelect;
 export type InsertServiceCategory = z.infer<typeof insertServiceCategorySchema>;
 export type ServiceRequest = typeof serviceRequests.$inferSelect;
 export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
+export type ServiceCatalogItem = typeof serviceCatalogItems.$inferSelect;
+export type InsertServiceCatalogItem = z.infer<typeof insertServiceCatalogItemSchema>;
 export type Advertisement = typeof advertisements.$inferSelect;
 export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;

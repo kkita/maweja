@@ -6,10 +6,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(amount: number): string {
-  return new Intl.NumberFormat("fr-CD", {
+  return "$" + new Intl.NumberFormat("en-US", {
     style: "decimal",
     minimumFractionDigits: 0,
-  }).format(amount) + " FC";
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 export function formatDate(date: string | Date): string {

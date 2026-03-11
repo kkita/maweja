@@ -2,17 +2,19 @@ import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
-import { Home, ShoppingBag, ClipboardList, Wallet, User, LogOut, LogIn, MessageCircle, Briefcase } from "lucide-react";
+import { Home, ShoppingBag, ClipboardList, Wallet, Settings, LogOut, LogIn, MessageCircle, Briefcase } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { queryClient } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
+import { useI18n } from "../lib/i18n";
 
 export default function ClientNav() {
   const [location, navigate] = useLocation();
   const { itemCount } = useCart();
   const { user, logout } = useAuth();
+  const { t } = useI18n();
 
   const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
@@ -34,15 +36,15 @@ export default function ClientNav() {
 
   const links = user
     ? [
-        { path: "/", icon: Home, label: "Accueil", badge: 0 },
-        { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
-        { path: "/orders", icon: ClipboardList, label: "Commandes", badge: 0 },
-        { path: "/services", icon: Briefcase, label: "Services", badge: 0 },
-        { path: "/wallet", icon: Wallet, label: "Wallet", badge: 0 },
+        { path: "/", icon: Home, label: t.client.home, badge: 0 },
+        { path: "/cart", icon: ShoppingBag, label: t.client.cart, badge: itemCount },
+        { path: "/orders", icon: ClipboardList, label: t.client.myOrders, badge: 0 },
+        { path: "/services", icon: Briefcase, label: t.client.services, badge: 0 },
+        { path: "/settings", icon: Settings, label: t.common.settings, badge: 0 },
       ]
     : [
-        { path: "/", icon: Home, label: "Accueil", badge: 0 },
-        { path: "/cart", icon: ShoppingBag, label: "Panier", badge: itemCount },
+        { path: "/", icon: Home, label: t.client.home, badge: 0 },
+        { path: "/cart", icon: ShoppingBag, label: t.client.cart, badge: itemCount },
       ];
 
   return (
@@ -75,7 +77,7 @@ export default function ClientNav() {
             ) : (
               <button onClick={() => navigate("/login")} className="flex items-center gap-1.5 bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-red-700 transition-all" data-testid="button-login">
                 <LogIn size={14} />
-                Connexion
+                {t.common.login}
               </button>
             )}
           </div>
@@ -90,13 +92,13 @@ export default function ClientNav() {
               <button
                 key={l.path}
                 onClick={() => navigate(l.path)}
-                data-testid={`nav-${l.label.toLowerCase()}`}
+                data-testid={`nav-${l.path.replace(/\//g, "") || "home"}`}
                 className={`flex-1 flex flex-col items-center py-2.5 relative transition-colors ${isActive ? "text-red-600" : "text-gray-400"}`}
               >
                 <div className="relative">
                   <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
                   {l.badge > 0 && (
-                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`badge-${l.label.toLowerCase()}`}>
+                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`badge-${l.path.replace(/\//g, "") || "home"}`}>
                       {l.badge > 99 ? "99+" : l.badge}
                     </span>
                   )}
