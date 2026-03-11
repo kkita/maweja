@@ -7,6 +7,7 @@ import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { connectWS } from "./lib/websocket";
 import { Toaster } from "./components/Toaster";
+import { useDynamicFavicon } from "./hooks/use-dynamic-favicon";
 import ClientContactBubble from "./components/ClientContactBubble";
 import SplashScreen from "./components/SplashScreen";
 
@@ -50,6 +51,8 @@ import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 function AppRoutes() {
   const { user, loading } = useAuth();
   const { hasChosenLanguage, t } = useI18n();
+
+  useDynamicFavicon();
 
   useEffect(() => {
     if (user?.id) connectWS(user.id);
