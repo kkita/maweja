@@ -78,13 +78,13 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 flex flex-col items-center justify-center pt-32">
-          <div className="w-24 h-24 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
+          <div className="w-24 h-24 bg-red-50 dark:bg-red-950 rounded-2xl flex items-center justify-center mb-4">
             <ShoppingBag size={40} className="text-red-300" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900" data-testid="text-empty-cart">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white" data-testid="text-empty-cart">
             Votre panier est vide
           </h2>
           <p className="text-gray-500 text-sm mt-2 text-center">
@@ -106,13 +106,13 @@ export default function CartPage() {
   const restaurantName = items[0].restaurantName;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-48">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-48">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-gray-900" data-testid="text-cart-title">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white" data-testid="text-cart-title">
               Mon Panier
             </h2>
             <span
@@ -131,7 +131,7 @@ export default function CartPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
           <div className="px-4 py-3 bg-red-50 rounded-t-2xl border-b border-red-100 flex items-center gap-2">
             <ShoppingBag size={16} className="text-red-600" />
             <p className="text-sm font-semibold text-red-700" data-testid="text-restaurant-name">
@@ -205,8 +205,8 @@ export default function CartPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <User size={16} className="text-red-600" />
             Informations personnelles
           </h3>
@@ -226,8 +226,8 @@ export default function CartPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
             <MessageSquare size={16} className="text-red-600" />
             Instructions speciales
           </h3>

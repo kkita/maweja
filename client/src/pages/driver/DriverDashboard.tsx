@@ -203,14 +203,14 @@ export default function DriverDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       {alarm && <AlarmOverlay reason={alarm} onDismiss={() => setAlarm(null)} />}
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-0.5">Bonjour {user?.name?.split(" ")[0]}</h2>
-            <p className="text-xs text-gray-500">Vos livraisons du jour</p>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-0.5">Bonjour {user?.name?.split(" ")[0]}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Vos livraisons du jour</p>
           </div>
           <button onClick={toggleOnline} data-testid="toggle-online"
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-lg ${
@@ -241,34 +241,34 @@ export default function DriverDashboard() {
         )}
 
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950 rounded-xl flex items-center justify-center mx-auto mb-2">
               <Package size={18} className="text-blue-600" />
             </div>
-            <p className="text-2xl font-black text-gray-900">{activeOrders.length}</p>
-            <p className="text-[10px] text-gray-500 font-medium">En cours</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white">{activeOrders.length}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">En cours</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+            <div className="w-10 h-10 bg-green-50 dark:bg-green-950 rounded-xl flex items-center justify-center mx-auto mb-2">
               <CheckCircle2 size={18} className="text-green-600" />
             </div>
-            <p className="text-2xl font-black text-gray-900">{deliveredToday.length}</p>
-            <p className="text-[10px] text-gray-500 font-medium">Livrees</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white">{deliveredToday.length}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Livrees</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-center">
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+            <div className="w-10 h-10 bg-red-50 dark:bg-red-950 rounded-xl flex items-center justify-center mx-auto mb-2">
               <DollarSign size={18} className="text-red-600" />
             </div>
-            <p className="text-lg font-black text-gray-900">{formatPrice(totalEarnings)}</p>
-            <p className="text-[10px] text-gray-500 font-medium">Gains</p>
+            <p className="text-lg font-black text-gray-900 dark:text-white">{formatPrice(totalEarnings)}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Gains</p>
           </div>
         </div>
 
         {!isOnline && (
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-6">
-            <Power size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="font-bold text-gray-900 mb-1">Vous etes hors ligne</p>
-            <p className="text-xs text-gray-500 mb-4">Passez en ligne pour recevoir des commandes</p>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm text-center mb-6">
+            <Power size={40} className="text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="font-bold text-gray-900 dark:text-white mb-1">Vous etes hors ligne</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Passez en ligne pour recevoir des commandes</p>
             <button onClick={toggleOnline} className="bg-green-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-green-200" data-testid="go-online">
               Passer en ligne
             </button>
@@ -277,10 +277,10 @@ export default function DriverDashboard() {
 
         {activeOrders.length > 0 && (
           <div className="mb-6">
-            <h3 className="font-bold text-sm text-gray-900 mb-3">Livraisons en cours ({activeOrders.length})</h3>
+            <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3">Livraisons en cours ({activeOrders.length})</h3>
             <div className="space-y-3">
               {activeOrders.map(order => (
-                <div key={order.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm" data-testid={`active-order-${order.id}`}>
+                <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid={`active-order-${order.id}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-sm">{order.orderNumber}</span>
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
@@ -288,11 +288,11 @@ export default function DriverDashboard() {
 
                   <CountdownBadge estimatedDelivery={order.estimatedDelivery} />
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mt-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
                     <MapPin size={12} />
                     <span className="flex-1 truncate">{order.deliveryAddress}</span>
                   </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
                     <div>
                       <span className="font-bold text-red-600 text-sm">{formatPrice(order.total)}</span>
                       <span className="text-[10px] text-gray-400 ml-2">Gain: {formatPrice(order.deliveryFee)}</span>
@@ -320,28 +320,28 @@ export default function DriverDashboard() {
 
         {isOnline && (
           <div>
-            <h3 className="font-bold text-sm text-gray-900 mb-3">
+            <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3">
               Commandes disponibles ({pendingOrders.filter(o => !o.driverId).length})
             </h3>
             {pendingOrders.filter(o => !o.driverId).length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
-                <Clock size={36} className="text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500 text-sm font-medium">Aucune commande disponible</p>
-                <p className="text-gray-400 text-xs mt-1">Les nouvelles commandes apparaitront automatiquement</p>
+              <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+                <Clock size={36} className="text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Aucune commande disponible</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Les nouvelles commandes apparaitront automatiquement</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {pendingOrders.filter(o => !o.driverId).map(order => (
-                  <div key={order.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm" data-testid={`pending-order-${order.id}`}>
+                  <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid={`pending-order-${order.id}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-sm">{order.orderNumber}</span>
+                      <span className="font-bold text-sm text-gray-900 dark:text-white">{order.orderNumber}</span>
                       <span className="font-bold text-red-600 text-sm">{formatPrice(order.deliveryFee)}</span>
                     </div>
                     {order.estimatedDelivery && <CountdownBadge estimatedDelivery={order.estimatedDelivery} />}
-                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-2">
                       <MapPin size={12} /> {order.deliveryAddress}
                     </p>
-                    <p className="text-xs text-gray-400 mb-3">Total commande: {formatPrice(order.total)}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Total commande: {formatPrice(order.total)}</p>
                     <button onClick={() => acceptOrder(order.id)} data-testid={`accept-order-${order.id}`}
                       className="w-full bg-red-600 text-white py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-all">
                       Accepter la livraison

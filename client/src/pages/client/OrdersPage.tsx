@@ -39,10 +39,10 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Mes Commandes</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mes Commandes</h2>
 
         <div className="flex gap-2 mb-6">
           <button
@@ -51,7 +51,7 @@ export default function OrdersPage() {
             className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
               tab === "active"
                 ? "bg-red-600 text-white shadow-lg shadow-red-200"
-                : "bg-white text-gray-500 border border-gray-200"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
             }`}
           >
             En cours ({activeOrders.length})
@@ -62,7 +62,7 @@ export default function OrdersPage() {
             className={`flex-1 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
               tab === "history"
                 ? "bg-red-600 text-white shadow-lg shadow-red-200"
-                : "bg-white text-gray-500 border border-gray-200"
+                : "bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
             }`}
           >
             Historique ({pastOrders.length})
@@ -72,16 +72,16 @@ export default function OrdersPage() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl h-28 animate-pulse" />
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl h-28 animate-pulse" />
             ))}
           </div>
         ) : displayedOrders.length === 0 ? (
           <div className="text-center pt-20">
-            <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-950 rounded-3xl flex items-center justify-center mx-auto mb-4">
               <Package size={36} className="text-red-300" />
             </div>
-            <h3 className="font-bold text-gray-900">Aucune commande</h3>
-            <p className="text-gray-500 text-sm mt-2">
+            <h3 className="font-bold text-gray-900 dark:text-white">Aucune commande</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
               {tab === "active"
                 ? "Vous n'avez pas de commande en cours"
                 : "Aucune commande dans l'historique"}
@@ -106,22 +106,22 @@ export default function OrdersPage() {
                   key={order.id}
                   onClick={() => navigate(`/order/${order.id}`)}
                   data-testid={`order-card-${order.id}`}
-                  className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all text-left"
+                  className="w-full bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all text-left"
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-bold text-sm text-gray-900">{order.orderNumber}</span>
+                      <span className="font-bold text-sm text-gray-900 dark:text-white">{order.orderNumber}</span>
                       <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${statusColors[order.status]}`}>
                         {statusLabels[order.status]}
                       </span>
                     </div>
                     <ChevronRight size={16} className="text-gray-300 flex-shrink-0" />
                   </div>
-                  <p className="text-xs text-gray-600 font-medium mb-1">{restaurantName}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-1">{restaurantName}</p>
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-gray-500">{formatDate(order.createdAt!)}</span>
-                      <span className="text-xs text-gray-400">{itemCount} article{itemCount > 1 ? "s" : ""}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(order.createdAt!)}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{itemCount} article{itemCount > 1 ? "s" : ""}</span>
                     </div>
                     <span className="font-bold text-red-600 text-sm">{formatPrice(order.total)}</span>
                   </div>

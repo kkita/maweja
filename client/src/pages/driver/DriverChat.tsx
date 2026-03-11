@@ -79,10 +79,10 @@ export default function DriverChat() {
 
   if (selectedAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-20">
         <DriverNav />
         <div className="max-w-lg mx-auto flex flex-col" style={{ height: "calc(100vh - 130px)" }}>
-          <div className="bg-white px-4 py-3 border-b border-gray-100 flex items-center gap-3">
+          <div className="bg-white dark:bg-gray-900 px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
             <button onClick={() => setSelectedAdmin(null)} className="text-gray-400 hover:text-gray-600" data-testid="button-back-chat">
               <ArrowLeft size={20} />
             </button>
@@ -95,14 +95,14 @@ export default function DriverChat() {
               )}
             </div>
             <div>
-              <p className="font-bold text-sm text-gray-900">{selectedAdmin.name}</p>
-              <p className="text-[10px] text-gray-400">
+              <p className="font-bold text-sm text-gray-900 dark:text-white">{selectedAdmin.name}</p>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500">
                 Administration{selectedAdmin.isOnline ? " - En ligne" : ""}
               </p>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-950">
             {messages.length === 0 && (
               <div className="text-center pt-16 text-gray-400">
                 <MessageCircle size={36} className="mx-auto mb-3 opacity-30" />
@@ -115,7 +115,7 @@ export default function DriverChat() {
                 <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                   msg.senderId === user?.id
                     ? "bg-red-600 text-white rounded-br-md"
-                    : "bg-white text-gray-900 rounded-bl-md shadow-sm border border-gray-100"
+                    : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-md shadow-sm border border-gray-100 dark:border-gray-700"
                 }`}>
                   <p>{msg.message}</p>
                   <p className={`text-[9px] mt-1 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400"}`}>
@@ -127,7 +127,7 @@ export default function DriverChat() {
             <div ref={messagesEnd} />
           </div>
 
-          <div className="bg-white p-3 border-t border-gray-100">
+          <div className="bg-white dark:bg-gray-900 p-3 border-t border-gray-100 dark:border-gray-800">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -136,7 +136,7 @@ export default function DriverChat() {
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 placeholder="Votre message..."
                 data-testid="driver-input-chat"
-                className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500"
               />
               <button onClick={sendMessage} data-testid="driver-button-send"
                 className="w-12 h-12 bg-red-600 text-white rounded-xl flex items-center justify-center hover:bg-red-700 transition-colors">
@@ -150,11 +150,11 @@ export default function DriverChat() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">Messagerie</h2>
-        <p className="text-xs text-gray-500 mb-6">Contactez l'administration</p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Messagerie</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Contactez l'administration</p>
 
         <div className="space-y-3">
           {admins.map((admin: any) => (
@@ -162,10 +162,10 @@ export default function DriverChat() {
               key={admin.id}
               onClick={() => setSelectedAdmin(admin)}
               data-testid={`driver-admin-contact-${admin.id}`}
-              className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-all text-left"
+              className="w-full bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-3 hover:shadow-md transition-all text-left"
             >
               <div className="relative">
-                <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
+                <div className="w-12 h-12 bg-red-50 dark:bg-red-950 rounded-xl flex items-center justify-center">
                   <Shield size={20} className="text-red-600" />
                 </div>
                 {admin.isOnline && (
@@ -173,8 +173,8 @@ export default function DriverChat() {
                 )}
               </div>
               <div className="flex-1">
-                <p className="font-bold text-sm text-gray-900">{admin.name}</p>
-                <p className="text-xs text-gray-400">
+                <p className="font-bold text-sm text-gray-900 dark:text-white">{admin.name}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">
                   Administration{admin.isOnline ? " - En ligne" : " - Hors ligne"}
                 </p>
               </div>
@@ -187,15 +187,15 @@ export default function DriverChat() {
           ))}
 
           {admins.length === 0 && (
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
-              <Shield size={36} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500 text-sm font-medium">Aucun administrateur disponible</p>
+            <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+              <Shield size={36} className="text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Aucun administrateur disponible</p>
             </div>
           )}
         </div>
       </div>
       <div className="fixed bottom-20 left-0 right-0 text-center">
-        <p className="text-[10px] text-gray-400">Made By Khevin Andrew Kita - Ed Corporation</p>
+        <p className="text-[10px] text-gray-400 dark:text-gray-500">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
     </div>
   );

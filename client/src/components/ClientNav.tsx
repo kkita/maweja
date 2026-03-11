@@ -2,7 +2,7 @@ import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetch } from "../lib/queryClient";
-import { Home, ShoppingBag, ClipboardList, Wallet, Settings, LogOut, LogIn, MessageCircle, Briefcase } from "lucide-react";
+import { Home, ShoppingBag, ClipboardList, Settings, LogOut, LogIn, MessageCircle, Briefcase } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -49,13 +49,13 @@ export default function ClientNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-100 dark:border-gray-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <img src={logoImg} alt="MAWEJA" className="w-9 h-9 rounded-xl object-cover" />
             <div>
-              <h1 className="text-lg font-black text-gray-900 leading-tight">MAWEJA</h1>
-              <p className="text-[10px] text-gray-400 font-medium -mt-0.5">Kinshasa, RDC</p>
+              <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">MAWEJA</h1>
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium -mt-0.5">Kinshasa, RDC</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -63,16 +63,16 @@ export default function ClientNav() {
               <>
                 {unreadMsgCount > 0 && (
                   <div className="relative">
-                    <MessageCircle size={18} className="text-gray-400" />
+                    <MessageCircle size={18} className="text-gray-400 dark:text-gray-500" />
                     <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white text-[8px] font-bold min-w-3.5 h-3.5 px-0.5 rounded-full flex items-center justify-center" data-testid="badge-unread-messages">
                       {unreadMsgCount > 9 ? "9+" : unreadMsgCount}
                     </span>
                   </div>
                 )}
-                <span className="text-xs text-gray-500 font-medium" data-testid="text-username">{user.name?.split(" ")[0]}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium" data-testid="text-username">{user.name?.split(" ")[0]}</span>
                 <button
                   onClick={async () => { await logout(); navigate("/"); }}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  className="text-gray-400 dark:text-gray-500 hover:text-red-600 transition-colors"
                   data-testid="button-logout"
                 >
                   <LogOut size={18} />
@@ -88,7 +88,7 @@ export default function ClientNav() {
         </div>
       </header>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 pb-safe">
         <div className="max-w-lg mx-auto flex">
           {links.map((l) => {
             const isActive = location === l.path;
@@ -97,7 +97,7 @@ export default function ClientNav() {
                 key={l.path}
                 onClick={() => navigate(l.path)}
                 data-testid={`nav-${l.path.replace(/\//g, "") || "home"}`}
-                className={`flex-1 flex flex-col items-center py-2.5 relative transition-colors ${isActive ? "text-red-600" : "text-gray-400"}`}
+                className={`flex-1 flex flex-col items-center py-2.5 relative transition-colors ${isActive ? "text-red-600" : "text-gray-400 dark:text-gray-500"}`}
               >
                 <div className="relative">
                   <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />

@@ -54,26 +54,20 @@ export default function AdminSidebar() {
   ];
 
   const getBadge = (badgeKey: string) => {
-    if (badgeKey === "chat" && unreadChatCount > 0) {
-      return { count: unreadChatCount, color: "bg-red-600" };
-    }
-    if (badgeKey === "dashboard" && unreadNotifCount > 0) {
-      return { count: unreadNotifCount, color: "bg-red-600" };
-    }
-    if (badgeKey === "verifications" && pendingVerifications.length > 0) {
-      return { count: pendingVerifications.length, color: "bg-orange-500" };
-    }
+    if (badgeKey === "chat" && unreadChatCount > 0) return { count: unreadChatCount, color: "bg-red-600" };
+    if (badgeKey === "dashboard" && unreadNotifCount > 0) return { count: unreadNotifCount, color: "bg-red-600" };
+    if (badgeKey === "verifications" && pendingVerifications.length > 0) return { count: pendingVerifications.length, color: "bg-orange-500" };
     return null;
   };
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-100 h-screen flex flex-col fixed left-0 top-0 z-40">
-      <div className="p-6 border-b border-gray-100">
+    <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 h-screen flex flex-col fixed left-0 top-0 z-40">
+      <div className="p-6 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3">
           <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
           <div>
-            <h1 className="text-lg font-black text-gray-900">MAWEJA</h1>
-            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">{t.admin.adminPanel}</p>
+            <h1 className="text-lg font-black text-gray-900 dark:text-white">MAWEJA</h1>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">{t.admin.adminPanel}</p>
           </div>
         </div>
       </div>
@@ -89,8 +83,8 @@ export default function AdminSidebar() {
               data-testid={`admin-nav-${l.badgeKey}`}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 isActive
-                  ? "bg-red-50 text-red-700 font-semibold"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  ? "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400 font-semibold"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
               <l.icon size={18} strokeWidth={isActive ? 2.5 : 1.5} />
@@ -105,18 +99,18 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      <div className="p-4 border-t border-gray-100">
+      <div className="p-4 border-t border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center">
-            <span className="text-red-600 font-bold text-sm">{user?.name?.[0]}</span>
+          <div className="w-9 h-9 bg-red-100 dark:bg-red-950 rounded-xl flex items-center justify-center">
+            <span className="text-red-600 dark:text-red-400 font-bold text-sm">{user?.name?.[0]}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-            <p className="text-[10px] text-gray-400">Admin</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.name}</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">Admin</p>
           </div>
           <button
             onClick={async () => { await logout(); navigate("/admin/login"); }}
-            className="text-gray-400 hover:text-red-600 transition-colors"
+            className="text-gray-400 dark:text-gray-500 hover:text-red-600 transition-colors"
             data-testid="admin-logout"
           >
             <LogOut size={16} />

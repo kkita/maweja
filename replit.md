@@ -1,201 +1,62 @@
 # MAWEJA - Systeme de Livraison Kinshasa
 
 ## Overview
-Production-grade food delivery platform for Kinshasa, RDC with 3 interfaces: Client, Driver, Admin Dashboard. Built with Express + React + PostgreSQL + WebSocket. Red and white color scheme. Uber-style delivery platform with real-time driver tracking via Leaflet maps.
+MAWEJA is a production-grade food and service delivery platform designed for Kinshasa, RDC. It features three distinct interfaces: Client, Driver, and Admin Dashboard. The platform aims to be an Uber-style delivery service, providing real-time driver tracking and a comprehensive system for managing orders, services, and logistics.
 
-## Branding
-- App Name: MAWEJA
-- Signature: Made By Khevin Andrew Kita - Ed Corporation
-- Logo: attached_assets/image_1772833363714.png (imported as @assets/image_1772833363714.png in all components)
-- Primary Color: #dc2626 (red)
-- Color Scheme: Red + White
+**Key Capabilities:**
+- Real-time order tracking and driver location via Leaflet maps.
+- Multi-role support: Client for ordering food and requesting services, Driver for deliveries, and Admin for comprehensive management.
+- Internationalization (French/English) across all interfaces.
+- Integrated service catalog and request system alongside food delivery.
+- Robust financial tracking, marketing analytics, and driver verification workflows.
 
-## Architecture
-- **Backend**: Express.js + PostgreSQL + WebSocket
-- **Frontend**: React + Vite + Tailwind CSS 3
-- **Database**: PostgreSQL via Drizzle ORM
-- **Auth**: Session-based with express-session (3 separate cookies: sid_admin, sid_driver, sid_client for multi-tab support)
-- **Real-time**: WebSocket for notifications, chat, live updates, driver location
-- **Maps**: Leaflet + react-leaflet v4 (OpenStreetMap tiles)
-- **Routing**: wouter (client-side)
-- **State**: TanStack React Query + Context API
-- **File uploads**: multer (uploads/ directory, 5MB limit, jpg/png/webp)
+**Business Vision & Market Potential:**
+MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
-## i18n (Internationalization)
-- Full French/English support across all interfaces
-- Translation files: `client/src/lib/translations/fr.ts` and `en.ts`
-- i18n context: `client/src/lib/i18n.tsx` with `useI18n()` hook returning `{ lang, setLang, t, hasChosenLanguage, setHasChosenLanguage }`
-- Language stored in localStorage: `maweja_lang` (value) + `maweja_lang_chosen` (flag)
-- Splash screen: Shows on first visit for non-admin users, requires language selection before app access
-- Admin: Language flag dropdown in header (AdminLayout), no splash screen
-- Client/Driver: Language selector in Settings page, splash screen on first visit
-- All nav labels, page titles, form fields, status labels, and UI text use translation keys
+## User Preferences
+- I prefer simple language.
+- I want iterative development.
+- Ask before making major changes.
+- I prefer detailed explanations.
 
-## Service Catalog
-- Table: `service_catalog_items` (id, categoryId, name, description, imageUrl, price, isActive, sortOrder)
-- Admin manages catalog items via "Catalogue" tab in AdminServices page
-- Client: Categories with active catalog items show "Browse catalog" badge; clicking opens image gallery grid
-- Client can select a model from gallery, then request a quote with the selection pre-filled
-- Data-driven: Any category with active catalog items gets catalog browsing (not hardcoded by name)
-- API: CRUD at `/api/service-catalog`
+## System Architecture
+**Core Technologies:**
+- **Backend**: Express.js, PostgreSQL, WebSocket
+- **Frontend**: React, Vite, Tailwind CSS 3
+- **Database**: PostgreSQL with Drizzle ORM
+- **Real-time Communication**: WebSockets for notifications, chat, live updates, and driver location.
+- **Mapping**: Leaflet with react-leaflet v4 and OpenStreetMap tiles.
+- **State Management**: TanStack React Query and Context API.
+- **Client-side Routing**: Wouter.
+- **File Storage**: Multer for image uploads (max 5MB for general, 20MB for media).
 
-## Key Files
-- `server/index.ts` - Server entry, DB setup, table creation with ALTER TABLE migrations
-- `server/routes.ts` - API routes (auth, restaurants, orders, drivers CRUD, chat, wallet, finance, CSV export, file upload, driver onboarding/verification)
-- `server/storage.ts` - Database operations (IStorage interface with finance & dashboard stats)
-- `server/db.ts` - Drizzle DB connection
-- `server/seed.ts` - Initial data seeding (restaurants, menu items, admin + drivers)
-- `server/vite.ts` - Vite dev server middleware
-- `shared/schema.ts` - Database schema + types (users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances)
-- `client/src/App.tsx` - Main router (role-based routing with driver verification gate)
-- `client/src/lib/auth.tsx` - Auth context (sessionStorage-based role detection per tab)
-- `client/src/lib/queryClient.ts` - Query client, apiRequest, authFetch (all include X-User-Role header)
-- `client/src/lib/cart.tsx` - Cart context
-- `client/src/lib/websocket.ts` - WebSocket client
+**UI/UX Decisions:**
+- **Branding**: App Name: MAWEJA. Primary color: Red (#dc2626) with white accents.
+- **Admin Dashboard**: Desktop-first layout with a fixed sidebar and content area, responsive breakpoints for grids.
+- **Client/Driver Apps**: Mobile-first design, optimized for 375px–430px screens, with sticky headers and fixed bottom navigation.
+- **Internationalization**: Full French/English support with language selection at first visit for clients/drivers and a dropdown for admins.
+- **Theming**: Dark mode support (Auto/Light/Dark) via `localStorage` and `window.matchMedia`, utilizing Tailwind CSS dark mode classes.
+- **Favicons**: Dynamic favicons based on user role (original for client, black-tinted for driver, red-tinted for admin).
 
-## Database Tables
-- **users**: email, password, name, phone, role, isBlocked, vehicleType, vehiclePlate, driverLicense, commissionRate, lat/lng, walletBalance, loyaltyPoints, sex, dateOfBirth, fullAddress, idPhotoUrl, profilePhotoUrl, verificationStatus, rejectedFields
-- **restaurants**: name, description, cuisine, image, logoUrl, coverVideoUrl, address, rating, deliveryTime, deliveryFee, minOrder, lat/lng, phone, openingHours, email, managerName, brandName, hqAddress, prepTime
-- **menu_items**: restaurantId, name, description, price, image, category, isAvailable, popular
-- **orders**: orderNumber, clientId, restaurantId, driverId, status, items, subtotal, deliveryFee, commission, total, paymentMethod, paymentStatus, deliveryAddress, deliveryLat/Lng, rating, feedback, estimatedDelivery, cancelReason, taxAmount, promoCode, promoDiscount, deviceType, auditLog
-- **saved_addresses**: userId, label, address, lat, lng, isDefault
-- **finances**: type (revenue/expense), category, amount, description, orderId, userId, reference
-- **service_categories**: name, icon, description, isActive
-- **service_requests**: clientId, categoryId, categoryName, status, scheduledType, scheduledDate, scheduledTime, fullName, phone, address, serviceType, budget, photoUrl, additionalInfo, contactMethod, adminNotes
-- **advertisements**: title, mediaUrl, mediaType, linkUrl, isActive, sortOrder
-- **notifications**, **chat_messages**, **wallet_transactions**
+**Feature Specifications & Implementations:**
+- **Authentication**: Session-based with separate cookies for Admin, Driver, and Client roles to support multi-tab usage. Guest browsing of menus is allowed, with login/registration enforced at checkout.
+- **Driver Onboarding & Verification**: Multi-step process where admins create basic driver accounts, drivers complete detailed profiles, and admins review/approve fields with real-time feedback via WebSockets.
+- **Service Catalog**: Dynamic service categories and items managed by admin. Clients can browse and request quotes with pre-filled selections.
+- **Chat System**: Real-time messaging between Admin ↔ Driver and Client → Admin (via a floating bubble with structured complaint forms).
+- **Order Management**: Comprehensive order lifecycle including creation, status updates, driver assignment, real-time tracking, cancellation with refunds, and detailed audit logs.
+- **Payment Methods**: Supports multiple payment options including Cash, Mobile Money, Wallet, Google Pay, POS, IllicoCash, and Credit Card.
+- **Loyalty Program & Promos**: Loyalty points system and dynamic promo codes (e.g., MAWEJA10, LIVRAISON) applicable at checkout.
+- **Location & Addresses**: Integrated Leaflet map with draggable markers, Nominatim reverse geocoding, and saved address management.
+- **Marketing & Analytics**: Admin dashboard provides KPIs, revenue/order trends, top products, payment breakdowns, client segmentation, and driver performance analytics. Dynamic promo banners are managed by admins with live previews.
+- **Notifications**: Browser push notifications with client segmentation for targeted broadcasts.
+- **Settings**: Client and Driver apps include modals for notification preferences, privacy policy, contact support (chat with admin), and app information.
 
-## Driver Onboarding & Verification
-- Admin creates driver accounts (basic: email, password, name, phone)
-- New drivers get `verificationStatus: "not_started"`
-- On first login, driver sees onboarding form (NOT the dashboard)
-- Driver fills: full name, sex, date of birth, full address, email, phone, profile photo (required), ID photo (required)
-- After submission, verificationStatus becomes "pending" and driver sees waiting screen
-- Admin reviews on `/admin/verifications` page, can approve or reject specific fields
-- If rejected, driver sees only the rejected fields editable, re-submits
-- Once approved (verificationStatus: "approved"), driver accesses full app
-- WebSocket pushes verification_approved/verification_rejected events in real-time
-- Existing drivers (seeded) are pre-set to "approved"
-
-## Guest Browsing & Auth
-- Non-authenticated users can browse restaurants, menus, and add to cart
-- Login/registration is required only at checkout (inline AuthGate component)
-- ClientNav adapts: shows "Connexion" button for guests, full nav for logged-in users
-- Driver/admin self-registration is blocked both client-side (no role selector) and server-side (403 response)
-- Three separate login pages:
-  - `/login` - Client (login + registration, red gradient)
-  - `/driver/login` - Driver (login only, dark gradient, admin-created accounts notice)
-  - `/admin/login` - Admin (login only, dark slate gradient, dashboard access)
-- Backend enforces `expectedRole` on login: rejects mismatched roles with clear error messages
-
-## Pages
-### Client
-- HomePage - Restaurant listing, search, categories, promo (guest accessible)
-- RestaurantPage - Menu with categories, add to cart (guest accessible)
-- CartPage - Cart items with qty controls, client info, special instructions, delivery address selection, confirmation modal (guest accessible)
-- CheckoutPage - Professional invoice, promo codes (MAWEJA10/MAWEJA20/LIVRAISON/BIENVENUE), loyalty points, 7 payment methods (Cash, Mobile Money, Wallet, Google Pay, POS, IllicoCash, Carte de Credit), auth required
-- OrdersPage - Active/history tabs with status filters, order cards linking to detail
-- OrderDetailPage - 6-step status stepper, order summary, cancel with reason modal, star rating + feedback, driver info
-- AddressPage - Leaflet map with draggable marker, Nominatim reverse geocoding, saved addresses CRUD with labels (Maison/Bureau/Eglise/Autre)
-- TrackingPage - Real-time order tracking
-- WalletPage - Wallet balance, top-up, transaction history
-- ServicesPage - Browse service categories, catalog image gallery for categories with catalog items, view own service requests
-- ServiceRequestPage - Create a devis/quote with scheduling, contact preference, budget, selected catalog model info
-- ClientSettings - Language selector (FR/EN), notifications, privacy, support, about
-- DriverSettings - Driver profile info, language selector, notifications, privacy, support
-
-### Driver
-- DriverOnboarding - First-login profile completion + waiting screen (gates unverified drivers)
-- DriverDashboard - Online/offline toggle, GPS location broadcasting, available/active orders, earnings, countdown timers, alarm overlay
-- DriverOrders - Delivery history
-- DriverEarnings - Revenue tracking
-- DriverChat - Chat with admin
-
-### Admin Dashboard
-- AdminDashboard - KPIs, recent orders, performance metrics
-- AdminOrders - Full order management: status/driver assignment, restaurant/date/payment/search filters, manual order creation modal, print invoice, order audit log timeline, new order sound notification (Web Audio API), enhanced CSV export with filters, device type tracking
-- AdminDrivers - 3-column layout + dispatch dashboard with 7 tabs: Gestion (map/list/details), Non attribuees (unassigned orders), Attribuees (assigned by driver), Completees (on-time vs late), Disponibles (free drivers), Occupes (busy with order count), Hors ligne. 45-min countdown + URGENT badges
-- AdminMarketing - Full analytics: 8 KPIs, revenue/order trend charts (Recharts BarChart), orders by hour (AreaChart), top 10 products, payment method breakdown (PieChart), top clients table, driver performance ranking. Date range filter
-- AdminRestaurants - Restaurant management with extended fields (email, manager, brand, HQ address, prep time), commission auto-calculation, media management
-- AdminCustomers - Customer management, wallet/points
-- AdminChat - Messaging with clients and drivers
-- AdminFinance - Revenue/expense tracking, category breakdown, daily chart, CSV export
-- AdminSettings - App configuration, WhatsApp number setting
-- AdminVerifications - Review driver onboarding submissions, approve or reject fields individually
-- AdminServices - Manage service categories + view/update service requests with notes/status + catalog management (add/edit/delete catalog items with images, filter by category)
-- AdminAds - CRUD advertisements (images/videos), toggle active, reorder
-- AdminNotifications - Broadcast push notifications with client segmentation (frequent buyers, service users, inactive, high value, new clients)
-
-## Responsiveness
-- **Admin Dashboard**: Desktop-first layout with fixed w-64 sidebar + ml-64 content area. Sidebar nav has `overflow-y-auto` for scrollability. All admin pages use AdminLayout (sticky header, p-8 content, footer). Stat card grids use responsive breakpoints (grid-cols-1 → sm/md/lg increases).
-- **Client App**: Mobile-first with max-w-lg centered content, sticky top header, fixed bottom nav (5 items when logged in), all pages have pb-24 for bottom nav clearance.
-- **Driver App**: Mobile-first same pattern as Client, 4 bottom nav items, all pages have pb-24.
-
-## Chat System
-- Admin ↔ Driver: Admin can message any driver from AdminChat (dynamic contact list). Driver has dedicated chat page (/driver/chat) to message admins.
-- Client → Admin: Floating "Contactez-nous" bubble on client pages with live chat, structured complaint form, and WhatsApp contact option (wa.me link).
-- Real-time: WebSocket notifications + polling fallback. Unread message counts shown per contact.
-- Security: All chat endpoints enforce session ownership (users can only access their own messages/unread counts). Sender ID validated against session.
-
-## API Endpoints
-- POST /api/auth/login, /api/auth/register, /api/auth/logout, GET /api/auth/me
-- POST /api/upload (image upload, auth required, max 5MB)
-- POST /api/upload-media (image/video upload, auth required, max 20MB, returns {url, type})
-- POST /api/driver/onboarding (driver profile completion)
-- GET /api/admin/verifications (pending/rejected drivers)
-- POST /api/admin/verify/:driverId (approve/reject with field-level rejection)
-- CRUD /api/restaurants, /api/restaurants/:id/menu, /api/menu-items
-- GET/POST/PATCH /api/orders, POST /api/orders/:id/rate, PATCH /api/orders/:id/cancel
-- CRUD /api/saved-addresses, PATCH /api/saved-addresses/:id/default
-- POST /api/promo/validate (codes: MAWEJA10, MAWEJA20, LIVRAISON, BIENVENUE)
-- GET/POST/PATCH/DELETE /api/drivers, PATCH /api/drivers/:id/block, /api/drivers/:id/location, /api/drivers/:id/status, POST /api/drivers/:id/alarm
-- GET/POST /api/finance, GET /api/finance/summary, GET /api/finance/export (CSV)
-- GET /api/orders/export (CSV)
-- GET /api/dashboard/stats
-- GET /api/analytics/marketing?dateFrom=&dateTo= (KPIs, charts, top products, client/driver analytics)
-- GET/POST /api/notifications, /api/wallet
-- CRUD /api/service-categories, GET/POST /api/service-requests, PATCH /api/service-requests/:id
-- CRUD /api/advertisements (with file upload)
-- POST /api/notifications/broadcast (targeted push notifications with segments)
-- GET /api/analytics/client-segments (user segmentation analytics)
-- Chat: GET /api/chat/contacts/:userId, GET /api/chat/users-by-role/:role, GET /api/chat/unread/:userId, PATCH /api/chat/read/:senderId/:receiverId, GET /api/chat/:userId1/:userId2, POST /api/chat
-
-## Accounts (seed data)
-- Admin: admin@maweja.cd / admin123
-- Drivers: driver1-4@maweja.cd / driver123 (pre-approved)
-
-## Payment Methods
-Cash, Mobile Money (M-Pesa/Orange Money/Airtel), Wallet MAWEJA, Google Pay, POS, IllicoCash, Carte de Credit
-
-## Promo Codes
-- MAWEJA10: 10% off
-- MAWEJA20: 20% off
-- LIVRAISON: Free delivery
-- BIENVENUE: $2000 off
-
-## Checkout Flow
-- Cart stores checkout data in sessionStorage("maweja_checkout") → CheckoutPage reads it
-- Loyalty points: 1 point = 100 FC, toggle to apply at checkout
-- Tax: 5% of subtotal
-- Order cancellation: Only pending/confirmed orders, requires reason, auto-refund to wallet if paid
-- Saved addresses: Kinshasa default center [-4.325, 15.322], Nominatim reverse geocoding
-
-## Responsiveness (Completed Audit)
-- Target: iPhone SE (375px) → iPhone 14 Pro Max (430px) for iOS/Android app export
-- Client App: Fully responsive on 375px–430px, bottom nav uses flex-1 (2 tabs unauthenticated, 5 tabs authenticated)
-- Driver App: All pages use `<DriverNav />` as FIRST child in JSX (sticky header at top, fixed bottom nav)
-  - KEY FIX: DriverSettings had DriverNav placed LAST in JSX (bug fixed — header was appearing at bottom)
-- Admin Dashboard: Desktop-first panel with sidebar, works well on 1280px+
-- Nav pattern: All pages use `min-h-screen pb-24` wrapper + nav component as first child
-
-## Dynamic Favicons
-- Client: Original logo (no tint)
-- Driver: Black-tinted logo (dark overlay)
-- Admin: Red-tinted logo (red overlay)
-- Implemented via canvas tinting in `client/src/hooks/use-dynamic-favicon.ts`
-
-## Dynamic Promo Banner
-- Table: `promo_banners` (title, subtitle, label, buttonText, bgColor, textColor, buttonColor, isActive)
-- API: GET /api/promo-banner (public), PATCH /api/promo-banner (admin auth required)
-- Admin editor: AdminAds page → "Bannière Promo" tab with live color pickers and preview
-- Client: Reads from API, shows animated promo card on home page
+## External Dependencies
+- **Mapping Service**: OpenStreetMap (via Leaflet and react-leaflet).
+- **Database**: PostgreSQL.
+- **ORM**: Drizzle ORM.
+- **File Uploads**: Multer.
+- **Charting Library**: Recharts (for admin analytics).
+- **Geocoding**: Nominatim (for reverse geocoding).
+- **Payment Gateways**: Integration points for Mobile Money (M-Pesa/Orange Money/Airtel), Google Pay, POS systems, IllicoCash, and Credit Card processing. (Specific providers not detailed, but interfaces exist).
+- **WebSocket Library**: (Implied, typically `ws` or `socket.io` for Express).

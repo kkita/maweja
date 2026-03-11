@@ -97,12 +97,12 @@ export default function HomePage() {
   const displayedRestaurants = showAll || activeCategory || searchQuery.trim() ? filtered : filtered.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="mb-6">
-          <p className="text-gray-500 text-sm font-medium">{t.client.hello} {user?.name?.split(" ")[0]} 👋</p>
-          <h2 className="text-2xl font-black text-gray-900 mt-1">{t.client.whatToEat}</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{t.client.hello} {user?.name?.split(" ")[0]} 👋</p>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white mt-1">{t.client.whatToEat}</h2>
         </div>
 
         <div className="relative mb-6">
@@ -113,7 +113,7 @@ export default function HomePage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="input-search"
-            className="w-full pl-11 pr-10 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
+            className="w-full pl-11 pr-10 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm"
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" data-testid="button-clear-search">
@@ -137,7 +137,7 @@ export default function HomePage() {
                 className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all ${
                   isActive
                     ? "bg-red-600 text-white shadow-lg shadow-red-200"
-                    : "bg-white text-gray-600 border border-gray-200 hover:border-red-300 hover:text-red-600"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-red-300 hover:text-red-600"
                 }`}
               >
                 {lang === "en" ? c.nameEn : c.name}
@@ -147,7 +147,7 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
             {activeCategory ? activeCategory : searchQuery ? t.client.results : t.client.popularRestaurants}
           </h3>
           {!showAll && !activeCategory && !searchQuery && filtered.length > 6 && (
@@ -163,14 +163,14 @@ export default function HomePage() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl h-48 animate-pulse" />
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl h-48 animate-pulse" />
             ))}
           </div>
         ) : displayedRestaurants.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-gray-100" data-testid="text-no-results">
-            <Search size={40} className="text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">{t.client.noRestaurant}</p>
-            <p className="text-gray-400 text-sm mt-1">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-800" data-testid="text-no-results">
+            <Search size={40} className="text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-500 dark:text-gray-400 font-medium">{t.client.noRestaurant}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
               {searchQuery ? t.client.tryOtherSearch : t.client.noInCategory}
             </p>
             <button
@@ -188,7 +188,7 @@ export default function HomePage() {
                 key={r.id}
                 onClick={() => navigate(`/restaurant/${r.id}`)}
                 data-testid={`restaurant-card-${r.id}`}
-                className="w-full bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all text-left"
+                className="w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all text-left"
               >
                 <div className="relative h-36">
                   <img src={r.image} alt={r.name} className="w-full h-full object-cover" />
@@ -203,27 +203,27 @@ export default function HomePage() {
                 <div className="p-4">
                   <div className="flex items-center gap-2.5">
                     {r.logoUrl ? (
-                      <img src={r.logoUrl} alt={`${r.name} logo`} className="w-9 h-9 rounded-xl object-cover border border-gray-100 flex-shrink-0" data-testid={`restaurant-logo-${r.id}`} />
+                      <img src={r.logoUrl} alt={`${r.name} logo`} className="w-9 h-9 rounded-xl object-cover border border-gray-100 dark:border-gray-700 flex-shrink-0" data-testid={`restaurant-logo-${r.id}`} />
                     ) : (
-                      <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 border border-red-100">
+                      <div className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-950 flex items-center justify-center flex-shrink-0 border border-red-100 dark:border-red-900">
                         <span className="text-red-600 font-black text-sm">{r.name.charAt(0)}</span>
                       </div>
                     )}
                     <div className="min-w-0">
-                      <h4 className="font-bold text-gray-900">{r.name}</h4>
-                      <p className="text-gray-500 text-xs line-clamp-1">{r.description}</p>
+                      <h4 className="font-bold text-gray-900 dark:text-white">{r.name}</h4>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1">{r.description}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 mt-3 flex-wrap">
-                    <div className="flex items-center gap-1 text-gray-500" data-testid={`restaurant-prep-time-${r.id}`}>
+                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400" data-testid={`restaurant-prep-time-${r.id}`}>
                       <ChefHat size={12} />
                       <span className="text-xs font-medium">{t.client.prep}: {r.prepTime || r.deliveryTime}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-500">
+                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                       <Clock size={12} />
                       <span className="text-xs font-medium">{r.deliveryTime}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-gray-500">
+                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                       <MapPin size={12} />
                       <span className="text-xs font-medium">{r.address.split(",")[0]}</span>
                     </div>

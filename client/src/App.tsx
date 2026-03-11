@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { CartProvider } from "./lib/cart";
 import { I18nProvider, useI18n } from "./lib/i18n";
+import { ThemeProvider } from "./lib/theme";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { connectWS } from "./lib/websocket";
@@ -159,14 +160,16 @@ function AppRoutes() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <I18nProvider>
-        <AuthProvider>
-          <CartProvider>
-            <AppRoutes />
-            <Toaster />
-          </CartProvider>
-        </AuthProvider>
-      </I18nProvider>
+      <ThemeProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <CartProvider>
+              <AppRoutes />
+              <Toaster />
+            </CartProvider>
+          </AuthProvider>
+        </I18nProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
