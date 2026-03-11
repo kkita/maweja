@@ -1,13 +1,17 @@
 import express from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 // seedDatabase importé mais désactivé — données de production uniquement
 // import { seedDatabase } from "./seed";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
 
 const app = express();
+
+// Faire confiance au reverse proxy Replit (nécessaire pour les cookies sécurisés en prod)
+app.set("trust proxy", 1);
 
 const CAPACITOR_ORIGINS = [
   "capacitor://localhost",
@@ -35,11 +39,26 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+const isProduction = process.env.NODE_ENV === "production";
+const PgSession = connectPgSimple(session);
+
+const pgStore = new PgSession({
+  pool,
+  tableName: "user_sessions",
+  createTableIfMissing: true,
+});
+
 const sessionOpts = {
+  store: pgStore,
   secret: process.env.SESSION_SECRET || "maweja-secret-2024",
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 },
+  cookie: {
+    secure: isProduction,
+    httpOnly: true,
+    sameSite: isProduction ? ("none" as const) : ("lax" as const),
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  },
 };
 
 const adminSession = session({ ...sessionOpts, name: "sid_admin" });
