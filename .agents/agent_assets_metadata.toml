@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "44kQSplfzWH6QScAv-wMl"
+uri = "file://MAWEJA_Presentation.pdf"
+type = "pdf"
+title = "MAWEJA — Présentation Officielle (PDF)"
