@@ -50,6 +50,27 @@ import ServicesPage from "./pages/client/ServicesPage";
 import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 import PresentationPage from "./pages/PresentationPage";
 
+const MOBILE_MODE = import.meta.env.VITE_MOBILE_MODE as string | undefined;
+
+function MobileModeGuard() {
+  const [location, navigate] = useLocation();
+
+  useEffect(() => {
+    if (!MOBILE_MODE) return;
+    if (MOBILE_MODE === "driver") {
+      if (!location.startsWith("/driver") && !location.startsWith("/admin")) {
+        navigate("/driver/login");
+      }
+    } else if (MOBILE_MODE === "client") {
+      if (location.startsWith("/driver/") || location.startsWith("/admin/")) {
+        navigate("/");
+      }
+    }
+  }, [location]);
+
+  return null;
+}
+
 function AppRoutes() {
   const { user, loading } = useAuth();
   const { hasChosenLanguage, t } = useI18n();
@@ -62,16 +83,16 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">{t.common.loading}</p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium">{t.common.loading}</p>
         </div>
       </div>
     );
   }
 
-  if (user?.role === "admin") {
+  if (user?.role === "admin" && MOBILE_MODE !== "client" && MOBILE_MODE !== "driver") {
     return (
       <Switch>
         <Route path="/" component={AdminDashboard} />
@@ -104,6 +125,7 @@ function AppRoutes() {
     return (
       <Switch>
         <Route path="/" component={DriverDashboard} />
+        <Route path="/driver/login" component={DriverLoginPage} />
         <Route path="/driver/orders" component={DriverOrders} />
         <Route path="/driver/chat" component={DriverChat} />
         <Route path="/driver/earnings" component={DriverEarnings} />
@@ -138,6 +160,16 @@ function AppRoutes() {
     );
   }
 
+  if (MOBILE_MODE === "driver") {
+    return (
+      <Switch>
+        <Route path="/" component={DriverLoginPage} />
+        <Route path="/driver/login" component={DriverLoginPage} />
+        <Route component={DriverLoginPage} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
       <Route path="/" component={ClientHome} />
@@ -164,6 +196,7 @@ export default function App() {
         <I18nProvider>
           <AuthProvider>
             <CartProvider>
+              <MobileModeGuard />
               <AppRoutes />
               <Toaster />
             </CartProvider>

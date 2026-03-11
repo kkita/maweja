@@ -1,0 +1,28 @@
+{
+  "name": "maweja-client",
+  "version": "1.0.0",
+  "description": "MAWEJA Client App - Application mobile pour les clients",
+  "private": true,
+  "scripts": {
+    "build": "cd ../.. && VITE_MOBILE_MODE=client VITE_API_BASE_URL=https://VOTRE_BACKEND_URL npx vite build --config vite.mobile.config.ts",
+    "sync": "npx cap sync android",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios",
+    "add:android": "npx cap add android",
+    "add:ios": "npx cap add ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/haptics": "^6.0.0",
+    "@capacitor/keyboard": "^6.0.0",
+    "@capacitor/network": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  }
+}

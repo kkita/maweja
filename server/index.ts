@@ -7,6 +7,30 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 
 const app = express();
+
+const CAPACITOR_ORIGINS = [
+  "capacitor://localhost",
+  "https://localhost",
+  "http://localhost",
+  "http://localhost:8100",
+  "https://localhost:8100",
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && CAPACITOR_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,X-User-Role,Authorization");
+    if (req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
