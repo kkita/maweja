@@ -70,7 +70,11 @@ export default function ClientNav() {
                   </div>
                 )}
                 <span className="text-xs text-gray-500 font-medium" data-testid="text-username">{user.name?.split(" ")[0]}</span>
-                <button onClick={logout} className="text-gray-400 hover:text-red-600 transition-colors" data-testid="button-logout">
+                <button
+                  onClick={async () => { await logout(); navigate("/"); }}
+                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  data-testid="button-logout"
+                >
                   <LogOut size={18} />
                 </button>
               </>

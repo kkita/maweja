@@ -82,7 +82,11 @@ export default function DriverNav() {
               <Power size={12} />
               {isOnline ? t.driver.online : t.driver.offline}
             </button>
-            <button onClick={logout} className="text-gray-400 hover:text-red-600" data-testid="button-logout">
+            <button
+              onClick={async () => { await logout(); navigate("/driver/login"); }}
+              className="text-gray-400 hover:text-red-600"
+              data-testid="button-logout"
+            >
               <LogOut size={18} />
             </button>
           </div>

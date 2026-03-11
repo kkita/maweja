@@ -114,7 +114,11 @@ export default function AdminSidebar() {
             <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
             <p className="text-[10px] text-gray-400">Admin</p>
           </div>
-          <button onClick={logout} className="text-gray-400 hover:text-red-600 transition-colors" data-testid="admin-logout">
+          <button
+            onClick={async () => { await logout(); navigate("/admin/login"); }}
+            className="text-gray-400 hover:text-red-600 transition-colors"
+            data-testid="admin-logout"
+          >
             <LogOut size={16} />
           </button>
         </div>
