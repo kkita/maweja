@@ -101,7 +101,7 @@ export default function OrderDetailPage() {
 
   if (isLoading || !order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -131,28 +131,28 @@ export default function OrderDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="flex items-center gap-3 mb-6">
           <button
             onClick={() => navigate("/orders")}
-            className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200"
+            className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700"
             data-testid="button-back-orders"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} className="text-gray-700 dark:text-gray-300" />
           </button>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Commande {order.orderNumber}</h2>
-            <p className="text-xs text-gray-500">{formatDate(order.createdAt!)}</p>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Commande {order.orderNumber}</h2>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(order.createdAt!)}</p>
           </div>
         </div>
 
         {isCancelled && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4 flex items-center gap-3" data-testid="banner-cancelled">
+          <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-4 flex items-center gap-3" data-testid="banner-cancelled">
             <Ban size={20} className="text-red-600 flex-shrink-0" />
             <div>
-              <p className="font-semibold text-red-700 text-sm">Commande annulee</p>
+              <p className="font-semibold text-red-700 dark:text-red-400 text-sm">Commande annulee</p>
               {order.cancelReason && (
                 <p className="text-xs text-red-500 mt-0.5">Raison : {order.cancelReason}</p>
               )}
@@ -160,8 +160,8 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4">
-          <h3 className="font-semibold text-sm text-gray-900 mb-6">Statut de la commande</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 mb-4">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-6">Statut de la commande</h3>
           {!isCancelled && (
             <div className="space-y-0">
               {steps.map((step, i) => {
@@ -176,8 +176,8 @@ export default function OrderDetailPage() {
                           isCurrent
                             ? "bg-red-600 text-white shadow-lg shadow-red-200"
                             : isCompleted
-                            ? "bg-green-100 text-green-600"
-                            : "bg-gray-100 text-gray-400"
+                            ? "bg-green-100 dark:bg-green-900/40 text-green-600"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-400"
                         }`}
                       >
                         <step.icon size={18} />
@@ -185,7 +185,7 @@ export default function OrderDetailPage() {
                       {i < steps.length - 1 && (
                         <div
                           className={`w-0.5 h-8 my-1 ${
-                            isCompleted ? "bg-green-300" : isCurrent ? "bg-red-300" : "bg-gray-200"
+                            isCompleted ? "bg-green-300 dark:bg-green-700" : isCurrent ? "bg-red-300" : "bg-gray-200 dark:bg-gray-700"
                           }`}
                         />
                       )}
@@ -196,13 +196,13 @@ export default function OrderDetailPage() {
                           isCurrent
                             ? "text-red-600"
                             : isCompleted
-                            ? "text-green-700"
-                            : "text-gray-400"
+                            ? "text-green-700 dark:text-green-400"
+                            : "text-gray-400 dark:text-gray-600"
                         }`}
                       >
                         {step.label}
                       </p>
-                      {isCurrent && <p className="text-xs text-gray-500 mt-0.5">En cours...</p>}
+                      {isCurrent && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">En cours...</p>}
                     </div>
                   </div>
                 );
@@ -211,34 +211,34 @@ export default function OrderDetailPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="font-semibold text-sm text-gray-900 mb-3">Resume de la commande</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Resume de la commande</h3>
           {restaurant && (
-            <p className="text-xs text-gray-500 mb-3 font-medium">{restaurant.name}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">{restaurant.name}</p>
           )}
           <div className="space-y-2">
             {(items as any[]).map((item: any, i: number) => (
               <div key={i} className="flex justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-gray-600 dark:text-gray-400">
                   {item.qty} x {item.name}
                 </span>
-                <span className="font-medium">{formatPrice(item.price * item.qty)}</span>
+                <span className="font-medium dark:text-white">{formatPrice(item.price * item.qty)}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-100 mt-3 pt-3 space-y-1">
+          <div className="border-t border-gray-100 dark:border-gray-800 mt-3 pt-3 space-y-1">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Sous-total</span>
-              <span>{formatPrice(order.subtotal)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Sous-total</span>
+              <span className="dark:text-white">{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Livraison</span>
-              <span>{formatPrice(order.deliveryFee)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Livraison</span>
+              <span className="dark:text-white">{formatPrice(order.deliveryFee)}</span>
             </div>
             {order.taxAmount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Taxes</span>
-                <span>{formatPrice(order.taxAmount)}</span>
+                <span className="text-gray-500 dark:text-gray-400">Taxes</span>
+                <span className="dark:text-white">{formatPrice(order.taxAmount)}</span>
               </div>
             )}
             {order.promoDiscount > 0 && (
@@ -247,49 +247,49 @@ export default function OrderDetailPage() {
                 <span>-{formatPrice(order.promoDiscount)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold pt-1 border-t border-gray-100">
-              <span>Total</span>
+            <div className="flex justify-between font-bold pt-1 border-t border-gray-100 dark:border-gray-800">
+              <span className="dark:text-white">Total</span>
               <span className="text-red-600">{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="font-semibold text-sm text-gray-900 mb-3">Details</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Details</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">Numero</span>
-              <span className="font-medium">{order.orderNumber}</span>
+              <span className="text-gray-500 dark:text-gray-400">Numero</span>
+              <span className="font-medium dark:text-white">{order.orderNumber}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Date</span>
-              <span className="font-medium">{formatDate(order.createdAt!)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Date</span>
+              <span className="font-medium dark:text-white">{formatDate(order.createdAt!)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">Paiement</span>
-              <span className="font-medium">{paymentLabels[order.paymentMethod] || order.paymentMethod}</span>
+              <span className="text-gray-500 dark:text-gray-400">Paiement</span>
+              <span className="font-medium dark:text-white">{paymentLabels[order.paymentMethod] || order.paymentMethod}</span>
             </div>
             <div className="flex justify-between items-start gap-2">
-              <span className="text-gray-500 flex-shrink-0">Adresse</span>
-              <span className="font-medium text-right">{order.deliveryAddress}</span>
+              <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">Adresse</span>
+              <span className="font-medium dark:text-white text-right">{order.deliveryAddress}</span>
             </div>
           </div>
         </div>
 
         {driver && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-            <h3 className="font-semibold text-sm text-gray-900 mb-3">Votre livreur</h3>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Votre livreur</h3>
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
                 <Truck size={20} className="text-red-600" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-sm">{driver.name}</p>
-                <p className="text-xs text-gray-500">{driver.phone}</p>
+                <p className="font-semibold text-sm dark:text-white">{driver.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{driver.phone}</p>
               </div>
               <a
                 href={`tel:${driver.phone}`}
-                className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-red-600"
+                className="w-10 h-10 bg-red-50 dark:bg-red-950/40 rounded-xl flex items-center justify-center text-red-600"
                 data-testid="button-call-driver"
               >
                 <Phone size={18} />
@@ -325,7 +325,7 @@ export default function OrderDetailPage() {
             <button
               onClick={() => setShowCancelModal(true)}
               data-testid="button-cancel-order"
-              className="w-full py-3 rounded-2xl border-2 border-red-200 text-red-600 font-semibold text-sm flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl border-2 border-red-200 dark:border-red-800 text-red-600 font-semibold text-sm flex items-center justify-center gap-2"
             >
               <AlertTriangle size={16} />
               Annuler la commande
@@ -346,18 +346,18 @@ export default function OrderDetailPage() {
 
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" data-testid="modal-cancel">
-          <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-8 animate-in slide-in-from-bottom">
+          <div className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-lg p-6 pb-8 animate-in slide-in-from-bottom">
             <div className="flex items-center justify-between gap-2 mb-6">
-              <h3 className="font-bold text-lg">Annuler la commande</h3>
+              <h3 className="font-bold text-lg dark:text-white">Annuler la commande</h3>
               <button
                 onClick={() => setShowCancelModal(false)}
                 data-testid="button-close-cancel-modal"
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
               >
-                <X size={16} />
+                <X size={16} className="dark:text-gray-300" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">Pourquoi souhaitez-vous annuler ?</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Pourquoi souhaitez-vous annuler ?</p>
             <div className="space-y-2 mb-4">
               {cancelReasons.map((reason) => (
                 <button
@@ -366,8 +366,8 @@ export default function OrderDetailPage() {
                   data-testid={`cancel-reason-${reason}`}
                   className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     cancelReason === reason
-                      ? "bg-red-50 text-red-700 border-2 border-red-300"
-                      : "bg-gray-50 text-gray-700 border border-gray-200"
+                      ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border-2 border-red-300 dark:border-red-700"
+                      : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
                   }`}
                 >
                   {reason}
@@ -380,7 +380,7 @@ export default function OrderDetailPage() {
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Decrivez votre raison..."
                 data-testid="input-custom-reason"
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4 resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-300"
+                className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl p-3 text-sm mb-4 resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-300"
               />
             )}
             <button
@@ -397,18 +397,18 @@ export default function OrderDetailPage() {
 
       {showRateModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" data-testid="modal-rate">
-          <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 pb-8 animate-in slide-in-from-bottom">
+          <div className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-lg p-6 pb-8 animate-in slide-in-from-bottom">
             <div className="flex items-center justify-between gap-2 mb-6">
-              <h3 className="font-bold text-lg">Evaluer la commande</h3>
+              <h3 className="font-bold text-lg dark:text-white">Evaluer la commande</h3>
               <button
                 onClick={() => setShowRateModal(false)}
                 data-testid="button-close-rate-modal"
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
               >
-                <X size={16} />
+                <X size={16} className="dark:text-gray-300" />
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-4 text-center">Comment etait votre commande ?</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Comment etait votre commande ?</p>
             <div className="flex justify-center gap-2 mb-6">
               {[1, 2, 3, 4, 5].map((s) => (
                 <button
@@ -419,7 +419,7 @@ export default function OrderDetailPage() {
                 >
                   <Star
                     size={36}
-                    className={s <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                    className={s <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"}
                   />
                 </button>
               ))}
@@ -429,7 +429,7 @@ export default function OrderDetailPage() {
               onChange={(e) => setFeedback(e.target.value)}
               placeholder="Un commentaire ? (optionnel)"
               data-testid="input-feedback"
-              className="w-full border border-gray-200 rounded-xl p-3 text-sm mb-4 resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-300"
+              className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl p-3 text-sm mb-4 resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-300"
             />
             <button
               onClick={handleRate}

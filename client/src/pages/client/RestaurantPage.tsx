@@ -25,7 +25,7 @@ export default function RestaurantPage() {
   const getItemQty = (itemId: number) => items.find((i) => i.id === itemId)?.quantity || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-32">
       <div className="relative h-56">
         {restaurant && !showVideo && (
           <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
@@ -85,14 +85,14 @@ export default function RestaurantPage() {
 
       <div className="max-w-lg mx-auto px-4 py-4">
         {restaurant?.prepTime && (
-          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
+          <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
             <ChefHat size={16} className="text-orange-600 flex-shrink-0" />
-            <span className="text-sm font-semibold text-orange-800">Temps de preparation: {restaurant.prepTime}</span>
+            <span className="text-sm font-semibold text-orange-800 dark:text-orange-300">Temps de preparation: {restaurant.prepTime}</span>
           </div>
         )}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
           {categories.map((c) => (
-            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white border border-gray-200 rounded-full text-xs font-semibold text-gray-600 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-all">
+            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-200 hover:text-red-600 transition-all">
               {c}
             </a>
           ))}
@@ -100,7 +100,7 @@ export default function RestaurantPage() {
 
         {categories.map((cat) => (
           <div key={cat} id={`cat-${cat}`} className="mb-6">
-            <h3 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">{cat}</h3>
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">{cat}</h3>
             <div className="space-y-3">
               {menu.filter((m) => m.category === cat).map((item) => {
                 const qty = getItemQty(item.id);
@@ -108,25 +108,25 @@ export default function RestaurantPage() {
                   <div
                     key={item.id}
                     data-testid={`menu-item-${item.id}`}
-                    className="bg-white rounded-2xl p-3 flex gap-3 border border-gray-100 shadow-sm"
+                    className="bg-white dark:bg-gray-900 rounded-2xl p-3 flex gap-3 border border-gray-100 dark:border-gray-800 shadow-sm"
                   >
                     <img src={item.image} alt={item.name} className="w-20 h-20 rounded-xl object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-semibold text-gray-900 text-sm">{item.name}</h4>
-                          {item.popular && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-semibold">Populaire</span>}
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{item.name}</h4>
+                          {item.popular && <span className="text-[10px] bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-semibold">Populaire</span>}
                         </div>
                       </div>
-                      <p className="text-gray-400 text-xs mt-1 line-clamp-2">{item.description}</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-xs mt-1 line-clamp-2">{item.description}</p>
                       <div className="flex items-center justify-between mt-2">
                         <span className="font-bold text-red-600 text-sm">{formatPrice(item.price)}</span>
                         {qty > 0 ? (
-                          <div className="flex items-center gap-2 bg-red-50 rounded-xl px-2 py-1">
+                          <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/40 rounded-xl px-2 py-1">
                             <button
                               onClick={() => updateQuantity(item.id, qty - 1)}
                               data-testid={`minus-${item.id}`}
-                              className="w-6 h-6 rounded-lg bg-white border border-red-200 flex items-center justify-center text-red-600"
+                              className="w-6 h-6 rounded-lg bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800 flex items-center justify-center text-red-600"
                             >
                               <Minus size={12} />
                             </button>
@@ -162,7 +162,7 @@ export default function RestaurantPage() {
       </div>
 
       {itemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => navigate("/cart")}

@@ -67,13 +67,13 @@ export default function DriverLoginPage() {
             <p className="text-gray-400 mt-1 text-sm">Espace Livreur</p>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8">
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
                 <div>
-                  <h1 className="text-xl font-black text-gray-900">MAWEJA</h1>
-                  <p className="text-xs text-gray-400">Espace Livreur</p>
+                  <h1 className="text-xl font-black text-gray-900 dark:text-white">MAWEJA</h1>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Espace Livreur</p>
                 </div>
               </div>
             </div>
@@ -89,13 +89,13 @@ export default function DriverLoginPage() {
               <div className="relative">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="email" placeholder="Adresse email" value={email} onChange={e => setEmail(e.target.value)}
-                  data-testid="driver-input-email" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                  data-testid="driver-input-email" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
               </div>
 
               <div className="relative">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
-                  data-testid="driver-input-password" className="w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                  data-testid="driver-input-password" className="w-full pl-11 pr-12 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>

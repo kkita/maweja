@@ -235,15 +235,15 @@ export default function CartPage() {
             value={specialInstructions}
             onChange={(e) => setSpecialInstructions(e.target.value)}
             placeholder="Ex: Sans oignon, bien cuit, allergies..."
-            className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+            className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
             rows={3}
             data-testid="input-special-instructions"
           />
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <MapPin size={16} className="text-red-600" />
               Adresse de livraison
             </h3>
@@ -259,7 +259,7 @@ export default function CartPage() {
           </div>
           {defaultAddress ? (
             <div
-              className="bg-gray-50 rounded-xl p-3 text-sm text-gray-700 flex items-start gap-2"
+              className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"
               data-testid="text-delivery-address"
             >
               <MapPin size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
@@ -272,7 +272,7 @@ export default function CartPage() {
                 value={manualAddress}
                 onChange={(e) => setManualAddress(e.target.value)}
                 placeholder="Entrez votre adresse de livraison"
-                className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
                 data-testid="input-manual-address"
               />
               <button
@@ -286,17 +286,17 @@ export default function CartPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 space-y-3">
           <div className="flex justify-between gap-2 text-sm">
-            <span className="text-gray-500">Sous-total</span>
-            <span className="font-semibold" data-testid="text-subtotal">{formatPrice(total)}</span>
+            <span className="text-gray-500 dark:text-gray-400">Sous-total</span>
+            <span className="font-semibold dark:text-white" data-testid="text-subtotal">{formatPrice(total)}</span>
           </div>
           <div className="flex justify-between gap-2 text-sm">
-            <span className="text-gray-500">Frais de livraison</span>
-            <span className="font-semibold" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
+            <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
+            <span className="font-semibold dark:text-white" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
           </div>
-          <div className="border-t border-gray-100 pt-3 flex justify-between gap-2">
-            <span className="font-bold">Total</span>
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex justify-between gap-2">
+            <span className="font-bold dark:text-white">Total</span>
             <span className="font-black text-red-600 text-lg" data-testid="text-grand-total">
               {formatPrice(grandTotal)}
             </span>
@@ -304,7 +304,7 @@ export default function CartPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100 z-50">
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800 z-50">
         <div className="max-w-lg mx-auto">
           <button
             onClick={handleCheckout}
@@ -320,13 +320,13 @@ export default function CartPage() {
       {showConfirmModal && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center p-4">
           <div
-            className="bg-white rounded-2xl w-full max-w-lg p-6 space-y-4 animate-in slide-in-from-bottom"
+            className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 space-y-4 animate-in slide-in-from-bottom"
             data-testid="modal-confirm-address"
           >
-            <h3 className="text-lg font-bold text-gray-900">Confirmer l'adresse</h3>
-            <div className="bg-gray-50 rounded-xl p-4 flex items-start gap-3">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirmer l'adresse</h3>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex items-start gap-3">
               <MapPin size={18} className="text-red-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-gray-700" data-testid="text-confirm-address">
+              <p className="text-sm text-gray-700 dark:text-gray-300" data-testid="text-confirm-address">
                 {resolvedAddress}
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function CartPage() {
                   setShowConfirmModal(false);
                   navigate("/addresses");
                 }}
-                className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 text-sm font-semibold"
+                className="flex-1 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-semibold"
                 data-testid="button-modal-change"
               >
                 Changer

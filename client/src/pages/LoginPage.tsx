@@ -79,18 +79,18 @@ export default function LoginPage() {
             <p className="text-red-200 mt-1 text-sm">Espace Client</p>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-2xl p-8">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8">
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
                 <div>
-                  <h1 className="text-xl font-black text-gray-900">MAWEJA</h1>
-                  <p className="text-xs text-gray-400">Espace Client</p>
+                  <h1 className="text-xl font-black text-gray-900 dark:text-white">MAWEJA</h1>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Espace Client</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-2 mb-6 bg-gray-100 rounded-2xl p-1">
+            <div className="flex gap-2 mb-6 bg-gray-100 dark:bg-gray-800 rounded-2xl p-1">
               <button onClick={() => { setIsLogin(true); setError(""); }} data-testid="tab-login"
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${isLogin ? "bg-red-600 text-white shadow-lg" : "text-gray-500"}`}>
                 Connexion
@@ -107,17 +107,17 @@ export default function LoginPage() {
                   <div className="relative">
                     <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type="text" placeholder="Nom complet" value={name} onChange={e => setName(e.target.value)}
-                      data-testid="input-name" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                      data-testid="input-name" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
                   </div>
                   <div className="relative">
                     <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type="tel" placeholder="Telephone (ex: 0812345678)" value={phone} onChange={e => setPhone(e.target.value)}
-                      data-testid="input-phone" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                      data-testid="input-phone" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
                   </div>
                   <div className="relative">
                     <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type="text" placeholder="Adresse (quartier, commune)" value={address} onChange={e => setAddress(e.target.value)}
-                      data-testid="input-address" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+                      data-testid="input-address" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
                   </div>
                 </>
               )}
@@ -125,13 +125,13 @@ export default function LoginPage() {
               <div className="relative">
                 <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type="email" placeholder="Adresse email" value={email} onChange={e => setEmail(e.target.value)}
-                  data-testid="input-email" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                  data-testid="input-email" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
               </div>
 
               <div className="relative">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input type={showPassword ? "text" : "password"} placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)}
-                  data-testid="input-password" className="w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
+                  data-testid="input-password" className="w-full pl-11 pr-12 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
