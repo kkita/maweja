@@ -1,15 +1,13 @@
 {
   "name": "maweja-driver",
   "version": "1.0.0",
-  "description": "MAWEJA Driver App - Application mobile pour les livreurs",
+  "description": "MAWEJA Driver App — Android uniquement | com.edcorp.maweja.driver",
   "private": true,
   "scripts": {
     "build": "cd ../.. && VITE_MOBILE_MODE=driver VITE_API_BASE_URL=https://VOTRE_BACKEND_URL npx vite build --config vite.mobile.config.ts",
     "sync": "npx cap sync android",
     "open:android": "npx cap open android",
-    "open:ios": "npx cap open ios",
-    "add:android": "npx cap add android",
-    "add:ios": "npx cap add ios"
+    "add:android": "npx cap add android"
   },
   "dependencies": {
     "@capacitor/core": "^6.0.0",
@@ -22,7 +20,6 @@
   },
   "devDependencies": {
     "@capacitor/android": "^6.0.0",
-    "@capacitor/cli": "^6.0.0",
-    "@capacitor/ios": "^6.0.0"
+    "@capacitor/cli": "^6.0.0"
   }
 }

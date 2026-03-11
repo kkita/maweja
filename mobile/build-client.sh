@@ -1,65 +1,58 @@
 #!/bin/bash
 # ============================================================
-# Script de build pour l'app Client MAWEJA (Android + iOS)
+# MAWEJA CLIENT APP — Build Capacitor
+# Package ID : com.edcorp.maweja
+# Plateformes : Android + iOS
 # ============================================================
-# Utilisez ce script depuis la racine du projet MAWEJA
 # Usage: bash mobile/build-client.sh
 # ============================================================
 
 set -e
 
 echo "================================================"
-echo "   MAWEJA CLIENT APP - Build Capacitor"
+echo "   MAWEJA CLIENT — com.edcorp.maweja"
+echo "   Plateformes : Android + iOS"
 echo "================================================"
 
-# ---- 1. Vérification de l'URL du backend ----
+# ---- 1. URL du backend ----
 if [ -z "$VITE_API_BASE_URL" ]; then
   echo ""
-  echo "⚠️  ATTENTION: VITE_API_BASE_URL non définie!"
-  echo "   Exemple: export VITE_API_BASE_URL=https://votre-backend.replit.app"
-  echo "   ou lancez: VITE_API_BASE_URL=https://... bash mobile/build-client.sh"
-  echo ""
-  read -p "Entrez l'URL du backend (ex: https://maweja.replit.app): " VITE_API_BASE_URL
+  echo "VITE_API_BASE_URL non définie."
+  read -p "URL du backend déployé (ex: https://maweja.replit.app): " VITE_API_BASE_URL
   export VITE_API_BASE_URL
 fi
 
 echo ""
-echo "→ Backend URL: $VITE_API_BASE_URL"
-echo "→ Mode: CLIENT"
+echo "→ Backend : $VITE_API_BASE_URL"
+echo "→ Mode    : CLIENT"
 echo ""
 
 # ---- 2. Build Vite ----
-echo "[1/4] Build de l'application web (Vite)..."
-VITE_MOBILE_MODE=client VITE_API_BASE_URL=$VITE_API_BASE_URL npx vite build --config vite.mobile.config.ts
-echo "   ✓ Build web terminé → mobile/client/www/"
+echo "[1/3] Build application web..."
+VITE_MOBILE_MODE=client VITE_API_BASE_URL=$VITE_API_BASE_URL \
+  npx vite build --config vite.mobile.config.ts
+echo "   ✓ Web build → mobile/client/www/"
 
 # ---- 3. Capacitor Sync ----
-echo "[2/4] Synchronisation Capacitor..."
+echo "[2/3] Synchronisation Capacitor (Android + iOS)..."
 cd mobile/client
-npx cap sync
-echo "   ✓ Capacitor sync terminé"
+npx cap sync android 2>/dev/null && echo "   ✓ Android sync OK" || echo "   ! Android non initialisé — lancez: npx cap add android"
+npx cap sync ios    2>/dev/null && echo "   ✓ iOS sync OK"     || echo "   ! iOS non initialisé — lancez: npx cap add ios (macOS requis)"
 
-# ---- 4. Build Android ----
-echo "[3/4] Build Android APK..."
-if [ -d "android" ]; then
-  npx cap build android --keystorepath ../../keystore/maweja-client.jks \
-    --keystorepass ${KEYSTORE_PASSWORD:-maweja2024} \
-    --keystorealias maweja-client \
-    --keystorealiaspass ${KEYSTORE_PASSWORD:-maweja2024} 2>/dev/null || \
-  (echo "   → Ouvrez Android Studio pour compiler manuellement" && npx cap open android)
-else
-  echo "   → Plateforme Android non initialisée. Lancez: npx cap add android"
-fi
-
+# ---- 4. Instructions ----
 echo ""
 echo "================================================"
 echo "   BUILD CLIENT TERMINÉ"
 echo "================================================"
 echo ""
-echo "APK: mobile/client/android/app/build/outputs/apk/release/app-release.apk"
+echo "Android APK :"
+echo "  cd mobile/client && npx cap open android"
+echo "  → Build → Generate Signed Bundle/APK dans Android Studio"
 echo ""
-echo "Prochaines étapes:"
-echo "  1. Connectez-vous à Google Play Console"
-echo "  2. Uploadez l'APK ou le fichier .aab"
-echo "  3. Complétez les informations de la fiche store"
+echo "iOS IPA (macOS uniquement) :"
+echo "  cd mobile/client && npx cap open ios"
+echo "  → Product → Archive dans Xcode"
+echo ""
+echo "APK output : mobile/client/android/app/build/outputs/apk/"
+echo "Package ID : com.edcorp.maweja"
 echo "================================================"

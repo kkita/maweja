@@ -1,13 +1,16 @@
 import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "cd.maweja.client",
+  appId: "com.edcorp.maweja",
   appName: "MAWEJA",
   webDir: "www",
   server: {
     androidScheme: "https",
   },
   android: {
+    backgroundColor: "#dc2626",
+  },
+  ios: {
     backgroundColor: "#dc2626",
   },
   plugins: {

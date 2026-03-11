@@ -1,7 +1,8 @@
 import { CapacitorConfig } from "@capacitor/cli";
 
+// DRIVER APP — Android uniquement (pas d'iOS)
 const config: CapacitorConfig = {
-  appId: "cd.maweja.driver",
+  appId: "com.edcorp.maweja.driver",
   appName: "MAWEJA Driver",
   webDir: "www",
   server: {
@@ -16,7 +17,6 @@ const config: CapacitorConfig = {
       launchAutoHide: true,
       backgroundColor: "#dc2626",
       androidSplashResourceName: "splash",
-      iosSplashResourceName: "Splash",
       showSpinner: false,
     },
     StatusBar: {

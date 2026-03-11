@@ -8,14 +8,11 @@
 
 ## Vue d'ensemble
 
-Ce guide vous permet de générer deux applications mobiles natives distinctes à partir du projet MAWEJA :
-
-| App | Package ID | Store |
-|-----|-----------|-------|
-| **MAWEJA** (Client) | `cd.maweja.client` | Google Play + App Store |
-| **MAWEJA Driver** (Livreur) | `cd.maweja.driver` | Google Play + App Store |
-
-L'Admin Dashboard reste une application web uniquement.
+| App | Package ID | Android | iOS |
+|-----|-----------|:-------:|:---:|
+| **MAWEJA** (Clients) | `com.edcorp.maweja` | ✅ | ✅ |
+| **MAWEJA Driver** (Livreurs) | `com.edcorp.maweja.driver` | ✅ | ❌ |
+| Admin Dashboard | — (web uniquement) | ❌ | ❌ |
 
 ---
 
@@ -31,12 +28,15 @@ L'Admin Dashboard reste une application web uniquement.
      - Android Emulator
 4. **Variables d'environnement à configurer :**
    ```bash
-   export ANDROID_HOME=$HOME/Android/Sdk       # macOS/Linux
-   export ANDROID_HOME=%LOCALAPPDATA%\Android\Sdk  # Windows
+   # macOS / Linux
+   export ANDROID_HOME=$HOME/Android/Sdk
    export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+
+   # Windows (PowerShell)
+   $env:ANDROID_HOME = "$env:LOCALAPPDATA\Android\Sdk"
    ```
 
-### Pour iOS (macOS uniquement)
+### Pour iOS — App Client uniquement (macOS requis)
 1. **macOS Ventura ou plus récent**
 2. **Xcode 15+** — depuis le Mac App Store
 3. **Xcode Command Line Tools** :
@@ -53,7 +53,6 @@ L'Admin Dashboard reste une application web uniquement.
 ## Étape 1 — Récupérer le code source
 
 ```bash
-# Clonez le projet MAWEJA sur votre machine locale
 git clone <URL_DE_VOTRE_REPO> maweja
 cd maweja
 npm install
@@ -63,159 +62,78 @@ npm install
 
 ## Étape 2 — Déployer le backend
 
-L'application mobile a besoin d'un backend accessible sur internet (pas localhost).
+L'application mobile a besoin d'un backend accessible sur internet.
 
-1. **Déployez le backend** sur Replit :
-   - Allez sur votre Repl MAWEJA
-   - Cliquez sur **Deploy** en haut à droite
-   - Copiez l'URL de déploiement (ex: `https://maweja.replit.app`)
-
-2. **Notez votre URL backend** — vous en aurez besoin pour les builds.
+1. Sur Replit → cliquez **Deploy** en haut à droite
+2. Notez l'URL obtenue (ex: `https://maweja.replit.app`)
 
 ---
 
-## Étape 3 — Initialiser Capacitor (à faire une seule fois)
+## Étape 3 — Initialiser Capacitor (une seule fois)
+
+### App Client (com.edcorp.maweja) — Android + iOS
+
+```bash
+cd mobile/client
+npm install
+
+# Ajouter Android
+npx cap add android
+
+# Ajouter iOS (macOS uniquement)
+npx cap add ios
+```
+
+### App Driver (com.edcorp.maweja.driver) — Android uniquement
+
+```bash
+cd mobile/driver
+npm install
+
+# Ajouter Android
+npx cap add android
+
+# ⚠️  Ne pas ajouter iOS — Driver app est Android uniquement
+```
+
+---
+
+## Étape 4 — Builders les apps
 
 ### App Client
 
 ```bash
-# Dans le dossier mobile/client
-cd mobile/client
-npm install
-
-# Ajouter la plateforme Android
-npx cap add android
-
-# Ajouter la plateforme iOS (macOS uniquement)
-npx cap add ios
+# Depuis la racine du projet
+VITE_API_BASE_URL=https://maweja.replit.app bash mobile/build-client.sh
 ```
 
 ### App Driver
 
 ```bash
-# Dans le dossier mobile/driver
-cd ../driver
-npm install
-
-# Ajouter la plateforme Android
-npx cap add android
-
-# Ajouter la plateforme iOS (macOS uniquement)
-npx cap add ios
+# Depuis la racine du projet
+VITE_API_BASE_URL=https://maweja.replit.app bash mobile/build-driver.sh
 ```
 
 ---
 
-## Étape 4 — Build de l'App Client (MAWEJA)
+## Étape 5 — Build Android APK (les deux apps)
 
 ```bash
-# Retournez à la racine du projet
-cd ../..
-
-# Build du web (remplacez par votre URL backend réelle)
-VITE_MOBILE_MODE=client VITE_API_BASE_URL=https://maweja.replit.app \
-  npx vite build --config vite.mobile.config.ts
-
-# Sync Capacitor
-cd mobile/client
-npx cap sync android
-npx cap sync ios  # macOS uniquement
-```
-
----
-
-## Étape 5 — Build de l'App Driver (MAWEJA Driver)
-
-```bash
-# Retournez à la racine du projet
-cd ../..
-
-# Build du web (remplacez par votre URL backend réelle)
-VITE_MOBILE_MODE=driver VITE_API_BASE_URL=https://maweja.replit.app \
-  npx vite build --config vite.mobile.config.ts
-
-# Sync Capacitor
-cd mobile/driver
-npx cap sync android
-npx cap sync ios  # macOS uniquement
-```
-
----
-
-## Étape 6 — Build Android (APK / AAB)
-
-### Option A — Android Studio (recommandé)
-
-```bash
-# Ouvrir le projet Android dans Android Studio
-cd mobile/client
-npx cap open android
+# Ouvrir dans Android Studio
+cd mobile/client && npx cap open android   # App Client
+cd mobile/driver && npx cap open android   # App Driver
 ```
 
 Dans Android Studio :
-1. Attendez que Gradle se synchronise (peut prendre 2-5 minutes)
+1. Attendez la synchronisation Gradle (2-5 minutes)
 2. **Build → Generate Signed Bundle / APK...**
-3. Choisissez **Android App Bundle (.aab)** pour le Play Store (recommandé)
-   - ou **APK** pour une installation directe
-4. Créez ou utilisez votre **keystore** (fichier .jks)
-5. Remplissez les infos :
-   - Key store path: `keystore/maweja-client.jks`
-   - Key alias: `maweja-client`
-   - Password: (votre mot de passe)
-6. Cliquez **Next → Finish**
-
-> Répétez pour `mobile/driver` (App Driver)
-
-### Option B — Ligne de commande
-
-```bash
-cd mobile/client/android
-
-# Debug APK (test uniquement)
-./gradlew assembleDebug
-# → Output: app/build/outputs/apk/debug/app-debug.apk
-
-# Release AAB (Google Play Store)
-./gradlew bundleRelease
-# → Output: app/build/outputs/bundle/release/app-release.aab
-```
+3. Choisissez **Android App Bundle (.aab)** pour le Play Store
+4. Créez un keystore (voir Étape 7 ci-dessous)
+5. Remplissez les infos et cliquez **Finish**
 
 ---
 
-## Étape 7 — Créer un Keystore (signature numérique)
-
-> **IMPORTANT** : Sauvegardez votre keystore ! Si vous le perdez, vous ne pourrez plus mettre à jour votre app sur le Play Store.
-
-```bash
-mkdir -p keystore
-
-# Créer le keystore pour l'app Client
-keytool -genkey -v \
-  -keystore keystore/maweja-client.jks \
-  -alias maweja-client \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000
-
-# Créer le keystore pour l'app Driver
-keytool -genkey -v \
-  -keystore keystore/maweja-driver.jks \
-  -alias maweja-driver \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000
-```
-
-Remplissez les informations demandées :
-- **Prénom et Nom** : Khevin Andrew Kita
-- **Organisation** : Ed Corporation
-- **Ville** : Kinshasa
-- **État/Province** : Kinshasa
-- **Code pays** : CD
-
----
-
-## Étape 8 — Build iOS (macOS uniquement)
+## Étape 6 — Build iOS (App Client uniquement — macOS requis)
 
 ```bash
 cd mobile/client
@@ -223,71 +141,75 @@ npx cap open ios
 ```
 
 Dans Xcode :
-1. Connectez votre compte Apple Developer (Xcode → Preferences → Accounts)
-2. Sélectionnez votre **Team** (compte développeur Apple)
-3. Modifiez le Bundle Identifier → `cd.maweja.client`
-4. **Product → Archive**
-5. Dans l'Organizer → **Distribute App → App Store Connect**
+1. Connectez votre compte Apple Developer
+2. Bundle Identifier : `com.edcorp.maweja`
+3. **Product → Archive**
+4. Organizer → **Distribute App → App Store Connect**
 
 > **Compte Apple Developer requis** : 99 USD/an sur developer.apple.com
 
 ---
 
-## Étape 9 — Publication sur les Stores
+## Étape 7 — Créer les Keystores (signature Android)
 
-### Google Play Store (Android)
-
-1. Créez un compte sur **play.google.com/console** (frais uniques de 25 USD)
-2. **Créer une nouvelle application**
-3. Remplissez :
-   - **Nom de l'application** : MAWEJA (ou MAWEJA Driver)
-   - **Description courte** : Commandez de la nourriture et des services à Kinshasa
-   - **Description longue** : Application de livraison de nourriture et services à Kinshasa, République Démocratique du Congo...
-   - **Catégorie** : Alimentation et boissons
-4. **Production → Créer une release** → Uploadez votre fichier `.aab`
-5. Complétez le formulaire et soumettez pour révision (1-3 jours)
-
-### App Store Apple (iOS)
-
-1. Connectez-vous sur **appstoreconnect.apple.com**
-2. **Mes apps → +** (Nouvelle app)
-3. Bundle ID : `cd.maweja.client`
-4. Remplissez les métadonnées
-5. Uploadez via **Xcode → Archive → Distribute**
-6. Soumettez pour révision Apple (1-7 jours)
-
----
-
-## Personnalisation des icônes et splash screen
-
-### Icônes d'application
-
-Placez votre icône (1024x1024 PNG, sans coins arrondis) dans :
-```
-mobile/client/android/app/src/main/res/
-mobile/driver/android/app/src/main/res/
-```
-
-Utilisez **Android Asset Studio** pour générer toutes les tailles :
-→ https://romannurik.github.io/AndroidAssetStudio/icons-launcher.html
-
-### Splash Screen
-
-Couleur de fond : `#dc2626` (rouge MAWEJA) — déjà configurée dans `capacitor.config.ts`
-
----
-
-## Scripts rapides (raccourcis)
-
-Depuis la racine du projet :
+> **IMPORTANT** : Sauvegardez vos keystores ! Sans eux, vous ne pourrez plus mettre à jour vos apps.
 
 ```bash
-# Build + sync App Client
-bash mobile/build-client.sh
+mkdir -p keystore
 
-# Build + sync App Driver
-bash mobile/build-driver.sh
+# Keystore pour l'App Client (com.edcorp.maweja)
+keytool -genkey -v \
+  -keystore keystore/maweja-client.jks \
+  -alias maweja-client \
+  -keyalg RSA -keysize 2048 -validity 10000
+
+# Keystore pour l'App Driver (com.edcorp.maweja.driver)
+keytool -genkey -v \
+  -keystore keystore/maweja-driver.jks \
+  -alias maweja-driver \
+  -keyalg RSA -keysize 2048 -validity 10000
 ```
+
+Informations à renseigner :
+- **Prénom et Nom** : Khevin Andrew Kita
+- **Organisation** : Ed Corporation
+- **Ville** : Kinshasa
+- **Code pays** : CD
+
+---
+
+## Étape 8 — Publication sur les Stores
+
+### Google Play Store
+
+| Champ | App Client | App Driver |
+|-------|-----------|-----------|
+| Nom | MAWEJA | MAWEJA Driver |
+| Package | `com.edcorp.maweja` | `com.edcorp.maweja.driver` |
+| Catégorie | Alimentation et boissons | Cartes et navigation |
+| Frais d'inscription | 25 USD (unique) | (même compte) |
+
+1. Créez un compte sur **play.google.com/console**
+2. **Créer une application** → remplissez les informations
+3. **Production → Créer une release** → uploadez le fichier `.aab`
+
+### App Store (App Client uniquement)
+
+1. Connectez-vous sur **appstoreconnect.apple.com**
+2. **Mes apps → +** → Bundle ID : `com.edcorp.maweja`
+3. Complétez les métadonnées et soumettez
+
+---
+
+## Récapitulatif des identifiants
+
+| | App Client | App Driver |
+|--|-----------|-----------|
+| **Package ID** | `com.edcorp.maweja` | `com.edcorp.maweja.driver` |
+| **Nom affiché** | MAWEJA | MAWEJA Driver |
+| **Android** | ✅ | ✅ |
+| **iOS** | ✅ | ❌ |
+| **Keystore** | `keystore/maweja-client.jks` | `keystore/maweja-driver.jks` |
 
 ---
 
@@ -297,57 +219,51 @@ bash mobile/build-driver.sh
 maweja/
 ├── mobile/
 │   ├── client/
-│   │   ├── capacitor.config.ts   ← Config Capacitor client
+│   │   ├── capacitor.config.ts   ← com.edcorp.maweja (Android + iOS)
 │   │   ├── package.json
-│   │   ├── www/                  ← Build web (généré automatiquement)
+│   │   ├── www/                  ← Build web (auto-généré)
 │   │   ├── android/              ← Projet Android Studio
 │   │   └── ios/                  ← Projet Xcode (macOS seulement)
 │   ├── driver/
-│   │   ├── capacitor.config.ts   ← Config Capacitor driver
+│   │   ├── capacitor.config.ts   ← com.edcorp.maweja.driver (Android seul)
 │   │   ├── package.json
-│   │   ├── www/                  ← Build web (généré automatiquement)
-│   │   ├── android/              ← Projet Android Studio
-│   │   └── ios/                  ← Projet Xcode (macOS seulement)
-│   ├── build-client.sh           ← Script build client
-│   └── build-driver.sh           ← Script build driver
-├── vite.mobile.config.ts         ← Config Vite pour mobile
+│   │   ├── www/                  ← Build web (auto-généré)
+│   │   └── android/              ← Projet Android Studio
+│   ├── build-client.sh           ← Build client (Android + iOS)
+│   └── build-driver.sh           ← Build driver (Android uniquement)
+├── vite.mobile.config.ts
 ├── MOBILE_BUILD.md               ← Ce guide
-└── keystore/                     ← Vos keystores (à créer, NE PAS partager!)
+└── keystore/                     ← Vos keystores (NE PAS partager ni commiter!)
 ```
 
 ---
 
-## Variables d'environnement importantes
+## Variables d'environnement
 
 | Variable | Description | Exemple |
 |----------|-------------|---------|
-| `VITE_MOBILE_MODE` | Mode de build (`client` ou `driver`) | `client` |
+| `VITE_MOBILE_MODE` | `client` ou `driver` | `client` |
 | `VITE_API_BASE_URL` | URL du backend déployé | `https://maweja.replit.app` |
 
 ---
 
 ## Dépannage fréquent
 
-### Erreur: "ANDROID_HOME is not set"
+### "ANDROID_HOME is not set"
 ```bash
 export ANDROID_HOME=$HOME/Android/Sdk
 export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 ```
 
-### Erreur: "Gradle build failed"
+### "Gradle build failed"
 ```bash
-cd mobile/client/android
-./gradlew clean
-./gradlew assembleDebug
+cd mobile/client/android   # ou mobile/driver/android
+./gradlew clean && ./gradlew assembleDebug
 ```
 
-### Les cookies de session ne fonctionnent pas
-- Vérifiez que `VITE_API_BASE_URL` pointe vers le bon backend
-- Le backend accepte les origines `capacitor://localhost` et `https://localhost`
-
-### L'app se charge mais les données ne s'affichent pas
-- Vérifiez que le backend est bien déployé et accessible
-- Testez l'URL dans votre navigateur : `https://votre-backend.replit.app/api/restaurants`
+### Les données ne s'affichent pas dans l'app
+- Vérifiez que `VITE_API_BASE_URL` pointe vers le backend déployé
+- Testez l'URL : `https://maweja.replit.app/api/restaurants`
 
 ---
 

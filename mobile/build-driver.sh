@@ -1,6 +1,8 @@
 #!/bin/bash
 # ============================================================
-# Script de build pour l'app Driver MAWEJA (Android + iOS)
+# MAWEJA DRIVER APP — Build Capacitor
+# Package ID : com.edcorp.maweja.driver
+# Plateformes : Android UNIQUEMENT (pas d'iOS)
 # ============================================================
 # Usage: bash mobile/build-driver.sh
 # ============================================================
@@ -8,53 +10,48 @@
 set -e
 
 echo "================================================"
-echo "   MAWEJA DRIVER APP - Build Capacitor"
+echo "   MAWEJA DRIVER — com.edcorp.maweja.driver"
+echo "   Plateforme : Android uniquement"
 echo "================================================"
 
-# ---- 1. Vérification de l'URL du backend ----
+# ---- 1. URL du backend ----
 if [ -z "$VITE_API_BASE_URL" ]; then
   echo ""
-  echo "⚠️  ATTENTION: VITE_API_BASE_URL non définie!"
-  read -p "Entrez l'URL du backend (ex: https://maweja.replit.app): " VITE_API_BASE_URL
+  echo "VITE_API_BASE_URL non définie."
+  read -p "URL du backend déployé (ex: https://maweja.replit.app): " VITE_API_BASE_URL
   export VITE_API_BASE_URL
 fi
 
 echo ""
-echo "→ Backend URL: $VITE_API_BASE_URL"
-echo "→ Mode: DRIVER"
+echo "→ Backend : $VITE_API_BASE_URL"
+echo "→ Mode    : DRIVER"
 echo ""
 
 # ---- 2. Build Vite ----
-echo "[1/4] Build de l'application web (Vite)..."
-VITE_MOBILE_MODE=driver VITE_API_BASE_URL=$VITE_API_BASE_URL npx vite build --config vite.mobile.config.ts
-echo "   ✓ Build web terminé → mobile/driver/www/"
+echo "[1/3] Build application web..."
+VITE_MOBILE_MODE=driver VITE_API_BASE_URL=$VITE_API_BASE_URL \
+  npx vite build --config vite.mobile.config.ts
+echo "   ✓ Web build → mobile/driver/www/"
 
-# ---- 3. Capacitor Sync ----
-echo "[2/4] Synchronisation Capacitor..."
+# ---- 3. Capacitor Sync Android ----
+echo "[2/3] Synchronisation Capacitor (Android)..."
 cd mobile/driver
-npx cap sync
-echo "   ✓ Capacitor sync terminé"
+npx cap sync android 2>/dev/null && echo "   ✓ Android sync OK" || echo "   ! Android non initialisé — lancez: npx cap add android"
 
-# ---- 4. Build Android ----
-echo "[3/4] Build Android APK..."
-if [ -d "android" ]; then
-  npx cap build android --keystorepath ../../keystore/maweja-driver.jks \
-    --keystorepass ${KEYSTORE_PASSWORD:-maweja2024} \
-    --keystorealias maweja-driver \
-    --keystorealiaspass ${KEYSTORE_PASSWORD:-maweja2024} 2>/dev/null || \
-  (echo "   → Ouvrez Android Studio pour compiler manuellement" && npx cap open android)
-else
-  echo "   → Plateforme Android non initialisée. Lancez: npx cap add android"
-fi
-
+# ---- 4. Instructions ----
 echo ""
 echo "================================================"
 echo "   BUILD DRIVER TERMINÉ"
 echo "================================================"
 echo ""
-echo "APK: mobile/driver/android/app/build/outputs/apk/release/app-release.apk"
+echo "Android APK :"
+echo "  cd mobile/driver && npx cap open android"
+echo "  → Build → Generate Signed Bundle/APK dans Android Studio"
 echo ""
-echo "Prochaines étapes:"
-echo "  1. Connectez-vous à Google Play Console"
-echo "  2. Uploadez l'APK ou le fichier .aab"
+echo "APK output : mobile/driver/android/app/build/outputs/apk/"
+echo "Package ID : com.edcorp.maweja.driver"
+echo "================================================"
+echo ""
+echo "NOTE: L'app Driver est Android uniquement."
+echo "      Aucune publication iOS prévue."
 echo "================================================"
