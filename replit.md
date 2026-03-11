@@ -179,3 +179,23 @@ Cash, Mobile Money (M-Pesa/Orange Money/Airtel), Wallet MAWEJA, Google Pay, POS,
 - Tax: 5% of subtotal
 - Order cancellation: Only pending/confirmed orders, requires reason, auto-refund to wallet if paid
 - Saved addresses: Kinshasa default center [-4.325, 15.322], Nominatim reverse geocoding
+
+## Responsiveness (Completed Audit)
+- Target: iPhone SE (375px) → iPhone 14 Pro Max (430px) for iOS/Android app export
+- Client App: Fully responsive on 375px–430px, bottom nav uses flex-1 (2 tabs unauthenticated, 5 tabs authenticated)
+- Driver App: All pages use `<DriverNav />` as FIRST child in JSX (sticky header at top, fixed bottom nav)
+  - KEY FIX: DriverSettings had DriverNav placed LAST in JSX (bug fixed — header was appearing at bottom)
+- Admin Dashboard: Desktop-first panel with sidebar, works well on 1280px+
+- Nav pattern: All pages use `min-h-screen pb-24` wrapper + nav component as first child
+
+## Dynamic Favicons
+- Client: Original logo (no tint)
+- Driver: Black-tinted logo (dark overlay)
+- Admin: Red-tinted logo (red overlay)
+- Implemented via canvas tinting in `client/src/hooks/use-dynamic-favicon.ts`
+
+## Dynamic Promo Banner
+- Table: `promo_banners` (title, subtitle, label, buttonText, bgColor, textColor, buttonColor, isActive)
+- API: GET /api/promo-banner (public), PATCH /api/promo-banner (admin auth required)
+- Admin editor: AdminAds page → "Bannière Promo" tab with live color pickers and preview
+- Client: Reads from API, shows animated promo card on home page

@@ -9,11 +9,11 @@ export default function DriverSettings() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="bg-white border-b border-gray-100 px-5 py-4">
-        <h1 className="text-xl font-black text-gray-900" data-testid="text-driver-settings-title">{t.settings.title}</h1>
-      </div>
+      <DriverNav />
 
       <div className="max-w-lg mx-auto px-4 py-4">
+        <h2 className="text-xl font-bold text-gray-900 mb-5" data-testid="text-driver-settings-title">{t.settings.title}</h2>
+
         {user && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-4 flex items-center gap-4">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center">
@@ -77,8 +77,6 @@ export default function DriverSettings() {
           MAWEJA v1.0 - Made By Khevin Andrew Kita - Ed Corporation
         </p>
       </div>
-
-      <DriverNav />
     </div>
   );
 }
