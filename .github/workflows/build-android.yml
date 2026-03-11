@@ -1,0 +1,200 @@
+name: Build Android APKs (Client + Driver)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Type de build'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+env:
+  NODE_VERSION: '20'
+  JAVA_VERSION: '17'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # APP CLIENT — com.edcorp.maweja (Android)
+  # ─────────────────────────────────────────────
+  build-client-android:
+    name: "MAWEJA Client — Android APK"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Installer les dépendances racine
+        run: npm ci
+
+      - name: Build Vite — App Client
+        env:
+          VITE_MOBILE_MODE: client
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: npx vite build --config vite.mobile.config.ts
+
+      - name: Installer les dépendances Capacitor (Client)
+        working-directory: mobile/client
+        run: npm install
+
+      - name: Initialiser la plateforme Android (Client)
+        working-directory: mobile/client
+        run: npx cap add android
+
+      - name: Synchroniser Capacitor Android (Client)
+        working-directory: mobile/client
+        run: npx cap sync android
+
+      # ── Build Debug ──
+      - name: Build APK Debug (Client)
+        if: ${{ github.event.inputs.build_type != 'release' }}
+        working-directory: mobile/client/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK Debug (Client)
+        if: ${{ github.event.inputs.build_type != 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: maweja-client-debug-${{ github.run_number }}.apk
+          path: mobile/client/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      # ── Build Release (nécessite keystore secrets) ──
+      - name: Décoder le Keystore (Client)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        run: |
+          echo "${{ secrets.CLIENT_KEYSTORE_BASE64 }}" | base64 --decode > mobile/client/android/keystore.jks
+
+      - name: Build AAB Release (Client)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        working-directory: mobile/client/android
+        env:
+          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.CLIENT_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.CLIENT_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.CLIENT_KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD \
+            --no-daemon
+
+      - name: Upload AAB Release (Client)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: maweja-client-release-${{ github.run_number }}.aab
+          path: mobile/client/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 90
+
+  # ─────────────────────────────────────────────
+  # APP DRIVER — com.edcorp.maweja.driver (Android)
+  # ─────────────────────────────────────────────
+  build-driver-android:
+    name: "MAWEJA Driver — Android APK"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup Java JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Installer les dépendances racine
+        run: npm ci
+
+      - name: Build Vite — App Driver
+        env:
+          VITE_MOBILE_MODE: driver
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: npx vite build --config vite.mobile.config.ts
+
+      - name: Installer les dépendances Capacitor (Driver)
+        working-directory: mobile/driver
+        run: npm install
+
+      - name: Initialiser la plateforme Android (Driver)
+        working-directory: mobile/driver
+        run: npx cap add android
+
+      - name: Synchroniser Capacitor Android (Driver)
+        working-directory: mobile/driver
+        run: npx cap sync android
+
+      # ── Build Debug ──
+      - name: Build APK Debug (Driver)
+        if: ${{ github.event.inputs.build_type != 'release' }}
+        working-directory: mobile/driver/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK Debug (Driver)
+        if: ${{ github.event.inputs.build_type != 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: maweja-driver-debug-${{ github.run_number }}.apk
+          path: mobile/driver/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      # ── Build Release ──
+      - name: Décoder le Keystore (Driver)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        run: |
+          echo "${{ secrets.DRIVER_KEYSTORE_BASE64 }}" | base64 --decode > mobile/driver/android/keystore.jks
+
+      - name: Build AAB Release (Driver)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        working-directory: mobile/driver/android
+        env:
+          KEYSTORE_PATH: keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.DRIVER_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.DRIVER_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.DRIVER_KEY_PASSWORD }}
+        run: |
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$KEYSTORE_PATH \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD \
+            --no-daemon
+
+      - name: Upload AAB Release (Driver)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: maweja-driver-release-${{ github.run_number }}.aab
+          path: mobile/driver/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 90

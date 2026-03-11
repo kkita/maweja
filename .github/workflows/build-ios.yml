@@ -1,0 +1,146 @@
+name: Build iOS IPA (Client uniquement)
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Type de build'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ─────────────────────────────────────────────
+  # APP CLIENT — com.edcorp.maweja (iOS)
+  # ─────────────────────────────────────────────
+  build-client-ios:
+    name: "MAWEJA Client — iOS IPA"
+    runs-on: macos-latest
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Installer CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Installer les dépendances racine
+        run: npm ci
+
+      - name: Build Vite — App Client
+        env:
+          VITE_MOBILE_MODE: client
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: npx vite build --config vite.mobile.config.ts
+
+      - name: Installer les dépendances Capacitor (Client)
+        working-directory: mobile/client
+        run: npm install
+
+      - name: Initialiser la plateforme iOS
+        working-directory: mobile/client
+        run: npx cap add ios
+
+      - name: Synchroniser Capacitor iOS
+        working-directory: mobile/client
+        run: npx cap sync ios
+
+      # ── Build Debug (simulateur, sans signing) ──
+      - name: Build Debug iOS (simulateur)
+        if: ${{ github.event.inputs.build_type == 'debug' }}
+        working-directory: mobile/client/ios/App
+        run: |
+          xcodebuild build \
+            -scheme App \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      # ── Build Release (App Store — nécessite Apple certificates) ──
+      - name: Importer le certificat Apple (Release)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: maweja-build-keychain
+        run: |
+          # Créer un keychain temporaire
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Importer le certificat P12
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # Importer le profil de provisioning
+          echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build Archive iOS (Release)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        working-directory: mobile/client/ios/App
+        run: |
+          xcodebuild archive \
+            -scheme App \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/maweja-client.xcarchive \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=${{ secrets.IOS_TEAM_ID }} \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISION_PROFILE_NAME }}"
+
+      - name: Exporter IPA (Release)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${{ secrets.IOS_TEAM_ID }}</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          </plist>
+          EOF
+
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/maweja-client.xcarchive \
+            -exportPath $RUNNER_TEMP/maweja-client-ipa \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist
+
+      - name: Upload IPA (Release)
+        if: ${{ github.event.inputs.build_type == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: maweja-client-release-${{ github.run_number }}.ipa
+          path: ${{ runner.temp }}/maweja-client-ipa/*.ipa
+          retention-days: 90
+
+      - name: Nettoyer keychain
+        if: always()
+        run: security delete-keychain build.keychain 2>/dev/null || true
