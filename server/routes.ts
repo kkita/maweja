@@ -303,6 +303,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(all);
   });
 
+  app.get("/api/orders/export", requireAdmin, async (req, res) => {
+    const filters: any = {};
+    if (req.query.status) filters.status = req.query.status;
+    if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
+    if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
+    let data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
+    if (req.query.restaurantId) {
+      data = data.filter(o => o.restaurantId === Number(req.query.restaurantId));
+    }
+
+    const allUsers = await storage.getAllUsers();
+    const allRestaurants = await storage.getRestaurants();
+    const getUserName = (id: number) => allUsers.find(u => u.id === id)?.name || "";
+    const getRestName = (id: number) => allRestaurants.find(r => r.id === id)?.name || "";
+
+    const csv = [
+      "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
+      ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
+    ].join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`);
+    res.send(csv);
+  });
+
   app.get("/api/orders/:id", requireAuth, async (req, res) => {
     const userId = (req.session as any).userId;
     const user = await storage.getUser(userId);
@@ -859,31 +884,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename=finances_maweja_${new Date().toISOString().split("T")[0]}.csv`);
-    res.send(csv);
-  });
-
-  app.get("/api/orders/export", requireAdmin, async (req, res) => {
-    const filters: any = {};
-    if (req.query.status) filters.status = req.query.status;
-    if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
-    if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
-    let data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
-    if (req.query.restaurantId) {
-      data = data.filter(o => o.restaurantId === Number(req.query.restaurantId));
-    }
-
-    const allUsers = await storage.getAllUsers();
-    const allRestaurants = await storage.getRestaurants();
-    const getUserName = (id: number) => allUsers.find(u => u.id === id)?.name || "";
-    const getRestName = (id: number) => allRestaurants.find(r => r.id === id)?.name || "";
-
-    const csv = [
-      "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
-      ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
-    ].join("\n");
-
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename=commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`);
     res.send(csv);
   });
 

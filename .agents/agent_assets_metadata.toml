@@ -36,3 +36,9 @@ id = "PLP4LqM3aK1lpWXyvmQ-1"
 uri = "file://MAWEJA_COMPLET_GITHUB_v3.zip"
 type = "unspecified"
 title = "MAWEJA — Code complet v3 CORRIGÉ (ImageMagick installé automatiquement)"
+
+[[outputs]]
+id = "V8Dn6aKSMzs6RhLQIyWQL"
+uri = "file://MAWEJA_COMPLET_GITHUB_v4.zip"
+type = "unspecified"
+title = "MAWEJA_COMPLET_GITHUB_v4.zip — Version corrigée"
