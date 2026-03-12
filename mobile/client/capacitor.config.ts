@@ -9,22 +9,43 @@ const config: CapacitorConfig = {
   },
   android: {
     backgroundColor: "#dc2626",
+    allowMixedContent: true,
   },
   ios: {
     backgroundColor: "#dc2626",
+    contentInset: "automatic",
+    scrollEnabled: true,
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2000,
+      launchShowDuration: 2500,
       launchAutoHide: true,
       backgroundColor: "#dc2626",
       androidSplashResourceName: "splash",
       iosSplashResourceName: "Splash",
       showSpinner: false,
+      androidScaleType: "CENTER_CROP",
+      splashFullScreen: true,
+      splashImmersive: true,
     },
     StatusBar: {
       style: "Default",
       backgroundColor: "#dc2626",
+      overlaysWebView: false,
+    },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
+    },
+    LocalNotifications: {
+      smallIcon: "ic_stat_notify",
+      iconColor: "#dc2626",
+      sound: "default",
+    },
+    Geolocation: {
+      // Aucune config supplémentaire — permissions injectées dans le manifest
+    },
+    Camera: {
+      // Aucune config supplémentaire — permissions injectées dans le manifest
     },
   },
 };

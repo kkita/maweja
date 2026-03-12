@@ -1,4 +1,4 @@
-name: Build Android APKs (Client + Driver)
+name: Build Android — MAWEJA (Client + Driver)
 
 on:
   push:
@@ -19,14 +19,14 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
-  # ─────────────────────────────────────────────
-  # APP CLIENT — com.edcorp.maweja (Android)
-  # ─────────────────────────────────────────────
+  # ══════════════════════════════════════════════════════
+  #  APP CLIENT — com.edcorp.maweja (Android)
+  # ══════════════════════════════════════════════════════
   build-client-android:
-    name: "MAWEJA Client — Android APK"
+    name: "MAWEJA Client — Android"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout du code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
@@ -47,10 +47,10 @@ jobs:
       - name: Installer les dépendances racine
         run: npm ci
 
-      - name: Build Vite — App Client
+      - name: Build Vite — App Client (maweja.net)
         env:
           VITE_MOBILE_MODE: client
-          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://maweja.net' }}
         run: npx vite build --config vite.mobile.config.ts
 
       - name: Installer les dépendances Capacitor (Client)
@@ -65,21 +65,93 @@ jobs:
         working-directory: mobile/client
         run: npx cap sync android
 
+      # ── Icônes MAWEJA ──
+      - name: Générer les icônes launcher MAWEJA (Client)
+        run: |
+          ICON_SRC="client/public/logo.png"
+          ANDROID_RES="mobile/client/android/app/src/main/res"
+
+          declare -A SIZES=(
+            ["mipmap-mdpi"]=48
+            ["mipmap-hdpi"]=72
+            ["mipmap-xhdpi"]=96
+            ["mipmap-xxhdpi"]=144
+            ["mipmap-xxxhdpi"]=192
+          )
+          declare -A FG_SIZES=(
+            ["mipmap-mdpi"]=108
+            ["mipmap-hdpi"]=162
+            ["mipmap-xhdpi"]=216
+            ["mipmap-xxhdpi"]=324
+            ["mipmap-xxxhdpi"]=432
+          )
+
+          for density in "${!SIZES[@]}"; do
+            SIZE=${SIZES[$density]}
+            mkdir -p "$ANDROID_RES/$density"
+            convert "$ICON_SRC" -resize ${SIZE}x${SIZE} "$ANDROID_RES/$density/ic_launcher.png"
+            convert "$ICON_SRC" -resize ${SIZE}x${SIZE} "$ANDROID_RES/$density/ic_launcher_round.png"
+            FG=${FG_SIZES[$density]}
+            convert "$ICON_SRC" -resize ${FG}x${FG} "$ANDROID_RES/$density/ic_launcher_foreground.png"
+          done
+
+          # Icône notification (blanc sur transparent pour Android 8+)
+          mkdir -p "$ANDROID_RES/drawable"
+          convert "$ICON_SRC" -resize 96x96 \
+            -colorspace Gray -threshold 50% \
+            "$ANDROID_RES/drawable/ic_stat_notify.png"
+
+          echo "✓ Icônes MAWEJA générées pour Client"
+
+      # ── Permissions Android ──
+      - name: Injecter les permissions Android (Client)
+        working-directory: mobile/client/android/app/src/main
+        run: |
+          python3 << 'EOF'
+          content = open('AndroidManifest.xml').read()
+          permissions = """
+              <!-- Géolocalisation -->
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+              <!-- Notifications -->
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
+              <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+              <!-- Caméra & Médias -->
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+              <!-- Réseau -->
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+          """
+          if 'ACCESS_FINE_LOCATION' not in content:
+              content = content.replace('</manifest>', permissions + '\n</manifest>')
+              open('AndroidManifest.xml', 'w').write(content)
+              print('✓ Permissions injectées (Client)')
+          else:
+              print('ℹ Permissions déjà présentes')
+          EOF
+
       # ── Build Debug ──
       - name: Build APK Debug (Client)
         if: ${{ github.event.inputs.build_type != 'release' }}
         working-directory: mobile/client/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Debug (Client)
         if: ${{ github.event.inputs.build_type != 'release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: maweja-client-debug-${{ github.run_number }}.apk
+          name: maweja-client-debug-${{ github.run_number }}
           path: mobile/client/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
-      # ── Build Release (nécessite keystore secrets) ──
+      # ── Build Release ──
       - name: Décoder le Keystore (Client)
         if: ${{ github.event.inputs.build_type == 'release' }}
         run: |
@@ -105,18 +177,18 @@ jobs:
         if: ${{ github.event.inputs.build_type == 'release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: maweja-client-release-${{ github.run_number }}.aab
+          name: maweja-client-release-${{ github.run_number }}
           path: mobile/client/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 90
 
-  # ─────────────────────────────────────────────
-  # APP DRIVER — com.edcorp.maweja.driver (Android)
-  # ─────────────────────────────────────────────
+  # ══════════════════════════════════════════════════════
+  #  APP DRIVER — com.edcorp.maweja.driver (Android)
+  # ══════════════════════════════════════════════════════
   build-driver-android:
-    name: "MAWEJA Driver — Android APK"
+    name: "MAWEJA Driver — Android"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout du code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
@@ -137,10 +209,10 @@ jobs:
       - name: Installer les dépendances racine
         run: npm ci
 
-      - name: Build Vite — App Driver
+      - name: Build Vite — App Driver (maweja.net)
         env:
           VITE_MOBILE_MODE: driver
-          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://maweja.net' }}
         run: npx vite build --config vite.mobile.config.ts
 
       - name: Installer les dépendances Capacitor (Driver)
@@ -155,17 +227,88 @@ jobs:
         working-directory: mobile/driver
         run: npx cap sync android
 
+      # ── Icônes MAWEJA ──
+      - name: Générer les icônes launcher MAWEJA (Driver)
+        run: |
+          ICON_SRC="client/public/logo.png"
+          ANDROID_RES="mobile/driver/android/app/src/main/res"
+
+          declare -A SIZES=(
+            ["mipmap-mdpi"]=48
+            ["mipmap-hdpi"]=72
+            ["mipmap-xhdpi"]=96
+            ["mipmap-xxhdpi"]=144
+            ["mipmap-xxxhdpi"]=192
+          )
+          declare -A FG_SIZES=(
+            ["mipmap-mdpi"]=108
+            ["mipmap-hdpi"]=162
+            ["mipmap-xhdpi"]=216
+            ["mipmap-xxhdpi"]=324
+            ["mipmap-xxxhdpi"]=432
+          )
+
+          for density in "${!SIZES[@]}"; do
+            SIZE=${SIZES[$density]}
+            mkdir -p "$ANDROID_RES/$density"
+            convert "$ICON_SRC" -resize ${SIZE}x${SIZE} "$ANDROID_RES/$density/ic_launcher.png"
+            convert "$ICON_SRC" -resize ${SIZE}x${SIZE} "$ANDROID_RES/$density/ic_launcher_round.png"
+            FG=${FG_SIZES[$density]}
+            convert "$ICON_SRC" -resize ${FG}x${FG} "$ANDROID_RES/$density/ic_launcher_foreground.png"
+          done
+
+          mkdir -p "$ANDROID_RES/drawable"
+          convert "$ICON_SRC" -resize 96x96 \
+            -colorspace Gray -threshold 50% \
+            "$ANDROID_RES/drawable/ic_stat_notify.png"
+
+          echo "✓ Icônes MAWEJA générées pour Driver"
+
+      # ── Permissions Android ──
+      - name: Injecter les permissions Android (Driver)
+        working-directory: mobile/driver/android/app/src/main
+        run: |
+          python3 << 'EOF'
+          content = open('AndroidManifest.xml').read()
+          permissions = """
+              <!-- Géolocalisation (obligatoire pour le livreur) -->
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+              <!-- Notifications -->
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission android:name="android.permission.WAKE_LOCK" />
+              <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+              <!-- Caméra & Médias -->
+              <uses-permission android:name="android.permission.CAMERA" />
+              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+              <!-- Réseau -->
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+          """
+          if 'ACCESS_FINE_LOCATION' not in content:
+              content = content.replace('</manifest>', permissions + '\n</manifest>')
+              open('AndroidManifest.xml', 'w').write(content)
+              print('✓ Permissions injectées (Driver)')
+          else:
+              print('ℹ Permissions déjà présentes')
+          EOF
+
       # ── Build Debug ──
       - name: Build APK Debug (Driver)
         if: ${{ github.event.inputs.build_type != 'release' }}
         working-directory: mobile/driver/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK Debug (Driver)
         if: ${{ github.event.inputs.build_type != 'release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: maweja-driver-debug-${{ github.run_number }}.apk
+          name: maweja-driver-debug-${{ github.run_number }}
           path: mobile/driver/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
@@ -195,6 +338,6 @@ jobs:
         if: ${{ github.event.inputs.build_type == 'release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: maweja-driver-release-${{ github.run_number }}.aab
+          name: maweja-driver-release-${{ github.run_number }}
           path: mobile/driver/android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 90

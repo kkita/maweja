@@ -12,3 +12,9 @@ id = "pnZiDqLwYZaaXZ0QX4Gj-"
 uri = "file://maweja-github.zip"
 type = "unspecified"
 title = "MAWEJA — Code source complet (à uploader sur GitHub)"
+
+[[outputs]]
+id = "YorWQ98XJvCCsGGYHm2py"
+uri = "file://MAWEJA_GitHub_Actions.zip"
+type = "unspecified"
+title = "MAWEJA GitHub Actions — Android + iOS (prêt pour GitHub)"
