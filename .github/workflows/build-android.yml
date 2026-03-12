@@ -65,6 +65,9 @@ jobs:
         run: npx cap sync android
 
       # ── Icônes MAWEJA ──
+      - name: Installer ImageMagick
+        run: sudo apt-get install -y imagemagick
+
       - name: Générer les icônes launcher MAWEJA (Client)
         run: |
           ICON_SRC="client/public/logo.png"
@@ -226,6 +229,9 @@ jobs:
         run: npx cap sync android
 
       # ── Icônes MAWEJA ──
+      - name: Installer ImageMagick
+        run: sudo apt-get install -y imagemagick
+
       - name: Générer les icônes launcher MAWEJA (Driver)
         run: |
           ICON_SRC="client/public/logo.png"

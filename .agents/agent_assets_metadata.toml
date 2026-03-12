@@ -30,3 +30,9 @@ id = "YALVvrGzSsHZKpt0MLEKh"
 uri = "file://MAWEJA_COMPLET_GITHUB_v2.zip"
 type = "unspecified"
 title = "MAWEJA — Code source complet v2 CORRIGÉ (1.6 Mo) — avec logo inclus"
+
+[[outputs]]
+id = "PLP4LqM3aK1lpWXyvmQ-1"
+uri = "file://MAWEJA_COMPLET_GITHUB_v3.zip"
+type = "unspecified"
+title = "MAWEJA — Code complet v3 CORRIGÉ (ImageMagick installé automatiquement)"
