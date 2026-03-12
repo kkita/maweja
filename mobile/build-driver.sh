@@ -18,7 +18,7 @@ echo "================================================"
 if [ -z "$VITE_API_BASE_URL" ]; then
   echo ""
   echo "VITE_API_BASE_URL non définie."
-  read -p "URL du backend déployé (ex: https://maweja.replit.app): " VITE_API_BASE_URL
+  read -p "URL du backend déployé (ex: https://maweja.net): " VITE_API_BASE_URL
   export VITE_API_BASE_URL
 fi
 

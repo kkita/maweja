@@ -19,6 +19,8 @@ const CAPACITOR_ORIGINS = [
   "http://localhost",
   "http://localhost:8100",
   "https://localhost:8100",
+  "https://maweja.net",
+  "https://www.maweja.net",
 ];
 
 app.use((req, res, next) => {

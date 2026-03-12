@@ -75,7 +75,7 @@ Dans votre repo GitHub → **Settings → Secrets and variables → Actions → 
 
 | Secret | Description | Comment l'obtenir |
 |--------|-------------|-------------------|
-| `API_BASE_URL` | URL du backend déployé | Ex: `https://maweja.replit.app` |
+| `API_BASE_URL` | URL du backend déployé | `https://maweja.net` |
 
 ---
 
