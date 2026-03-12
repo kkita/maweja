@@ -24,3 +24,9 @@ id = "kcU3Nq_e3Q7YbR1sKVrCe"
 uri = "file://MAWEJA_COMPLET_GITHUB.zip"
 type = "unspecified"
 title = "MAWEJA — Code source complet pour GitHub (796 Ko)"
+
+[[outputs]]
+id = "YALVvrGzSsHZKpt0MLEKh"
+uri = "file://MAWEJA_COMPLET_GITHUB_v2.zip"
+type = "unspecified"
+title = "MAWEJA — Code source complet v2 CORRIGÉ (1.6 Mo) — avec logo inclus"
