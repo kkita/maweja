@@ -15,6 +15,9 @@ app.set("trust proxy", 1);
 
 const CAPACITOR_ORIGINS = [
   "capacitor://localhost",
+  "capacitor://com.edcorp.maweja",
+  "capacitor://com.edcorp.maweja.driver",
+  "ionic://localhost",
   "https://localhost",
   "http://localhost",
   "http://localhost:8100",
@@ -23,9 +26,18 @@ const CAPACITOR_ORIGINS = [
   "https://www.maweja.net",
 ];
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && CAPACITOR_ORIGINS.includes(origin)) {
+  const isCapacitor =
+    origin &&
+    (CAPACITOR_ORIGINS.includes(origin) ||
+      origin.startsWith("capacitor://") ||
+      origin.startsWith("ionic://") ||
+      origin === "null");
+
+  if (isCapacitor && origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
@@ -55,10 +67,11 @@ const sessionOpts = {
   resave: false,
   saveUninitialized: false,
   cookie: {
-    // Replit gère HTTPS au niveau du proxy — secure: false est correct ici
-    secure: false,
+    // En production: sameSite=none + secure=true pour les apps APK Capacitor (cross-origin)
+    // En développement: sameSite=lax + secure=false pour le navigateur local
+    secure: IS_PROD,
     httpOnly: true,
-    sameSite: "lax" as const,
+    sameSite: (IS_PROD ? "none" : "lax") as "none" | "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   },
 };

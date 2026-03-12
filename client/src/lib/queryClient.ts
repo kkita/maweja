@@ -3,8 +3,29 @@ import { QueryClient, type QueryFunctionContext } from "@tanstack/react-query";
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "";
 
 export function resolveUrl(url: string): string {
-  if (!url || url.startsWith("http") || url.startsWith("//")) return url;
+  if (!url || url.startsWith("http") || url.startsWith("//") || url.startsWith("data:")) return url;
   return `${API_BASE}${url}`;
+}
+
+export function resolveImg(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http") || url.startsWith("//") || url.startsWith("data:")) return url;
+  return `${API_BASE}${url}`;
+}
+
+function fixUploadsUrls(data: any): any {
+  if (!API_BASE) return data;
+  if (typeof data === "string") {
+    if (data.startsWith("/uploads/")) return `${API_BASE}${data}`;
+    return data;
+  }
+  if (Array.isArray(data)) return data.map(fixUploadsUrls);
+  if (data && typeof data === "object") {
+    const out: Record<string, any> = {};
+    for (const k in data) out[k] = fixUploadsUrls(data[k]);
+    return out;
+  }
+  return data;
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -25,6 +46,16 @@ export function authFetch(url: string, options?: RequestInit): Promise<Response>
     ...rest,
     headers: { "X-User-Role": getUserRole(), ...(extraHeaders as Record<string, string> || {}) },
   });
+}
+
+export async function authFetchJson<T = any>(url: string, options?: RequestInit): Promise<T> {
+  const res = await authFetch(url, options);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || res.statusText);
+  }
+  const json = await res.json();
+  return fixUploadsUrls(json) as T;
 }
 
 export async function apiRequest(url: string, options?: RequestInit) {
@@ -51,7 +82,8 @@ export const queryClient = new QueryClient({
           headers: { "X-User-Role": getUserRole() },
         });
         await throwIfResNotOk(res);
-        return res.json();
+        const json = await res.json();
+        return fixUploadsUrls(json);
       },
       refetchInterval: false,
       refetchOnWindowFocus: false,

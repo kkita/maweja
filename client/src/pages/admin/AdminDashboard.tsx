@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import AdminLayout from "../../components/AdminLayout";
 import { onWSMessage } from "../../lib/websocket";
-import { queryClient, authFetch } from "../../lib/queryClient";
+import { queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useI18n } from "../../lib/i18n";
 import { Package, Truck, Users, DollarSign, TrendingUp, Clock, CheckCircle2, AlertCircle, ArrowUpRight, Store, UtensilsCrossed } from "lucide-react";
@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const { data: stats } = useQuery<any>({ queryKey: ["/api/dashboard/stats"] });
   const { data: recentOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
-    queryFn: () => authFetch("/api/orders").then((r) => r.json()),
+    queryFn: () => authFetchJson("/api/orders"),
   });
 
   useEffect(() => {

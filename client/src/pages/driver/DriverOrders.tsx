@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth";
-import { authFetch } from "../../lib/queryClient";
+import { authFetch , authFetchJson} from "../../lib/queryClient";
 import DriverNav from "../../components/DriverNav";
 import { Package, MapPin } from "lucide-react";
 import { formatPrice, formatDate, statusLabels, statusColors } from "../../lib/utils";
@@ -10,7 +10,7 @@ export default function DriverOrders() {
   const { user } = useAuth();
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders", { driverId: user?.id }],
-    queryFn: () => authFetch(`/api/orders?driverId=${user?.id}`).then((r) => r.json()),
+    queryFn: () => authFetchJson(`/api/orders?driverId=${user?.id}`),
     enabled: !!user,
   });
 

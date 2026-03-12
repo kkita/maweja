@@ -40,7 +40,7 @@ jobs:
       - name: Build Vite — App Client (maweja.net)
         env:
           VITE_MOBILE_MODE: client
-          VITE_API_BASE_URL: ${{ secrets.API_BASE_URL || 'https://maweja.net' }}
+          VITE_API_BASE_URL: https://maweja.net
         run: npx vite build --config vite.mobile.config.ts
 
       - name: Installer les dépendances Capacitor (Client)

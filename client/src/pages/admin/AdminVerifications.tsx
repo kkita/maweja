@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, queryClient } from "../../lib/queryClient";
+import { apiRequest, queryClient, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   Shield, CheckCircle2, XCircle, User, Mail, Phone, MapPin, Calendar,
@@ -133,7 +133,7 @@ export default function AdminVerifications() {
                   className={`p-3 border-b border-gray-50 cursor-pointer transition-all hover:bg-gray-50 ${selected?.id === d.id ? "bg-red-50 border-l-[3px] border-l-red-600" : ""}`}>
                   <div className="flex items-center gap-3">
                     {d.profilePhotoUrl ? (
-                      <img src={d.profilePhotoUrl} alt="" className="w-10 h-10 rounded-xl object-cover" />
+                      <img src={resolveImg(d.profilePhotoUrl)} alt="" className="w-10 h-10 rounded-xl object-cover" />
                     ) : (
                       <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
                         <User size={16} className="text-gray-400" />
@@ -162,7 +162,7 @@ export default function AdminVerifications() {
               <div className="p-5 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-4">
                   {selected.profilePhotoUrl ? (
-                    <img src={selected.profilePhotoUrl} alt="" className="w-16 h-16 rounded-2xl object-cover cursor-pointer hover:opacity-80"
+                    <img src={resolveImg(selected.profilePhotoUrl)} alt="" className="w-16 h-16 rounded-2xl object-cover cursor-pointer hover:opacity-80"
                       onClick={() => setPreviewImage(selected.profilePhotoUrl)} />
                   ) : (
                     <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center">
@@ -208,9 +208,9 @@ export default function AdminVerifications() {
                             </p>
                             {isPhoto ? (
                               value ? (
-                                <img src={value} alt={FIELD_LABELS[field]}
+                                <img src={resolveImg(value)} alt={FIELD_LABELS[field]}
                                   className="w-full max-w-xs h-32 object-cover rounded-lg cursor-pointer hover:opacity-80"
-                                  onClick={e => { e.stopPropagation(); setPreviewImage(value); }} />
+                                  onClick={e => { e.stopPropagation(); setPreviewImage(resolveImg(value)); }} />
                               ) : (
                                 <p className="text-xs text-red-500 italic">Non fourni</p>
                               )

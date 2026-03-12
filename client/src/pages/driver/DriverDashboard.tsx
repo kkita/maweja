@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../lib/auth";
 import { useToast } from "../../hooks/use-toast";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import DriverNav from "../../components/DriverNav";
 import { Package, Clock, CheckCircle2, Truck, MapPin, Power, Navigation, DollarSign, Star, AlertCircle, Phone, Timer, Bell, X } from "lucide-react";
@@ -93,13 +93,13 @@ export default function DriverDashboard() {
 
   const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders", "ready"],
-    queryFn: () => authFetch("/api/orders?status=ready").then(r => r.json()),
+    queryFn: () => authFetchJson("/api/orders?status=ready"),
     refetchInterval: 5000,
   });
 
   const { data: myOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders", "driver", user?.id],
-    queryFn: () => authFetch(`/api/orders?driverId=${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/orders?driverId=${user?.id}`),
     enabled: !!user,
     refetchInterval: 5000,
   });

@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { authFetch } from "../lib/queryClient";
+import { authFetch , authFetchJson} from "../lib/queryClient";
 import { useI18n } from "../lib/i18n";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield, BarChart3,
@@ -17,14 +17,14 @@ export default function AdminSidebar() {
 
   const { data: notifications = [] } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
-    queryFn: () => authFetch(`/api/notifications/${user?.id}`).then((r) => r.json()),
+    queryFn: () => authFetchJson(`/api/notifications/${user?.id}`),
     enabled: !!user,
     refetchInterval: 10000,
   });
 
   const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
-    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/chat/unread/${user?.id}`),
     enabled: !!user,
     refetchInterval: 5000,
   });

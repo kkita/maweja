@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { authFetch } from "../../lib/queryClient";
+import { authFetch , authFetchJson} from "../../lib/queryClient";
 import { formatPrice } from "../../lib/utils";
 import AdminLayout from "../../components/AdminLayout";
 import {
@@ -64,7 +64,7 @@ export default function AdminMarketing() {
   const { data, isLoading } = useQuery<MarketingData>({
     queryKey: ["/api/analytics/marketing", dateFrom, dateTo],
     queryFn: () =>
-      authFetch(`/api/analytics/marketing?dateFrom=${dateFrom}&dateTo=${dateTo}`).then((r) => r.json()),
+      authFetchJson(`/api/analytics/marketing?dateFrom=${dateFrom}&dateTo=${dateTo}`),
   });
 
   const hourData = (data?.ordersByHour || []).map((val, i) => ({ hour: `${i}h`, orders: val }));

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth";
 import { useToast } from "../../hooks/use-toast";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import ClientNav from "../../components/ClientNav";
 import { Wallet, ArrowUpRight, ArrowDownLeft, Smartphone, Plus, Award } from "lucide-react";
 import { formatPrice, formatDate } from "../../lib/utils";
@@ -18,7 +18,7 @@ export default function WalletPage() {
 
   const { data: transactions = [] } = useQuery<WalletTransaction[]>({
     queryKey: ["/api/wallet", user?.id],
-    queryFn: () => authFetch(`/api/wallet/${user?.id}`).then((r) => r.json()),
+    queryFn: () => authFetchJson(`/api/wallet/${user?.id}`),
     enabled: !!user,
   });
 

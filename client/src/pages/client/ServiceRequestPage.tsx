@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   ArrowLeft, Calendar, Clock, User, Phone, MapPin, Tag, DollarSign,
@@ -48,7 +48,7 @@ export default function ServiceRequestPage() {
 
   const { data: existingRequest } = useQuery<ServiceRequest>({
     queryKey: ["/api/service-requests", requestId],
-    queryFn: () => authFetch(`/api/service-requests/${requestId}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/service-requests/${requestId}`),
     enabled: !!isViewMode && !!user,
   });
 

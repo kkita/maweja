@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useEffect } from "react";
 import ClientNav from "../../components/ClientNav";
 import { onWSMessage } from "../../lib/websocket";
-import { queryClient, authFetch } from "../../lib/queryClient";
+import { queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { ArrowLeft, CheckCircle2, Package, ChefHat, Truck, MapPin, Clock, Phone, MessageCircle } from "lucide-react";
 import { formatPrice, formatDate, statusLabels } from "../../lib/utils";
 import type { Order, User } from "@shared/schema";
@@ -24,13 +24,13 @@ export default function TrackingPage() {
 
   const { data: order } = useQuery<Order>({
     queryKey: ["/api/orders", id],
-    queryFn: () => authFetch(`/api/orders/${id}`).then((r) => r.json()),
+    queryFn: () => authFetchJson(`/api/orders/${id}`),
     refetchInterval: 10000,
   });
 
   const { data: driver } = useQuery<Omit<User, "password">>({
     queryKey: ["/api/drivers", order?.driverId],
-    queryFn: () => authFetch(`/api/drivers`).then(r => r.json()).then((drivers: any[]) => drivers.find(d => d.id === order?.driverId)),
+    queryFn: () => authFetchJson(`/api/drivers`).then((drivers: any[]) => drivers.find(d => d.id === order?.driverId)),
     enabled: !!order?.driverId,
   });
 

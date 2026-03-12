@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
-import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
+import { authFetch, apiRequest, queryClient , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { formatPrice, formatDate, statusLabels, statusColors, paymentLabels } from "../../lib/utils";
 import ClientNav from "../../components/ClientNav";
@@ -45,14 +45,14 @@ export default function OrderDetailPage() {
 
   const { data: order, isLoading } = useQuery<Order>({
     queryKey: ["/api/orders", id],
-    queryFn: () => authFetch(`/api/orders/${id}`).then((r) => r.json()),
+    queryFn: () => authFetchJson(`/api/orders/${id}`),
     enabled: !!id,
     refetchInterval: 10000,
   });
 
   const { data: restaurant } = useQuery<Restaurant>({
     queryKey: ["/api/restaurants", order?.restaurantId],
-    queryFn: () => authFetch(`/api/restaurants/${order?.restaurantId}`).then((r) => r.json()),
+    queryFn: () => authFetchJson(`/api/restaurants/${order?.restaurantId}`),
     enabled: !!order?.restaurantId,
   });
 

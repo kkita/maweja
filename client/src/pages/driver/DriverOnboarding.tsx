@@ -1,12 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
-import { apiRequest } from "../../lib/queryClient";
+import { apiRequest, resolveUrl, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
+
 import { onWSMessage } from "../../lib/websocket";
+
 import {
   Upload, Camera, User, Mail, Phone, MapPin, Calendar, Users, Shield,
   CheckCircle2, Clock, AlertCircle, Loader2, X, ChevronRight
 } from "lucide-react";
+
+const isNativeMobile = (): boolean =>
+  typeof (window as any).Capacitor !== "undefined" &&
+  !!(window as any).Capacitor?.isNativePlatform?.();
 
 const FIELD_LABELS: Record<string, string> = {
   name: "Nom complet",
@@ -19,29 +25,70 @@ const FIELD_LABELS: Record<string, string> = {
   profilePhotoUrl: "Photo de profil",
 };
 
+async function uploadFileToServer(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const role = sessionStorage.getItem("maweja_role") || "driver";
+  const res = await fetch(resolveUrl("/api/upload"), {
+    method: "POST",
+    body: formData,
+    credentials: "include",
+    headers: { "X-User-Role": role },
+  });
+  if (!res.ok) throw new Error("Echec de l'upload");
+  const data = await res.json();
+  return resolveUrl(data.url);
+}
+
+async function pickImageNative(setUploading: (b: boolean) => void, onChange: (url: string) => void) {
+  setUploading(true);
+  try {
+    const { Camera } = (window as any).Capacitor.Plugins;
+    const photo = await Camera.getPhoto({
+      quality: 85,
+      allowEditing: false,
+      resultType: "base64",
+      source: "PHOTOS",
+    });
+    const blob = await fetch(`data:image/jpeg;base64,${photo.base64String}`).then(r => r.blob());
+    const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+    const url = await uploadFileToServer(file);
+    onChange(url);
+  } catch {
+    onChange("");
+  }
+  setUploading(false);
+}
+
 function FileUploadField({ label, icon: Icon, value, onChange, rejected, disabled }: {
   label: string; icon: any; value: string; onChange: (url: string) => void; rejected?: boolean; disabled?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const role = sessionStorage.getItem("maweja_role") || "driver";
-      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include", headers: { "X-User-Role": role } });
-      if (!res.ok) throw new Error("Echec de l'upload");
-      const data = await res.json();
-      onChange(data.url);
+      const url = await uploadFileToServer(file);
+      onChange(url);
     } catch {
       onChange("");
     }
     setUploading(false);
+    if (inputRef.current) inputRef.current.value = "";
   };
+
+  const handleClick = () => {
+    if (isNativeMobile()) {
+      pickImageNative(setUploading, onChange);
+    } else {
+      inputRef.current?.click();
+    }
+  };
+
+  const imgSrc = value ? (value.startsWith("http") ? value : resolveUrl(value)) : "";
 
   return (
     <div className={`rounded-2xl border-2 transition-all ${rejected ? "border-red-300 bg-red-50 dark:bg-red-950/30" : value ? "border-green-300 bg-green-50 dark:bg-green-950/30" : "border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"} ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
@@ -58,9 +105,9 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
         </p>
         {value ? (
           <div className="relative">
-            <img src={value} alt={label} className="w-full h-40 object-cover rounded-xl" />
+            <img src={imgSrc} alt={label} className="w-full h-40 object-cover rounded-xl" />
             {!disabled && (
-              <button onClick={() => { onChange(""); inputRef.current?.click(); }}
+              <button onClick={() => { onChange(""); }}
                 className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white dark:hover:bg-gray-800"
                 data-testid={`change-${label.toLowerCase().replace(/\s/g, "-")}`}>
                 <X size={12} className="text-gray-600 dark:text-gray-300" />
@@ -69,7 +116,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
             {!rejected && <CheckCircle2 size={20} className="absolute bottom-2 right-2 text-green-600 bg-white rounded-full" />}
           </div>
         ) : (
-          <button onClick={() => inputRef.current?.click()} disabled={uploading}
+          <button onClick={handleClick} disabled={uploading}
             data-testid={`upload-${label.toLowerCase().replace(/\s/g, "-")}`}
             className="w-full py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-gray-700 transition-colors">
             {uploading ? (
@@ -77,11 +124,19 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
             ) : (
               <Camera size={24} className="text-gray-400" />
             )}
-            <span className="text-xs text-gray-500 dark:text-gray-400">{uploading ? "Envoi en cours..." : "Cliquez pour choisir une photo"}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {uploading ? "Envoi en cours..." : isNativeMobile() ? "Appuyez pour choisir depuis la galerie" : "Cliquez pour choisir une photo"}
+            </span>
           </button>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        style={{ position: "absolute", opacity: 0, width: 1, height: 1, pointerEvents: "none" }}
+        onChange={handleFileChange}
+      />
     </div>
   );
 }
@@ -170,7 +225,7 @@ export default function DriverOnboarding() {
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 mb-6">
             <div className="flex items-center gap-3">
               {form.profilePhotoUrl && (
-                <img src={form.profilePhotoUrl} alt="Profile" className="w-12 h-12 rounded-xl object-cover" />
+                <img src={resolveImg(form.profilePhotoUrl)} alt="Profile" className="w-12 h-12 rounded-xl object-cover" />
               )}
               <div className="text-left">
                 <p className="font-bold text-sm text-gray-900 dark:text-white">{form.name}</p>

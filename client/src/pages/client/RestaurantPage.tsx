@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { useCart } from "../../lib/cart";
-import { authFetch } from "../../lib/queryClient";
+import { authFetch , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus, Play, ChefHat } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
@@ -17,8 +17,8 @@ export default function RestaurantPage() {
   const [showVideo, setShowVideo] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const { data: restaurant } = useQuery<Restaurant>({ queryKey: ["/api/restaurants", id], queryFn: () => authFetch(`/api/restaurants/${id}`).then(r => r.json()) });
-  const { data: menu = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/restaurants", id, "menu"], queryFn: () => authFetch(`/api/restaurants/${id}/menu`).then(r => r.json()) });
+  const { data: restaurant } = useQuery<Restaurant>({ queryKey: ["/api/restaurants", id], queryFn: () => authFetchJson(`/api/restaurants/${id}`) });
+  const { data: menu = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/restaurants", id, "menu"], queryFn: () => authFetchJson(`/api/restaurants/${id}/menu`) });
 
   const categories = [...new Set(menu.map((m) => m.category))];
 

@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { authFetch } from "../../lib/queryClient";
+import { authFetch , authFetchJson} from "../../lib/queryClient";
 import {
   Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle,
   Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, ArrowLeft, Image, Scissors, X
@@ -40,7 +40,7 @@ export default function ServicesPage() {
 
   const { data: myRequests = [], isLoading: reqsLoading } = useQuery<ServiceRequest[]>({
     queryKey: ["/api/service-requests"],
-    queryFn: () => authFetch("/api/service-requests").then(r => r.json()),
+    queryFn: () => authFetchJson("/api/service-requests"),
     enabled: !!user,
   });
 

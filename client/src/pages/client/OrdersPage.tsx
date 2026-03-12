@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
-import { authFetch } from "../../lib/queryClient";
+import { authFetch , authFetchJson} from "../../lib/queryClient";
 import ClientNav from "../../components/ClientNav";
 import { ChevronRight, Package } from "lucide-react";
 import { formatPrice, formatDate, statusLabels, statusColors } from "../../lib/utils";
@@ -16,7 +16,7 @@ export default function OrdersPage() {
 
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
-    queryFn: () => authFetch("/api/orders").then((r) => r.json()),
+    queryFn: () => authFetchJson("/api/orders"),
     enabled: !!user,
   });
 

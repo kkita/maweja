@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DriverNav from "../../components/DriverNav";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import { Send, MessageCircle, Shield, Circle, ArrowLeft } from "lucide-react";
 import type { ChatMessage, User as UserType } from "@shared/schema";
@@ -17,19 +17,19 @@ export default function DriverChat() {
 
   const { data: admins = [] } = useQuery<SafeUser[]>({
     queryKey: ["/api/chat/users-by-role", "admin"],
-    queryFn: () => authFetch("/api/chat/users-by-role/admin").then(r => r.json()),
+    queryFn: () => authFetchJson("/api/chat/users-by-role/admin"),
   });
 
   const { data: unreadCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
-    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/chat/unread/${user?.id}`),
     enabled: !!user,
     refetchInterval: 5000,
   });
 
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat", user?.id, selectedAdmin?.id],
-    queryFn: () => authFetch(`/api/chat/${user?.id}/${selectedAdmin?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/chat/${user?.id}/${selectedAdmin?.id}`),
     enabled: !!selectedAdmin && !!user,
     refetchInterval: 3000,
   });

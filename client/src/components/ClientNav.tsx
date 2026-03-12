@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
-import { authFetch } from "../lib/queryClient";
+import { authFetch , authFetchJson} from "../lib/queryClient";
 import { Home, ShoppingBag, ClipboardList, Settings, LogOut, LogIn, MessageCircle, Briefcase } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ export default function ClientNav() {
 
   const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
-    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/chat/unread/${user?.id}`),
     enabled: !!user,
     refetchInterval: 10000,
   });

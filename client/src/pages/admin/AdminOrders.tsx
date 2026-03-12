@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   Package, ChevronDown, ChevronUp, Truck, MapPin, Search, Filter,
@@ -66,7 +66,7 @@ export default function AdminOrders() {
 
   const { data: drivers = [] } = useQuery<User[]>({
     queryKey: ["/api/drivers"],
-    queryFn: () => authFetch("/api/drivers").then((r) => r.json()),
+    queryFn: () => authFetchJson("/api/drivers"),
   });
 
   const { data: restaurants = [] } = useQuery<Restaurant[]>({
@@ -77,7 +77,7 @@ export default function AdminOrders() {
     queryKey: ["/api/restaurants", newOrderRestaurant, "menu"],
     queryFn: () =>
       newOrderRestaurant
-        ? authFetch(`/api/restaurants/${newOrderRestaurant}/menu`).then((r) => r.json())
+        ? authFetchJson(`/api/restaurants/${newOrderRestaurant}/menu`)
         : Promise.resolve([]),
     enabled: !!newOrderRestaurant,
   });

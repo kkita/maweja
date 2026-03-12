@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { DollarSign, TrendingUp, TrendingDown, Download, Plus, X, ArrowUpRight, ArrowDownLeft, PieChart, BarChart3, FileSpreadsheet } from "lucide-react";
 import { formatPrice, formatDate } from "../../lib/utils";
@@ -22,7 +22,7 @@ export default function AdminFinance() {
 
   const { data: entries = [] } = useQuery<Finance[]>({
     queryKey: ["/api/finance", filter, dateFrom, dateTo],
-    queryFn: () => authFetch(`/api/finance?${queryParams}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/finance?${queryParams}`),
   });
 
   const summaryParams = new URLSearchParams();
@@ -31,7 +31,7 @@ export default function AdminFinance() {
 
   const { data: summary } = useQuery<any>({
     queryKey: ["/api/finance/summary", dateFrom, dateTo],
-    queryFn: () => authFetch(`/api/finance/summary?${summaryParams}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/finance/summary?${summaryParams}`),
   });
 
   const totalRevenue = Number(summary?.summary?.totalRevenue) || 0;

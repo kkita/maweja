@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import { useToast } from "../../hooks/use-toast";
 import {
@@ -134,7 +134,7 @@ export default function AdminDrivers() {
 
   const { data: drivers = [] } = useQuery<any[]>({
     queryKey: ["/api/drivers"],
-    queryFn: () => authFetch("/api/drivers").then(r => r.json()),
+    queryFn: () => authFetchJson("/api/drivers"),
     refetchInterval: 5000,
   });
 

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import type { Advertisement } from "@shared/schema";
 
 export default function AdBanner() {
   const { data: ads = [] } = useQuery<Advertisement[]>({
-    queryKey: ["/api/advertisements", "active"],
-    queryFn: () => fetch("/api/advertisements?active=true").then(r => r.json()),
+    queryKey: ["/api/advertisements?active=true"],
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);

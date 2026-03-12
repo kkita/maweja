@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { authFetch } from "../lib/queryClient";
+import { authFetch , authFetchJson} from "../lib/queryClient";
 import { Home, Package, DollarSign, LogOut, Power, MessageCircle, Settings } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useState, useEffect } from "react";
@@ -19,14 +19,14 @@ export default function DriverNav() {
 
   const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
-    queryFn: () => authFetch(`/api/chat/unread/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/chat/unread/${user?.id}`),
     enabled: !!user,
     refetchInterval: 5000,
   });
 
   const { data: notifications = [] } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
-    queryFn: () => authFetch(`/api/notifications/${user?.id}`).then(r => r.json()),
+    queryFn: () => authFetchJson(`/api/notifications/${user?.id}`),
     enabled: !!user,
     refetchInterval: 10000,
   });
