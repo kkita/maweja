@@ -64,15 +64,16 @@ const pgStore = new PgSession({
 const sessionOpts = {
   store: pgStore,
   secret: process.env.SESSION_SECRET || "maweja-secret-2024",
-  resave: false,
+  resave: true,
   saveUninitialized: false,
+  rolling: true,
   cookie: {
     // En production: sameSite=none + secure=true pour les apps APK Capacitor (cross-origin)
     // En développement: sameSite=lax + secure=false pour le navigateur local
     secure: IS_PROD,
     httpOnly: true,
     sameSite: (IS_PROD ? "none" : "lax") as "none" | "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 14 * 24 * 60 * 60 * 1000,
   },
 };
 

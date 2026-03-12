@@ -89,7 +89,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     (req.session as any).userId = user.id;
     const { password: _, ...safeUser } = user;
-    res.json(safeUser);
+    // Explicitly save session to DB BEFORE sending response (prevents race condition)
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Erreur de session" });
+      }
+      res.json(safeUser);
+    });
   });
 
   app.post("/api/auth/register", async (req, res) => {
@@ -106,6 +113,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     (req.session as any).userId = user.id;
     const { password: _, ...safeUser } = user;
+
+    // Save session to DB BEFORE sending response (prevents race condition)
+    await new Promise<void>((resolve, reject) =>
+      req.session.save((err) => (err ? reject(err) : resolve()))
+    );
 
     // Notify admins of new registration
     const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
@@ -134,8 +146,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/auth/logout", (req, res) => {
-    req.session.destroy(() => {});
-    res.json({ ok: true });
+    req.session.destroy((err) => {
+      if (err) console.error("Session destroy error:", err);
+      res.json({ ok: true });
+    });
   });
 
   app.use("/uploads", (await import("express")).default.static(uploadsDir));

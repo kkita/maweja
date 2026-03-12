@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (data: { email: string; password: string; name: string; phone: string; role?: string; address?: string }) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: Omit<User, "password"> | null) => void;
+  refreshUser: () => Promise<void>;
 }
 
 function detectRoleFromPath(): string {
@@ -32,17 +33,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Omit<User, "password"> | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchMe = async () => {
     const role = initRole();
-    fetch("/api/auth/me", {
-      credentials: "include",
-      headers: { "X-User-Role": role },
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u) => setUser(u))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    try {
+      const res = await fetch("/api/auth/me", {
+        credentials: "include",
+        headers: { "X-User-Role": role },
+      });
+      if (res.ok) {
+        const u = await res.json();
+        setUser(u);
+      } else {
+        setUser(null);
+      }
+    } catch {
+      // Network error — keep existing user state (don't log out on network failure)
+    }
+  };
+
+  useEffect(() => {
+    fetchMe().finally(() => setLoading(false));
   }, []);
+
+  const refreshUser = async () => {
+    await fetchMe();
+  };
 
   const login = async (email: string, password: string, expectedRole?: string) => {
     const role = expectedRole || "client";
@@ -72,7 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -31,7 +31,17 @@ function fixUploadsUrls(data: any): any {
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(body || res.statusText);
+    // Try to parse JSON error message for cleaner error display
+    try {
+      const parsed = JSON.parse(body);
+      const msg = parsed.message || parsed.error || body;
+      const err = new Error(msg);
+      (err as any).status = res.status;
+      throw err;
+    } catch (parseErr) {
+      if ((parseErr as any).status) throw parseErr;
+      throw new Error(body || res.statusText);
+    }
   }
 }
 
@@ -52,7 +62,13 @@ export async function authFetchJson<T = any>(url: string, options?: RequestInit)
   const res = await authFetch(url, options);
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(body || res.statusText);
+    try {
+      const parsed = JSON.parse(body);
+      throw new Error(parsed.message || parsed.error || body);
+    } catch (e) {
+      if (e instanceof Error && e.message !== body) throw e;
+      throw new Error(body || res.statusText);
+    }
   }
   const json = await res.json();
   return fixUploadsUrls(json) as T;
