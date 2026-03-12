@@ -207,107 +207,115 @@ export default function DriverDashboard() {
       {alarm && <AlarmOverlay reason={alarm} onDismiss={() => setAlarm(null)} />}
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-5 fade-in-up">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-0.5">Bonjour {user?.name?.split(" ")[0]}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Vos livraisons du jour</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Bonjour</p>
+            <h2 className="text-xl font-black text-gray-900 dark:text-white">{user?.name?.split(" ")[0]} 👋</h2>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Vos livraisons du jour</p>
           </div>
           <button onClick={toggleOnline} data-testid="toggle-online"
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-lg ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-lg active:scale-95 ${
               isOnline
-                ? "bg-green-600 text-white shadow-green-200"
-                : "bg-gray-200 text-gray-600 shadow-gray-100"
+                ? "bg-green-500 text-white shadow-green-200 dark:shadow-green-900/30"
+                : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-gray-100 dark:shadow-none"
             }`}>
-            <Power size={16} />
+            <Power size={15} className={isOnline ? "animate-pulse" : ""} />
             {isOnline ? "En ligne" : "Hors ligne"}
           </button>
         </div>
 
         {isOnline && (
-          <div className={`flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl text-xs font-medium ${gpsActive ? "bg-green-50 text-green-700" : "bg-orange-50 text-orange-700"}`}>
-            <Navigation size={14} />
-            {gpsActive ? "GPS actif - Position partagee toutes les 15s" : "GPS inactif - Activez la localisation"}
+          <div className={`flex items-center gap-2 mb-4 px-4 py-3 rounded-2xl text-xs font-semibold border fade-in ${
+            gpsActive
+              ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+              : "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
+          }`}>
+            <Navigation size={13} className={gpsActive ? "text-green-600" : "text-orange-600"} />
+            {gpsActive ? "📍 GPS actif — Position partagée toutes les 15s" : "⚠️ GPS inactif — Activez la localisation"}
           </div>
         )}
 
         {lateOrders.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4 animate-pulse">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle size={16} className="text-red-600" />
-              <span className="font-bold text-sm text-red-700">Retard detecte!</span>
+          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-4 animate-pulse">
+            <div className="flex items-center gap-2 mb-1">
+              <AlertCircle size={15} className="text-red-600" />
+              <span className="font-black text-sm text-red-700 dark:text-red-400">Retard détecté !</span>
             </div>
-            <p className="text-xs text-red-600">Vous avez {lateOrders.length} livraison(s) en retard. Veuillez accelerer.</p>
+            <p className="text-xs text-red-600 dark:text-red-400">Vous avez {lateOrders.length} livraison{lateOrders.length > 1 ? "s" : ""} en retard. Veuillez accélérer.</p>
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950 rounded-xl flex items-center justify-center mx-auto mb-2">
-              <Package size={18} className="text-blue-600" />
+        <div className="grid grid-cols-3 gap-2.5 mb-5">
+          {[
+            { icon: Package, label: "En cours", value: activeOrders.length, color: "blue", bg: "bg-blue-50 dark:bg-blue-950/30", iconBg: "bg-blue-100 dark:bg-blue-900/40", iconColor: "text-blue-600" },
+            { icon: CheckCircle2, label: "Livrées", value: deliveredToday.length, color: "green", bg: "bg-green-50 dark:bg-green-950/30", iconBg: "bg-green-100 dark:bg-green-900/40", iconColor: "text-green-600" },
+            { icon: DollarSign, label: "Gains", value: formatPrice(totalEarnings), color: "red", bg: "bg-red-50 dark:bg-red-950/30", iconBg: "bg-red-100 dark:bg-red-900/40", iconColor: "text-red-600" },
+          ].map((stat, i) => (
+            <div key={stat.label} className={`${stat.bg} rounded-2xl p-3.5 border border-transparent fade-in-up stagger-${i + 1}`} data-testid={`driver-stat-${stat.label.toLowerCase()}`}>
+              <div className={`w-8 h-8 ${stat.iconBg} rounded-xl flex items-center justify-center mb-2`}>
+                <stat.icon size={16} className={stat.iconColor} />
+              </div>
+              <p className={`text-xl font-black ${stat.iconColor}`}>{stat.value}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold">{stat.label}</p>
             </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-white">{activeOrders.length}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">En cours</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-            <div className="w-10 h-10 bg-green-50 dark:bg-green-950 rounded-xl flex items-center justify-center mx-auto mb-2">
-              <CheckCircle2 size={18} className="text-green-600" />
-            </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-white">{deliveredToday.length}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Livrees</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-            <div className="w-10 h-10 bg-red-50 dark:bg-red-950 rounded-xl flex items-center justify-center mx-auto mb-2">
-              <DollarSign size={18} className="text-red-600" />
-            </div>
-            <p className="text-lg font-black text-gray-900 dark:text-white">{formatPrice(totalEarnings)}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Gains</p>
-          </div>
+          ))}
         </div>
 
         {!isOnline && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm text-center mb-6">
-            <Power size={40} className="text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-            <p className="font-bold text-gray-900 dark:text-white mb-1">Vous etes hors ligne</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Passez en ligne pour recevoir des commandes</p>
-            <button onClick={toggleOnline} className="bg-green-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-green-200" data-testid="go-online">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center mb-5 fade-in scale-in">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Power size={36} className="text-gray-400 dark:text-gray-500" />
+            </div>
+            <p className="font-black text-lg text-gray-900 dark:text-white mb-1">Vous êtes hors ligne</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Passez en ligne pour recevoir des commandes et commencer à livrer</p>
+            <button
+              onClick={toggleOnline}
+              className="bg-green-500 text-white px-8 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-green-200 dark:shadow-green-900/30 hover:bg-green-600 active:scale-95 transition-all"
+              data-testid="go-online"
+            >
+              <Power size={14} className="inline mr-2" />
               Passer en ligne
             </button>
           </div>
         )}
 
         {activeOrders.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3">Livraisons en cours ({activeOrders.length})</h3>
+          <div className="mb-5">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <h3 className="font-black text-sm text-gray-900 dark:text-white">Livraisons en cours</h3>
+              <span className="text-[10px] font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full">{activeOrders.length}</span>
+            </div>
             <div className="space-y-3">
               {activeOrders.map(order => (
-                <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid={`active-order-${order.id}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-sm">{order.orderNumber}</span>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
+                <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all" data-testid={`active-order-${order.id}`}>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</span>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-xl ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
                   </div>
 
                   <CountdownBadge estimatedDelivery={order.estimatedDelivery} />
 
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    <MapPin size={12} />
-                    <span className="flex-1 truncate">{order.deliveryAddress}</span>
+                  <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2.5">
+                    <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
+                    <span className="flex-1 line-clamp-2">{order.deliveryAddress}</span>
                   </div>
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700/50">
                     <div>
-                      <span className="font-bold text-red-600 text-sm">{formatPrice(order.total)}</span>
-                      <span className="text-[10px] text-gray-400 ml-2">Gain: {formatPrice(order.deliveryFee)}</span>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Votre gain</p>
+                      <span className="font-black text-green-600 text-base">{formatPrice(order.deliveryFee)}</span>
                     </div>
                     <div className="flex gap-2">
                       {order.status === "picked_up" && (
                         <button onClick={() => updateStatus(order.id, "delivered")} data-testid={`deliver-${order.id}`}
-                          className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-green-200">
-                          Livree
+                          className="bg-green-500 text-white px-5 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-green-200 dark:shadow-green-900/30 hover:bg-green-600 active:scale-95 transition-all">
+                          ✓ Livrée
                         </button>
                       )}
                       {["confirmed", "preparing"].includes(order.status) && (
                         <button onClick={() => updateStatus(order.id, "picked_up")} data-testid={`pickup-${order.id}`}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold">
-                          Recuperee
+                          className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-black hover:bg-blue-700 active:scale-95 transition-all">
+                          Récupérée
                         </button>
                       )}
                     </div>
@@ -320,31 +328,44 @@ export default function DriverDashboard() {
 
         {isOnline && (
           <div>
-            <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3">
-              Commandes disponibles ({pendingOrders.filter(o => !o.driverId).length})
-            </h3>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-ping absolute" />
+              <div className="w-2 h-2 bg-red-500 rounded-full" />
+              <h3 className="font-black text-sm text-gray-900 dark:text-white">
+                Commandes disponibles
+              </h3>
+              <span className="text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full">
+                {pendingOrders.filter(o => !o.driverId).length}
+              </span>
+            </div>
             {pendingOrders.filter(o => !o.driverId).length === 0 ? (
               <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-                <Clock size={36} className="text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Aucune commande disponible</p>
-                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Les nouvelles commandes apparaitront automatiquement</p>
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Clock size={28} className="text-gray-300 dark:text-gray-600" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 font-bold text-sm">En attente de commandes...</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Les nouvelles commandes apparaîtront automatiquement</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {pendingOrders.filter(o => !o.driverId).map(order => (
-                  <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid={`pending-order-${order.id}`}>
+                  <div key={order.id} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border-2 border-red-100 dark:border-red-900/30 shadow-sm hover:shadow-lg hover:border-red-300 dark:hover:border-red-700 transition-all" data-testid={`pending-order-${order.id}`}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-sm text-gray-900 dark:text-white">{order.orderNumber}</span>
-                      <span className="font-bold text-red-600 text-sm">{formatPrice(order.deliveryFee)}</span>
+                      <span className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</span>
+                      <div className="text-right">
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Votre gain</p>
+                        <p className="font-black text-green-600 text-base">{formatPrice(order.deliveryFee)}</p>
+                      </div>
                     </div>
                     {order.estimatedDelivery && <CountdownBadge estimatedDelivery={order.estimatedDelivery} />}
-                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-2">
-                      <MapPin size={12} /> {order.deliveryAddress}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1 mt-2">
+                      <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
+                      <span className="line-clamp-2">{order.deliveryAddress}</span>
                     </p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Total commande: {formatPrice(order.total)}</p>
+                    <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-3 mt-1">Total commande: {formatPrice(order.total)}</p>
                     <button onClick={() => acceptOrder(order.id)} data-testid={`accept-order-${order.id}`}
-                      className="w-full bg-red-600 text-white py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-all">
-                      Accepter la livraison
+                      className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-black shadow-lg shadow-red-200 dark:shadow-red-900/30 hover:bg-red-700 active:scale-95 transition-all">
+                      🚀 Accepter cette livraison
                     </button>
                   </div>
                 ))}

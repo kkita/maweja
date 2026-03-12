@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { authFetch , authFetchJson} from "../lib/queryClient";
+import { authFetchJson } from "../lib/queryClient";
 import { Home, Package, DollarSign, LogOut, Power, MessageCircle, Settings } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 import { useState, useEffect } from "react";
@@ -16,6 +16,7 @@ export default function DriverNav() {
   const { user, logout, setUser } = useAuth();
   const { t } = useI18n();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
+  const [toggling, setToggling] = useState(false);
 
   const { data: unreadChatCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
@@ -47,13 +48,21 @@ export default function DriverNav() {
   }, []);
 
   const toggleOnline = async () => {
+    if (toggling) return;
+    setToggling(true);
     const newStatus = !isOnline;
     setIsOnline(newStatus);
-    await apiRequest(`/api/drivers/${user?.id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ isOnline: newStatus }),
-    });
-    if (user) setUser({ ...user, isOnline: newStatus });
+    try {
+      await apiRequest(`/api/drivers/${user?.id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ isOnline: newStatus }),
+      });
+      if (user) setUser({ ...user, isOnline: newStatus });
+    } catch {
+      setIsOnline(!newStatus);
+    } finally {
+      setToggling(false);
+    }
   };
 
   const links = [
@@ -66,59 +75,79 @@ export default function DriverNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src={logoImg} alt="MAWEJA" className="w-9 h-9 rounded-xl object-cover" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl overflow-hidden ring-2 ring-red-100 dark:ring-red-900/30 shadow-lg shadow-red-100/50 dark:shadow-red-900/20">
+              <img src={logoImg} alt="MAWEJA" className="w-full h-full object-cover" />
+            </div>
             <div>
-              <h1 className="text-lg font-black text-gray-900 dark:text-white leading-tight">MAWEJA</h1>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium -mt-0.5">{t.driver.dashboard}</p>
+              <h1 className="text-base font-black text-gray-900 dark:text-white leading-tight tracking-tight">MAWEJA</h1>
+              <p className="text-[9px] text-blue-500 font-bold -mt-0.5 uppercase tracking-widest">{t.driver.dashboard}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={toggleOnline}
+              disabled={toggling}
               data-testid="button-toggle-online"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-sm ${
                 isOnline
-                  ? "bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400"
+                  ? "bg-green-500 text-white shadow-green-200 dark:shadow-green-900/30"
                   : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-              }`}
+              } ${toggling ? "opacity-60" : ""}`}
             >
-              <Power size={12} />
+              <Power size={12} className={isOnline ? "animate-pulse" : ""} />
               {isOnline ? t.driver.online : t.driver.offline}
             </button>
             <button
               onClick={async () => { await logout(); navigate("/driver/login"); }}
-              className="text-gray-400 dark:text-gray-500 hover:text-red-600 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all active:scale-95"
               data-testid="button-logout"
             >
-              <LogOut size={18} />
+              <LogOut size={16} />
             </button>
           </div>
         </div>
       </header>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 pb-safe">
-        <div className="max-w-lg mx-auto flex">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+        <div className="max-w-lg mx-auto flex items-center px-2 py-1">
           {links.map((l) => {
-            const isActive = location === l.path;
+            const isActive = location === l.path || (l.path !== "/" && location.startsWith(l.path));
             return (
               <button
                 key={l.path}
                 onClick={() => navigate(l.path)}
                 data-testid={`driver-nav-${l.path.replace(/\//g, "") || "home"}`}
-                className={`flex-1 flex flex-col items-center py-2.5 transition-colors ${isActive ? "text-red-600" : "text-gray-400 dark:text-gray-500"}`}
+                className={`flex-1 flex flex-col items-center py-2 px-1 rounded-2xl relative transition-all duration-200 active:scale-90 ${
+                  isActive
+                    ? "text-red-600"
+                    : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                }`}
               >
-                <div className="relative">
-                  <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
+                {isActive && (
+                  <div className="absolute inset-0 bg-red-50 dark:bg-red-900/20 rounded-2xl" />
+                )}
+                <div className="relative z-10">
+                  <div className={`transition-transform duration-200 ${isActive ? "scale-110" : "scale-100"}`}>
+                    <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                  </div>
                   {l.badge > 0 && (
-                    <span className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[9px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid={`driver-badge-${l.path.replace(/\//g, "") || "home"}`}>
+                    <span
+                      className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center animate-pulse"
+                      data-testid={`driver-badge-${l.path.replace(/\//g, "") || "home"}`}
+                    >
                       {l.badge > 99 ? "99+" : l.badge}
                     </span>
                   )}
                 </div>
-                <span className="text-[10px] font-semibold mt-1">{l.label}</span>
+                <span className={`text-[9px] font-bold mt-0.5 relative z-10 transition-all ${isActive ? "text-red-600" : ""}`}>
+                  {l.label}
+                </span>
+                {isActive && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />
+                )}
               </button>
             );
           })}

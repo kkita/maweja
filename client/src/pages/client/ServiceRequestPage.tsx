@@ -90,8 +90,17 @@ export default function ServiceRequestPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/service-requests"] });
       setSubmitted(true);
     },
-    onError: () => {
-      toast({ title: t.common.error, description: t.common.error, variant: "destructive" });
+    onError: (err: any) => {
+      let msg = err?.message || t.common.error;
+      try { msg = JSON.parse(msg)?.message || msg; } catch {}
+      if (msg.includes("401") || msg.includes("Non authentifie")) {
+        toast({ title: "Connexion requise", description: "Veuillez vous connecter pour envoyer une demande.", variant: "destructive" });
+        navigate("/login");
+      } else if (msg.includes("403") || msg.includes("interdit")) {
+        toast({ title: "Accès refusé", description: "Seuls les clients peuvent envoyer des demandes de service.", variant: "destructive" });
+      } else {
+        toast({ title: "Erreur d'envoi", description: msg, variant: "destructive" });
+      }
     },
   });
 
@@ -116,8 +125,25 @@ export default function ServiceRequestPage() {
   const handleSubmit = (e: any) => {
     e.preventDefault();
 
+    if (!user) {
+      toast({ title: "Connexion requise", description: "Veuillez vous connecter pour envoyer une demande de service.", variant: "destructive" });
+      navigate("/login");
+      return;
+    }
+
+    if (user.role !== "client") {
+      toast({ title: "Accès refusé", description: "Seuls les clients peuvent envoyer des demandes de service.", variant: "destructive" });
+      return;
+    }
+
+    if (!categoryId && !categoryName) {
+      toast({ title: "Catégorie manquante", description: "Veuillez sélectionner une catégorie de service.", variant: "destructive" });
+      navigate("/services");
+      return;
+    }
+
     if (!phone.trim()) {
-      toast({ title: t.common.error, description: t.common.phone, variant: "destructive" });
+      toast({ title: "Numéro requis", description: "Veuillez entrer votre numéro de téléphone.", variant: "destructive" });
       return;
     }
 
@@ -125,21 +151,21 @@ export default function ServiceRequestPage() {
       return;
     }
 
-    if (!hasCatalogModel && (!fullName.trim() || !phone.trim() || !address.trim())) {
-      toast({ title: t.common.error, description: t.common.error, variant: "destructive" });
+    if (!hasCatalogModel && (!fullName.trim() || !phone.trim())) {
+      toast({ title: "Champs requis", description: "Veuillez remplir votre nom et téléphone.", variant: "destructive" });
       return;
     }
 
     createMutation.mutate({
-      categoryId: Number(categoryId),
-      categoryName,
+      categoryId: Number(categoryId) || 1,
+      categoryName: categoryName || "Service",
       scheduledType,
       scheduledDate: scheduledType === "scheduled" ? scheduledDate : null,
       scheduledTime: scheduledType === "scheduled" ? scheduledTime : null,
-      fullName: fullName || user?.name || "",
+      fullName: fullName || user?.name || "Client",
       phone,
-      address: address || user?.address || "",
-      serviceType: catalogItemName ? `${catalogItemName}${serviceType ? ` - ${serviceType}` : ""}` : serviceType,
+      address: address || user?.address || "Non précisé",
+      serviceType: catalogItemName ? `${catalogItemName}${serviceType ? ` - ${serviceType}` : ""}` : serviceType || "Non précisé",
       budget: budget || catalogItemPrice || "",
       additionalInfo: hasCatalogModel
         ? `[${t.services.selectedModel}: ${catalogItemName}${catalogItemPrice ? ` (${catalogItemPrice})` : ""}]${catalogItemImage ? `\n[Image: ${catalogItemImage}]` : ""}${additionalInfo ? `\n${additionalInfo}` : ""}`
