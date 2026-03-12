@@ -54,6 +54,22 @@ export const restaurants = pgTable("restaurants", {
   brandName: text("brand_name"),
   hqAddress: text("hq_address"),
   prepTime: text("prep_time").default("20-30 min"),
+  restaurantCommissionRate: integer("restaurant_commission_rate").notNull().default(20),
+});
+
+export const restaurantPayouts = pgTable("restaurant_payouts", {
+  id: serial("id").primaryKey(),
+  restaurantId: integer("restaurant_id").notNull(),
+  restaurantName: text("restaurant_name").notNull(),
+  period: text("period").notNull(),
+  orderCount: integer("order_count").notNull().default(0),
+  grossAmount: integer("gross_amount").notNull().default(0),
+  mawejaCommission: integer("maweja_commission").notNull().default(0),
+  netAmount: integer("net_amount").notNull().default(0),
+  isPaid: boolean("is_paid").notNull().default(false),
+  paidAt: timestamp("paid_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const menuItems = pgTable("menu_items", {
@@ -272,3 +288,7 @@ export type Advertisement = typeof advertisements.$inferSelect;
 export type InsertAdvertisement = z.infer<typeof insertAdvertisementSchema>;
 export type PromoBanner = typeof promoBanners.$inferSelect;
 export type InsertPromoBanner = z.infer<typeof insertPromoBannerSchema>;
+
+export const insertRestaurantPayoutSchema = createInsertSchema(restaurantPayouts).omit({ id: true, createdAt: true });
+export type RestaurantPayout = typeof restaurantPayouts.$inferSelect;
+export type InsertRestaurantPayout = z.infer<typeof insertRestaurantPayoutSchema>;

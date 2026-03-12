@@ -48,3 +48,9 @@ id = "vH_gFSAQQByBBjUAoztn1"
 uri = "file://MAWEJA_COMPLET_GITHUB_v5.zip"
 type = "unspecified"
 title = "MAWEJA_COMPLET_GITHUB_v5.zip — Tous les bugs APK corrigés"
+
+[[outputs]]
+id = "fwXxDKzPFswXlH123pumt"
+uri = "file://MAWEJA_COMPLET_GITHUB_v7.zip"
+type = "unspecified"
+title = "MAWEJA_COMPLET_GITHUB_v7.zip — Code source complet"

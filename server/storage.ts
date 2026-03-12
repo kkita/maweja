@@ -2,7 +2,7 @@ import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
-  serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings,
+  serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings, restaurantPayouts,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -14,6 +14,7 @@ import {
   type ServiceCatalogItem, type InsertServiceCatalogItem,
   type Advertisement, type InsertAdvertisement,
   type PromoBanner, type InsertPromoBanner,
+  type RestaurantPayout, type InsertRestaurantPayout,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -94,6 +95,12 @@ export interface IStorage {
   setSetting(key: string, value: string): Promise<void>;
   setSettings(data: Record<string, string>): Promise<void>;
   upsertPromoBanner(data: Partial<InsertPromoBanner>): Promise<PromoBanner>;
+
+  getRestaurantPayouts(): Promise<RestaurantPayout[]>;
+  getRestaurantPayout(id: number): Promise<RestaurantPayout | undefined>;
+  createRestaurantPayout(data: InsertRestaurantPayout): Promise<RestaurantPayout>;
+  updateRestaurantPayout(id: number, data: Partial<RestaurantPayout>): Promise<RestaurantPayout | undefined>;
+  deleteRestaurantPayout(id: number): Promise<void>;
 
   getDashboardStats(): Promise<any>;
 }
@@ -311,6 +318,29 @@ export class DatabaseStorage implements IStorage {
     }).from(finances).where(whereClause).groupBy(sql`to_char(${finances.createdAt}, 'YYYY-MM-DD')`).orderBy(sql`to_char(${finances.createdAt}, 'YYYY-MM-DD')`);
 
     return { summary, byCategory, daily };
+  }
+
+  async getRestaurantPayouts() {
+    return db.select().from(restaurantPayouts).orderBy(desc(restaurantPayouts.createdAt));
+  }
+
+  async getRestaurantPayout(id: number) {
+    const [payout] = await db.select().from(restaurantPayouts).where(eq(restaurantPayouts.id, id));
+    return payout;
+  }
+
+  async createRestaurantPayout(data: InsertRestaurantPayout) {
+    const [payout] = await db.insert(restaurantPayouts).values(data).returning();
+    return payout;
+  }
+
+  async updateRestaurantPayout(id: number, data: Partial<RestaurantPayout>) {
+    const [payout] = await db.update(restaurantPayouts).set(data).where(eq(restaurantPayouts.id, id)).returning();
+    return payout;
+  }
+
+  async deleteRestaurantPayout(id: number) {
+    await db.delete(restaurantPayouts).where(eq(restaurantPayouts.id, id));
   }
 
   async getDashboardStats() {

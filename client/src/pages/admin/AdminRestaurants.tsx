@@ -15,8 +15,8 @@ function MediaUploadButton({ label, accept, onUploaded, current, icon: Icon, tes
   const isVideo = accept.includes("video");
 
   const handleFile = async (file: File) => {
-    const maxSize = isVideo ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
-    if (file.size > maxSize) { onError?.(isVideo ? "Video trop volumineuse (max 20MB)" : "Image trop volumineuse (max 5MB)"); return; }
+    const maxSize = isVideo ? 1 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) { onError?.(isVideo ? "Vidéo trop volumineuse (max 1MB)" : "Image trop volumineuse (max 5MB)"); return; }
     setUploading(true);
     try {
       const fd = new FormData();
@@ -55,6 +55,7 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
     rating: 4.5, phone: "", openingHours: "08:00 - 22:00",
     email: "", managerName: "", brandName: "", prepTime: "20-30 min",
     image: "", logoUrl: "",
+    restaurantCommissionRate: 20,
   });
   const [imageUploading, setImageUploading] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
@@ -130,6 +131,25 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
           <div className="grid grid-cols-2 gap-3">
             {field("email", "Email", "email", "contact@restaurant.com")}
             {field("managerName", "Nom du manager", "text", "Jean Dupont")}
+          </div>
+
+          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl p-3">
+            <label className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2 block flex items-center gap-1">
+              <span>💰</span> Commission MAWEJA (% déduit du chiffre d'affaires)
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="number" min="0" max="100"
+                value={form.restaurantCommissionRate}
+                onChange={e => setForm(f => ({ ...f, restaurantCommissionRate: Number(e.target.value) }))}
+                data-testid="input-restaurant-commission"
+                className="w-24 px-3 py-2.5 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-xl text-sm font-bold text-red-600 dark:text-red-400 text-center focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+              <span className="text-sm font-bold text-red-600 dark:text-red-400">%</span>
+              <p className="text-[11px] text-red-600/70 dark:text-red-400/70 flex-1">
+                Par ex: 20% → MAWEJA garde 20% du CA, le restaurant reçoit 80%
+              </p>
+            </div>
           </div>
 
           <div>
@@ -208,12 +228,13 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
   const [deliveryFee, setDeliveryFee] = useState(restaurant.deliveryFee);
   const [deliveryTime, setDeliveryTime] = useState(restaurant.deliveryTime);
   const [phone, setPhone] = useState(restaurant.phone || "");
+  const [commissionRate, setCommissionRate] = useState<number>(restaurant.restaurantCommissionRate ?? 20);
 
   const mutation = useMutation({
     mutationFn: async () => {
       await apiRequest(`/api/restaurants/${restaurant.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime }),
+        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate }),
       });
     },
     onSuccess: () => {
@@ -264,6 +285,18 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
           {inp(managerName, setManagerName, "Nom du manager", "text", "Jean Dupont")}
           {inp(brandName, setBrandName, "Marque", "text", "Nom de la marque")}
           {inp(hqAddress, setHqAddress, "Adresse du siege", "text", "Adresse complete")}
+
+          <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl p-3">
+            <label className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2 block">Commission MAWEJA (%)</label>
+            <div className="flex items-center gap-3">
+              <input type="number" min="0" max="100" value={commissionRate}
+                onChange={e => setCommissionRate(Number(e.target.value))}
+                data-testid="input-edit-restaurant-commission"
+                className="w-24 px-3 py-2.5 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-700 rounded-xl text-sm font-bold text-red-600 dark:text-red-400 text-center focus:outline-none focus:ring-2 focus:ring-red-500" />
+              <span className="text-sm font-bold text-red-600 dark:text-red-400">%</span>
+              <p className="text-[11px] text-red-600/70 dark:text-red-400/70 flex-1">Part MAWEJA sur le CA livré</p>
+            </div>
+          </div>
         </div>
         <button onClick={() => mutation.mutate()} disabled={mutation.isPending} data-testid="save-restaurant-info"
           className="w-full mt-5 py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
@@ -307,7 +340,7 @@ function EditMediaModal({ restaurant, onClose }: { restaurant: Restaurant; onClo
         <div className="space-y-5">
           <MediaUploadButton label="Logo du restaurant" accept="image/jpeg,image/png,image/webp" current={logoUrl} onUploaded={setLogoUrl} onError={showError} icon={Image} testId="upload-restaurant-logo" />
           <MediaUploadButton label="Image de couverture" accept="image/jpeg,image/png,image/webp" current={image} onUploaded={setImage} onError={showError} icon={Image} testId="upload-restaurant-cover" />
-          <MediaUploadButton label="Video de couverture (max 20MB, sans son)" accept="video/mp4,video/webm,video/quicktime" current={coverVideoUrl} onUploaded={setCoverVideoUrl} onError={showError} icon={Video} testId="upload-restaurant-video" />
+          <MediaUploadButton label="Vidéo de couverture (max 1MB, sans audio)" accept="video/mp4,video/webm,video/quicktime" current={coverVideoUrl} onUploaded={setCoverVideoUrl} onError={showError} icon={Video} testId="upload-restaurant-video" />
           {coverVideoUrl && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
               <p className="text-xs text-amber-700">La video sera lue en mode muet. Elle apparaitra sur la page du restaurant cote client.</p>

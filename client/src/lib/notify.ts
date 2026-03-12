@@ -55,7 +55,7 @@ export async function getNotifPermission(): Promise<"granted" | "denied" | "defa
   return Notification.permission;
 }
 
-export async function showNotif(title: string, body: string, icon = "/logo.png") {
+export async function showNotif(title: string, body: string, icon = "/maweja-icon.png") {
   if (isNative()) {
     try {
       const plugin = getLocalNotificationsPlugin();

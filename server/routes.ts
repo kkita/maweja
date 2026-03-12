@@ -887,6 +887,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.send(csv);
   });
 
+  // ─── Restaurant Payouts ───────────────────────────────────────────────────
+  app.get("/api/restaurant-payouts", requireAdmin, async (_req, res) => {
+    const payouts = await storage.getRestaurantPayouts();
+    res.json(payouts);
+  });
+
+  app.post("/api/restaurant-payouts", requireAdmin, async (req, res) => {
+    const payout = await storage.createRestaurantPayout(req.body);
+    res.json(payout);
+  });
+
+  app.post("/api/restaurant-payouts/generate", requireAdmin, async (req, res) => {
+    const { dateFrom, dateTo, period } = req.body;
+    if (!dateFrom || !dateTo || !period) return res.status(400).json({ message: "dateFrom, dateTo et period sont requis" });
+
+    const allOrders = await storage.getOrders({
+      dateFrom: new Date(dateFrom),
+      dateTo: new Date(dateTo),
+      status: "delivered",
+    });
+    const allRestaurants = await storage.getRestaurants();
+
+    const byRestaurant: Record<number, { count: number; gross: number }> = {};
+    for (const o of allOrders) {
+      if (!byRestaurant[o.restaurantId]) byRestaurant[o.restaurantId] = { count: 0, gross: 0 };
+      byRestaurant[o.restaurantId].count++;
+      byRestaurant[o.restaurantId].gross += o.subtotal;
+    }
+
+    const created = [];
+    for (const [rid, stats] of Object.entries(byRestaurant)) {
+      const rest = allRestaurants.find(r => r.id === Number(rid));
+      if (!rest || stats.count === 0) continue;
+      const rate = rest.restaurantCommissionRate ?? 20;
+      const mawejaCommission = Math.round(stats.gross * rate / 100);
+      const netAmount = stats.gross - mawejaCommission;
+      const payout = await storage.createRestaurantPayout({
+        restaurantId: Number(rid),
+        restaurantName: rest.name,
+        period,
+        orderCount: stats.count,
+        grossAmount: stats.gross,
+        mawejaCommission,
+        netAmount,
+        isPaid: false,
+      });
+      created.push(payout);
+    }
+
+    res.json({ created: created.length, payouts: created });
+  });
+
+  app.patch("/api/restaurant-payouts/:id", requireAdmin, async (req, res) => {
+    const payout = await storage.updateRestaurantPayout(Number(req.params.id), req.body);
+    if (!payout) return res.status(404).json({ message: "Paiement non trouvé" });
+    res.json(payout);
+  });
+
+  app.delete("/api/restaurant-payouts/:id", requireAdmin, async (req, res) => {
+    await storage.deleteRestaurantPayout(Number(req.params.id));
+    res.json({ ok: true });
+  });
+
   // Dashboard stats
   app.get("/api/dashboard/stats", requireAdmin, async (_req, res) => {
     const stats = await storage.getDashboardStats();
