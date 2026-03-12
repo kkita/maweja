@@ -13,6 +13,13 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 **Business Vision & Market Potential:**
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
+## Recent Changes (March 2026)
+- **Restaurant CRUD**: Added "Ajouter un restaurant" + Delete + full menu items management (add/edit/delete per restaurant)
+- **WhatsApp persistence**: Added `app_settings` DB table; `/api/settings` GET+PATCH; AdminSettings saves to DB; ClientContactBubble uses dynamic WhatsApp number
+- **Services/Catalog seeded**: 10 catalog items seeded across categories (Hotellerie, Transport, Nettoyage, Reparation, Evenementiel); 3 default ads seeded
+- **AdminChat improved**: Better UX with date separators, phone call button, client-first behavior enforced (clients tab only shows clients who wrote first)
+- **AdminDashboard animations**: AnimatedNumber counter, live indicator, ProgressBar animations, hover effects, gradient revenue card, fade-in on load, skeleton loaders
+
 ## User Preferences
 - I prefer simple language.
 - I want iterative development.

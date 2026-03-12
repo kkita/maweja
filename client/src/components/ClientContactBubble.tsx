@@ -29,6 +29,13 @@ export default function ClientContactBubble() {
     enabled: !!user && isOpen,
   });
 
+  const { data: appSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const whatsappNumber = (appSettings?.whatsapp_number || "+243819994041").replace(/\s+/g, "").replace("+", "");
+
   const { data: unreadCounts = {} } = useQuery<Record<number, number>>({
     queryKey: ["/api/chat/unread", user?.id],
     queryFn: () => authFetchJson(`/api/chat/unread/${user?.id}`),
@@ -158,7 +165,7 @@ export default function ClientContactBubble() {
                     </span>
                   )}
                 </button>
-                <button onClick={() => window.open("https://wa.me/243812345678?text=Bonjour MAWEJA, j'ai besoin d'aide.", "_blank")} data-testid="button-whatsapp"
+                <button onClick={() => window.open(`https://wa.me/${whatsappNumber}?text=Bonjour MAWEJA, j'ai besoin d'aide.`, "_blank")} data-testid="button-whatsapp"
                   className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
                   <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
                     <SiWhatsapp size={18} className="text-green-600" />

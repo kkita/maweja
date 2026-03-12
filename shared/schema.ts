@@ -260,6 +260,12 @@ export type ServiceRequest = typeof serviceRequests.$inferSelect;
 export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
 export type ServiceCatalogItem = typeof serviceCatalogItems.$inferSelect;
 export type InsertServiceCatalogItem = z.infer<typeof insertServiceCatalogItemSchema>;
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertPromoBannerSchema = createInsertSchema(promoBanners).omit({ id: true, updatedAt: true });
 
 export type Advertisement = typeof advertisements.$inferSelect;

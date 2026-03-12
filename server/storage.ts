@@ -2,7 +2,7 @@ import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
-  serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners,
+  serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -90,6 +90,9 @@ export interface IStorage {
   updateAdvertisement(id: number, data: Partial<Advertisement>): Promise<Advertisement | undefined>;
   deleteAdvertisement(id: number): Promise<void>;
   getPromoBanner(): Promise<PromoBanner | undefined>;
+  getSettings(): Promise<Record<string, string>>;
+  setSetting(key: string, value: string): Promise<void>;
+  setSettings(data: Record<string, string>): Promise<void>;
   upsertPromoBanner(data: Partial<InsertPromoBanner>): Promise<PromoBanner>;
 
   getDashboardStats(): Promise<any>;
@@ -491,6 +494,25 @@ export class DatabaseStorage implements IStorage {
         ...data,
       }).returning();
       return created;
+    }
+  }
+  async getSettings(): Promise<Record<string, string>> {
+    const rows = await db.select().from(appSettings);
+    const result: Record<string, string> = {};
+    for (const row of rows) result[row.key] = row.value;
+    return result;
+  }
+
+  async setSetting(key: string, value: string) {
+    await db.insert(appSettings).values({ key, value }).onConflictDoUpdate({
+      target: appSettings.key,
+      set: { value, updatedAt: new Date() },
+    });
+  }
+
+  async setSettings(data: Record<string, string>) {
+    for (const [key, value] of Object.entries(data)) {
+      await this.setSetting(key, value);
     }
   }
 }

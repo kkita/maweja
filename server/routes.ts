@@ -1280,5 +1280,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // ─── App Settings ────────────────────────────────────────────────────
+  app.get("/api/settings", async (_req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      const defaults: Record<string, string> = {
+        whatsapp_number: "+243819994041",
+        app_name: "MAWEJA",
+        delivery_fee: "2500",
+        min_order: "3000",
+        max_radius: "15",
+        notifications: "true",
+        auto_assign: "true",
+        loyalty_enabled: "true",
+        points_per_order: "10",
+        currency: "USD",
+      };
+      res.json({ ...defaults, ...settings });
+    } catch { res.json({}); }
+  });
+
+  app.patch("/api/settings", requireAdmin, async (req, res) => {
+    try {
+      const data: Record<string, string> = {};
+      for (const [k, v] of Object.entries(req.body)) {
+        data[k] = String(v);
+      }
+      await storage.setSettings(data);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: "Erreur sauvegarde" }); }
+  });
+
   return httpServer;
 }
