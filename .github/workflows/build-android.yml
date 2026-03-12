@@ -33,7 +33,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Setup Java JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -45,7 +44,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Installer les dépendances racine
-        run: npm ci
+        run: npm install
 
       - name: Build Vite — App Client (maweja.net)
         env:
@@ -195,7 +194,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       - name: Setup Java JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
@@ -207,7 +205,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Installer les dépendances racine
-        run: npm ci
+        run: npm install
 
       - name: Build Vite — App Driver (maweja.net)
         env:
