@@ -18,3 +18,9 @@ id = "YorWQ98XJvCCsGGYHm2py"
 uri = "file://MAWEJA_GitHub_Actions.zip"
 type = "unspecified"
 title = "MAWEJA GitHub Actions — CORRIGÉ (sans erreur lock file)"
+
+[[outputs]]
+id = "kcU3Nq_e3Q7YbR1sKVrCe"
+uri = "file://MAWEJA_COMPLET_GITHUB.zip"
+type = "unspecified"
+title = "MAWEJA — Code source complet pour GitHub (796 Ko)"
