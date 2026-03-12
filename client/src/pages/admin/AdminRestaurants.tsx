@@ -54,31 +54,24 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
     deliveryFee: 2500, deliveryTime: "30-45 min", minOrder: 5000,
     rating: 4.5, phone: "", openingHours: "08:00 - 22:00",
     email: "", managerName: "", brandName: "", prepTime: "20-30 min",
-    image: "", logoUrl: "",
     restaurantCommissionRate: 20,
   });
-  const [imageUploading, setImageUploading] = useState(false);
-  const imageRef = useRef<HTMLInputElement>(null);
-  const { toast: t2 } = useToast();
-
-  const handleImageFile = async (file: File) => {
-    if (file.size > 5 * 1024 * 1024) { toast({ title: "Erreur", description: "Image trop volumineuse (max 5MB)", variant: "destructive" }); return; }
-    setImageUploading(true);
-    try {
-      const fd = new FormData(); fd.append("file", file);
-      const res = await authFetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.url) setForm(f => ({ ...f, image: data.url }));
-    } catch { toast({ title: "Erreur", description: "Upload echoue", variant: "destructive" }); }
-    setImageUploading(false);
-  };
+  const [coverImage, setCoverImage] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [coverVideoUrl, setCoverVideoUrl] = useState("");
+  const showError = (msg: string) => toast({ title: "Erreur", description: msg, variant: "destructive" });
 
   const mutation = useMutation({
     mutationFn: async () => {
       if (!form.name || !form.cuisine || !form.address) throw new Error("Champs requis manquants");
       await apiRequest("/api/restaurants", {
         method: "POST",
-        body: JSON.stringify({ ...form, image: form.image || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400" }),
+        body: JSON.stringify({
+          ...form,
+          image: coverImage || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400",
+          logoUrl: logoUrl || null,
+          coverVideoUrl: coverVideoUrl || null,
+        }),
       });
     },
     onSuccess: () => {
@@ -152,18 +145,46 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Image de couverture</label>
-            <div className="flex items-center gap-3">
-              {form.image && <img src={form.image} alt="" className="w-16 h-12 rounded-xl object-cover border" />}
-              <button type="button" onClick={() => imageRef.current?.click()} disabled={imageUploading}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-300 rounded-xl text-xs font-medium text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors">
-                {imageUploading ? <Loader2 size={14} className="animate-spin" /> : <Image size={14} />}
-                {form.image ? "Changer l'image" : "Choisir une image"}
-              </button>
-              {!form.image && <span className="text-[10px] text-gray-400">ou une image par defaut sera utilisee</span>}
-            </div>
-            <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleImageFile(e.target.files[0])} />
+          {/* ── Médias du restaurant ─────────────────────── */}
+          <div className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4">
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Image size={12} /> Médias du restaurant
+            </p>
+            <MediaUploadButton
+              label="Logo du restaurant"
+              accept="image/jpeg,image/png,image/webp"
+              current={logoUrl}
+              onUploaded={setLogoUrl}
+              onError={showError}
+              icon={Image}
+              testId="create-upload-logo"
+            />
+            <MediaUploadButton
+              label="Image de couverture"
+              accept="image/jpeg,image/png,image/webp"
+              current={coverImage}
+              onUploaded={setCoverImage}
+              onError={showError}
+              icon={Image}
+              testId="create-upload-cover"
+            />
+            <MediaUploadButton
+              label="Vidéo de couverture (max 1MB, sans audio)"
+              accept="video/mp4,video/webm,video/quicktime"
+              current={coverVideoUrl}
+              onUploaded={setCoverVideoUrl}
+              onError={showError}
+              icon={Video}
+              testId="create-upload-video"
+            />
+            {coverVideoUrl && (
+              <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                La vidéo sera lue en mode muet sur la page restaurant côté client.
+              </p>
+            )}
+            {!coverImage && (
+              <p className="text-[11px] text-gray-400">Sans image de couverture, une image par défaut sera utilisée.</p>
+            )}
           </div>
         </div>
 
@@ -664,12 +685,13 @@ export default function AdminRestaurants() {
                       {r.isActive ? "Actif" : "Inactif"}
                     </button>
                     <button onClick={e => { e.stopPropagation(); setEditingInfo(r); }} data-testid={`edit-info-${r.id}`}
-                      className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors" title="Modifier les infos">
-                      <Pencil size={13} />
+                      className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors text-xs font-medium" title="Modifier les infos">
+                      <Pencil size={12} /> <span className="hidden sm:inline">Infos</span>
                     </button>
                     <button onClick={e => { e.stopPropagation(); setEditingMedia(r); }} data-testid={`edit-media-${r.id}`}
-                      className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-colors" title="Modifier les medias">
-                      <Image size={13} />
+                      className="flex items-center gap-1.5 px-2.5 h-8 rounded-lg bg-amber-50 border border-amber-200 text-amber-600 hover:bg-amber-100 transition-colors text-xs font-semibold" title="Modifier logo, image et vidéo">
+                      <Image size={12} /> <span className="hidden sm:inline">Médias</span>
+                      {(r.logoUrl || r.coverVideoUrl) && <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />}
                     </button>
                     <button onClick={e => { e.stopPropagation(); setDeletingRestaurant(r); }} data-testid={`delete-restaurant-${r.id}`}
                       className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors" title="Supprimer">
@@ -684,6 +706,49 @@ export default function AdminRestaurants() {
 
                 {expandedId === r.id && (
                   <div className="px-4 pb-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-800" data-testid={`restaurant-details-${r.id}`}>
+                    {/* ── Aperçu Médias ── */}
+                    <div className="flex items-start gap-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-3">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        {/* Logo */}
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Logo</p>
+                          {r.logoUrl ? (
+                            <img src={r.logoUrl} alt="logo" className="w-14 h-14 rounded-xl object-cover border-2 border-white shadow" data-testid={`preview-logo-${r.id}`} />
+                          ) : (
+                            <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center" data-testid={`no-logo-${r.id}`}>
+                              <span className="text-[10px] text-gray-400 text-center leading-tight">Pas de<br/>logo</span>
+                            </div>
+                          )}
+                        </div>
+                        {/* Image couverture */}
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Couverture</p>
+                          <img src={r.image} alt="cover" className="w-24 h-14 rounded-xl object-cover border-2 border-white shadow" data-testid={`preview-cover-${r.id}`} />
+                        </div>
+                        {/* Vidéo */}
+                        <div className="text-center">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Vidéo</p>
+                          {r.coverVideoUrl ? (
+                            <div className="w-24 h-14 rounded-xl overflow-hidden border-2 border-white shadow relative" data-testid={`preview-video-${r.id}`}>
+                              <video src={r.coverVideoUrl} className="w-full h-full object-cover" muted playsInline />
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                <Video size={16} className="text-white" />
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-24 h-14 rounded-xl bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center gap-1" data-testid={`no-video-${r.id}`}>
+                              <Video size={14} className="text-gray-400" />
+                              <span className="text-[9px] text-gray-400">Pas de vidéo</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button onClick={() => setEditingMedia(r)} data-testid={`quick-edit-media-${r.id}`}
+                        className="ml-auto flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold hover:bg-amber-600 transition-colors shadow-sm">
+                        <Upload size={12} /> Modifier les médias
+                      </button>
+                    </div>
+
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-3 mb-3">
                       <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email</p><p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{r.email || "—"}</p></div>
                       <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Manager</p><p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{r.managerName || "—"}</p></div>
