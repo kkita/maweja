@@ -281,16 +281,24 @@ export default function AdminDrivers() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Supprimer ce livreur definitivement ?")) return;
-    await apiRequest(`/api/drivers/${id}`, { method: "DELETE" });
-    queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-    if (selectedDriver?.id === id) setSelectedDriver(null);
-    toast({ title: "Livreur supprime" });
+    try {
+      await apiRequest(`/api/drivers/${id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      if (selectedDriver?.id === id) setSelectedDriver(null);
+      toast({ title: "Livreur supprime" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible de supprimer le livreur", variant: "destructive" });
+    }
   };
 
   const handleBlock = async (id: number, isBlocked: boolean) => {
-    await apiRequest(`/api/drivers/${id}/block`, { method: "PATCH", body: JSON.stringify({ isBlocked: !isBlocked }) });
-    queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-    toast({ title: isBlocked ? "Livreur debloque" : "Livreur bloque" });
+    try {
+      await apiRequest(`/api/drivers/${id}/block`, { method: "PATCH", body: JSON.stringify({ isBlocked: !isBlocked }) });
+      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+      toast({ title: isBlocked ? "Livreur debloque" : "Livreur bloque" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible de modifier le statut du livreur", variant: "destructive" });
+    }
   };
 
   const startEdit = (d: any) => {

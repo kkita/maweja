@@ -5,12 +5,14 @@ import { useAuth } from "../../lib/auth";
 import { apiRequest, queryClient, authFetchJson } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare, Phone, Info, Clock } from "lucide-react";
+import { useToast } from "../../hooks/use-toast";
 import type { ChatMessage, User as UserType } from "@shared/schema";
 
 type SafeUser = Omit<UserType, "password">;
 
 export default function AdminChat() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedContact, setSelectedContact] = useState<SafeUser | null>(null);
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -80,7 +82,14 @@ export default function AdminChat() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/chat", user?.id, selectedContact?.id] });
       inputRef.current?.focus();
-    } catch {}
+    } catch (err: any) {
+      setMessage(msg);
+      toast({
+        title: "Erreur d'envoi",
+        description: err?.message || "Impossible d'envoyer le message. Vérifiez votre connexion.",
+        variant: "destructive",
+      });
+    }
   };
 
   const activeList = tab === "drivers" ? drivers : clientContacts;

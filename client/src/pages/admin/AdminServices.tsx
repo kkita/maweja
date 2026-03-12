@@ -50,6 +50,9 @@ export default function AdminServices() {
     queryKey: ["/api/service-catalog"],
   });
 
+  const errToast = (err: any, fallback = "Une erreur est survenue") =>
+    toast({ title: "Erreur", description: err?.message || fallback, variant: "destructive" });
+
   const updateRequestMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest(`/api/service-requests/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
@@ -58,6 +61,7 @@ export default function AdminServices() {
       setSelectedRequest(null);
       toast({ title: t.common.success, description: t.admin.updateButton });
     },
+    onError: (err: any) => errToast(err, "Impossible de mettre à jour la demande"),
   });
 
   const createCatMutation = useMutation({
@@ -68,6 +72,7 @@ export default function AdminServices() {
       setCatName(""); setCatIcon("Briefcase"); setCatDesc("");
       toast({ title: t.common.success, description: t.admin.newCategory });
     },
+    onError: (err: any) => errToast(err, "Impossible de créer la catégorie"),
   });
 
   const updateCatMutation = useMutation({
@@ -78,6 +83,7 @@ export default function AdminServices() {
       setEditingCat(null);
       toast({ title: t.common.success, description: t.admin.updateButton });
     },
+    onError: (err: any) => errToast(err, "Impossible de modifier la catégorie"),
   });
 
   const deleteCatMutation = useMutation({
@@ -86,6 +92,7 @@ export default function AdminServices() {
       queryClient.invalidateQueries({ queryKey: ["/api/service-categories"] });
       toast({ title: t.common.success, description: t.common.delete });
     },
+    onError: (err: any) => errToast(err, "Impossible de supprimer la catégorie"),
   });
 
   const createItemMutation = useMutation({
@@ -96,6 +103,7 @@ export default function AdminServices() {
       resetItemForm();
       toast({ title: t.common.success, description: t.admin.addCatalogItem });
     },
+    onError: (err: any) => errToast(err, "Impossible de créer l'article"),
   });
 
   const updateItemMutation = useMutation({
@@ -108,6 +116,7 @@ export default function AdminServices() {
       resetItemForm();
       toast({ title: t.common.success, description: t.admin.updateButton });
     },
+    onError: (err: any) => errToast(err, "Impossible de modifier l'article"),
   });
 
   const deleteItemMutation = useMutation({
@@ -116,6 +125,7 @@ export default function AdminServices() {
       queryClient.invalidateQueries({ queryKey: ["/api/service-catalog"] });
       toast({ title: t.common.success, description: t.common.delete });
     },
+    onError: (err: any) => errToast(err, "Impossible de supprimer l'article"),
   });
 
   const resetItemForm = () => {
@@ -419,7 +429,10 @@ export default function AdminServices() {
                   className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-20 resize-none" />
               </div>
               <button onClick={() => {
-                if (!catName.trim()) return;
+                if (!catName.trim()) {
+                  toast({ title: "Champ requis", description: "Le nom de la catégorie est obligatoire", variant: "destructive" });
+                  return;
+                }
                 if (editingCat) {
                   updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, description: catDesc } });
                 } else {
@@ -478,8 +491,15 @@ export default function AdminServices() {
                   className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
               </div>
               <button onClick={() => {
-                if (!itemName.trim() || !itemImage.trim() || !itemCategoryId) return;
-                const data = { name: itemName, description: itemDesc, imageUrl: itemImage, price: itemPrice || null, categoryId: itemCategoryId, isActive: true };
+                if (!itemName.trim()) {
+                  toast({ title: "Champ requis", description: "Le nom de l'article est obligatoire", variant: "destructive" });
+                  return;
+                }
+                if (!itemCategoryId) {
+                  toast({ title: "Champ requis", description: "Sélectionnez une catégorie", variant: "destructive" });
+                  return;
+                }
+                const data = { name: itemName, description: itemDesc, imageUrl: itemImage || null, price: itemPrice || null, categoryId: itemCategoryId, isActive: true };
                 if (editingItem) {
                   updateItemMutation.mutate({ id: editingItem.id, data });
                 } else {

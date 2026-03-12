@@ -41,6 +41,13 @@ export default function AdminCustomers() {
         description: isBlocked ? "Le client ne peut plus se connecter." : "Le client peut à nouveau se connecter.",
       });
     },
+    onError: (err: any) => {
+      toast({
+        title: "Erreur",
+        description: err?.message || "Impossible de modifier le statut du client",
+        variant: "destructive",
+      });
+    },
   });
 
   const clientOrders = orders.reduce((acc: Record<number, { count: number; total: number }>, o) => {

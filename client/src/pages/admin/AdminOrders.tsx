@@ -109,15 +109,23 @@ export default function AdminOrders() {
   });
 
   const updateOrderStatus = async (orderId: number, status: string) => {
-    await apiRequest(`/api/orders/${orderId}`, { method: "PATCH", body: JSON.stringify({ status }) });
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    toast({ title: "Statut mis a jour" });
+    try {
+      await apiRequest(`/api/orders/${orderId}`, { method: "PATCH", body: JSON.stringify({ status }) });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({ title: "Statut mis a jour" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible de mettre à jour le statut", variant: "destructive" });
+    }
   };
 
   const assignDriver = async (orderId: number, driverId: number) => {
-    await apiRequest(`/api/orders/${orderId}`, { method: "PATCH", body: JSON.stringify({ driverId, status: "confirmed" }) });
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    toast({ title: "Livreur assigne!" });
+    try {
+      await apiRequest(`/api/orders/${orderId}`, { method: "PATCH", body: JSON.stringify({ driverId, status: "confirmed" }) });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      toast({ title: "Livreur assigne!" });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'assigner le livreur", variant: "destructive" });
+    }
   };
 
   const handlePrint = () => {
