@@ -15,11 +15,20 @@ function isNative(): boolean {
     (window as any).Capacitor?.isNativePlatform?.() === true;
 }
 
+function getLocalNotificationsPlugin(): any | null {
+  try {
+    return (window as any).Capacitor?.Plugins?.LocalNotifications ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function requestNotifPermission(): Promise<boolean> {
   if (isNative()) {
     try {
-      const { LocalNotifications } = await import("@capacitor/local-notifications");
-      const { display } = await LocalNotifications.requestPermissions();
+      const plugin = getLocalNotificationsPlugin();
+      if (!plugin) return false;
+      const { display } = await plugin.requestPermissions();
       return display === "granted";
     } catch {
       return false;
@@ -34,8 +43,9 @@ export async function requestNotifPermission(): Promise<boolean> {
 export async function getNotifPermission(): Promise<"granted" | "denied" | "default"> {
   if (isNative()) {
     try {
-      const { LocalNotifications } = await import("@capacitor/local-notifications");
-      const { display } = await LocalNotifications.checkPermissions();
+      const plugin = getLocalNotificationsPlugin();
+      if (!plugin) return "denied";
+      const { display } = await plugin.checkPermissions();
       return display === "granted" ? "granted" : "denied";
     } catch {
       return "denied";
@@ -48,12 +58,13 @@ export async function getNotifPermission(): Promise<"granted" | "denied" | "defa
 export async function showNotif(title: string, body: string, icon = "/logo.png") {
   if (isNative()) {
     try {
-      const { LocalNotifications } = await import("@capacitor/local-notifications");
-      const perms = await LocalNotifications.checkPermissions();
+      const plugin = getLocalNotificationsPlugin();
+      if (!plugin) return;
+      const perms = await plugin.checkPermissions();
       if (perms.display !== "granted") {
-        await LocalNotifications.requestPermissions();
+        await plugin.requestPermissions();
       }
-      await LocalNotifications.schedule({
+      await plugin.schedule({
         notifications: [{
           id: notifId++,
           title,
