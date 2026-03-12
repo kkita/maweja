@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
+import { handleWSEvent } from "../lib/notify";
 import type { Notification as Notif } from "@shared/schema";
 import { useI18n } from "../lib/i18n";
 
@@ -35,10 +36,13 @@ export default function DriverNav() {
 
   useEffect(() => {
     return onWSMessage((data) => {
-      if (data.type === "chat_message" || data.type === "notification") {
+      if (data.type === "chat_message" || data.type === "notification" ||
+          data.type === "order_assigned" || data.type === "new_order") {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       }
+      handleWSEvent(data);
     });
   }, []);
 

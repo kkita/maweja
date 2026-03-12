@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useI18n } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
 import { useTheme, type ThemeMode } from "../../lib/theme";
@@ -10,6 +10,7 @@ import {
   ArrowLeft, Globe, ChevronRight, Bell, Shield, HelpCircle, Info,
   Sun, Moon, MonitorSmartphone, X, Send, Check, BellOff
 } from "lucide-react";
+import { requestNotifPermission, getNotifPermission, showNotif } from "../../lib/notify";
 
 function ThemePicker() {
   const { theme, setTheme } = useTheme();
@@ -40,21 +41,19 @@ function ThemePicker() {
 }
 
 function NotificationsModal({ onClose }: { onClose: () => void }) {
-  const [permission, setPermission] = useState<NotificationPermission>(() => {
-    if (typeof Notification === "undefined") return "denied";
-    return Notification.permission;
-  });
+  const [permission, setPermission] = useState<"granted" | "denied" | "default">("default");
   const [appNotifs, setAppNotifs] = useState(() => localStorage.getItem("maweja_notif_app") !== "false");
   const [orderNotifs, setOrderNotifs] = useState(() => localStorage.getItem("maweja_notif_orders") !== "false");
   const [promoNotifs, setPromoNotifs] = useState(() => localStorage.getItem("maweja_notif_promos") !== "false");
 
+  useEffect(() => {
+    getNotifPermission().then(setPermission);
+  }, []);
+
   const requestPermission = async () => {
-    if (typeof Notification === "undefined") return;
-    const result = await Notification.requestPermission();
-    setPermission(result);
-    if (result === "granted") {
-      new Notification("MAWEJA", { body: "Notifications activées !", icon: "/logo.png" });
-    }
+    const granted = await requestNotifPermission();
+    setPermission(granted ? "granted" : "denied");
+    if (granted) showNotif("MAWEJA", "Notifications activées ! 🎉");
   };
 
   const toggle = (key: string, value: boolean, setter: (v: boolean) => void) => {

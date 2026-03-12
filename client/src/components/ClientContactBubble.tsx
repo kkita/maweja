@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { apiRequest, queryClient, authFetch } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
+import { handleWSEvent } from "../lib/notify";
 import { useToast } from "../hooks/use-toast";
 import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -53,6 +54,7 @@ export default function ClientContactBubble() {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }
+      handleWSEvent(data);
     });
   }, []);
 

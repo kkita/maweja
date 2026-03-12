@@ -7,6 +7,7 @@ import { ThemeProvider } from "./lib/theme";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
 import { connectWS } from "./lib/websocket";
+import { requestNotifPermission } from "./lib/notify";
 import { Toaster } from "./components/Toaster";
 import { useDynamicFavicon } from "./hooks/use-dynamic-favicon";
 import ClientContactBubble from "./components/ClientContactBubble";
@@ -78,7 +79,14 @@ function AppRoutes() {
   useDynamicFavicon();
 
   useEffect(() => {
-    if (user?.id) connectWS(user.id);
+    if (user?.id) {
+      connectWS(user.id);
+      const isNative = typeof (window as any).Capacitor !== "undefined" &&
+        (window as any).Capacitor?.isNativePlatform?.() === true;
+      if (isNative) {
+        requestNotifPermission();
+      }
+    }
   }, [user?.id]);
 
   if (loading) {

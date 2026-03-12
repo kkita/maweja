@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { queryClient } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
+import { handleWSEvent } from "../lib/notify";
 import { useI18n } from "../lib/i18n";
 
 export default function ClientNav() {
@@ -25,10 +26,13 @@ export default function ClientNav() {
 
   useEffect(() => {
     return onWSMessage((data) => {
-      if (data.type === "chat_message" || data.type === "notification") {
+      if (data.type === "chat_message" || data.type === "notification" ||
+          data.type === "order_status" || data.type === "order_updated") {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       }
+      handleWSEvent(data);
     });
   }, []);
 
