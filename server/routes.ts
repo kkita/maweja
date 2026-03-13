@@ -16,10 +16,13 @@ const mediaStorage = multer.diskStorage({
 
 const upload = multer({
   storage: mediaStorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB pour les photos de livreurs
   fileFilter: (_req, file, cb) => {
-    const allowed = /jpeg|jpg|png|webp/;
-    cb(null, allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype.replace("image/", "")));
+    // Accept any image MIME type (includes image/jpeg, image/png, image/webp, image/heic, etc.)
+    if (file.mimetype.startsWith("image/")) return cb(null, true);
+    // Also accept by extension as fallback
+    const allowed = /\.(jpeg|jpg|png|webp|heic|heif)$/i;
+    cb(null, allowed.test(file.originalname));
   },
 });
 
@@ -64,6 +67,7 @@ async function requireAdmin(req: any, res: any, next: any) {
   if (!userId) return res.status(401).json({ message: "Non authentifie" });
   const user = await storage.getUser(userId);
   if (!user || user.role !== "admin") return res.status(403).json({ message: "Acces interdit" });
+  if (user.isBlocked) return res.status(403).json({ message: "Compte bloqué par un administrateur" });
   next();
 }
 
@@ -154,10 +158,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.use("/uploads", (await import("express")).default.static(uploadsDir));
 
-  app.post("/api/upload", requireAuth, upload.single("file"), (req: any, res) => {
-    if (!req.file) return res.status(400).json({ message: "Fichier requis (jpg, png, webp, max 5MB)" });
-    const url = `/uploads/${req.file.filename}`;
-    res.json({ url });
+  app.post("/api/upload", requireAuth, (req: any, res: any, next: any) => {
+    upload.single("file")(req, res, (err: any) => {
+      if (err) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({ message: "Fichier trop volumineux (max 10MB)" });
+        }
+        return res.status(400).json({ message: err.message || "Erreur lors de l'upload" });
+      }
+      if (!req.file) return res.status(400).json({ message: "Format non supporté. Utilisez JPG, PNG ou WEBP." });
+      const url = `/uploads/${req.file.filename}`;
+      res.json({ url });
+    });
   });
 
   app.post("/api/upload-media", requireAuth, uploadMedia.single("file"), (req: any, res) => {
@@ -1392,29 +1404,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/accounts", requireAdmin, async (_req, res) => {
     const allUsers = await storage.getAllUsers();
     const admins = allUsers.filter(u => u.role === "admin");
-    res.json(admins.map(u => ({ id: u.id, name: u.name, email: u.email, phone: u.phone, adminRole: u.adminRole, createdAt: u.createdAt })));
+    res.json(admins.map(u => ({
+      id: u.id, name: u.name, email: u.email, phone: u.phone,
+      adminRole: u.adminRole, adminPermissions: u.adminPermissions,
+      isBlocked: u.isBlocked, createdAt: u.createdAt
+    })));
   });
 
   app.post("/api/admin/accounts", requireAdmin, async (req, res) => {
-    const { name, email, password, phone, adminRole } = req.body;
+    const { name, email, password, phone, adminRole, adminPermissions } = req.body;
     if (!name || !email || !password || !phone) return res.status(400).json({ message: "Champs requis: name, email, password, phone" });
     const existing = await storage.getUserByEmail(email);
     if (existing) return res.status(409).json({ message: "Cet email est déjà utilisé" });
-    const user = await storage.createUser({ name, email, password, phone, role: "admin", adminRole: adminRole || "support" } as any);
-    res.json({ id: user.id, name: user.name, email: user.email, phone: user.phone, adminRole: user.adminRole });
+    const user = await storage.createUser({ name, email, password, phone, role: "admin", adminRole: adminRole || null, adminPermissions: adminPermissions || [] } as any);
+    res.json({ id: user.id, name: user.name, email: user.email, phone: user.phone, adminRole: user.adminRole, adminPermissions: user.adminPermissions });
   });
 
   app.patch("/api/admin/accounts/:id", requireAdmin, async (req, res) => {
     const id = Number(req.params.id);
-    const { adminRole, password, name, phone } = req.body;
+    const { adminRole, adminPermissions, password, name, phone, isBlocked } = req.body;
+    const target = await storage.getUser(id);
+    if (!target) return res.status(404).json({ message: "Compte introuvable" });
+    // Protect primary superadmin from being blocked
+    if ((target.email === "admin@maweja.cd" || target.email === "admin@maweja.net") && isBlocked) {
+      return res.status(403).json({ message: "Ce compte ne peut pas être bloqué" });
+    }
     const update: any = {};
-    if (adminRole) update.adminRole = adminRole;
+    if (adminRole !== undefined) update.adminRole = adminRole;
+    if (adminPermissions !== undefined) update.adminPermissions = adminPermissions;
     if (password) update.password = password;
     if (name) update.name = name;
     if (phone) update.phone = phone;
+    if (isBlocked !== undefined) update.isBlocked = isBlocked;
     const updated = await storage.updateUser(id, update);
     if (!updated) return res.status(404).json({ message: "Compte introuvable" });
-    res.json({ id: updated.id, name: updated.name, email: updated.email, phone: updated.phone, adminRole: updated.adminRole });
+    res.json({ id: updated.id, name: updated.name, email: updated.email, phone: updated.phone, adminRole: updated.adminRole, adminPermissions: updated.adminPermissions, isBlocked: updated.isBlocked });
   });
 
   app.delete("/api/admin/accounts/:id", requireAdmin, async (req, res) => {

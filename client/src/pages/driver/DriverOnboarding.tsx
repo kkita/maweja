@@ -35,29 +35,16 @@ async function uploadFileToServer(file: File): Promise<string> {
     credentials: "include",
     headers: { "X-User-Role": role },
   });
-  if (!res.ok) throw new Error("Echec de l'upload");
+  if (!res.ok) {
+    let message = "Échec de l'envoi de la photo";
+    try {
+      const body = await res.json();
+      message = body.message || message;
+    } catch {}
+    throw new Error(message);
+  }
   const data = await res.json();
   return resolveUrl(data.url);
-}
-
-async function pickImageNative(setUploading: (b: boolean) => void, onChange: (url: string) => void) {
-  setUploading(true);
-  try {
-    const { Camera } = (window as any).Capacitor.Plugins;
-    const photo = await Camera.getPhoto({
-      quality: 85,
-      allowEditing: false,
-      resultType: "base64",
-      source: "PHOTOS",
-    });
-    const blob = await fetch(`data:image/jpeg;base64,${photo.base64String}`).then(r => r.blob());
-    const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
-    const url = await uploadFileToServer(file);
-    onChange(url);
-  } catch {
-    onChange("");
-  }
-  setUploading(false);
 }
 
 function FileUploadField({ label, icon: Icon, value, onChange, rejected, disabled }: {
@@ -65,24 +52,57 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const doUpload = async (file: File) => {
+    setUploading(true);
+    setErrorMsg(null);
+    try {
+      const url = await uploadFileToServer(file);
+      onChange(url);
+    } catch (e: any) {
+      const msg = e?.message || "Impossible d'envoyer la photo";
+      setErrorMsg(msg);
+      toast({ title: "Erreur photo", description: msg, variant: "destructive" });
+      onChange("");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploading(true);
-    try {
-      const url = await uploadFileToServer(file);
-      onChange(url);
-    } catch {
-      onChange("");
-    }
-    setUploading(false);
+    await doUpload(file);
     if (inputRef.current) inputRef.current.value = "";
+  };
+
+  const pickNative = async () => {
+    setUploading(true);
+    setErrorMsg(null);
+    try {
+      const { Camera } = (window as any).Capacitor.Plugins;
+      const photo = await Camera.getPhoto({
+        quality: 85,
+        allowEditing: false,
+        resultType: "base64",
+        source: "PHOTOS",
+      });
+      const blob = await fetch(`data:image/jpeg;base64,${photo.base64String}`).then(r => r.blob());
+      const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+      await doUpload(file);
+    } catch (e: any) {
+      if (e?.message !== "cancelled") {
+        toast({ title: "Erreur photo", description: "Impossible d'accéder à la galerie", variant: "destructive" });
+      }
+      setUploading(false);
+    }
   };
 
   const handleClick = () => {
     if (isNativeMobile()) {
-      pickImageNative(setUploading, onChange);
+      pickNative();
     } else {
       inputRef.current?.click();
     }
@@ -107,7 +127,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
           <div className="relative">
             <img src={imgSrc} alt={label} className="w-full h-40 object-cover rounded-xl" />
             {!disabled && (
-              <button onClick={() => { onChange(""); }}
+              <button onClick={() => { onChange(""); setErrorMsg(null); }}
                 className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-gray-900/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white dark:hover:bg-gray-800"
                 data-testid={`change-${label.toLowerCase().replace(/\s/g, "-")}`}>
                 <X size={12} className="text-gray-600 dark:text-gray-300" />
@@ -116,18 +136,26 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
             {!rejected && <CheckCircle2 size={20} className="absolute bottom-2 right-2 text-green-600 bg-white rounded-full" />}
           </div>
         ) : (
-          <button onClick={handleClick} disabled={uploading}
-            data-testid={`upload-${label.toLowerCase().replace(/\s/g, "-")}`}
-            className="w-full py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-gray-700 transition-colors">
-            {uploading ? (
-              <Loader2 size={24} className="text-red-500 animate-spin" />
-            ) : (
-              <Camera size={24} className="text-gray-400" />
+          <>
+            <button onClick={handleClick} disabled={uploading}
+              data-testid={`upload-${label.toLowerCase().replace(/\s/g, "-")}`}
+              className="w-full py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-gray-700 transition-colors">
+              {uploading ? (
+                <Loader2 size={24} className="text-red-500 animate-spin" />
+              ) : (
+                <Camera size={24} className={errorMsg ? "text-red-400" : "text-gray-400"} />
+              )}
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {uploading ? "Envoi en cours..." : isNativeMobile() ? "Appuyez pour choisir depuis la galerie" : "Cliquez pour choisir une photo"}
+              </span>
+            </button>
+            {errorMsg && (
+              <div className="mt-2 flex items-center gap-1.5 text-red-600 text-[11px] font-medium">
+                <AlertCircle size={12} />
+                {errorMsg}
+              </div>
             )}
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {uploading ? "Envoi en cours..." : isNativeMobile() ? "Appuyez pour choisir depuis la galerie" : "Cliquez pour choisir une photo"}
-            </span>
-          </button>
+          </>
         )}
       </div>
       <input

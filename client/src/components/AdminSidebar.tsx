@@ -10,34 +10,26 @@ import {
   Briefcase, Image, Megaphone, UserCog
 } from "lucide-react";
 
-type AdminRole = "superadmin" | "marketing" | "finance" | "support" | null | undefined;
-
-const ROLE_LABEL: Record<string, string> = {
-  superadmin: "Super Admin",
-  marketing: "Agent Marketing",
-  finance: "Agent Financier",
-  support: "Support Client",
-};
-
-const ROLE_ACCESS: Record<string, string[]> = {
-  superadmin: ["*"],
-  marketing: ["dashboard", "customers", "marketing", "ads", "notifications"],
-  finance: ["dashboard", "finance"],
-  support: ["dashboard", "orders", "chat", "customers", "services"],
-};
-
-function canAccess(adminRole: AdminRole, badgeKey: string): boolean {
-  const role = adminRole || "superadmin";
-  const allowed = ROLE_ACCESS[role] || ROLE_ACCESS["superadmin"];
-  return allowed.includes("*") || allowed.includes(badgeKey);
+function canAccess(user: any, badgeKey: string): boolean {
+  const adminRole = user?.adminRole;
+  const adminPermissions: string[] = user?.adminPermissions || [];
+  // Explicit superadmin role → full access
+  if (adminRole === "superadmin") return true;
+  // No role AND no permissions → full access (primary accounts)
+  if (!adminRole && adminPermissions.length === 0) return true;
+  // Has specific permissions (limited account) → check permissions
+  // Dashboard is always accessible
+  if (badgeKey === "dashboard") return true;
+  return adminPermissions.includes(badgeKey);
 }
 
 export default function AdminSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useI18n();
-  const adminRole = (user as any)?.adminRole as AdminRole;
-  const isSuperAdmin = !adminRole || adminRole === "superadmin";
+  const adminRole = (user as any)?.adminRole as string | null;
+  const adminPermissions: string[] = (user as any)?.adminPermissions || [];
+  const isSuperAdmin = adminRole === "superadmin" || (!adminRole && adminPermissions.length === 0);
 
   const { data: notifications = [] } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
@@ -79,7 +71,7 @@ export default function AdminSidebar() {
     { path: "/admin/settings", icon: Settings, label: t.admin.settings, badgeKey: "settings" },
   ];
 
-  const links = allLinks.filter(l => canAccess(adminRole, l.badgeKey));
+  const links = allLinks.filter(l => canAccess(user, l.badgeKey));
 
   const getBadge = (badgeKey: string) => {
     if (badgeKey === "chat" && unreadChatCount > 0) return { count: unreadChatCount, color: "bg-red-600" };
@@ -135,7 +127,7 @@ export default function AdminSidebar() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.name}</p>
             <p className="text-[10px] text-gray-400 dark:text-gray-500">
-              {adminRole ? ROLE_LABEL[adminRole] || "Admin" : "Super Admin"}
+              {isSuperAdmin ? "Super Admin" : `Accès limité (${adminPermissions.length} menus)`}
             </p>
           </div>
           <button

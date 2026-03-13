@@ -4,53 +4,81 @@ import AdminLayout from "../../components/AdminLayout";
 import { queryClient, authFetchJson } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useAuth } from "../../lib/auth";
-import { UserPlus, Trash2, Edit2, Shield, Key, User, Mail, Phone, ChevronDown, Eye, EyeOff, X } from "lucide-react";
+import {
+  UserPlus, Trash2, Edit2, Shield, Key, User, Mail, Phone,
+  Eye, EyeOff, X, Ban, CheckCircle, AlertCircle, LayoutDashboard,
+  Package, Truck, Store, Users, MessageCircle, DollarSign, BarChart3,
+  Briefcase, Image, Megaphone, Settings, UserCog
+} from "lucide-react";
 
-type AdminRole = "superadmin" | "marketing" | "finance" | "support";
-
-const ROLE_LABELS: Record<AdminRole, string> = {
-  superadmin: "Super Admin",
-  marketing: "Agent Marketing",
-  finance: "Agent Financier",
-  support: "Support Client",
-};
-
-const ROLE_COLORS: Record<AdminRole, string> = {
-  superadmin: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300",
-  marketing: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
-  finance: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
-  support: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-};
-
-const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
-  superadmin: ["Accès complet à toutes les sections", "Gestion des comptes admin", "Paramètres système"],
-  marketing: ["Marketing & Publicités", "Notifications", "Clients", "Analyse des données"],
-  finance: ["Finance & Paiements", "Reversements restaurants", "Rapports financiers"],
-  support: ["Commandes", "Chat client", "Clients", "Services à la demande"],
-};
+const ALL_PERMISSIONS = [
+  { key: "orders", label: "Commandes", icon: Package },
+  { key: "drivers", label: "Livreurs", icon: Truck },
+  { key: "verifications", label: "Vérifications", icon: Shield },
+  { key: "restaurants", label: "Restaurants", icon: Store },
+  { key: "customers", label: "Clients", icon: Users },
+  { key: "chat", label: "Chat", icon: MessageCircle },
+  { key: "finance", label: "Finance", icon: DollarSign },
+  { key: "marketing", label: "Marketing", icon: BarChart3 },
+  { key: "services", label: "Services", icon: Briefcase },
+  { key: "ads", label: "Publicités", icon: Image },
+  { key: "notifications", label: "Notifications", icon: Megaphone },
+  { key: "accounts", label: "Comptes Admin", icon: UserCog },
+  { key: "settings", label: "Paramètres", icon: Settings },
+];
 
 interface AdminAccount {
   id: number;
   name: string;
   email: string;
   phone: string;
-  adminRole: AdminRole | null;
+  adminRole: string | null;
+  adminPermissions: string[] | null;
+  isBlocked: boolean;
   createdAt: string;
 }
 
-function AccountModal({ account, onClose, onSave }: { account?: AdminAccount; onClose: () => void; onSave: () => void }) {
+const PRIMARY_EMAILS = ["admin@maweja.cd", "admin@maweja.net"];
+
+function isPrimary(account: AdminAccount) {
+  return PRIMARY_EMAILS.includes(account.email);
+}
+
+function AccountModal({ account, onClose, onSave }: {
+  account?: AdminAccount; onClose: () => void; onSave: () => void;
+}) {
   const { toast } = useToast();
+  // An account is superadmin if: adminRole is explicitly "superadmin",
+  // OR adminRole is null with no adminPermissions set (primary accounts like admin@maweja.cd)
+  const permsArr = account?.adminPermissions as string[] | null;
+  const hasDedicatedPermissions = Array.isArray(permsArr) && permsArr.length > 0;
+  const isSuperAdminDefault = !account?.adminRole || account?.adminRole === "superadmin";
+  const isRestricted = isSuperAdminDefault && hasDedicatedPermissions; // null role but has permissions
+  const isSuperAdmin = isSuperAdminDefault && !isRestricted;
+
   const [form, setForm] = useState({
     name: account?.name || "",
     email: account?.email || "",
     phone: account?.phone || "",
     password: "",
-    adminRole: (account?.adminRole || "support") as AdminRole,
+    isSuperAdmin: isSuperAdmin,
+    permissions: permsArr || [],
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const isEdit = !!account;
+
+  const togglePermission = (key: string) => {
+    setForm(f => ({
+      ...f,
+      permissions: f.permissions.includes(key)
+        ? f.permissions.filter(p => p !== key)
+        : [...f.permissions, key],
+    }));
+  };
+
+  const selectAll = () => setForm(f => ({ ...f, permissions: ALL_PERMISSIONS.map(p => p.key) }));
+  const clearAll = () => setForm(f => ({ ...f, permissions: [] }));
 
   const save = async () => {
     if (!form.name || !form.email || !form.phone) {
@@ -61,24 +89,34 @@ function AccountModal({ account, onClose, onSave }: { account?: AdminAccount; on
       toast({ title: "Mot de passe requis", description: "Un mot de passe est nécessaire pour le nouveau compte", variant: "destructive" });
       return;
     }
+    if (!form.isSuperAdmin && form.permissions.length === 0) {
+      toast({ title: "Permissions requises", description: "Sélectionnez au moins une permission pour ce compte", variant: "destructive" });
+      return;
+    }
     setLoading(true);
     try {
-      if (isEdit) {
-        const body: any = { adminRole: form.adminRole, name: form.name, phone: form.phone };
-        if (form.password) body.password = form.password;
+      const body: any = {
+        name: form.name,
+        phone: form.phone,
+        adminRole: form.isSuperAdmin ? "superadmin" : null,
+        adminPermissions: form.isSuperAdmin ? [] : form.permissions,
+      };
+      if (form.password) body.password = form.password;
+      if (!isEdit) {
+        body.email = form.email;
+        await authFetchJson("/api/admin/accounts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        toast({ title: "Compte créé avec succès" });
+      } else {
         await authFetchJson(`/api/admin/accounts/${account!.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
         toast({ title: "Compte mis à jour" });
-      } else {
-        await authFetchJson("/api/admin/accounts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        });
-        toast({ title: "Compte créé avec succès" });
       }
       onSave();
       onClose();
@@ -91,8 +129,8 @@ function AccountModal({ account, onClose, onSave }: { account?: AdminAccount; on
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-800">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-lg border border-gray-100 dark:border-gray-800 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center">
               {isEdit ? <Edit2 size={18} className="text-red-600" /> : <UserPlus size={18} className="text-red-600" />}
@@ -105,42 +143,77 @@ function AccountModal({ account, onClose, onSave }: { account?: AdminAccount; on
             <X size={16} className="text-gray-500" />
           </button>
         </div>
-        <div className="p-6 space-y-4">
-          {/* Role selection */}
+
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+          {/* Access type */}
           <div>
-            <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 block">Rôle</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(ROLE_LABELS) as AdminRole[]).map(role => (
-                <button
-                  key={role}
-                  onClick={() => setForm(f => ({ ...f, adminRole: role }))}
-                  data-testid={`role-${role}`}
-                  className={`p-3 rounded-2xl border-2 text-left transition-all ${form.adminRole === role
-                    ? "border-red-500 bg-red-50 dark:bg-red-900/20"
-                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                  }`}
-                >
-                  <Shield size={14} className={form.adminRole === role ? "text-red-600 mb-1" : "text-gray-400 mb-1"} />
-                  <p className={`text-xs font-bold ${form.adminRole === role ? "text-red-700 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>
-                    {ROLE_LABELS[role]}
-                  </p>
-                </button>
-              ))}
+            <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 block">Type d'accès</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setForm(f => ({ ...f, isSuperAdmin: true }))}
+                data-testid="role-superadmin"
+                className={`p-4 rounded-2xl border-2 text-left transition-all ${form.isSuperAdmin
+                  ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <Shield size={18} className={form.isSuperAdmin ? "text-red-600 mb-1" : "text-gray-400 mb-1"} />
+                <p className={`text-sm font-black ${form.isSuperAdmin ? "text-red-700 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>Super Admin</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Accès complet</p>
+              </button>
+              <button
+                onClick={() => setForm(f => ({ ...f, isSuperAdmin: false }))}
+                data-testid="role-custom"
+                className={`p-4 rounded-2xl border-2 text-left transition-all ${!form.isSuperAdmin
+                  ? "border-red-500 bg-red-50 dark:bg-red-900/20"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <UserCog size={18} className={!form.isSuperAdmin ? "text-red-600 mb-1" : "text-gray-400 mb-1"} />
+                <p className={`text-sm font-black ${!form.isSuperAdmin ? "text-red-700 dark:text-red-400" : "text-gray-700 dark:text-gray-300"}`}>Accès Limité</p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">Permissions choisies</p>
+              </button>
             </div>
-            {form.adminRole && (
-              <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">Accès autorisés:</p>
-                <ul className="space-y-0.5">
-                  {ROLE_PERMISSIONS[form.adminRole].map(perm => (
-                    <li key={perm} className="text-[11px] text-gray-600 dark:text-gray-300 flex items-center gap-1">
-                      <span className="w-1 h-1 bg-red-500 rounded-full flex-shrink-0" />
-                      {perm}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
+
+          {/* Permissions checkboxes (only shown when not superadmin) */}
+          {!form.isSuperAdmin && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Accès aux menus</label>
+                <div className="flex gap-2">
+                  <button onClick={selectAll} className="text-[11px] font-bold text-red-600 hover:underline" data-testid="btn-select-all-perms">Tout sélectionner</button>
+                  <span className="text-gray-300 dark:text-gray-600">|</span>
+                  <button onClick={clearAll} className="text-[11px] font-bold text-gray-500 hover:underline" data-testid="btn-clear-all-perms">Effacer</button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5 bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-3">
+                {ALL_PERMISSIONS.map(({ key, label, icon: Icon }) => {
+                  const checked = form.permissions.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => togglePermission(key)}
+                      data-testid={`perm-${key}`}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl text-left transition-all ${
+                        checked
+                          ? "bg-red-600 text-white shadow-sm"
+                          : "bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+                      }`}
+                    >
+                      <Icon size={13} className={checked ? "text-white" : "text-gray-400"} />
+                      <span className="text-[12px] font-semibold truncate">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {form.permissions.length > 0 && (
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 ml-1">
+                  {form.permissions.length} permission{form.permissions.length > 1 ? "s" : ""} sélectionnée{form.permissions.length > 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Name */}
           <div>
@@ -210,7 +283,8 @@ function AccountModal({ account, onClose, onSave }: { account?: AdminAccount; on
             </div>
           </div>
         </div>
-        <div className="p-6 pt-0 flex gap-3">
+
+        <div className="p-6 pt-0 flex gap-3 flex-shrink-0">
           <button onClick={onClose} className="flex-1 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             Annuler
           </button>
@@ -233,13 +307,16 @@ export default function AdminAccounts() {
   const { user: currentUser } = useAuth();
   const [modal, setModal] = useState<"create" | AdminAccount | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [blocking, setBlocking] = useState<number | null>(null);
 
   const { data: accounts = [], refetch } = useQuery<AdminAccount[]>({
     queryKey: ["/api/admin/accounts"],
   });
 
+  const isSuperAdmin = !(currentUser as any)?.adminRole || (currentUser as any)?.adminRole === "superadmin";
+
   const deleteAccount = async (id: number) => {
-    if (!confirm("Supprimer ce compte admin ?")) return;
+    if (!confirm("Supprimer ce compte admin définitivement ?")) return;
     setDeleting(id);
     try {
       await authFetchJson(`/api/admin/accounts/${id}`, { method: "DELETE" });
@@ -253,32 +330,89 @@ export default function AdminAccounts() {
     }
   };
 
-  const isSuperAdmin = !currentUser?.adminRole || currentUser?.adminRole === "superadmin";
+  const toggleBlock = async (account: AdminAccount) => {
+    const action = account.isBlocked ? "débloquer" : "bloquer";
+    if (!confirm(`Voulez-vous ${action} ce compte ?`)) return;
+    setBlocking(account.id);
+    try {
+      await authFetchJson(`/api/admin/accounts/${account.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isBlocked: !account.isBlocked }),
+      });
+      toast({
+        title: account.isBlocked ? "Compte débloqué" : "Compte bloqué",
+        description: account.isBlocked ? "Le compte peut à nouveau se connecter." : "Ce compte ne peut plus accéder au panel.",
+      });
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/accounts"] });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e.message, variant: "destructive" });
+    } finally {
+      setBlocking(null);
+    }
+  };
 
-  const roleStats = (Object.keys(ROLE_LABELS) as AdminRole[]).map(role => ({
-    role,
-    count: accounts.filter(a => (a.adminRole || "superadmin") === role).length,
-  }));
+  const isAccountSuperAdmin = (account: AdminAccount) => {
+    const perms = account.adminPermissions as string[] | null;
+    return account.adminRole === "superadmin" || (!account.adminRole && (!perms || perms.length === 0));
+  };
+
+  const getAccountLabel = (account: AdminAccount) => {
+    if (isAccountSuperAdmin(account)) return "Super Admin";
+    const perms = account.adminPermissions;
+    if (!perms || perms.length === 0) return "Aucune permission";
+    return `${perms.length} permission${perms.length > 1 ? "s" : ""}`;
+  };
+
+  const getAccountColor = (account: AdminAccount) => {
+    if (isAccountSuperAdmin(account)) return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+    return "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
+  };
+
+  const superAdminCount = accounts.filter(a => isAccountSuperAdmin(a)).length;
+  const limitedCount = accounts.filter(a => !isAccountSuperAdmin(a)).length;
+  const blockedCount = accounts.filter(a => a.isBlocked).length;
 
   return (
-    <AdminLayout title="Gestion des Comptes" subtitle="Créez et gérez les comptes administrateurs">
+    <AdminLayout title="Gestion des Comptes" subtitle="Créez et gérez les comptes administrateurs avec permissions granulaires">
       <div className="p-6 max-w-5xl mx-auto">
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          {roleStats.map(({ role, count }) => (
-            <div key={role} className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid={`stat-role-${role}`}>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${ROLE_COLORS[role]}`}>{ROLE_LABELS[role]}</span>
-              <p className="text-2xl font-black text-gray-900 dark:text-white mt-2">{count}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">compte{count !== 1 ? "s" : ""}</p>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid="stat-superadmins">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
+                <Shield size={15} className="text-red-600" />
+              </div>
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Super Admins</span>
             </div>
-          ))}
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{superAdminCount}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid="stat-limited">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
+                <UserCog size={15} className="text-blue-600" />
+              </div>
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Accès Limité</span>
+            </div>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{limitedCount}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm" data-testid="stat-blocked">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center">
+                <Ban size={15} className="text-orange-600" />
+              </div>
+              <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Bloqués</span>
+            </div>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">{blockedCount}</p>
+          </div>
         </div>
 
-        {/* Header actions */}
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white">Tous les Comptes</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{accounts.length} compte{accounts.length !== 1 ? "s" : ""} admin enregistrés</p>
+            <h2 className="text-xl font-black text-gray-900 dark:text-white">Tous les Comptes Admin</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{accounts.length} compte{accounts.length !== 1 ? "s" : ""} enregistrés</p>
           </div>
           {isSuperAdmin && (
             <button
@@ -303,16 +437,20 @@ export default function AdminAccounts() {
         ) : (
           <div className="space-y-3">
             {accounts.map(account => {
-              const role = (account.adminRole || "superadmin") as AdminRole;
               const isCurrentUser = account.id === currentUser?.id;
+              const primary = isPrimary(account);
               return (
                 <div
                   key={account.id}
-                  className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
+                  className={`bg-white dark:bg-gray-900 rounded-2xl p-5 border shadow-sm hover:shadow-md transition-all flex items-center gap-4 ${
+                    account.isBlocked ? "border-orange-200 dark:border-orange-900/40" : "border-gray-100 dark:border-gray-800"
+                  }`}
                   data-testid={`account-row-${account.id}`}
                 >
                   {/* Avatar */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center flex-shrink-0 text-white font-black text-lg shadow-lg shadow-red-200 dark:shadow-red-900/30">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-white font-black text-lg shadow-lg ${
+                    account.isBlocked ? "bg-gray-400 shadow-gray-200 dark:shadow-gray-900" : "bg-gradient-to-br from-red-500 to-red-700 shadow-red-200 dark:shadow-red-900/30"
+                  }`}>
                     {account.name.charAt(0).toUpperCase()}
                   </div>
 
@@ -323,14 +461,38 @@ export default function AdminAccounts() {
                       {isCurrentUser && (
                         <span className="text-[10px] font-bold bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">Vous</span>
                       )}
+                      {primary && (
+                        <span className="text-[10px] font-bold bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 px-2 py-0.5 rounded-full">Principal</span>
+                      )}
+                      {account.isBlocked && (
+                        <span className="text-[10px] font-bold bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <Ban size={9} /> Bloqué
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{account.email}</p>
                     <p className="text-xs text-gray-400 dark:text-gray-500">{account.phone}</p>
+                    {/* Permissions preview */}
+                    {account.adminRole !== "superadmin" && account.adminPermissions && account.adminPermissions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {account.adminPermissions.slice(0, 4).map(key => {
+                          const perm = ALL_PERMISSIONS.find(p => p.key === key);
+                          return perm ? (
+                            <span key={key} className="text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-1.5 py-0.5 rounded-lg">
+                              {perm.label}
+                            </span>
+                          ) : null;
+                        })}
+                        {account.adminPermissions.length > 4 && (
+                          <span className="text-[10px] font-medium text-gray-400 dark:text-gray-500">+{account.adminPermissions.length - 4}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Role badge */}
-                  <span className={`text-[11px] font-bold px-3 py-1.5 rounded-xl flex-shrink-0 ${ROLE_COLORS[role]}`}>
-                    {ROLE_LABELS[role]}
+                  <span className={`text-[11px] font-bold px-3 py-1.5 rounded-xl flex-shrink-0 ${getAccountColor(account)}`}>
+                    {getAccountLabel(account)}
                   </span>
 
                   {/* Actions */}
@@ -343,15 +505,32 @@ export default function AdminAccounts() {
                       >
                         <Edit2 size={14} className="text-gray-600 dark:text-gray-400" />
                       </button>
-                      {!isCurrentUser && (
-                        <button
-                          onClick={() => deleteAccount(account.id)}
-                          disabled={deleting === account.id}
-                          className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center justify-center transition-colors disabled:opacity-50"
-                          data-testid={`btn-delete-${account.id}`}
-                        >
-                          <Trash2 size={14} className="text-red-600" />
-                        </button>
+                      {!primary && !isCurrentUser && (
+                        <>
+                          <button
+                            onClick={() => toggleBlock(account)}
+                            disabled={blocking === account.id}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 ${
+                              account.isBlocked
+                                ? "bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40"
+                                : "bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40"
+                            }`}
+                            data-testid={`btn-block-${account.id}`}
+                          >
+                            {account.isBlocked
+                              ? <CheckCircle size={14} className="text-green-600" />
+                              : <Ban size={14} className="text-orange-600" />
+                            }
+                          </button>
+                          <button
+                            onClick={() => deleteAccount(account.id)}
+                            disabled={deleting === account.id}
+                            className="w-9 h-9 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 flex items-center justify-center transition-colors disabled:opacity-50"
+                            data-testid={`btn-delete-${account.id}`}
+                          >
+                            <Trash2 size={14} className="text-red-600" />
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
@@ -360,29 +539,6 @@ export default function AdminAccounts() {
             })}
           </div>
         )}
-
-        {/* Role permissions reference */}
-        <div className="mt-10">
-          <h3 className="font-black text-gray-900 dark:text-white mb-4">Référence des Permissions par Rôle</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {(Object.keys(ROLE_LABELS) as AdminRole[]).map(role => (
-              <div key={role} className="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-100 dark:border-gray-800">
-                <div className="flex items-center gap-2 mb-3">
-                  <Shield size={16} className="text-red-600" />
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${ROLE_COLORS[role]}`}>{ROLE_LABELS[role]}</span>
-                </div>
-                <ul className="space-y-1.5">
-                  {ROLE_PERMISSIONS[role].map(perm => (
-                    <li key={perm} className="text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full flex-shrink-0" />
-                      {perm}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
 
         <p className="text-center text-[11px] text-gray-400 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>

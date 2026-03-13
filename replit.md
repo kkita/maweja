@@ -14,6 +14,9 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
 ## Recent Changes (March 2026)
+- **Admin Granular Permissions**: Replaced fixed role presets with checkbox-based per-menu permissions system. Added `admin_permissions` JSONB column. AdminAccounts page now shows "Super Admin" vs "Accès Limité" toggle + individual menu permission checkboxes. Block/unblock functionality for sub-admin accounts added. `requireAdmin` middleware now blocks `isBlocked` admins
+- **AdminSidebar**: Updated to use `adminPermissions[]` array for nav filtering (instead of role presets). Dashboard always visible; each other menu requires explicit permission for restricted accounts
+- **Driver Photo Upload Fix**: Multer fileFilter now accepts all `image/*` MIME types (includes HEIC/HEIF from iOS). Upload limit increased to 10MB. Error handling improved to show server error messages via toast + inline indicator
 - **Admin Sub-Roles Module**: Added `adminRole` column to users table (superadmin/marketing/finance/support); AdminSidebar filters navigation by role; AdminAccounts page for full CRUD management of admin sub-accounts; AdminLayout supports subtitle prop
 - **WebSocket Improvements**: `websocket.ts` rewritten with heartbeat (25s ping), duplicate connection guard, `disconnectWS()` function, clean onclose=null before replacing connections
 - **Notification Permissions**: `requestNotifPermission()` now called for web browsers (not just native Capacitor) on user login
