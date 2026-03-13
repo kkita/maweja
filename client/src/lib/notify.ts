@@ -69,7 +69,7 @@ export async function showNotif(title: string, body: string, icon = "/maweja-ico
           id: notifId++,
           title,
           body,
-          smallIcon: "ic_stat_notify",
+          smallIcon: "ic_launcher_foreground",
           iconColor: "#dc2626",
           sound: "default",
           autoCancel: true,
