@@ -326,6 +326,7 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'not_started'`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rejected_fields JSONB`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_token TEXT`);
 
   // Seed admin par défaut — crée les comptes s'ils n'existent pas encore
   await db.execute(sql`

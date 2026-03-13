@@ -5,6 +5,11 @@ import { storage } from "./storage";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
+
+function generateToken(): string {
+  return crypto.randomBytes(32).toString("hex");
+}
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -55,15 +60,35 @@ function sendToUser(userId: number, data: any) {
   }
 }
 
-function requireAuth(req: any, res: any, next: any) {
-  if (!(req.session as any)?.userId) {
-    return res.status(401).json({ message: "Non authentifie" });
+async function resolveUserFromRequest(req: any): Promise<number | null> {
+  // 1. Cookie session first (web browser)
+  if ((req.session as any)?.userId) {
+    return (req.session as any).userId;
   }
+  // 2. Bearer token fallback (mobile APK — sessionStorage volatile)
+  const authHeader = req.headers["authorization"] as string | undefined;
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    if (token) {
+      const user = await storage.getUserByToken(token);
+      if (user && !user.isBlocked) {
+        // Hydrate session so downstream code using req.session.userId still works
+        (req.session as any).userId = user.id;
+        return user.id;
+      }
+    }
+  }
+  return null;
+}
+
+async function requireAuth(req: any, res: any, next: any) {
+  const userId = await resolveUserFromRequest(req);
+  if (!userId) return res.status(401).json({ message: "Non authentifie" });
   next();
 }
 
 async function requireAdmin(req: any, res: any, next: any) {
-  const userId = (req.session as any)?.userId;
+  const userId = await resolveUserFromRequest(req);
   if (!userId) return res.status(401).json({ message: "Non authentifie" });
   const user = await storage.getUser(userId);
   if (!user || user.role !== "admin") return res.status(403).json({ message: "Acces interdit" });
@@ -92,14 +117,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(403).json({ message: msgs[expectedRole] || "Acces interdit" });
     }
     (req.session as any).userId = user.id;
+    // Generate persistent token for mobile APK auth
+    const token = generateToken();
+    await storage.updateUser(user.id, { authToken: token });
     const { password: _, ...safeUser } = user;
+    const responseData = { ...safeUser, authToken: token };
     // Explicitly save session to DB BEFORE sending response (prevents race condition)
     req.session.save((err) => {
       if (err) {
         console.error("Session save error:", err);
         return res.status(500).json({ message: "Erreur de session" });
       }
-      res.json(safeUser);
+      res.json(responseData);
     });
   });
 
@@ -116,7 +145,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       address: address || null,
     });
     (req.session as any).userId = user.id;
+    // Generate persistent token for mobile APK auth
+    const regToken = generateToken();
+    await storage.updateUser(user.id, { authToken: regToken });
     const { password: _, ...safeUser } = user;
+    const regResponseData = { ...safeUser, authToken: regToken };
 
     // Save session to DB BEFORE sending response (prevents race condition)
     await new Promise<void>((resolve, reject) =>
@@ -136,11 +169,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       sendToUser(admin.id, { type: "new_user", user: safeUser });
     }
 
-    res.json(safeUser);
+    res.json(regResponseData);
   });
 
   app.get("/api/auth/me", async (req, res) => {
-    const userId = (req.session as any)?.userId;
+    const userId = await resolveUserFromRequest(req);
     if (!userId) return res.status(401).json({ message: "Non authentifie" });
     const user = await storage.getUser(userId);
     if (!user) return res.status(401).json({ message: "Utilisateur non trouve" });

@@ -30,6 +30,7 @@ export const users = pgTable("users", {
   rejectedFields: jsonb("rejected_fields"),
   adminRole: text("admin_role"),
   adminPermissions: jsonb("admin_permissions"),
+  authToken: text("auth_token"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

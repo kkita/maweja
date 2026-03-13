@@ -47,8 +47,40 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+const TOKEN_KEY = "maweja_auth_token";
+const ROLE_KEY = "maweja_role";
+
 export function getUserRole(): string {
-  return sessionStorage.getItem("maweja_role") || "client";
+  return localStorage.getItem(ROLE_KEY) || sessionStorage.getItem(ROLE_KEY) || "client";
+}
+
+export function setUserRole(role: string) {
+  localStorage.setItem(ROLE_KEY, role);
+  sessionStorage.setItem(ROLE_KEY, role);
+}
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setAuthToken(token: string | null) {
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+function buildAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = {
+    "X-User-Role": getUserRole(),
+    ...extra,
+  };
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
 }
 
 export function authFetch(url: string, options?: RequestInit): Promise<Response> {
@@ -56,7 +88,7 @@ export function authFetch(url: string, options?: RequestInit): Promise<Response>
   return fetch(resolveUrl(url), {
     credentials: "include",
     ...rest,
-    headers: { "X-User-Role": getUserRole(), ...(extraHeaders as Record<string, string> || {}) },
+    headers: buildAuthHeaders(extraHeaders as Record<string, string> || {}),
   });
 }
 
@@ -78,8 +110,7 @@ export async function apiRequest(url: string, options?: RequestInit) {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      "X-User-Role": getUserRole(),
-      ...existingHeaders,
+      ...buildAuthHeaders(existingHeaders),
     },
     credentials: "include",
   });
@@ -93,7 +124,7 @@ export const queryClient = new QueryClient({
       queryFn: async ({ queryKey }: QueryFunctionContext) => {
         const res = await fetch(resolveUrl(queryKey[0] as string), {
           credentials: "include",
-          headers: { "X-User-Role": getUserRole() },
+          headers: buildAuthHeaders(),
         });
         await throwIfResNotOk(res);
         const json = await res.json();

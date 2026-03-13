@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, queryClient } from "../../lib/queryClient";
+import { apiRequest, queryClient, getUserRole } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { Image, Plus, Trash2, Edit2, X, Eye, EyeOff, Film, Flame, Megaphone } from "lucide-react";
 import type { Advertisement, PromoBanner } from "@shared/schema";
@@ -57,7 +57,7 @@ export default function AdminAds() {
   // ─── ADS MUTATIONS ────────────────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const role = sessionStorage.getItem("maweja_role") || "admin";
+      const role = getUserRole();
       const res = await fetch("/api/advertisements", { method: "POST", body: formData, credentials: "include", headers: { "X-User-Role": role } });
       if (!res.ok) throw new Error("Erreur creation");
       return res.json();
@@ -72,7 +72,7 @@ export default function AdminAds() {
 
   const updateAdMutation = useMutation({
     mutationFn: async ({ id, formData }: { id: number; formData: FormData }) => {
-      const role = sessionStorage.getItem("maweja_role") || "admin";
+      const role = getUserRole();
       const res = await fetch(`/api/advertisements/${id}`, { method: "PATCH", body: formData, credentials: "include", headers: { "X-User-Role": role } });
       if (!res.ok) throw new Error("Erreur mise a jour");
       return res.json();
@@ -95,7 +95,7 @@ export default function AdminAds() {
 
   const toggleAdMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      const role = sessionStorage.getItem("maweja_role") || "admin";
+      const role = getUserRole();
       const fd = new FormData();
       fd.append("isActive", String(isActive));
       const res = await fetch(`/api/advertisements/${id}`, { method: "PATCH", body: fd, credentials: "include", headers: { "X-User-Role": role } });
