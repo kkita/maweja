@@ -14,6 +14,11 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
 ## Recent Changes (March 2026)
+- **Admin Sub-Roles Module**: Added `adminRole` column to users table (superadmin/marketing/finance/support); AdminSidebar filters navigation by role; AdminAccounts page for full CRUD management of admin sub-accounts; AdminLayout supports subtitle prop
+- **WebSocket Improvements**: `websocket.ts` rewritten with heartbeat (25s ping), duplicate connection guard, `disconnectWS()` function, clean onclose=null before replacing connections
+- **Notification Permissions**: `requestNotifPermission()` now called for web browsers (not just native Capacitor) on user login
+- **Driver Dashboard Map**: Added `DriverLiveMap` Leaflet component with real-time driver GPS position + active order delivery markers; GPS status bar now acts as toggle for the map; stores `driverPos` state for real-time update
+- **Backend Admin Routes**: `/api/admin/accounts` GET/POST/PATCH/DELETE for sub-account management
 - **Restaurant CRUD**: Added "Ajouter un restaurant" + Delete + full menu items management (add/edit/delete per restaurant)
 - **WhatsApp persistence**: Added `app_settings` DB table; `/api/settings` GET+PATCH; AdminSettings saves to DB; ClientContactBubble uses dynamic WhatsApp number
 - **Services/Catalog seeded**: 10 catalog items seeded across categories (Hotellerie, Transport, Nettoyage, Reparation, Evenementiel); 3 default ads seeded

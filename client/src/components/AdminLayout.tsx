@@ -28,7 +28,7 @@ function ThemeToggle() {
   );
 }
 
-export default function AdminLayout({ children, title }: { children: ReactNode; title: string }) {
+export default function AdminLayout({ children, title, subtitle }: { children: ReactNode; title: string; subtitle?: string }) {
   const { lang, setLang, t } = useI18n();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -46,7 +46,10 @@ export default function AdminLayout({ children, title }: { children: ReactNode; 
       <AdminSidebar />
       <main className="flex-1 ml-64">
         <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-8 py-5 sticky top-0 z-30 flex items-center justify-between">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-white">{title}</h1>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{title}</h1>
+            {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{subtitle}</p>}
+          </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <div className="relative" ref={menuRef}>

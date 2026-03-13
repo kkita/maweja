@@ -1388,5 +1388,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (e) { res.status(500).json({ error: "Erreur sauvegarde" }); }
   });
 
+  // Admin sub-accounts management
+  app.get("/api/admin/accounts", requireAdmin, async (_req, res) => {
+    const allUsers = await storage.getAllUsers();
+    const admins = allUsers.filter(u => u.role === "admin");
+    res.json(admins.map(u => ({ id: u.id, name: u.name, email: u.email, phone: u.phone, adminRole: u.adminRole, createdAt: u.createdAt })));
+  });
+
+  app.post("/api/admin/accounts", requireAdmin, async (req, res) => {
+    const { name, email, password, phone, adminRole } = req.body;
+    if (!name || !email || !password || !phone) return res.status(400).json({ message: "Champs requis: name, email, password, phone" });
+    const existing = await storage.getUserByEmail(email);
+    if (existing) return res.status(409).json({ message: "Cet email est déjà utilisé" });
+    const user = await storage.createUser({ name, email, password, phone, role: "admin", adminRole: adminRole || "support" } as any);
+    res.json({ id: user.id, name: user.name, email: user.email, phone: user.phone, adminRole: user.adminRole });
+  });
+
+  app.patch("/api/admin/accounts/:id", requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    const { adminRole, password, name, phone } = req.body;
+    const update: any = {};
+    if (adminRole) update.adminRole = adminRole;
+    if (password) update.password = password;
+    if (name) update.name = name;
+    if (phone) update.phone = phone;
+    const updated = await storage.updateUser(id, update);
+    if (!updated) return res.status(404).json({ message: "Compte introuvable" });
+    res.json({ id: updated.id, name: updated.name, email: updated.email, phone: updated.phone, adminRole: updated.adminRole });
+  });
+
+  app.delete("/api/admin/accounts/:id", requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    // Don't delete the primary superadmin accounts
+    const u = await storage.getUser(id);
+    if (!u) return res.status(404).json({ message: "Compte introuvable" });
+    if (u.email === "admin@maweja.cd" || u.email === "admin@maweja.net") {
+      return res.status(403).json({ message: "Ce compte ne peut pas être supprimé" });
+    }
+    await storage.deleteUser(id);
+    res.json({ ok: true });
+  });
+
   return httpServer;
 }

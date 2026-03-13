@@ -6,8 +6,9 @@ import { I18nProvider, useI18n } from "./lib/i18n";
 import { ThemeProvider } from "./lib/theme";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect } from "react";
-import { connectWS } from "./lib/websocket";
+import { connectWS, disconnectWS } from "./lib/websocket";
 import { requestNotifPermission } from "./lib/notify";
+import AdminAccounts from "./pages/admin/AdminAccounts";
 import { Toaster } from "./components/Toaster";
 import { useDynamicFavicon } from "./hooks/use-dynamic-favicon";
 import ClientContactBubble from "./components/ClientContactBubble";
@@ -81,11 +82,10 @@ function AppRoutes() {
   useEffect(() => {
     if (user?.id) {
       connectWS(user.id);
-      const isNative = typeof (window as any).Capacitor !== "undefined" &&
-        (window as any).Capacitor?.isNativePlatform?.() === true;
-      if (isNative) {
-        requestNotifPermission();
-      }
+      // Request notification permission for both native and web browsers
+      requestNotifPermission().catch(() => {});
+    } else if (user === null) {
+      disconnectWS();
     }
   }, [user?.id]);
 
@@ -116,6 +116,7 @@ function AppRoutes() {
         <Route path="/admin/services" component={AdminServices} />
         <Route path="/admin/ads" component={AdminAds} />
         <Route path="/admin/notifications" component={AdminNotifications} />
+        <Route path="/admin/accounts" component={AdminAccounts} />
         <Route component={AdminDashboard} />
       </Switch>
     );

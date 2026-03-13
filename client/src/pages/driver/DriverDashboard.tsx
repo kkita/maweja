@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "../../lib/auth";
 import { useToast } from "../../hooks/use-toast";
 import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import DriverNav from "../../components/DriverNav";
-import { Package, Clock, CheckCircle2, Truck, MapPin, Power, Navigation, DollarSign, Star, AlertCircle, Phone, Timer, Bell, X } from "lucide-react";
+import { Package, Clock, CheckCircle2, Truck, MapPin, Power, Navigation, DollarSign, Star, AlertCircle, Phone, Timer, Bell, X, Map as MapIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/utils";
 import type { Order } from "@shared/schema";
+import "leaflet/dist/leaflet.css";
+import * as L from "leaflet";
 
 function CountdownBadge({ estimatedDelivery }: { estimatedDelivery: string | null }) {
   const [remaining, setRemaining] = useState("");
@@ -84,12 +86,105 @@ function AlarmOverlay({ reason, onDismiss }: { reason: string; onDismiss: () => 
   );
 }
 
+interface DriverMapProps {
+  driverLat: number | null;
+  driverLng: number | null;
+  activeOrders: Order[];
+}
+
+function DriverLiveMap({ driverLat, driverLng, activeOrders }: DriverMapProps) {
+  const mapRef = useRef<any>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const driverMarkerRef = useRef<any>(null);
+  const orderMarkersRef = useRef<any[]>([]);
+
+  const defaultLat = driverLat ?? -4.3222;
+  const defaultLng = driverLng ?? 15.3222;
+
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [defaultLat, defaultLng],
+      zoom: 14,
+      zoomControl: true,
+      attributionControl: false,
+    });
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  // Update driver marker
+  useEffect(() => {
+    if (!mapRef.current || !driverLat || !driverLng) return;
+
+    const driverIcon = L.divIcon({
+      html: `<div style="width:40px;height:40px;background:#dc2626;border-radius:50%;border:4px solid white;box-shadow:0 4px 12px rgba(220,38,38,0.5);display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+      </div>`,
+      className: "",
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+    });
+
+    if (driverMarkerRef.current) {
+      driverMarkerRef.current.setLatLng([driverLat, driverLng]);
+    } else {
+      driverMarkerRef.current = L.marker([driverLat, driverLng], { icon: driverIcon })
+        .addTo(mapRef.current)
+        .bindPopup("📍 Vous êtes ici");
+    }
+
+    mapRef.current.setView([driverLat, driverLng], mapRef.current.getZoom());
+  }, [driverLat, driverLng]);
+
+  // Update order markers
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    orderMarkersRef.current.forEach(m => m.remove());
+    orderMarkersRef.current = [];
+
+    activeOrders.forEach((order, i) => {
+      if (!order.deliveryLat || !order.deliveryLng) return;
+      const orderIcon = L.divIcon({
+        html: `<div style="width:32px;height:32px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 3px 8px rgba(37,99,235,0.5);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px;">${i + 1}</div>`,
+        className: "",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const m = L.marker([order.deliveryLat, order.deliveryLng], { icon: orderIcon })
+        .addTo(mapRef.current)
+        .bindPopup(`🚚 Livraison #${order.orderNumber}`);
+      orderMarkersRef.current.push(m);
+    });
+  }, [activeOrders]);
+
+  return (
+    <div
+      ref={mapContainerRef}
+      className="w-full h-48 rounded-2xl overflow-hidden"
+      data-testid="driver-map"
+    />
+  );
+}
+
 export default function DriverDashboard() {
   const { user, setUser } = useAuth();
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
   const [gpsActive, setGpsActive] = useState(false);
   const [alarm, setAlarm] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [driverPos, setDriverPos] = useState<{ lat: number; lng: number } | null>(null);
 
   const { data: pendingOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders", "ready"],
@@ -118,6 +213,7 @@ export default function DriverDashboard() {
     navigator.geolocation.getCurrentPosition(
       pos => {
         setGpsActive(true);
+        setDriverPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         apiRequest(`/api/drivers/${user.id}/location`, {
           method: "PATCH",
           body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -225,13 +321,37 @@ export default function DriverDashboard() {
         </div>
 
         {isOnline && (
-          <div className={`flex items-center gap-2 mb-4 px-4 py-3 rounded-2xl text-xs font-semibold border fade-in ${
-            gpsActive
-              ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
-              : "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
-          }`}>
-            <Navigation size={13} className={gpsActive ? "text-green-600" : "text-orange-600"} />
-            {gpsActive ? "📍 GPS actif — Position partagée toutes les 15s" : "⚠️ GPS inactif — Activez la localisation"}
+          <div className="mb-4 fade-in">
+            <button
+              onClick={() => setShowMap(m => !m)}
+              className={`w-full flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-semibold border transition-all ${
+                gpsActive
+                  ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800"
+                  : "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
+              }`}
+              data-testid="toggle-map"
+            >
+              <Navigation size={13} className={gpsActive ? "text-green-600" : "text-orange-600"} />
+              <span className="flex-1 text-left">
+                {gpsActive ? "📍 GPS actif — Position partagée toutes les 15s" : "⚠️ GPS inactif — Activez la localisation"}
+              </span>
+              <MapIcon size={14} />
+              {showMap ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+            </button>
+            {showMap && (
+              <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
+                <DriverLiveMap
+                  driverLat={driverPos?.lat ?? null}
+                  driverLng={driverPos?.lng ?? null}
+                  activeOrders={activeOrders}
+                />
+                <div className="bg-white dark:bg-gray-900 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600 flex-shrink-0" /> Vous</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-600 flex-shrink-0" /> Livraisons</span>
+                  <span className="ml-auto font-bold">{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length} point{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length !== 1 ? "s" : ""}</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

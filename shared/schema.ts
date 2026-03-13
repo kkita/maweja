@@ -28,6 +28,7 @@ export const users = pgTable("users", {
   profilePhotoUrl: text("profile_photo_url"),
   verificationStatus: text("verification_status").default("not_started"),
   rejectedFields: jsonb("rejected_fields"),
+  adminRole: text("admin_role"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

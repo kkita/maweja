@@ -1,19 +1,43 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { authFetch , authFetchJson} from "../lib/queryClient";
+import { authFetchJson } from "../lib/queryClient";
 import { useI18n } from "../lib/i18n";
-import {
-  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Bell, Shield, BarChart3,
-  Briefcase, Image, Megaphone
-} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Notification as Notif } from "@shared/schema";
 import logoImg from "@assets/image_1772833363714.png";
+import {
+  LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Shield, BarChart3,
+  Briefcase, Image, Megaphone, UserCog
+} from "lucide-react";
+
+type AdminRole = "superadmin" | "marketing" | "finance" | "support" | null | undefined;
+
+const ROLE_LABEL: Record<string, string> = {
+  superadmin: "Super Admin",
+  marketing: "Agent Marketing",
+  finance: "Agent Financier",
+  support: "Support Client",
+};
+
+const ROLE_ACCESS: Record<string, string[]> = {
+  superadmin: ["*"],
+  marketing: ["dashboard", "customers", "marketing", "ads", "notifications"],
+  finance: ["dashboard", "finance"],
+  support: ["dashboard", "orders", "chat", "customers", "services"],
+};
+
+function canAccess(adminRole: AdminRole, badgeKey: string): boolean {
+  const role = adminRole || "superadmin";
+  const allowed = ROLE_ACCESS[role] || ROLE_ACCESS["superadmin"];
+  return allowed.includes("*") || allowed.includes(badgeKey);
+}
 
 export default function AdminSidebar() {
   const [location, navigate] = useLocation();
   const { user, logout } = useAuth();
   const { t } = useI18n();
+  const adminRole = (user as any)?.adminRole as AdminRole;
+  const isSuperAdmin = !adminRole || adminRole === "superadmin";
 
   const { data: notifications = [] } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
@@ -35,9 +59,10 @@ export default function AdminSidebar() {
   const { data: pendingVerifications = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/verifications"],
     refetchInterval: 10000,
+    enabled: isSuperAdmin,
   });
 
-  const links = [
+  const allLinks = [
     { path: "/", icon: LayoutDashboard, label: t.admin.dashboard, badgeKey: "dashboard" },
     { path: "/admin/orders", icon: Package, label: t.admin.orders, badgeKey: "orders" },
     { path: "/admin/drivers", icon: Truck, label: t.admin.drivers, badgeKey: "drivers" },
@@ -50,8 +75,11 @@ export default function AdminSidebar() {
     { path: "/admin/services", icon: Briefcase, label: t.admin.services, badgeKey: "services" },
     { path: "/admin/ads", icon: Image, label: t.admin.ads, badgeKey: "ads" },
     { path: "/admin/notifications", icon: Megaphone, label: t.admin.notifications, badgeKey: "notifications" },
+    { path: "/admin/accounts", icon: UserCog, label: "Comptes Admin", badgeKey: "accounts" },
     { path: "/admin/settings", icon: Settings, label: t.admin.settings, badgeKey: "settings" },
   ];
+
+  const links = allLinks.filter(l => canAccess(adminRole, l.badgeKey));
 
   const getBadge = (badgeKey: string) => {
     if (badgeKey === "chat" && unreadChatCount > 0) return { count: unreadChatCount, color: "bg-red-600" };
@@ -106,7 +134,9 @@ export default function AdminSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.name}</p>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500">Admin</p>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500">
+              {adminRole ? ROLE_LABEL[adminRole] || "Admin" : "Super Admin"}
+            </p>
           </div>
           <button
             onClick={async () => { await logout(); navigate("/admin/login"); }}
