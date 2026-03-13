@@ -38,6 +38,21 @@ echo "[2/3] Synchronisation Capacitor (Android)..."
 cd mobile/driver
 npx cap sync android 2>/dev/null && echo "   ✓ Android sync OK" || echo "   ! Android non initialisé — lancez: npx cap add android"
 
+# ---- 3b. Icône notification Android (ic_stat_notify) ----
+ANDROID_RES="android/app/src/main/res"
+if [ -d "$ANDROID_RES" ]; then
+  echo "[2b/3] Copie icônes notification Android..."
+  ROOT=$(cd ../.. && pwd)
+  for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+    mkdir -p "${ANDROID_RES}/drawable-${density}"
+    cp "${ROOT}/resources/android/notification/ic_stat_notify_${density}.png" \
+       "${ANDROID_RES}/drawable-${density}/ic_stat_notify.png" 2>/dev/null && \
+       echo "   ✓ ic_stat_notify → drawable-${density}" || true
+  done
+else
+  echo "   ! (Android pas encore initialisé, icons copiés après 'npx cap add android')"
+fi
+
 # ---- 4. Instructions ----
 echo ""
 echo "================================================"

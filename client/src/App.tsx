@@ -60,7 +60,7 @@ function MobileModeGuard() {
   useEffect(() => {
     if (!MOBILE_MODE) return;
     if (MOBILE_MODE === "driver") {
-      if (!location.startsWith("/driver") && !location.startsWith("/admin")) {
+      if (location !== "/" && !location.startsWith("/driver") && !location.startsWith("/admin")) {
         navigate("/driver/login");
       }
     } else if (MOBILE_MODE === "client") {
