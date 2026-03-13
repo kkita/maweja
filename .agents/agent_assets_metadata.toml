@@ -54,3 +54,9 @@ id = "fwXxDKzPFswXlH123pumt"
 uri = "file://MAWEJA_COMPLET_GITHUB_v7.zip"
 type = "unspecified"
 title = "MAWEJA_COMPLET_GITHUB_v7.zip — Code source complet"
+
+[[outputs]]
+id = "X2rOyFip1LSEGKhRieJKj"
+uri = "file://MAWEJA_v8.zip"
+type = "unspecified"
+title = "MAWEJA_v8 — Code source complet (GitHub)"
