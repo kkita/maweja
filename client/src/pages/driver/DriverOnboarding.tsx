@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, resolveUrl, resolveImg, getUserRole } from "../../lib/queryClient";
+import { apiRequest, resolveUrl, resolveImg, getUserRole, getAuthToken } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 
 import { onWSMessage } from "../../lib/websocket";
@@ -28,12 +28,14 @@ const FIELD_LABELS: Record<string, string> = {
 async function uploadFileToServer(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  const role = getUserRole();
+  const headers: Record<string, string> = { "X-User-Role": getUserRole() };
+  const token = getAuthToken();
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(resolveUrl("/api/upload"), {
     method: "POST",
     body: formData,
     credentials: "include",
-    headers: { "X-User-Role": role },
+    headers,
   });
   if (!res.ok) {
     let message = "Échec de l'envoi de la photo";

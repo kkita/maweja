@@ -4,7 +4,7 @@ import { useAuth } from "../../lib/auth";
 import { useTheme, type ThemeMode } from "../../lib/theme";
 import ClientNav from "../../components/ClientNav";
 import { useLocation } from "wouter";
-import { apiRequest } from "../../lib/queryClient";
+import { apiRequest, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   ArrowLeft, Globe, ChevronRight, Bell, Shield, HelpCircle, Info,
@@ -170,7 +170,7 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
     if (!message.trim() || !userId) return;
     setSending(true);
     try {
-      const admins = await fetch("/api/chat/users-by-role/admin").then(r => r.json());
+      const admins = await authFetch("/api/chat/users-by-role/admin").then(r => r.json());
       const admin = admins[0];
       if (!admin) throw new Error("No admin");
       await apiRequest("/api/chat", {

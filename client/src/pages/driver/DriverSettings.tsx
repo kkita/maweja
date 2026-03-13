@@ -3,7 +3,7 @@ import { useI18n } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
 import { useTheme, type ThemeMode } from "../../lib/theme";
 import DriverNav from "../../components/DriverNav";
-import { apiRequest } from "../../lib/queryClient";
+import { apiRequest, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   Globe, ChevronRight, Bell, Shield, HelpCircle, Info, User,
@@ -166,7 +166,7 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
     if (!message.trim() || !userId) return;
     setSending(true);
     try {
-      const admins = await fetch("/api/chat/users-by-role/admin").then(r => r.json());
+      const admins = await authFetch("/api/chat/users-by-role/admin").then(r => r.json());
       const admin = admins[0];
       if (!admin) throw new Error("No admin");
       await apiRequest("/api/chat", {
