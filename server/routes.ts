@@ -796,8 +796,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/chat/users-by-role/:role", requireAuth, async (req, res) => {
-    const sessionUserId = (req.session as any)?.userId;
-    const sessionUser = await storage.getUser(sessionUserId);
+    const sessionUserId = await resolveUserFromRequest(req);
+    const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
     if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
     const requestedRole = req.params.role;
     if (sessionUser.role === "client" && requestedRole !== "admin") return res.status(403).json({ message: "Acces interdit" });

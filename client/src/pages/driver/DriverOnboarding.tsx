@@ -172,7 +172,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
 }
 
 export default function DriverOnboarding() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, refreshUser } = useAuth();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -203,14 +203,14 @@ export default function DriverOnboarding() {
     return onWSMessage((data) => {
       if (data.type === "verification_approved") {
         toast({ title: "Compte approuve!", description: "Vous pouvez maintenant utiliser l'application" });
-        window.location.reload();
+        refreshUser();
       }
       if (data.type === "verification_rejected") {
         toast({ title: "Corrections requises", description: "Veuillez corriger les champs indiques", variant: "destructive" });
-        window.location.reload();
+        refreshUser();
       }
     });
-  }, [toast]);
+  }, [toast, refreshUser]);
 
   const handleSubmit = async () => {
     const missing = Object.entries(form).filter(([_, v]) => !v);
@@ -263,11 +263,19 @@ export default function DriverOnboarding() {
               </div>
             </div>
           </div>
-          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 border border-orange-200 dark:border-orange-800">
+          <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3 border border-orange-200 dark:border-orange-800 mb-4">
             <p className="text-xs text-orange-700 dark:text-orange-400 flex items-center gap-2 justify-center">
               <Loader2 size={14} className="animate-spin" /> Verification en cours...
             </p>
           </div>
+          <button
+            onClick={() => refreshUser()}
+            data-testid="button-refresh-status"
+            className="w-full py-3 rounded-xl border-2 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+          >
+            <CheckCircle2 size={16} />
+            Actualiser le statut
+          </button>
           <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
         </div>
       </div>
