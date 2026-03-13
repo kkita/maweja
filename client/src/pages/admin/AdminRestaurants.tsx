@@ -110,8 +110,8 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
           {field("description", "Description", "text", "Courte description du restaurant")}
           {field("address", "Adresse *", "text", "ex: Avenue du Commerce, Kinshasa")}
           <div className="grid grid-cols-2 gap-3">
-            {field("deliveryFee", "Frais de livraison (FC)", "number", "2500")}
-            {field("minOrder", "Commande minimum (FC)", "number", "5000")}
+            {field("deliveryFee", "Frais de livraison ($)", "number", "2")}
+            {field("minOrder", "Commande minimum ($)", "number", "5")}
           </div>
           <div className="grid grid-cols-2 gap-3">
             {field("deliveryTime", "Temps de livraison", "text", "30-45 min")}
@@ -292,7 +292,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
           {inp(address, setAddress, "Adresse *", "text", "Avenue...")}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Frais de livraison (FC)</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Frais de livraison ($)</label>
               <input type="number" value={deliveryFee} onChange={e => setDeliveryFee(Number(e.target.value))}
                 className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>
@@ -441,7 +441,7 @@ function MenuItemForm({ restaurantId, item, onClose }: { restaurantId: number; i
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Prix (FC) *</label>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Prix ($) *</label>
               <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} data-testid="input-menu-item-price"
                 className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
             </div>

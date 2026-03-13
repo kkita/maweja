@@ -86,9 +86,9 @@ export default function AdminSettings() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {textField("app_name", "Nom de l'application", "text", "MAWEJA")}
-            {textField("currency", "Devise", "text", "USD / CDF")}
-            {textField("delivery_fee", "Frais de livraison par defaut (FC)", "number", "2500")}
-            {textField("min_order", "Commande minimum (FC)", "number", "3000")}
+            {textField("currency", "Devise", "text", "USD ($)")}
+            {textField("delivery_fee", "Frais de livraison par defaut ($)", "number", "2")}
+            {textField("min_order", "Commande minimum ($)", "number", "5")}
             {textField("max_radius", "Rayon de livraison max (km)", "number", "15")}
             {textField("points_per_order", "Points de fidelite par commande", "number", "10")}
           </div>

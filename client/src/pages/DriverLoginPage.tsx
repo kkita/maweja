@@ -52,8 +52,8 @@ export default function DriverLoginPage() {
             </div>
             <div className="w-px h-10 bg-gray-600" />
             <div className="text-center">
-              <p className="text-3xl font-black text-white">CDF</p>
-              <p className="text-xs text-gray-400">Gains directs</p>
+              <p className="text-3xl font-black text-white">$</p>
+              <p className="text-xs text-gray-400">Gains en USD</p>
             </div>
           </div>
         </div>
