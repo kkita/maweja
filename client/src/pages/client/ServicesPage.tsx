@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
@@ -50,6 +50,20 @@ export default function ServicesPage() {
 
   const activeCategories = categories.filter(c => c.isActive);
 
+  // Auto-open a category when navigated from HomePage with ?cat=ID
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const catId = params.get("cat");
+    if (!catId || categories.length === 0) return;
+    const cat = categories.find(c => c.id === Number(catId));
+    if (cat && !selectedCatalogCategory) {
+      setSelectedCatalogCategory(cat);
+      // Clean the URL param without reloading
+      const url = new URL(window.location.href);
+      url.searchParams.delete("cat");
+      window.history.replaceState({}, "", url.pathname);
+    }
+  }, [categories]);
 
   const catalogItemsForCategory = selectedCatalogCategory
     ? allCatalogItems.filter(item => item.categoryId === selectedCatalogCategory.id && item.isActive)

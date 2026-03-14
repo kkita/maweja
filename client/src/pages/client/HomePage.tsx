@@ -9,7 +9,7 @@ import {
   Star, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
-import type { Restaurant, PromoBanner, ServiceCategory } from "@shared/schema";
+import type { Restaurant, PromoBanner, ServiceCategory, ServiceCatalogItem } from "@shared/schema";
 
 /* ─── Promo banner ─────────────────────────────────────────────────────────── */
 function PromoBannerBlock() {
@@ -227,6 +227,7 @@ export default function HomePage() {
   const { t, lang } = useI18n();
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
   const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
+  const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -246,15 +247,22 @@ export default function HomePage() {
   const displayedRestaurants = showAll || activeCategory || searchQuery.trim() ? filtered : filtered.slice(0, 6);
 
   const handleServiceClick = (cat: ServiceCategory) => {
-    sessionStorage.setItem("maweja_service_request", JSON.stringify({
-      categoryId: cat.id,
-      categoryName: cat.name,
-      catalogItemId: null,
-      catalogItemName: null,
-      catalogItemPrice: null,
-      catalogItemImage: null,
-    }));
-    navigate("/services/new");
+    const hasCatalog = catalogItems.some(item => item.categoryId === cat.id && item.isActive);
+    if (hasCatalog) {
+      // Go to services page with this category's catalog open
+      navigate(`/services?cat=${cat.id}`);
+    } else {
+      // Go directly to the request form
+      sessionStorage.setItem("maweja_service_request", JSON.stringify({
+        categoryId: cat.id,
+        categoryName: cat.name,
+        catalogItemId: null,
+        catalogItemName: null,
+        catalogItemPrice: null,
+        catalogItemImage: null,
+      }));
+      navigate("/services/new");
+    }
   };
 
   const handleStaticItem = (item: typeof staticItems[0]) => {
