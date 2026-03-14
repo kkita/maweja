@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
@@ -49,6 +49,16 @@ export default function ServicesPage() {
   });
 
   const activeCategories = categories.filter(c => c.isActive);
+
+  // Auto-select category if navigated from HomePage service card
+  useEffect(() => {
+    if (categories.length === 0) return;
+    const openCatId = sessionStorage.getItem("maweja_open_cat");
+    if (!openCatId) return;
+    sessionStorage.removeItem("maweja_open_cat");
+    const cat = categories.find(c => c.id === Number(openCatId));
+    if (cat) setSelectedCatalogCategory(cat);
+  }, [categories]);
 
   const catalogItemsForCategory = selectedCatalogCategory
     ? allCatalogItems.filter(item => item.categoryId === selectedCatalogCategory.id && item.isActive)

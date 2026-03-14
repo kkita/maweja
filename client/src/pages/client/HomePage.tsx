@@ -6,10 +6,10 @@ import AdBanner from "../../components/AdBanner";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
 import {
-  Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp
+  Star, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
-import type { Restaurant, PromoBanner, ServiceCategory } from "@shared/schema";
+import type { Restaurant, PromoBanner, ServiceCategory, ServiceCatalogItem } from "@shared/schema";
 
 /* ─── Promo banner ─────────────────────────────────────────────────────────── */
 function PromoBannerBlock() {
@@ -75,65 +75,78 @@ const cuisineCategories = [
   { name: "🌍 International", nameEn: "🌍 International", cuisine: "International" },
 ];
 
-/* ─── Static quick-access items (always shown in the grid) ─────────────────── */
+/* ─── Default Unsplash image per service name ───────────────────────────────── */
+const SERVICE_IMAGES: Record<string, string> = {
+  "hotellerie":          "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&q=85",
+  "transport":           "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?w=300&q=85",
+  "nettoyage":           "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=300&q=85",
+  "demenagement":        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=85",
+  "evenementiel":        "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=300&q=85",
+  "reparation":          "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300&q=85",
+  "coursier":            "https://images.unsplash.com/photo-1568952433726-3896e3881c65?w=300&q=85",
+  "autre":               "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=300&q=85",
+  "coiffure":            "https://images.unsplash.com/photo-1560869713-7d0a29430803?w=300&q=85",
+  "pédicure & manucure": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=300&q=85",
+  "manucure":            "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=300&q=85",
+  "massage & bien-être": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=300&q=85",
+  "massage":             "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=300&q=85",
+  "ménage à domicile":   "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=300&q=85",
+  "menage":              "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=300&q=85",
+  "restaurants":         "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300&q=85",
+  "fast food":           "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=85",
+  "pizza":               "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&q=85",
+  "promos":              "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=300&q=85",
+  "services":            "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=300&q=85",
+};
+
+function getServiceImage(name: string, imageUrl?: string | null): string {
+  if (imageUrl && imageUrl.trim()) return imageUrl;
+  const key = name.toLowerCase().trim();
+  for (const [k, v] of Object.entries(SERVICE_IMAGES)) {
+    if (key.includes(k) || k.includes(key)) return v;
+  }
+  return "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=300&q=85";
+}
+
+/* ─── Static quick-access items ─────────────────────────────────────────────── */
 const staticItems = [
-  { key: "restaurants", emoji: "🍽️", label: "Restaurants", labelEn: "Restaurants", bg: "#fff3e0", color: "#e65100", path: null },
-  { key: "fastfood",    emoji: "🍔", label: "Fast Food",    labelEn: "Fast Food",    bg: "#fce4ec", color: "#c62828", path: null, filter: "Fast Food" },
-  { key: "pizza",       emoji: "🍕", label: "Pizza",        labelEn: "Pizza",        bg: "#e8f5e9", color: "#2e7d32", path: null, filter: "Pizza" },
-  { key: "promos",      emoji: "🎁", label: "Promos",       labelEn: "Promos",       bg: "#e3f2fd", color: "#1565c0", path: null },
-  { key: "services",    emoji: "✨", label: "Services",     labelEn: "Services",     bg: "#f3e5f5", color: "#6a1b9a", path: "/services" },
+  { key: "restaurants", label: "Restaurants", labelEn: "Restaurants", filter: null as string | null, path: null as string | null },
+  { key: "fastfood",    label: "Fast Food",    labelEn: "Fast Food",    filter: "Fast Food",           path: null },
+  { key: "pizza",       label: "Pizza",        labelEn: "Pizza",        filter: "Pizza",               path: null },
+  { key: "promos",      label: "Promos",       labelEn: "Promos",       filter: null,                  path: null },
+  { key: "services",    label: "Services",     labelEn: "Services",     filter: null,                  path: "/services" },
 ];
 
-/* ─── Service icon item ────────────────────────────────────────────────────── */
-function ServiceIcon({ cat, onClick }: { cat: ServiceCategory; onClick: () => void }) {
-  const [imgLoaded, setImgLoaded] = useState(false);
-  const [imgErr, setImgErr] = useState(false);
-  const hasImage = cat.imageUrl && cat.imageUrl.trim().length > 0 && !imgErr;
-
-  const colors = [
-    { bg: "#fff8e1", color: "#f57f17" },
-    { bg: "#fce4ec", color: "#c62828" },
-    { bg: "#e8f5e9", color: "#2e7d32" },
-    { bg: "#e3f2fd", color: "#1565c0" },
-    { bg: "#f3e5f5", color: "#6a1b9a" },
-    { bg: "#e0f7fa", color: "#00695c" },
-    { bg: "#fff3e0", color: "#e65100" },
-    { bg: "#fafafa", color: "#424242" },
-  ];
-  const c = colors[cat.id % colors.length];
-
+/* ─── Service photo card ─────────────────────────────────────────────────────── */
+function ServiceCard({
+  name, label, imgUrl, testId, onClick,
+}: { name: string; label: string; imgUrl: string; testId: string; onClick: () => void }) {
+  const [loaded, setLoaded] = useState(false);
   return (
     <button
-      key={cat.id}
       onClick={onClick}
-      data-testid={`service-icon-${cat.id}`}
-      className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform"
+      data-testid={testId}
+      className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform flex-shrink-0"
+      style={{ width: 72 }}
     >
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center relative overflow-hidden"
-        style={{ backgroundColor: c.bg, border: `1px solid ${c.color}22` }}
-      >
-        {hasImage ? (
-          <>
-            {!imgLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
-                <div className="w-5 h-5 rounded-full bg-gray-200" />
-              </div>
-            )}
-            <img
-              src={cat.imageUrl!}
-              alt={cat.name}
-              onLoad={() => setImgLoaded(true)}
-              onError={() => setImgErr(true)}
-              className={`w-10 h-10 object-contain transition-opacity duration-300 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
-            />
-          </>
-        ) : (
-          <span className="text-2xl">{cat.icon?.length <= 2 ? cat.icon : "🛠️"}</span>
+      <div className="w-16 h-16 rounded-2xl overflow-hidden relative shadow-sm"
+        style={{ boxShadow: "0 2px 10px rgba(0,0,0,0.15)" }}>
+        {!loaded && (
+          <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse" />
         )}
+        <img
+          src={imgUrl}
+          alt={name}
+          onLoad={() => setLoaded(true)}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          loading="lazy"
+        />
+        {/* Bottom gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
-      <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center leading-tight line-clamp-2 w-14">
-        {cat.name}
+      <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center leading-tight"
+        style={{ width: 72, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        {label}
       </span>
     </button>
   );
@@ -214,6 +227,7 @@ export default function HomePage() {
   const { t, lang } = useI18n();
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
   const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
+  const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -232,10 +246,29 @@ export default function HomePage() {
 
   const displayedRestaurants = showAll || activeCategory || searchQuery.trim() ? filtered : filtered.slice(0, 6);
 
+  const categoryHasCatalog = (catId: number) =>
+    catalogItems.some(item => item.categoryId === catId && item.isActive);
+
+  const handleServiceClick = (cat: ServiceCategory) => {
+    if (categoryHasCatalog(cat.id)) {
+      sessionStorage.setItem("maweja_open_cat", String(cat.id));
+      navigate("/services");
+    } else {
+      sessionStorage.setItem("maweja_service_request", JSON.stringify({
+        categoryId: cat.id,
+        categoryName: cat.name,
+        catalogItemId: null,
+        catalogItemName: null,
+        catalogItemPrice: null,
+        catalogItemImage: null,
+      }));
+      navigate("/services/new");
+    }
+  };
+
   const handleStaticItem = (item: typeof staticItems[0]) => {
     if (item.path) { navigate(item.path); return; }
     if (item.filter) { setActiveCategory(item.filter); return; }
-    if (item.key === "promos") { /* TODO: scroll to promo */ }
   };
 
   return (
@@ -301,7 +334,7 @@ export default function HomePage() {
               data-testid="services-scroll"
             >
               <div
-                className="grid gap-x-3 gap-y-3"
+                className="grid gap-x-3 gap-y-3 pb-1"
                 style={{
                   gridTemplateRows: "repeat(2, auto)",
                   gridAutoFlow: "column",
@@ -310,31 +343,25 @@ export default function HomePage() {
               >
                 {/* Static quick-access items */}
                 {staticItems.map(item => (
-                  <button
+                  <ServiceCard
                     key={item.key}
+                    name={item.key}
+                    label={lang === "en" ? item.labelEn : item.label}
+                    imgUrl={getServiceImage(item.key)}
+                    testId={`quicklink-${item.key}`}
                     onClick={() => handleStaticItem(item)}
-                    data-testid={`quicklink-${item.key}`}
-                    className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform"
-                    style={{ width: 64 }}
-                  >
-                    <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                      style={{ backgroundColor: item.bg, border: `1px solid ${item.color}22` }}
-                    >
-                      <span className="text-2xl">{item.emoji}</span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center leading-tight w-14 line-clamp-2">
-                      {lang === "en" ? item.labelEn : item.label}
-                    </span>
-                  </button>
+                  />
                 ))}
 
                 {/* Dynamic service categories */}
                 {serviceCategories.filter(c => c.isActive).map(cat => (
-                  <ServiceIcon
+                  <ServiceCard
                     key={cat.id}
-                    cat={cat}
-                    onClick={() => navigate(`/services`)}
+                    name={cat.name}
+                    label={cat.name}
+                    imgUrl={getServiceImage(cat.name, cat.imageUrl)}
+                    testId={`service-icon-${cat.id}`}
+                    onClick={() => handleServiceClick(cat)}
                   />
                 ))}
               </div>
