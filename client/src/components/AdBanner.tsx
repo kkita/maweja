@@ -97,14 +97,25 @@ export default function AdBanner() {
   if (visibleAds.length === 0) {
     return (
       <div
-        className="rounded-2xl overflow-hidden flex items-center justify-center"
-        style={{ height: 140, background: "linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%)", border: "2px dashed #e5e7eb" }}
+        className="rounded-2xl overflow-hidden flex items-center justify-between px-5"
+        style={{
+          height: 140,
+          background: "linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%)",
+          border: "1.5px dashed #fca5a5"
+        }}
         data-testid="ad-placeholder"
       >
-        <div className="text-center">
-          <Megaphone size={24} className="text-gray-300 mx-auto mb-1" />
-          <p className="text-xs text-gray-400 font-medium">Votre publicité ici</p>
-          <p className="text-[10px] text-gray-300">Contactez-nous : +243 819 994 041</p>
+        <div className="flex-1">
+          <div className="inline-flex items-center gap-1.5 bg-red-100 px-2.5 py-0.5 rounded-full mb-2">
+            <Megaphone size={10} className="text-red-500" />
+            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Sponsorisé</span>
+          </div>
+          <p className="text-sm font-bold text-gray-700 leading-tight">Publiez votre annonce ici</p>
+          <p className="text-xs text-gray-400 mt-0.5">Touchez des milliers de clients à Kinshasa</p>
+          <p className="text-[11px] font-semibold text-red-600 mt-1.5">+243 819 994 041</p>
+        </div>
+        <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0 ml-3">
+          <Megaphone size={28} className="text-red-400" />
         </div>
       </div>
     );
