@@ -26,10 +26,8 @@ export async function seedDatabase() {
     { email: "driver4@maweja.cd", password: "driver123", name: "Joseph Kalala", phone: "0856789012", role: "driver", walletBalance: 21, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3100, lng: 15.3200, vehicleType: "scooter", vehiclePlate: "KN-3456-GH", driverLicense: "DL-003456", commissionRate: 15, verificationStatus: "approved" },
   ]).onConflictDoNothing();
 
-  // ── 2. Clean old wrong data (keep users & orders intact) ───────────────────
+  // ── 2. Clean old wrong restaurant/menu data only (services preserved) ────────
   await db.delete(menuItems);
-  await db.delete(serviceCatalogItems);
-  await db.delete(serviceCategories);
 
   // ── 3. Fix / upsert restaurants ───────────────────────────────────────────
   // Update restaurant id=1 (old "Golden Tulip") to become Aldar (preserves order FKs)
@@ -194,41 +192,52 @@ export async function seedDatabase() {
     { restaurantId: leGrand.id, name: "Velouté de Courge", description: "Velouté de butternut, crème fouettée, noisettes torréfiées et huile de truffe", price: 6, image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=400&fit=crop", category: "Entrées", isAvailable: true, popular: false },
   ]);
 
-  // ── 5. Insert correct service categories ────────────────────────────────────
-  const cats = await db.insert(serviceCategories).values([
-    { name: "Coiffure", icon: "Scissors", description: "Tresses, nattes, perruques, défrisage, coloration et coupes professionnelles à domicile", isActive: true },
-    { name: "Pédicure & Manucure", icon: "Hand", description: "Soins complets des ongles, nail art, soins des pieds et massage relaxant à domicile", isActive: true },
-    { name: "Massage & Bien-être", icon: "Heart", description: "Massages relaxants, thérapeutiques et sportifs par des professionnels certifiés", isActive: true },
-    { name: "Ménage à domicile", icon: "Home", description: "Nettoyage professionnel de votre domicile — cuisine, salles de bain, sols et vitres", isActive: true },
-  ]).returning();
+  // ── 5. Upsert service categories (add missing ones, keep existing) ──────────
+  async function getOrCreateCategory(name: string, icon: string, description: string): Promise<number> {
+    const [existing] = await db.select({ id: serviceCategories.id }).from(serviceCategories).where(eq(serviceCategories.name, name));
+    if (existing) return existing.id;
+    const [inserted] = await db.insert(serviceCategories).values({ name, icon, description, isActive: true }).returning({ id: serviceCategories.id });
+    return inserted.id;
+  }
 
-  const [coiffure, pedicure, massage, menage] = cats;
+  const coiffureId  = await getOrCreateCategory("Coiffure", "Scissors", "Tresses, nattes, perruques, défrisage, coloration et coupes professionnelles à domicile");
+  const pedicureId  = await getOrCreateCategory("Pédicure & Manucure", "Hand", "Soins complets des ongles, nail art, soins des pieds et massage relaxant à domicile");
+  const massageId   = await getOrCreateCategory("Massage & Bien-être", "Heart", "Massages relaxants, thérapeutiques et sportifs par des professionnels certifiés");
+  const menageId    = await getOrCreateCategory("Ménage à domicile", "Home", "Nettoyage professionnel de votre domicile — cuisine, salles de bain, sols et vitres");
 
-  // ── 6. Insert catalog items ─────────────────────────────────────────────────
-  await db.insert(serviceCatalogItems).values([
+  // ── 6. Insert catalog items only if they don't already exist (by name) ──────
+  const newCatalogItems = [
     // Coiffure (8 items)
-    { categoryId: coiffure.id, name: "Tresses Box Braids", description: "Tresses box braids longues ou courtes, durée ~4h", imageUrl: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?w=400&h=400&fit=crop", price: "$15–$35", isActive: true, sortOrder: 1 },
-    { categoryId: coiffure.id, name: "Nattes Collées (Cornrows)", description: "Nattes collées simples ou avec motifs créatifs", imageUrl: "https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=400&h=400&fit=crop", price: "$10–$25", isActive: true, sortOrder: 2 },
-    { categoryId: coiffure.id, name: "Pose de Perruque", description: "Installation et coiffage de perruque frontale ou full lace", imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop", price: "$20–$50", isActive: true, sortOrder: 3 },
-    { categoryId: coiffure.id, name: "Défrisage & Lissage", description: "Défrisage chimique ou lissage brésilien kératine", imageUrl: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&h=400&fit=crop", price: "$15–$40", isActive: true, sortOrder: 4 },
-    { categoryId: coiffure.id, name: "Coloration Cheveux", description: "Coloration complète ou mèches, toutes nuances disponibles", imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=400&fit=crop", price: "$20–$45", isActive: true, sortOrder: 5 },
-    { categoryId: coiffure.id, name: "Coupe & Brushing Femme", description: "Coupe, shampooing et brushing professionnel à domicile", imageUrl: "https://images.unsplash.com/photo-1560066984-138daaa5a68f?w=400&h=400&fit=crop", price: "$10–$20", isActive: true, sortOrder: 6 },
-    { categoryId: coiffure.id, name: "Coupe Homme", description: "Coupe dégradé, barbe et styling pour hommes à domicile", imageUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=400&fit=crop", price: "$5–$15", isActive: true, sortOrder: 7 },
-    { categoryId: coiffure.id, name: "Dreadlocks", description: "Création, entretien et retouche de dreadlocks naturelles", imageUrl: "https://images.unsplash.com/photo-1590334841786-a24e59beba6a?w=400&h=400&fit=crop", price: "$25–$60", isActive: true, sortOrder: 8 },
+    { categoryId: coiffureId, name: "Tresses Box Braids", description: "Tresses box braids longues ou courtes, durée ~4h", imageUrl: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?w=400&h=400&fit=crop", price: "$15–$35", isActive: true, sortOrder: 1 },
+    { categoryId: coiffureId, name: "Nattes Collées (Cornrows)", description: "Nattes collées simples ou avec motifs créatifs", imageUrl: "https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=400&h=400&fit=crop", price: "$10–$25", isActive: true, sortOrder: 2 },
+    { categoryId: coiffureId, name: "Pose de Perruque", description: "Installation et coiffage de perruque frontale ou full lace", imageUrl: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop", price: "$20–$50", isActive: true, sortOrder: 3 },
+    { categoryId: coiffureId, name: "Défrisage & Lissage", description: "Défrisage chimique ou lissage brésilien kératine", imageUrl: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&h=400&fit=crop", price: "$15–$40", isActive: true, sortOrder: 4 },
+    { categoryId: coiffureId, name: "Coloration Cheveux", description: "Coloration complète ou mèches, toutes nuances disponibles", imageUrl: "https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=400&h=400&fit=crop", price: "$20–$45", isActive: true, sortOrder: 5 },
+    { categoryId: coiffureId, name: "Coupe & Brushing Femme", description: "Coupe, shampooing et brushing professionnel à domicile", imageUrl: "https://images.unsplash.com/photo-1560066984-138daaa5a68f?w=400&h=400&fit=crop", price: "$10–$20", isActive: true, sortOrder: 6 },
+    { categoryId: coiffureId, name: "Coupe Homme", description: "Coupe dégradé, barbe et styling pour hommes à domicile", imageUrl: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=400&fit=crop", price: "$5–$15", isActive: true, sortOrder: 7 },
+    { categoryId: coiffureId, name: "Dreadlocks", description: "Création, entretien et retouche de dreadlocks naturelles", imageUrl: "https://images.unsplash.com/photo-1590334841786-a24e59beba6a?w=400&h=400&fit=crop", price: "$25–$60", isActive: true, sortOrder: 8 },
     // Pédicure & Manucure (4 items)
-    { categoryId: pedicure.id, name: "Soins Ongles Pieds Complet", description: "Coupe, lime, repousse cuticules et soin hydratant", imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop", price: "$8–$15", isActive: true, sortOrder: 1 },
-    { categoryId: pedicure.id, name: "Vernis Classique", description: "Application vernis couleur longue durée — pieds ou mains", imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop", price: "$5–$10", isActive: true, sortOrder: 2 },
-    { categoryId: pedicure.id, name: "Nail Art Créatif", description: "Décoration personnalisée, motifs, strass et dégradés artistiques", imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop", price: "$10–$25", isActive: true, sortOrder: 3 },
-    { categoryId: pedicure.id, name: "Pédicure Spa Relaxant", description: "Bain de pieds, gommage, masque hydratant et massage", imageUrl: "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&h=400&fit=crop", price: "$15–$30", isActive: true, sortOrder: 4 },
+    { categoryId: pedicureId, name: "Soins Ongles Pieds Complet", description: "Coupe, lime, repousse cuticules et soin hydratant", imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop", price: "$8–$15", isActive: true, sortOrder: 1 },
+    { categoryId: pedicureId, name: "Vernis Classique", description: "Application vernis couleur longue durée — pieds ou mains", imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop", price: "$5–$10", isActive: true, sortOrder: 2 },
+    { categoryId: pedicureId, name: "Nail Art Créatif", description: "Décoration personnalisée, motifs, strass et dégradés artistiques", imageUrl: "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=400&fit=crop", price: "$10–$25", isActive: true, sortOrder: 3 },
+    { categoryId: pedicureId, name: "Pédicure Spa Relaxant", description: "Bain de pieds, gommage, masque hydratant et massage", imageUrl: "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&h=400&fit=crop", price: "$15–$30", isActive: true, sortOrder: 4 },
     // Massage & Bien-être (3 items)
-    { categoryId: massage.id, name: "Massage Relaxant Corps Entier", description: "Massage suédois 60min — tensions, stress et fatigue évacués", imageUrl: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=400&fit=crop", price: "$25–$45", isActive: true, sortOrder: 1 },
-    { categoryId: massage.id, name: "Massage Dos & Nuque", description: "Massage ciblé dos, nuque et épaules — 30 minutes", imageUrl: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400&h=400&fit=crop", price: "$15–$25", isActive: true, sortOrder: 2 },
-    { categoryId: massage.id, name: "Massage Réflexologie Pieds", description: "Massage réflexologie 30min — détente profonde et rééquilibrage", imageUrl: "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&h=400&fit=crop", price: "$15–$25", isActive: true, sortOrder: 3 },
+    { categoryId: massageId, name: "Massage Relaxant Corps Entier", description: "Massage suédois 60min — tensions, stress et fatigue évacués", imageUrl: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=400&fit=crop", price: "$25–$45", isActive: true, sortOrder: 1 },
+    { categoryId: massageId, name: "Massage Dos & Nuque", description: "Massage ciblé dos, nuque et épaules — 30 minutes", imageUrl: "https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400&h=400&fit=crop", price: "$15–$25", isActive: true, sortOrder: 2 },
+    { categoryId: massageId, name: "Massage Réflexologie Pieds", description: "Massage réflexologie 30min — détente profonde et rééquilibrage", imageUrl: "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=400&h=400&fit=crop", price: "$15–$25", isActive: true, sortOrder: 3 },
     // Ménage à domicile (3 items)
-    { categoryId: menage.id, name: "Nettoyage Complet Maison", description: "Nettoyage de toutes les pièces, cuisine et salles de bain inclus", imageUrl: "https://images.unsplash.com/photo-1527515545081-5db817172677?w=400&h=400&fit=crop", price: "$20–$50", isActive: true, sortOrder: 1 },
-    { categoryId: menage.id, name: "Nettoyage Express 2h", description: "Intervention rapide 2h pour entretien courant et dépoussiérage", imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop", price: "$10–$20", isActive: true, sortOrder: 2 },
-    { categoryId: menage.id, name: "Repassage & Pliage Linge", description: "Repassage professionnel et pliage soigné de votre linge", imageUrl: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=400&fit=crop", price: "$8–$18", isActive: true, sortOrder: 3 },
-  ]);
+    { categoryId: menageId, name: "Nettoyage Complet Maison", description: "Nettoyage de toutes les pièces, cuisine et salles de bain inclus", imageUrl: "https://images.unsplash.com/photo-1527515545081-5db817172677?w=400&h=400&fit=crop", price: "$20–$50", isActive: true, sortOrder: 1 },
+    { categoryId: menageId, name: "Nettoyage Express 2h", description: "Intervention rapide 2h pour entretien courant et dépoussiérage", imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop", price: "$10–$20", isActive: true, sortOrder: 2 },
+    { categoryId: menageId, name: "Repassage & Pliage Linge", description: "Repassage professionnel et pliage soigné de votre linge", imageUrl: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&h=400&fit=crop", price: "$8–$18", isActive: true, sortOrder: 3 },
+  ];
 
-  console.log("✅ Migration MAWEJA terminée — 7 restaurants, 42 menus, 4 catégories de services, 18 items catalogue.");
+  // Fetch existing catalog item names to avoid duplicates
+  const existingCatalogItems = await db.select({ name: serviceCatalogItems.name }).from(serviceCatalogItems);
+  const existingNames = new Set(existingCatalogItems.map(i => i.name));
+  const itemsToInsert = newCatalogItems.filter(item => !existingNames.has(item.name));
+  if (itemsToInsert.length > 0) {
+    await db.insert(serviceCatalogItems).values(itemsToInsert);
+  }
+
+  console.log(`✅ Migration MAWEJA terminée — 7 restaurants, 42 menus, catégories de services fusionnées, ${itemsToInsert.length} nouveaux items catalogue ajoutés.`);
 }
