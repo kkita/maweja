@@ -250,25 +250,30 @@ export default function HomePage() {
     catalogItems.some(item => item.categoryId === catId && item.isActive);
 
   const handleServiceClick = (cat: ServiceCategory) => {
-    if (categoryHasCatalog(cat.id)) {
-      sessionStorage.setItem("maweja_open_cat", String(cat.id));
-      navigate("/services");
-    } else {
-      sessionStorage.setItem("maweja_service_request", JSON.stringify({
-        categoryId: cat.id,
-        categoryName: cat.name,
-        catalogItemId: null,
-        catalogItemName: null,
-        catalogItemPrice: null,
-        catalogItemImage: null,
-      }));
-      navigate("/services/new");
-    }
+    // Always go to /services — ServicesPage handles catalog vs. no-catalog
+    sessionStorage.setItem("maweja_open_cat", String(cat.id));
+    navigate("/services");
   };
 
   const handleStaticItem = (item: typeof staticItems[0]) => {
     if (item.path) { navigate(item.path); return; }
-    if (item.filter) { setActiveCategory(item.filter); return; }
+    if (item.filter) {
+      setActiveCategory(item.filter);
+      // Scroll to restaurants section
+      setTimeout(() => {
+        document.getElementById("restaurants-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+      return;
+    }
+    if (item.key === "restaurants") {
+      setActiveCategory(null);
+      setTimeout(() => {
+        document.getElementById("restaurants-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+    if (item.key === "promos") {
+      document.getElementById("promo-banner-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   return (
@@ -371,11 +376,11 @@ export default function HomePage() {
 
         {/* Promo banner */}
         {!searchQuery && !activeCategory && (
-          <div className="fade-in-up stagger-4"><PromoBannerBlock /></div>
+          <div id="promo-banner-section" className="fade-in-up stagger-4"><PromoBannerBlock /></div>
         )}
 
         {/* Cuisine filter pills */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-4 -mx-1 px-1 fade-in-up stagger-5 pb-0.5">
+        <div id="restaurants-section" className="flex gap-2 overflow-x-auto no-scrollbar mb-4 -mx-1 px-1 fade-in-up stagger-5 pb-0.5">
           {visibleCuisines.map((c) => {
             const isActive = activeCategory === c.cuisine;
             return (

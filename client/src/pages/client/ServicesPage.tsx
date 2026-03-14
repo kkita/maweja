@@ -44,21 +44,35 @@ export default function ServicesPage() {
     enabled: !!user,
   });
 
-  const { data: allCatalogItems = [] } = useQuery<ServiceCatalogItem[]>({
+  const { data: allCatalogItems = [], isLoading: catalogLoading } = useQuery<ServiceCatalogItem[]>({
     queryKey: ["/api/service-catalog"],
   });
 
   const activeCategories = categories.filter(c => c.isActive);
 
-  // Auto-select category if navigated from HomePage service card
+  // Auto-select category when arriving from a HomePage service card
   useEffect(() => {
-    if (categories.length === 0) return;
     const openCatId = sessionStorage.getItem("maweja_open_cat");
     if (!openCatId) return;
+    // Wait for both queries to finish loading
+    if (catsLoading || catalogLoading) return;
     sessionStorage.removeItem("maweja_open_cat");
     const cat = categories.find(c => c.id === Number(openCatId));
-    if (cat) setSelectedCatalogCategory(cat);
-  }, [categories]);
+    if (!cat) return;
+    if (allCatalogItems.some(item => item.categoryId === cat.id && item.isActive)) {
+      setSelectedCatalogCategory(cat);
+    } else {
+      sessionStorage.setItem("maweja_service_request", JSON.stringify({
+        categoryId: cat.id,
+        categoryName: cat.name,
+        catalogItemId: null,
+        catalogItemName: null,
+        catalogItemPrice: null,
+        catalogItemImage: null,
+      }));
+      navigate("/services/new");
+    }
+  }, [catsLoading, catalogLoading, categories, allCatalogItems]);
 
   const catalogItemsForCategory = selectedCatalogCategory
     ? allCatalogItems.filter(item => item.categoryId === selectedCatalogCategory.id && item.isActive)
