@@ -56,6 +56,15 @@ export default function OrderDetailPage() {
     enabled: !!order?.restaurantId,
   });
 
+  const { data: appSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const whatsappNumber = (appSettings?.whatsapp_number || "+243819994041")
+    .replace(/\s+/g, "")
+    .replace("+", "");
+
   const { data: driver } = useQuery<Omit<User, "password">>({
     queryKey: ["/api/drivers", order?.driverId],
     queryFn: () =>
@@ -311,7 +320,7 @@ export default function OrderDetailPage() {
               `- Statut actuel: ${statusLabels[order.status] || order.status}\n\n` +
               `Merci de votre aide.`
             );
-            window.open(`https://wa.me/243812345678?text=${msg}`, "_blank");
+            window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, "_blank");
           }}
           data-testid="button-whatsapp-order"
           className="w-full py-3.5 rounded-2xl bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-green-200 mt-4 hover:bg-green-700 transition-all"
