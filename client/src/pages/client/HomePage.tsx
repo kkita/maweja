@@ -9,7 +9,7 @@ import {
   Star, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
-import type { Restaurant, PromoBanner, ServiceCategory, ServiceCatalogItem } from "@shared/schema";
+import type { Restaurant, PromoBanner, ServiceCategory } from "@shared/schema";
 
 /* ─── Promo banner ─────────────────────────────────────────────────────────── */
 function PromoBannerBlock() {
@@ -227,7 +227,6 @@ export default function HomePage() {
   const { t, lang } = useI18n();
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
   const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
-  const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -246,13 +245,16 @@ export default function HomePage() {
 
   const displayedRestaurants = showAll || activeCategory || searchQuery.trim() ? filtered : filtered.slice(0, 6);
 
-  const categoryHasCatalog = (catId: number) =>
-    catalogItems.some(item => item.categoryId === catId && item.isActive);
-
   const handleServiceClick = (cat: ServiceCategory) => {
-    // Always go to /services — ServicesPage handles catalog vs. no-catalog
-    sessionStorage.setItem("maweja_open_cat", String(cat.id));
-    navigate("/services");
+    sessionStorage.setItem("maweja_service_request", JSON.stringify({
+      categoryId: cat.id,
+      categoryName: cat.name,
+      catalogItemId: null,
+      catalogItemName: null,
+      catalogItemPrice: null,
+      catalogItemImage: null,
+    }));
+    navigate("/services/new");
   };
 
   const handleStaticItem = (item: typeof staticItems[0]) => {
