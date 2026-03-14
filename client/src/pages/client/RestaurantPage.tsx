@@ -63,7 +63,9 @@ export default function RestaurantPage() {
         <div className="absolute bottom-4 left-4 right-4 text-white z-10">
           <div className="flex items-center gap-3">
             {restaurant?.logoUrl ? (
-              <img src={restaurant.logoUrl} alt={`${restaurant.name} logo`} className="w-12 h-12 rounded-xl object-cover border-2 border-white/30 flex-shrink-0 shadow-lg" data-testid="restaurant-detail-logo" />
+              <div className="w-12 h-12 rounded-xl bg-white flex-shrink-0 shadow-lg overflow-hidden flex items-center justify-center">
+                <img src={restaurant.logoUrl} alt={`${restaurant.name} logo`} className="w-full h-full object-contain p-1" data-testid="restaurant-detail-logo" />
+              </div>
             ) : (
               <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border-2 border-white/30">
                 <span className="text-white font-black text-lg">{restaurant?.name?.charAt(0)}</span>

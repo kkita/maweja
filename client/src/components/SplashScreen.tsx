@@ -3,13 +3,19 @@ import { useI18n, type Lang } from "../lib/i18n";
 import logoPath from "@assets/image_1772833363714.png";
 
 export default function SplashScreen() {
-  const { setLang, setHasChosenLanguage, t } = useI18n();
-  const [showLangPicker, setShowLangPicker] = useState(false);
+  const { setLang, setHasChosenLanguage } = useI18n();
+  const [phase, setPhase] = useState<"intro" | "lang">("intro");
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
+  const [logoVisible, setLogoVisible] = useState(false);
+  const [textVisible, setTextVisible] = useState(false);
+  const [taglineVisible, setTaglineVisible] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowLangPicker(true), 2000);
-    return () => clearTimeout(timer);
+    const t0 = setTimeout(() => setLogoVisible(true), 200);
+    const t1 = setTimeout(() => setTextVisible(true), 700);
+    const t2 = setTimeout(() => setTaglineVisible(true), 1100);
+    const t3 = setTimeout(() => setPhase("lang"), 2200);
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   const handleContinue = () => {
@@ -18,71 +24,140 @@ export default function SplashScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-red-50" />
+    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      style={{ background: "linear-gradient(160deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)" }}>
 
-      <div className="relative z-10 flex flex-col items-center">
-        <div className={`transition-all duration-1000 ${showLangPicker ? "mb-8" : "mb-0"}`}>
-          <img src={logoPath} alt="MAWEJA" className="w-32 h-32 object-contain animate-pulse" data-testid="img-splash-logo" />
-          <h1 className="text-4xl font-black text-red-600 text-center mt-4" data-testid="text-splash-title">MAWEJA</h1>
-          <p className="text-gray-400 text-xs text-center mt-2 font-medium tracking-wide">Food & Services Delivery</p>
+      {/* Animated circles background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-10 animate-pulse"
+          style={{ background: "radial-gradient(circle, #ffffff 0%, transparent 70%)" }} />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full opacity-10"
+          style={{ background: "radial-gradient(circle, #ffffff 0%, transparent 70%)", animationDelay: "1s" }} />
+        <div className="absolute top-1/3 -right-16 w-48 h-48 rounded-full opacity-5"
+          style={{ background: "radial-gradient(circle, #fbbf24 0%, transparent 70%)" }} />
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDuration: "2s" }} />
+        <div className="absolute top-2/3 right-1/4 w-1.5 h-1.5 bg-white/20 rounded-full animate-ping" style={{ animationDuration: "3s", animationDelay: "1s" }} />
+        <div className="absolute top-1/2 left-1/6 w-1 h-1 bg-white/25 rounded-full animate-ping" style={{ animationDuration: "2.5s", animationDelay: "0.5s" }} />
+        {/* Decorative ring */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: "20s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[440px] h-[440px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: "30s", animationDirection: "reverse" }} />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center px-6 w-full max-w-sm">
+
+        {/* Logo block */}
+        <div className={`flex flex-col items-center transition-all duration-700 ${phase === "lang" ? "mb-8 scale-90" : "mb-0"}`}>
+
+          {/* Logo circle */}
+          <div
+            className={`transition-all duration-700 ease-out ${logoVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-50 translate-y-8"}`}
+          >
+            <div className="relative">
+              {/* Outer glow ring */}
+              <div className="absolute inset-0 -m-3 rounded-[32px] bg-white/15 blur-xl" />
+              {/* Logo container */}
+              <div className="relative w-28 h-28 bg-white rounded-[28px] shadow-2xl flex items-center justify-center overflow-hidden"
+                style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.4), 0 0 0 4px rgba(255,255,255,0.15)" }}>
+                <img
+                  src={logoPath}
+                  alt="MAWEJA"
+                  className="w-full h-full object-contain p-2"
+                  data-testid="img-splash-logo"
+                />
+              </div>
+              {/* Pulse ring */}
+              {logoVisible && (
+                <div className="absolute inset-0 -m-1.5 rounded-[32px] border-2 border-white/30 animate-ping" style={{ animationDuration: "2s" }} />
+              )}
+            </div>
+          </div>
+
+          {/* MAWEJA title */}
+          <div className={`mt-6 text-center transition-all duration-600 delay-300 ${textVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
+            <h1 className="text-5xl font-black text-white tracking-tight drop-shadow-lg" data-testid="text-splash-title">
+              MAWEJA
+            </h1>
+          </div>
+
+          {/* Tagline */}
+          <div className={`mt-2 transition-all duration-600 delay-500 ${taglineVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
+            <p className="text-white/70 text-sm font-medium tracking-[0.2em] uppercase text-center">
+              Food & Services Delivery
+            </p>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="h-px w-8 bg-white/30" />
+              <span className="text-white/50 text-xs font-medium">Kinshasa, RDC</span>
+              <div className="h-px w-8 bg-white/30" />
+            </div>
+          </div>
         </div>
 
-        {showLangPicker && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-xs">
-            <p className="text-center text-gray-700 font-semibold mb-6" data-testid="text-choose-language">
+        {/* Language picker */}
+        {phase === "lang" && (
+          <div className="w-full animate-in fade-in slide-in-from-bottom-6 duration-500">
+
+            <p className="text-center text-white/80 font-semibold mb-5 text-sm tracking-wide uppercase" data-testid="text-choose-language">
               {selectedLang === "fr" ? "Choisissez votre langue" : "Choose your language"}
             </p>
 
-            <div className="space-y-3 mb-8">
-              <button
-                onClick={() => setSelectedLang("fr")}
-                data-testid="button-lang-fr"
-                className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all ${
-                  selectedLang === "fr"
-                    ? "border-red-600 bg-red-50 shadow-lg shadow-red-100"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <span className="text-2xl">🇫🇷</span>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">Francais</p>
-                  <p className="text-xs text-gray-500">French</p>
-                </div>
-                {selectedLang === "fr" && <div className="ml-auto w-5 h-5 bg-red-600 rounded-full flex items-center justify-center"><span className="text-white text-xs">✓</span></div>}
-              </button>
-
-              <button
-                onClick={() => setSelectedLang("en")}
-                data-testid="button-lang-en"
-                className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all ${
-                  selectedLang === "en"
-                    ? "border-red-600 bg-red-50 shadow-lg shadow-red-100"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <span className="text-2xl">🇬🇧</span>
-                <div className="text-left">
-                  <p className="font-bold text-gray-900">English</p>
-                  <p className="text-xs text-gray-500">Anglais</p>
-                </div>
-                {selectedLang === "en" && <div className="ml-auto w-5 h-5 bg-red-600 rounded-full flex items-center justify-center"><span className="text-white text-xs">✓</span></div>}
-              </button>
+            <div className="space-y-3 mb-6">
+              {[
+                { code: "fr" as Lang, flag: "🇫🇷", label: "Français", sub: "French" },
+                { code: "en" as Lang, flag: "🇬🇧", label: "English", sub: "Anglais" },
+              ].map(({ code, flag, label, sub }) => (
+                <button
+                  key={code}
+                  onClick={() => setSelectedLang(code)}
+                  data-testid={`button-lang-${code}`}
+                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 active:scale-[0.97] ${
+                    selectedLang === code
+                      ? "bg-white shadow-2xl scale-[1.02]"
+                      : "bg-white/15 backdrop-blur-sm border border-white/20 hover:bg-white/25"
+                  }`}
+                >
+                  <span className="text-3xl">{flag}</span>
+                  <div className="text-left flex-1">
+                    <p className={`font-bold text-base ${selectedLang === code ? "text-gray-900" : "text-white"}`}>{label}</p>
+                    <p className={`text-xs mt-0.5 ${selectedLang === code ? "text-gray-400" : "text-white/60"}`}>{sub}</p>
+                  </div>
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                    selectedLang === code ? "border-red-600 bg-red-600" : "border-white/40"
+                  }`}>
+                    {selectedLang === code && (
+                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                </button>
+              ))}
             </div>
 
             <button
               onClick={handleContinue}
               data-testid="button-splash-continue"
-              className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-sm hover:bg-red-700 shadow-xl shadow-red-200 transition-all"
+              className="w-full bg-white text-red-600 py-4 rounded-2xl font-black text-base tracking-wide hover:bg-red-50 active:scale-[0.97] transition-all shadow-2xl"
+              style={{ boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
             >
-              {selectedLang === "fr" ? "Continuer" : "Continue"}
+              {selectedLang === "fr" ? "Commencer →" : "Get Started →"}
             </button>
+          </div>
+        )}
+
+        {/* Loading dots when still in intro phase */}
+        {phase === "intro" && logoVisible && (
+          <div className="mt-10 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
           </div>
         )}
       </div>
 
-      <p className="absolute bottom-6 text-[10px] text-gray-400 font-medium" data-testid="text-splash-signature">
-        Made By Khevin Andrew Kita - Ed Corporation
+      {/* Signature */}
+      <p className="absolute bottom-6 text-[10px] text-white/30 font-medium text-center px-4" data-testid="text-splash-signature">
+        Made By Khevin Andrew Kita — Ed Corporation
       </p>
     </div>
   );

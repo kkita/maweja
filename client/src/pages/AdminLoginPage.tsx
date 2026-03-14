@@ -31,7 +31,9 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-red-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={logoImg} alt="MAWEJA" className="w-20 h-20 rounded-3xl mx-auto mb-4 shadow-2xl shadow-red-900/50 object-cover" />
+          <div className="w-20 h-20 rounded-3xl mx-auto mb-4 bg-white shadow-2xl shadow-red-900/50 flex items-center justify-center overflow-hidden">
+            <img src={logoImg} alt="MAWEJA" className="w-full h-full object-contain p-1" />
+          </div>
           <h1 className="text-3xl font-black text-white">MAWEJA</h1>
           <p className="text-slate-400 mt-1 text-sm">Administration & Dashboard</p>
         </div>

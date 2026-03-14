@@ -5,14 +5,12 @@ import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/AdBanner";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X } from "lucide-react";
+import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Restaurant, PromoBanner } from "@shared/schema";
 
 function PromoBannerBlock() {
-  const { data: banner } = useQuery<PromoBanner>({
-    queryKey: ["/api/promo-banner"],
-  });
+  const { data: banner } = useQuery<PromoBanner>({ queryKey: ["/api/promo-banner"] });
 
   const defaults = {
     tagText: "Offre Spéciale",
@@ -25,53 +23,137 @@ function PromoBannerBlock() {
     linkUrl: null as string | null,
   };
   const b = { ...defaults, ...banner };
-
   if (!b.isActive) return null;
 
   const content = (
     <div
-      className="rounded-2xl p-5 mb-6 text-white relative overflow-hidden"
-      style={{ background: `linear-gradient(to right, ${b.bgColorFrom}, ${b.bgColorTo})` }}
+      className="rounded-3xl p-5 mb-5 text-white relative overflow-hidden"
+      style={{ background: `linear-gradient(135deg, ${b.bgColorFrom} 0%, ${b.bgColorTo} 100%)` }}
       data-testid="promo-banner"
     >
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-8 -right-8 w-36 h-36 rounded-full bg-white/10" />
+        <div className="absolute -bottom-6 right-12 w-24 h-24 rounded-full bg-white/5" />
+        <div className="absolute top-3 right-1/3 w-3 h-3 rounded-full bg-white/20 animate-ping" style={{ animationDuration: "3s" }} />
+      </div>
       <div className="relative z-10">
-        <div className="flex items-center gap-1 mb-2">
-          <Flame size={16} />
+        <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
+          <Flame size={12} />
           <span className="text-xs font-bold uppercase tracking-wider">{b.tagText}</span>
         </div>
-        <h3 className="text-xl font-bold">{b.title}</h3>
+        <h3 className="text-xl font-black leading-tight">{b.title}</h3>
         <p className="text-white/80 text-sm mt-1">{b.subtitle}</p>
         {b.buttonText && (
           <button
-            className="mt-3 bg-white px-4 py-2 rounded-xl text-xs font-bold"
+            className="mt-4 bg-white px-5 py-2 rounded-xl text-xs font-black shadow-lg active:scale-95 transition-all"
             style={{ color: b.bgColorFrom }}
             data-testid="button-promo"
           >
-            {b.buttonText}
+            {b.buttonText} →
           </button>
         )}
       </div>
-      <div className="absolute right-0 top-0 w-32 h-full rounded-l-full" style={{ background: "rgba(255,255,255,0.1)" }} />
     </div>
   );
 
-  if (b.linkUrl) {
-    return <a href={b.linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>;
-  }
+  if (b.linkUrl) return <a href={b.linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>;
   return content;
 }
 
 const categories = [
-  { name: "Tous", nameEn: "All", cuisine: null },
-  { name: "Burgers", nameEn: "Burgers", cuisine: "Burgers" },
-  { name: "Congolais", nameEn: "Congolese", cuisine: "Congolais" },
-  { name: "Grillades", nameEn: "Grills", cuisine: "Grillades" },
-  { name: "Fast Food", nameEn: "Fast Food", cuisine: "Fast Food" },
-  { name: "Gastronomique", nameEn: "Fine Dining", cuisine: "Gastronomique" },
-  { name: "Libanais", nameEn: "Lebanese", cuisine: "Libanais" },
-  { name: "International", nameEn: "International", cuisine: "International" },
-  { name: "Supermarche", nameEn: "Supermarket", cuisine: "Supermarche" },
+  { name: "🍽️ Tous", nameEn: "🍽️ All", cuisine: null },
+  { name: "🇨🇩 Congolais", nameEn: "🇨🇩 Congolese", cuisine: "Congolais" },
+  { name: "🍔 Burgers", nameEn: "🍔 Burgers", cuisine: "Burgers" },
+  { name: "🍕 Pizza", nameEn: "🍕 Pizza", cuisine: "Pizza" },
+  { name: "☕ Café & Brunch", nameEn: "☕ Café & Brunch", cuisine: "Café & Brunch" },
+  { name: "🔥 Grillades", nameEn: "🔥 Grills", cuisine: "Grillades" },
+  { name: "🌯 Fast Food", nameEn: "🌯 Fast Food", cuisine: "Fast Food" },
+  { name: "⭐ Gastro", nameEn: "⭐ Fine Dining", cuisine: "Gastronomique" },
+  { name: "🧆 Libanais", nameEn: "🧆 Lebanese", cuisine: "Libanais" },
+  { name: "🌍 International", nameEn: "🌍 International", cuisine: "International" },
 ];
+
+function RestaurantCard({ r, idx, onClick }: { r: Restaurant; idx: number; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      data-testid={`restaurant-card-${r.id}`}
+      className={`w-full bg-white dark:bg-gray-900 rounded-3xl overflow-hidden active:scale-[0.97] transition-all duration-200 text-left fade-in-up stagger-${Math.min(idx + 1, 6)}`}
+      style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)" }}
+    >
+      {/* Cover image */}
+      <div className="relative h-44">
+        <img src={r.image} alt={r.name} className="w-full h-full object-cover" loading="lazy" />
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+        {/* Closed overlay */}
+        {!r.isActive && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
+            <span className="text-white font-black text-sm bg-black/70 px-4 py-2 rounded-xl tracking-wide">FERMÉ</span>
+          </div>
+        )}
+
+        {/* Rating badge */}
+        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-2xl px-2.5 py-1.5 flex items-center gap-1 shadow-lg">
+          <Star size={11} className="text-amber-500 fill-amber-500" />
+          <span className="text-xs font-black text-gray-900">{r.rating}</span>
+        </div>
+
+        {/* Top-left badge for popular */}
+        {r.rating >= 4.7 && (
+          <div className="absolute top-3 left-3 bg-amber-500 text-white rounded-xl px-2.5 py-1 flex items-center gap-1">
+            <TrendingUp size={10} />
+            <span className="text-[10px] font-black uppercase tracking-wide">Top</span>
+          </div>
+        )}
+
+        {/* Bottom info overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+          <div className="flex items-center gap-2.5">
+            {/* Restaurant logo */}
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-xl flex items-center justify-center overflow-hidden flex-shrink-0 ring-2 ring-white/50">
+              {r.logoUrl ? (
+                <img src={r.logoUrl} alt={`${r.name} logo`} className="w-full h-full object-contain p-1"
+                  data-testid={`restaurant-logo-${r.id}`} loading="lazy" />
+              ) : (
+                <span className="text-red-600 font-black text-lg">{r.name.charAt(0)}</span>
+              )}
+            </div>
+            <div>
+              <h4 className="font-black text-white text-base leading-tight drop-shadow">{r.name}</h4>
+              <span className="text-white/80 text-xs font-medium">{r.cuisine}</span>
+            </div>
+          </div>
+          {/* Delivery time pill */}
+          <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2.5 py-1.5 rounded-xl">
+            <Zap size={10} className="text-amber-400" />
+            <span className="text-white text-[11px] font-bold">{r.deliveryTime}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div className="px-4 py-3">
+        <p className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1 mb-3">{r.description}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
+            <ChefHat size={10} />
+            <span className="text-[11px] font-medium">{r.prepTime || r.deliveryTime}</span>
+          </div>
+          <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
+          <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500 min-w-0">
+            <MapPin size={10} className="flex-shrink-0" />
+            <span className="text-[11px] font-medium truncate">{r.address.split(",")[0]}</span>
+          </div>
+          <div className="ml-auto text-[11px] font-black text-red-600 bg-red-50 dark:bg-red-900/20 px-2.5 py-1 rounded-xl">
+            {formatPrice(r.deliveryFee)} livraison
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
 
 export default function HomePage() {
   const [, navigate] = useLocation();
@@ -95,19 +177,26 @@ export default function HomePage() {
   });
 
   const displayedRestaurants = showAll || activeCategory || searchQuery.trim() ? filtered : filtered.slice(0, 6);
+  const featuredRestaurants = restaurants.filter(r => r.rating >= 4.6).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <ClientNav />
-      <div className="max-w-lg mx-auto px-4 py-4">
-        <div className="mb-6 fade-in-up">
+
+      <div className="max-w-lg mx-auto px-4 pt-4">
+
+        {/* Greeting */}
+        <div className="mb-5 fade-in-up">
           <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-            {user ? `${t.client.hello} ${user.name?.split(" ")[0]} 👋` : `Bienvenue sur MAWEJA 👋`}
+            {user ? `${t.client.hello} ${user.name?.split(" ")[0]} 👋` : "Bienvenue sur MAWEJA 👋"}
           </p>
-          <h2 className="text-2xl font-black text-gray-900 dark:text-white mt-1">{t.client.whatToEat}</h2>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white mt-0.5 leading-tight">
+            {t.client.whatToEat}
+          </h2>
         </div>
 
-        <div className="relative mb-6 fade-in-up stagger-1">
+        {/* Search bar */}
+        <div className="relative mb-5 fade-in-up stagger-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
@@ -115,7 +204,8 @@ export default function HomePage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="input-search"
-            className="w-full pl-11 pr-10 py-3.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent shadow-sm transition-shadow hover:shadow-md"
+            className="w-full pl-11 pr-10 py-3.5 bg-white dark:bg-gray-900 rounded-2xl text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all"
+            style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)" }}
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors" data-testid="button-clear-search">
@@ -124,27 +214,67 @@ export default function HomePage() {
           )}
         </div>
 
-        <div className="fade-in-up stagger-2">
-          <AdBanner />
-        </div>
+        {/* Ads */}
+        <div className="fade-in-up stagger-2"><AdBanner /></div>
 
-        <div className="fade-in-up stagger-3">
-          <PromoBannerBlock />
-        </div>
+        {/* Promo banner */}
+        <div className="fade-in-up stagger-3"><PromoBannerBlock /></div>
 
-        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 -mx-1 px-1 fade-in-up stagger-4">
+        {/* Featured strip (horizontal scroll) - only when no search/filter */}
+        {!searchQuery && !activeCategory && featuredRestaurants.length > 0 && (
+          <div className="mb-6 fade-in-up stagger-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 bg-red-600 rounded-full" />
+                <h3 className="text-base font-black text-gray-900 dark:text-white">⭐ Les meilleurs</h3>
+              </div>
+            </div>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-1 px-1 pb-1">
+              {featuredRestaurants.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => navigate(`/restaurant/${r.id}`)}
+                  data-testid={`featured-card-${r.id}`}
+                  className="flex-shrink-0 w-44 bg-white dark:bg-gray-900 rounded-2xl overflow-hidden active:scale-[0.96] transition-all"
+                  style={{ boxShadow: "0 4px 16px rgba(0,0,0,0.10)" }}
+                >
+                  <div className="relative h-28">
+                    <img src={r.image} alt={r.name} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                    <div className="absolute bottom-2 left-2 right-2">
+                      <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-lg px-1.5 py-0.5 w-fit">
+                        <Star size={9} className="text-amber-400 fill-amber-400" />
+                        <span className="text-white text-[10px] font-black">{r.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-2.5">
+                    <p className="font-black text-gray-900 dark:text-white text-xs leading-tight line-clamp-1">{r.name}</p>
+                    <p className="text-gray-400 text-[10px] mt-0.5 flex items-center gap-1">
+                      <Clock size={9} />{r.deliveryTime}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Category pills */}
+        <div className="flex gap-2 overflow-x-auto no-scrollbar mb-5 -mx-1 px-1 fade-in-up stagger-5 pb-0.5">
           {visibleCategories.map((c) => {
             const isActive = activeCategory === c.cuisine;
             return (
               <button
                 key={c.name}
                 onClick={() => { setActiveCategory(isActive ? null : c.cuisine); setShowAll(false); }}
-                data-testid={`category-${c.name.toLowerCase().replace(/\s/g, "-")}`}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all active:scale-90 ${
+                data-testid={`category-${c.name.toLowerCase().replace(/[\s🍽️🇨🇩🍔🍕☕🔥🌯⭐🧆🌍]/g, "").toLowerCase().replace(/[&]/g, "").replace(/\s+/g, "-")}`}
+                className={`flex-shrink-0 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap ${
                   isActive
-                    ? "bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-red-900/30"
-                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-red-300 hover:text-red-600"
+                    ? "bg-red-600 text-white shadow-lg"
+                    : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-gray-800"
                 }`}
+                style={isActive ? { boxShadow: "0 4px 16px rgba(220,38,38,0.4)" } : { boxShadow: "0 1px 6px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)" }}
               >
                 {lang === "en" ? c.nameEn : c.name}
               </button>
@@ -152,40 +282,48 @@ export default function HomePage() {
           })}
         </div>
 
+        {/* Section header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-            {activeCategory ? activeCategory : searchQuery ? t.client.results : t.client.popularRestaurants}
-          </h3>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-5 bg-red-600 rounded-full" />
+            <h3 className="text-base font-black text-gray-900 dark:text-white">
+              {activeCategory ? (categories.find(c => c.cuisine === activeCategory)?.name ?? activeCategory)
+                : searchQuery ? t.client.results
+                : t.client.popularRestaurants}
+            </h3>
+          </div>
           {!showAll && !activeCategory && !searchQuery && filtered.length > 6 && (
-            <button onClick={() => setShowAll(true)} className="text-red-600 text-xs font-semibold flex items-center gap-0.5" data-testid="button-see-all">
+            <button onClick={() => setShowAll(true)} className="flex items-center gap-0.5 text-red-600 text-xs font-bold" data-testid="button-see-all">
               {t.common.seeAll} <ChevronRight size={14} />
             </button>
           )}
           {(showAll || activeCategory || searchQuery) && (
-            <span className="text-xs text-gray-400 font-medium" data-testid="text-result-count">{filtered.length} {t.common.restaurant}{filtered.length !== 1 ? "s" : ""}</span>
+            <span className="text-xs text-gray-400 font-medium" data-testid="text-result-count">
+              {filtered.length} {t.common.restaurant}{filtered.length !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
 
+        {/* Restaurant list */}
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
-                <div className="h-36 skeleton-shimmer" />
+              <div key={i} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+                <div className="h-44 skeleton-shimmer" />
                 <div className="p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl skeleton-shimmer flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="h-3.5 w-40 skeleton-shimmer rounded mb-2" />
-                      <div className="h-2.5 w-28 skeleton-shimmer rounded" />
-                    </div>
+                  <div className="h-2.5 w-full skeleton-shimmer rounded-full" />
+                  <div className="flex gap-3">
+                    <div className="h-2 w-20 skeleton-shimmer rounded-full" />
+                    <div className="h-2 w-28 skeleton-shimmer rounded-full" />
+                    <div className="ml-auto h-2 w-16 skeleton-shimmer rounded-full" />
                   </div>
-                  <div className="h-2.5 w-full skeleton-shimmer rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : displayedRestaurants.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center border border-gray-100 dark:border-gray-800 fade-in" data-testid="text-no-results">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl p-12 text-center fade-in" data-testid="text-no-results"
+            style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
             <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search size={28} className="text-gray-300 dark:text-gray-600" />
             </div>
@@ -195,7 +333,7 @@ export default function HomePage() {
             </p>
             <button
               onClick={() => { setActiveCategory(null); setSearchQuery(""); setShowAll(false); }}
-              className="mt-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-semibold px-4 py-2 rounded-xl hover:bg-red-100 transition-colors active:scale-95"
+              className="mt-4 bg-red-600 text-white text-sm font-bold px-6 py-2.5 rounded-xl active:scale-95 transition-all"
               data-testid="button-reset-filters"
             >
               {t.client.seeAllRestaurants}
@@ -204,62 +342,20 @@ export default function HomePage() {
         ) : (
           <div className="space-y-4">
             {displayedRestaurants.map((r, idx) => (
-              <button
-                key={r.id}
-                onClick={() => navigate(`/restaurant/${r.id}`)}
-                data-testid={`restaurant-card-${r.id}`}
-                className={`w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 text-left fade-in-up stagger-${Math.min(idx + 1, 6)}`}
-              >
-                <div className="relative h-36">
-                  <img src={r.image} alt={r.name} className="w-full h-full object-cover" loading="lazy" />
-                  {!r.isActive && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <span className="text-white font-bold text-sm bg-black/60 px-3 py-1 rounded-lg">Fermé</span>
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm rounded-xl px-2.5 py-1 flex items-center gap-1 shadow-sm">
-                    <Star size={12} className="text-yellow-500 fill-yellow-500" />
-                    <span className="text-xs font-bold text-gray-900">{r.rating}</span>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-3">
-                    <span className="text-white text-xs font-bold px-2.5 py-1 bg-red-600/80 rounded-lg backdrop-blur-sm">{r.cuisine}</span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-center gap-2.5">
-                    {r.logoUrl ? (
-                      <img src={r.logoUrl} alt={`${r.name} logo`} className="w-9 h-9 rounded-xl object-cover border border-gray-100 dark:border-gray-700 flex-shrink-0" data-testid={`restaurant-logo-${r.id}`} loading="lazy" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 flex items-center justify-center flex-shrink-0 border border-red-100 dark:border-red-900">
-                        <span className="text-red-600 font-black text-sm">{r.name.charAt(0)}</span>
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h4 className="font-black text-gray-900 dark:text-white text-sm">{r.name}</h4>
-                      <p className="text-gray-500 dark:text-gray-400 text-xs line-clamp-1 mt-0.5">{r.description}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 mt-3 flex-wrap">
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400" data-testid={`restaurant-prep-time-${r.id}`}>
-                      <ChefHat size={11} />
-                      <span className="text-[11px] font-medium">{t.client.prep}: {r.prepTime || r.deliveryTime}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                      <Clock size={11} />
-                      <span className="text-[11px] font-medium">{r.deliveryTime}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 flex-1 min-w-0">
-                      <MapPin size={11} className="flex-shrink-0" />
-                      <span className="text-[11px] font-medium truncate">{r.address.split(",")[0]}</span>
-                    </div>
-                    <div className="text-[11px] font-black text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-lg">
-                      {formatPrice(r.deliveryFee)} {t.client.deliveryFee}
-                    </div>
-                  </div>
-                </div>
-              </button>
+              <RestaurantCard key={r.id} r={r} idx={idx} onClick={() => navigate(`/restaurant/${r.id}`)} />
             ))}
           </div>
+        )}
+
+        {/* Show more */}
+        {!showAll && !activeCategory && !searchQuery && filtered.length > 6 && (
+          <button
+            onClick={() => setShowAll(true)}
+            data-testid="button-load-more"
+            className="w-full mt-4 py-3.5 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm font-bold hover:border-red-300 hover:text-red-600 transition-all active:scale-[0.98]"
+          >
+            Voir tous les restaurants ({filtered.length})
+          </button>
         )}
       </div>
     </div>
