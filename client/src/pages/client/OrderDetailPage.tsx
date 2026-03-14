@@ -211,7 +211,8 @@ export default function OrderDetailPage() {
                       >
                         {step.label}
                       </p>
-                      {isCurrent && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">En cours...</p>}
+                      {isCurrent && i < steps.length - 1 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">En cours...</p>}
+                      {isCurrent && i === steps.length - 1 && <p className="text-xs text-green-600 dark:text-green-400 font-semibold mt-0.5">Terminé ✓</p>}
                     </div>
                   </div>
                 );
