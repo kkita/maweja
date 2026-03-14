@@ -22,6 +22,7 @@ export default function AdminServices() {
   const [showCatModal, setShowCatModal] = useState(false);
   const [catName, setCatName] = useState("");
   const [catIcon, setCatIcon] = useState("Briefcase");
+  const [catImageUrl, setCatImageUrl] = useState("");
   const [catDesc, setCatDesc] = useState("");
   const [editingCat, setEditingCat] = useState<ServiceCategory | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
@@ -69,7 +70,7 @@ export default function AdminServices() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/service-categories"] });
       setShowCatModal(false);
-      setCatName(""); setCatIcon("Briefcase"); setCatDesc("");
+      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc("");
       toast({ title: t.common.success, description: t.admin.newCategory });
     },
     onError: (err: any) => errToast(err, "Impossible de créer la catégorie"),
@@ -251,7 +252,7 @@ export default function AdminServices() {
 
       {tab === "categories" && (
         <>
-          <button onClick={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatDesc(""); }}
+          <button onClick={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); }}
             data-testid="button-add-category"
             className="mb-4 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-red-700">
             <Plus size={16} /> {t.admin.newCategory}
@@ -268,7 +269,7 @@ export default function AdminServices() {
                     </span>
                   </div>
                   <div className="flex gap-1">
-                    <button onClick={() => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatDesc(cat.description); }}
+                    <button onClick={() => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); }}
                       className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center hover:bg-gray-100" data-testid={`button-edit-cat-${cat.id}`}>
                       <Edit2 size={14} className="text-gray-500 dark:text-gray-400" />
                     </button>
@@ -413,11 +414,32 @@ export default function AdminServices() {
                   className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryIcon}</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Icône URL (image)</label>
+                <div className="flex gap-2 items-center">
+                  {catImageUrl && (
+                    <div className="w-12 h-12 rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden flex-shrink-0 bg-gray-50">
+                      <img src={catImageUrl} alt="icone" className="w-10 h-10 object-contain" onError={(e) => (e.currentTarget.style.display = "none")} />
+                    </div>
+                  )}
+                  <input
+                    type="url"
+                    value={catImageUrl}
+                    onChange={e => setCatImageUrl(e.target.value)}
+                    placeholder="https://... (URL de l'image ou icône)"
+                    data-testid="input-cat-image-url"
+                    className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                  <Image size={10} /> Laissez vide pour utiliser l'emoji ci-dessous
+                </p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryIcon} (emoji si pas d'image)</label>
                 <select value={catIcon} onChange={e => setCatIcon(e.target.value)}
                   data-testid="select-cat-icon"
                   className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
-                  {["Briefcase","Hotel","Car","Sparkles","Package","PartyPopper","Wrench","Bike","HelpCircle"].map(i => (
+                  {["💼","🏨","🚗","✨","📦","🎉","🔧","🚴","❓","✂️","💅","💆","🧹","🍽️","🛒","🏠","🌟","💡"].map(i => (
                     <option key={i} value={i}>{i}</option>
                   ))}
                 </select>
@@ -434,9 +456,9 @@ export default function AdminServices() {
                   return;
                 }
                 if (editingCat) {
-                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, description: catDesc } });
+                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc } });
                 } else {
-                  createCatMutation.mutate({ name: catName, icon: catIcon, description: catDesc });
+                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc });
                 }
               }} data-testid="button-save-category"
                 className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700">

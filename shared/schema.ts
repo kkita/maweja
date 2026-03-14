@@ -177,6 +177,7 @@ export const serviceCategories = pgTable("service_categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   icon: text("icon").notNull().default("Briefcase"),
+  imageUrl: text("image_url").default(""),
   description: text("description").notNull().default(""),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),

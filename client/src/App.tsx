@@ -5,7 +5,7 @@ import { CartProvider } from "./lib/cart";
 import { I18nProvider, useI18n } from "./lib/i18n";
 import { ThemeProvider } from "./lib/theme";
 import { Switch, Route, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { connectWS, disconnectWS } from "./lib/websocket";
 import { requestNotifPermission } from "./lib/notify";
 import AdminAccounts from "./pages/admin/AdminAccounts";
@@ -76,18 +76,23 @@ function MobileModeGuard() {
 function AppRoutes() {
   const { user, loading } = useAuth();
   const { hasChosenLanguage, t } = useI18n();
+  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("maweja_splashed"));
 
   useDynamicFavicon();
 
   useEffect(() => {
     if (user?.id) {
       connectWS(user.id);
-      // Request notification permission for both native and web browsers
       requestNotifPermission().catch(() => {});
     } else if (user === null) {
       disconnectWS();
     }
   }, [user?.id]);
+
+  const dismissSplash = () => {
+    sessionStorage.setItem("maweja_splashed", "1");
+    setShowSplash(false);
+  };
 
   if (loading) {
     return (
@@ -98,6 +103,10 @@ function AppRoutes() {
         </div>
       </div>
     );
+  }
+
+  if (showSplash && user?.role !== "admin") {
+    return <SplashScreen onDone={dismissSplash} />;
   }
 
   if (user?.role === "admin" && MOBILE_MODE !== "client" && MOBILE_MODE !== "driver") {
@@ -122,12 +131,7 @@ function AppRoutes() {
     );
   }
 
-  if (!hasChosenLanguage && !user) {
-    return <SplashScreen />;
-  }
-
   if (user?.role === "driver") {
-    if (!hasChosenLanguage) return <SplashScreen />;
     if (user.verificationStatus !== "approved") {
       return <DriverOnboarding />;
     }
@@ -145,7 +149,6 @@ function AppRoutes() {
   }
 
   if (user?.role === "client") {
-    if (!hasChosenLanguage) return <SplashScreen />;
     return (
       <>
         <Switch>

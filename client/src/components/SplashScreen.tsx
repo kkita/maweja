@@ -1,103 +1,97 @@
 import { useState, useEffect } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
-import logoPath from "@assets/image_1772833363714.png";
 
-export default function SplashScreen() {
-  const { setLang, setHasChosenLanguage } = useI18n();
+interface SplashScreenProps {
+  onDone?: () => void;
+}
+
+export default function SplashScreen({ onDone }: SplashScreenProps) {
+  const { setLang, setHasChosenLanguage, hasChosenLanguage } = useI18n();
   const [phase, setPhase] = useState<"intro" | "lang">("intro");
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
-  const [logoVisible, setLogoVisible] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [textVisible, setTextVisible] = useState(false);
   const [taglineVisible, setTaglineVisible] = useState(false);
 
   useEffect(() => {
-    const t0 = setTimeout(() => setLogoVisible(true), 200);
-    const t1 = setTimeout(() => setTextVisible(true), 700);
-    const t2 = setTimeout(() => setTaglineVisible(true), 1100);
-    const t3 = setTimeout(() => setPhase("lang"), 2200);
+    const t0 = setTimeout(() => setVisible(true), 200);
+    const t1 = setTimeout(() => setTextVisible(true), 600);
+    const t2 = setTimeout(() => setTaglineVisible(true), 1000);
+    const t3 = setTimeout(() => {
+      if (hasChosenLanguage) {
+        onDone?.();
+      } else {
+        setPhase("lang");
+      }
+    }, 5000);
     return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   const handleContinue = () => {
     setLang(selectedLang);
     setHasChosenLanguage(true);
+    onDone?.();
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ background: "linear-gradient(160deg, #dc2626 0%, #b91c1c 50%, #991b1b 100%)" }}>
-
-      {/* Animated circles background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-10 animate-pulse"
-          style={{ background: "radial-gradient(circle, #ffffff 0%, transparent 70%)" }} />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #ffffff 0%, transparent 70%)", animationDelay: "1s" }} />
-        <div className="absolute top-1/3 -right-16 w-48 h-48 rounded-full opacity-5"
-          style={{ background: "radial-gradient(circle, #fbbf24 0%, transparent 70%)" }} />
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-white/30 rounded-full animate-ping" style={{ animationDuration: "2s" }} />
-        <div className="absolute top-2/3 right-1/4 w-1.5 h-1.5 bg-white/20 rounded-full animate-ping" style={{ animationDuration: "3s", animationDelay: "1s" }} />
-        <div className="absolute top-1/2 left-1/6 w-1 h-1 bg-white/25 rounded-full animate-ping" style={{ animationDuration: "2.5s", animationDelay: "0.5s" }} />
-        {/* Decorative ring */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: "20s" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[440px] h-[440px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: "30s", animationDirection: "reverse" }} />
-      </div>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden select-none"
+      style={{ backgroundColor: "#dc2626" }}
+    >
+      {/* Subtle vignette edges */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.12) 100%)" }} />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center px-6 w-full max-w-sm">
 
         {/* Logo block */}
-        <div className={`flex flex-col items-center transition-all duration-700 ${phase === "lang" ? "mb-8 scale-90" : "mb-0"}`}>
+        <div className={`flex flex-col items-center transition-all duration-500 ${phase === "lang" ? "mb-10 scale-90" : "mb-0"}`}>
 
-          {/* Logo circle */}
-          <div
-            className={`transition-all duration-700 ease-out ${logoVisible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-50 translate-y-8"}`}
-          >
-            <div className="relative">
-              {/* Outer glow ring */}
-              <div className="absolute inset-0 -m-3 rounded-[32px] bg-white/15 blur-xl" />
-              {/* Logo container */}
-              <div className="relative w-28 h-28 bg-white rounded-[28px] shadow-2xl flex items-center justify-center overflow-hidden"
-                style={{ boxShadow: "0 25px 60px rgba(0,0,0,0.4), 0 0 0 4px rgba(255,255,255,0.15)" }}>
-                <img
-                  src={logoPath}
-                  alt="MAWEJA"
-                  className="w-full h-full object-contain p-2"
-                  data-testid="img-splash-logo"
-                />
-              </div>
-              {/* Pulse ring */}
-              {logoVisible && (
-                <div className="absolute inset-0 -m-1.5 rounded-[32px] border-2 border-white/30 animate-ping" style={{ animationDuration: "2s" }} />
-              )}
-            </div>
-          </div>
-
-          {/* MAWEJA title */}
-          <div className={`mt-6 text-center transition-all duration-600 delay-300 ${textVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-            <h1 className="text-5xl font-black text-white tracking-tight drop-shadow-lg" data-testid="text-splash-title">
+          {/* MAWEJA text — white, no background */}
+          <div className={`text-center transition-all duration-700 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-6"}`}>
+            <h1
+              className="text-[64px] leading-none text-white drop-shadow-sm"
+              style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, letterSpacing: "-0.02em" }}
+              data-testid="text-splash-title"
+            >
               MAWEJA
             </h1>
           </div>
 
-          {/* Tagline */}
-          <div className={`mt-2 transition-all duration-600 delay-500 ${taglineVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
-            <p className="text-white/70 text-sm font-medium tracking-[0.2em] uppercase text-center">
-              Food & Services Delivery
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <div className="h-px w-8 bg-white/30" />
-              <span className="text-white/50 text-xs font-medium">Kinshasa, RDC</span>
-              <div className="h-px w-8 bg-white/30" />
+          {/* Divider line */}
+          <div className={`mt-4 transition-all duration-500 ${textVisible ? "opacity-100" : "opacity-0"}`}>
+            <div className="flex items-center gap-3">
+              <div className="h-px w-12 bg-white/40" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
+              <div className="h-px w-12 bg-white/40" />
             </div>
           </div>
+
+          {/* Tagline */}
+          <div className={`mt-3 text-center transition-all duration-500 ${taglineVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
+            <p className="text-white/75 text-sm font-medium tracking-[0.22em] uppercase">
+              Food &amp; Services Delivery
+            </p>
+            <p className="text-white/50 text-xs mt-1.5 tracking-widest font-medium">
+              Kinshasa, RDC
+            </p>
+          </div>
+
+          {/* Loading dots (intro phase only) */}
+          {phase === "intro" && taglineVisible && (
+            <div className="mt-10 flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          )}
         </div>
 
-        {/* Language picker */}
+        {/* Language picker (only if language not chosen yet) */}
         {phase === "lang" && (
           <div className="w-full animate-in fade-in slide-in-from-bottom-6 duration-500">
-
-            <p className="text-center text-white/80 font-semibold mb-5 text-sm tracking-wide uppercase" data-testid="text-choose-language">
+            <p className="text-center text-white/85 font-semibold mb-5 text-sm tracking-wide uppercase" data-testid="text-choose-language">
               {selectedLang === "fr" ? "Choisissez votre langue" : "Choose your language"}
             </p>
 
@@ -142,15 +136,6 @@ export default function SplashScreen() {
             >
               {selectedLang === "fr" ? "Commencer →" : "Get Started →"}
             </button>
-          </div>
-        )}
-
-        {/* Loading dots when still in intro phase */}
-        {phase === "intro" && logoVisible && (
-          <div className="mt-10 flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-            <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-            <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
           </div>
         )}
       </div>
