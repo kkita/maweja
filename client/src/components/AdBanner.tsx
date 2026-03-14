@@ -93,7 +93,22 @@ export default function AdBanner() {
   };
 
   if (isLoading) return <AdSkeleton />;
-  if (visibleAds.length === 0) return null;
+
+  if (visibleAds.length === 0) {
+    return (
+      <div
+        className="rounded-2xl overflow-hidden flex items-center justify-center"
+        style={{ height: 140, background: "linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%)", border: "2px dashed #e5e7eb" }}
+        data-testid="ad-placeholder"
+      >
+        <div className="text-center">
+          <Megaphone size={24} className="text-gray-300 mx-auto mb-1" />
+          <p className="text-xs text-gray-400 font-medium">Votre publicité ici</p>
+          <p className="text-[10px] text-gray-300">Contactez-nous : +243 819 994 041</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-sm" data-testid="ad-banner"

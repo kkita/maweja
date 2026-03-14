@@ -281,11 +281,11 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* ── Offres du jour — icon grid ───────────────────────── */}
+        {/* ── Maweja Services — 2 lignes scrollables ──────────── */}
         {!searchQuery && !activeCategory && (
           <div className="mb-5 fade-in-up stagger-3">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-200">Offres du jour</p>
+              <p className="text-[13px] font-semibold text-gray-800 dark:text-gray-200">Maweja Services</p>
               <button
                 onClick={() => navigate("/services")}
                 className="text-[11px] font-semibold text-red-600 flex items-center gap-0.5"
@@ -295,36 +295,49 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* Grid — 5 columns */}
-            <div className="grid grid-cols-5 gap-x-1 gap-y-3">
-              {/* Static quick-access items */}
-              {staticItems.map(item => (
-                <button
-                  key={item.key}
-                  onClick={() => handleStaticItem(item)}
-                  data-testid={`quicklink-${item.key}`}
-                  className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform"
-                >
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                    style={{ backgroundColor: item.bg, border: `1px solid ${item.color}22` }}
+            {/* 2-row horizontal scroll grid */}
+            <div
+              className="overflow-x-auto no-scrollbar -mx-4 px-4"
+              data-testid="services-scroll"
+            >
+              <div
+                className="grid gap-x-3 gap-y-3"
+                style={{
+                  gridTemplateRows: "repeat(2, auto)",
+                  gridAutoFlow: "column",
+                  width: "max-content",
+                }}
+              >
+                {/* Static quick-access items */}
+                {staticItems.map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => handleStaticItem(item)}
+                    data-testid={`quicklink-${item.key}`}
+                    className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform"
+                    style={{ width: 64 }}
                   >
-                    <span className="text-2xl">{item.emoji}</span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center leading-tight w-14 line-clamp-2">
-                    {lang === "en" ? item.labelEn : item.label}
-                  </span>
-                </button>
-              ))}
+                    <div
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                      style={{ backgroundColor: item.bg, border: `1px solid ${item.color}22` }}
+                    >
+                      <span className="text-2xl">{item.emoji}</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center leading-tight w-14 line-clamp-2">
+                      {lang === "en" ? item.labelEn : item.label}
+                    </span>
+                  </button>
+                ))}
 
-              {/* Dynamic service categories */}
-              {serviceCategories.filter(c => c.isActive).slice(0, 10).map(cat => (
-                <ServiceIcon
-                  key={cat.id}
-                  cat={cat}
-                  onClick={() => navigate(`/services`)}
-                />
-              ))}
+                {/* Dynamic service categories */}
+                {serviceCategories.filter(c => c.isActive).map(cat => (
+                  <ServiceIcon
+                    key={cat.id}
+                    cat={cat}
+                    onClick={() => navigate(`/services`)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         )}
