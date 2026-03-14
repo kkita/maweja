@@ -64,7 +64,7 @@ export default function ClientNav() {
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-white overflow-hidden ring-2 ring-red-100 dark:ring-red-900/30 shadow-lg shadow-red-100/50 dark:shadow-red-900/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-red-600 overflow-hidden ring-2 ring-red-500/40 shadow-lg shadow-red-600/30 flex items-center justify-center">
               <img src={logoImg} alt="MAWEJA" className="w-full h-full object-contain p-0.5" />
             </div>
             <div>

@@ -40,7 +40,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-red-600 via-red-700 to-red-900 flex">
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
-          <div className="w-20 h-20 rounded-3xl mb-8 bg-white shadow-2xl flex items-center justify-center overflow-hidden">
+          <div className="w-20 h-20 rounded-3xl mb-8 bg-red-600 shadow-2xl shadow-red-900/50 flex items-center justify-center overflow-hidden">
             <img src={logoImg} alt="MAWEJA" className="w-full h-full object-contain p-1" />
           </div>
           <h2 className="text-5xl font-black text-white leading-tight mb-4">
@@ -76,7 +76,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <div className="w-20 h-20 rounded-3xl mx-auto mb-4 bg-white shadow-2xl flex items-center justify-center overflow-hidden">
+            <div className="w-20 h-20 rounded-3xl mx-auto mb-4 bg-red-600 shadow-2xl shadow-red-900/30 flex items-center justify-center overflow-hidden">
               <img src={logoImg} alt="MAWEJA" className="w-full h-full object-contain p-1" />
             </div>
             <h1 className="text-3xl font-black text-white">MAWEJA</h1>
@@ -86,7 +86,7 @@ export default function LoginPage() {
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8">
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-red-600 shadow-md shadow-red-600/30 flex items-center justify-center overflow-hidden flex-shrink-0">
                   <img src={logoImg} alt="MAWEJA" className="w-full h-full object-contain p-0.5" />
                 </div>
                 <div>
