@@ -66,3 +66,9 @@ id = "6BSXxVpGhtcIuhL5izaEF"
 uri = "file://MAWEJA_v9.zip"
 type = "unspecified"
 title = "MAWEJA_v9.zip — Notifications rétablies (2.4 MB)"
+
+[[outputs]]
+id = "NqW2XGA-NICwuGqpffcp3"
+uri = "file://MAWEJA_source.zip"
+type = "unspecified"
+title = "MAWEJA — Code source complet (GitHub)"
