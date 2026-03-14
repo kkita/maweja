@@ -120,14 +120,12 @@ export default function ClientContactBubble() {
     return new Intl.DateTimeFormat("fr-CD", { hour: "2-digit", minute: "2-digit" }).format(new Date(date));
   };
 
-  if (!user) return null;
-
   return (
     <>
       <button
         onClick={() => { setIsOpen(!isOpen); if (!isOpen) { setView("menu"); setSelectedAdmin(null); } }}
         data-testid="button-contact-bubble"
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-red-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-red-300 hover:bg-red-700 transition-all hover:scale-110"
+        className="fixed bottom-[88px] right-4 z-50 w-14 h-14 bg-red-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-red-300 hover:bg-red-700 transition-all hover:scale-110"
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {!isOpen && totalUnread > 0 && (
@@ -146,6 +144,7 @@ export default function ClientContactBubble() {
                 <p className="text-red-200 text-xs mt-0.5">Comment pouvons-nous vous aider ?</p>
               </div>
               <div className="p-3 space-y-2">
+                {user ? (
                 <button onClick={() => {
                   const admin = admins.find((a: any) => a.isOnline) || admins[0];
                   if (admin) { setSelectedAdmin(admin); setView("chat"); }
@@ -165,6 +164,7 @@ export default function ClientContactBubble() {
                     </span>
                   )}
                 </button>
+              ) : null}
                 <button onClick={() => window.open(`https://wa.me/${whatsappNumber}?text=Bonjour MAWEJA, j'ai besoin d'aide.`, "_blank")} data-testid="button-whatsapp"
                   className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
                   <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
@@ -175,16 +175,18 @@ export default function ClientContactBubble() {
                     <p className="text-[10px] text-gray-400">Ecrivez-nous sur WhatsApp</p>
                   </div>
                 </button>
-                <button onClick={() => { setView("complaint"); setComplaintSent(false); }} data-testid="button-start-complaint"
-                  className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
-                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
-                    <AlertTriangle size={18} className="text-orange-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm text-gray-900">Reclamation</p>
-                    <p className="text-[10px] text-gray-400">Signalez un probleme structure</p>
-                  </div>
-                </button>
+                {user && (
+                  <button onClick={() => { setView("complaint"); setComplaintSent(false); }} data-testid="button-start-complaint"
+                    className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+                      <AlertTriangle size={18} className="text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-gray-900">Reclamation</p>
+                      <p className="text-[10px] text-gray-400">Signalez un probleme structure</p>
+                    </div>
+                  </button>
+                )}
               </div>
             </>
           )}

@@ -45,79 +45,61 @@ export default function ClientNav() {
   const unreadMsgCount = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
   const unreadNotifCount = notifications.filter(n => !n.isRead && n.type !== "chat").length;
 
-  const links = user
-    ? [
-        {
-          path: "/",
-          label: t.client.home,
-          badge: 0,
-          icon: (active: boolean) => (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-              <path d="M9 21V12h6v9" strokeWidth="1.8" fill="none" stroke="currentColor" />
-            </svg>
-          ),
-        },
-        {
-          path: "/cart",
-          label: t.client.cart,
-          badge: itemCount,
-          icon: (active: boolean) => (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
-            </svg>
-          ),
-        },
-        {
-          path: "/orders",
-          label: t.client.myOrders,
-          badge: unreadNotifCount,
-          icon: (active: boolean) => (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="18" rx="3" />
-              <path d="M7 8h10M7 12h7M7 16h5" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          ),
-        },
-        {
-          path: "/settings",
-          label: t.common.settings,
-          badge: 0,
-          icon: (active: boolean) => (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="8" r="4" fill={active ? "white" : "none"} stroke={active ? "transparent" : "currentColor"} strokeWidth="1.8" />
-              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          ),
-        },
-      ]
-    : [
-        {
-          path: "/",
-          label: t.client.home,
-          badge: 0,
-          icon: (active: boolean) => (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-              <path d="M9 21V12h6v9" strokeWidth="1.8" fill="none" stroke="currentColor" />
-            </svg>
-          ),
-        },
-        {
-          path: "/cart",
-          label: t.client.cart,
-          badge: itemCount,
-          icon: (active: boolean) => (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
-            </svg>
-          ),
-        },
-      ];
+  const handleProtectedNav = (path: string) => {
+    if (!user && (path === "/orders" || path === "/settings")) {
+      navigate("/login");
+    } else {
+      navigate(path);
+    }
+  };
+
+  const links = [
+    {
+      path: "/",
+      label: t.client.home,
+      badge: 0,
+      icon: (active: boolean) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+          <path d="M9 21V12h6v9" strokeWidth="1.8" fill="none" stroke="currentColor" />
+        </svg>
+      ),
+    },
+    {
+      path: "/cart",
+      label: t.client.cart,
+      badge: itemCount,
+      icon: (active: boolean) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.8" />
+          <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        </svg>
+      ),
+    },
+    {
+      path: "/orders",
+      label: t.client.myOrders,
+      badge: unreadNotifCount,
+      icon: (active: boolean) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="3" width="20" height="18" rx="3" />
+          <path d="M7 8h10M7 12h7M7 16h5" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
+      path: "/settings",
+      label: t.common.settings,
+      badge: 0,
+      icon: (active: boolean) => (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="8" r="4" fill={active ? "white" : "none"} stroke={active ? "transparent" : "currentColor"} strokeWidth="1.8" />
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -194,7 +176,7 @@ export default function ClientNav() {
             return (
               <button
                 key={l.path}
-                onClick={() => navigate(l.path)}
+                onClick={() => handleProtectedNav(l.path)}
                 data-testid={`nav-${l.path.replace(/\//g, "") || "home"}`}
                 className={`relative flex flex-col items-center justify-center gap-1 rounded-[20px] transition-all duration-250 active:scale-90 ${
                   isActive

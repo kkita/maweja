@@ -180,21 +180,24 @@ function AppRoutes() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={ClientHome} />
-      <Route path="/restaurant/:id" component={RestaurantPage} />
-      <Route path="/cart" component={CartPage} />
-      <Route path="/checkout" component={CheckoutPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/driver/login" component={DriverLoginPage} />
-      <Route path="/admin/login" component={AdminLoginPage} />
-      <Route path="/order/:id" component={OrderDetailPage} />
-      <Route path="/tracking/:id" component={TrackingPage} />
-      <Route path="/addresses" component={AddressPage} />
-      <Route path="/services" component={ServicesPage} />
-      <Route path="/presentation" component={PresentationPage} />
-      <Route component={ClientHome} />
-    </Switch>
+    <>
+      <Switch>
+        <Route path="/" component={ClientHome} />
+        <Route path="/restaurant/:id" component={RestaurantPage} />
+        <Route path="/cart" component={CartPage} />
+        <Route path="/checkout" component={CheckoutPage} />
+        <Route path="/login" component={LoginPage} />
+        <Route path="/driver/login" component={DriverLoginPage} />
+        <Route path="/admin/login" component={AdminLoginPage} />
+        <Route path="/order/:id" component={OrderDetailPage} />
+        <Route path="/tracking/:id" component={TrackingPage} />
+        <Route path="/addresses" component={AddressPage} />
+        <Route path="/services" component={ServicesPage} />
+        <Route path="/presentation" component={PresentationPage} />
+        <Route component={ClientHome} />
+      </Switch>
+      <ClientContactBubble />
+    </>
   );
 }
 
