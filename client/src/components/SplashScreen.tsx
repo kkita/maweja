@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
+import mawejaLogoSrc from "@assets/image_1772833363714.png";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -48,15 +49,15 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         {/* Logo block */}
         <div className={`flex flex-col items-center transition-all duration-500 ${phase === "lang" ? "mb-10 scale-90" : "mb-0"}`}>
 
-          {/* MAWEJA text — white, no background */}
-          <div className={`text-center transition-all duration-700 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-6"}`}>
-            <h1
-              className="text-[64px] leading-none text-white drop-shadow-sm"
-              style={{ fontFamily: "'Georgia', 'Times New Roman', serif", fontWeight: 400, letterSpacing: "-0.02em" }}
+          {/* MAWEJA logo image — white on red, no visible background */}
+          <div className={`transition-all duration-700 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-6"}`}>
+            <img
+              src={mawejaLogoSrc}
+              alt="MAWEJA"
               data-testid="text-splash-title"
-            >
-              MAWEJA
-            </h1>
+              className="w-56 h-auto object-contain"
+              style={{ mixBlendMode: "normal" }}
+            />
           </div>
 
           {/* Divider line */}
