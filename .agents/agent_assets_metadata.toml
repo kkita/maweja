@@ -72,3 +72,9 @@ id = "NqW2XGA-NICwuGqpffcp3"
 uri = "file://MAWEJA_source.zip"
 type = "unspecified"
 title = "MAWEJA — Code source actualisé (GitHub)"
+
+[[outputs]]
+id = "5Mqy7zfbRe8f8MBSiMvht"
+uri = "file://maweja-mobile-v2.zip"
+type = "unspecified"
+title = "MAWEJA Mobile v2 — Source complet (Android/iOS)"
