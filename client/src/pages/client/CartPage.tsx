@@ -5,6 +5,7 @@ import { useCart } from "../../lib/cart";
 import { useAuth } from "../../lib/auth";
 import { authFetch } from "../../lib/queryClient";
 import ClientNav from "../../components/ClientNav";
+import type { Restaurant } from "@shared/schema";
 import {
   MapPin,
   ShoppingBag,
@@ -41,11 +42,19 @@ export default function CartPage() {
     },
   });
 
+  const restaurantId = items.length > 0 ? items[0].restaurantId : null;
+
+  const { data: restaurant } = useQuery<Restaurant>({
+    queryKey: [`/api/restaurants/${restaurantId}`],
+    enabled: !!restaurantId,
+  });
+
   const defaultAddress =
     savedAddresses?.find((a) => a.isDefault) || savedAddresses?.[0] || null;
 
-  const deliveryFee = 2500;
-  const grandTotal = total + deliveryFee;
+  const deliveryFee = restaurant?.deliveryFee ?? 2;
+  const taxAmount = Math.round(total * 0.05 * 100) / 100;
+  const grandTotal = total + deliveryFee + taxAmount;
 
   const resolvedAddress = defaultAddress?.address || manualAddress;
 
@@ -102,7 +111,6 @@ export default function CartPage() {
     );
   }
 
-  const restaurantId = items[0].restaurantId;
   const restaurantName = items[0].restaurantName;
 
   return (
@@ -294,6 +302,10 @@ export default function CartPage() {
           <div className="flex justify-between gap-2 text-sm">
             <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
             <span className="font-semibold dark:text-white" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
+          </div>
+          <div className="flex justify-between gap-2 text-sm">
+            <span className="text-gray-500 dark:text-gray-400">Taxes (5%)</span>
+            <span className="font-semibold dark:text-white" data-testid="text-tax">{formatPrice(taxAmount)}</span>
           </div>
           <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex justify-between gap-2">
             <span className="font-bold dark:text-white">Total</span>

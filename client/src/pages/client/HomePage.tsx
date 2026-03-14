@@ -5,7 +5,7 @@ import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/AdBanner";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp } from "lucide-react";
+import { Star, Clock, MapPin, Search, ChevronRight, Flame, ChefHat, X, Zap, TrendingUp, Scissors, Hand, Heart, Home as HomeIcon, ArrowRight } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Restaurant, PromoBanner } from "@shared/schema";
 
@@ -220,9 +220,58 @@ export default function HomePage() {
         {/* Promo banner */}
         <div className="fade-in-up stagger-3"><PromoBannerBlock /></div>
 
+        {/* Services MAWEJA card */}
+        {!searchQuery && !activeCategory && (
+          <div className="mb-6 fade-in-up stagger-4">
+            <button
+              onClick={() => navigate("/services")}
+              data-testid="services-card"
+              className="w-full rounded-3xl overflow-hidden active:scale-[0.98] transition-all duration-200 text-left relative"
+              style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4c1d95 100%)", boxShadow: "0 8px 32px rgba(49,46,129,0.35)" }}
+            >
+              {/* Background decorations */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5" />
+                <div className="absolute -bottom-8 left-8 w-32 h-32 rounded-full bg-white/5" />
+                <div className="absolute top-4 right-1/3 w-2 h-2 rounded-full bg-violet-300/40 animate-ping" style={{ animationDuration: "3s" }} />
+              </div>
+              <div className="relative z-10 p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1 rounded-full mb-2">
+                      <span className="text-[10px] font-black text-violet-200 uppercase tracking-wider">À domicile · Kinshasa</span>
+                    </div>
+                    <h3 className="text-xl font-black text-white leading-tight">Services MAWEJA</h3>
+                    <p className="text-violet-200/80 text-xs mt-1">Coiffure, Massage, Ménage &amp; plus</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white/15 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <ArrowRight size={18} className="text-white" />
+                  </div>
+                </div>
+                {/* Service icons grid */}
+                <div className="flex gap-3">
+                  {[
+                    { icon: Scissors, label: "Coiffure", bg: "bg-pink-500/20" },
+                    { icon: Hand, label: "Manucure", bg: "bg-rose-500/20" },
+                    { icon: Heart, label: "Massage", bg: "bg-red-500/20" },
+                    { icon: HomeIcon, label: "Ménage", bg: "bg-violet-500/20" },
+                  ].map(({ icon: Icon, label, bg }) => (
+                    <div key={label} className="flex-1 flex flex-col items-center gap-1.5">
+                      <div className={`w-11 h-11 rounded-2xl ${bg} backdrop-blur-sm flex items-center justify-center border border-white/10`}>
+                        <Icon size={18} className="text-white" />
+                      </div>
+                      <span className="text-[9px] font-bold text-violet-200/90 text-center leading-tight">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Featured strip (horizontal scroll) - only when no search/filter */}
         {!searchQuery && !activeCategory && featuredRestaurants.length > 0 && (
-          <div className="mb-6 fade-in-up stagger-4">
+          <div className="mb-6 fade-in-up stagger-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-5 bg-red-600 rounded-full" />

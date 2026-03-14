@@ -2,8 +2,7 @@ import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetchJson, queryClient } from "../lib/queryClient";
-import { Home, ShoppingBag, ClipboardList, Settings, LogOut, LogIn, MessageCircle, Briefcase, Bell } from "lucide-react";
-import logoImg from "@assets/image_1772833363714.png";
+import { MapPin, LogOut, LogIn, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { onWSMessage } from "../lib/websocket";
@@ -48,30 +47,99 @@ export default function ClientNav() {
 
   const links = user
     ? [
-        { path: "/", icon: Home, label: t.client.home, badge: 0 },
-        { path: "/cart", icon: ShoppingBag, label: t.client.cart, badge: itemCount },
-        { path: "/orders", icon: ClipboardList, label: t.client.myOrders, badge: unreadNotifCount },
-        { path: "/services", icon: Briefcase, label: t.client.services, badge: 0 },
-        { path: "/settings", icon: Settings, label: t.common.settings, badge: 0 },
+        {
+          path: "/",
+          label: t.client.home,
+          badge: 0,
+          icon: (active: boolean) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+              <path d="M9 21V12h6v9" strokeWidth="1.8" fill="none" stroke="currentColor" />
+            </svg>
+          ),
+        },
+        {
+          path: "/cart",
+          label: t.client.cart,
+          badge: itemCount,
+          icon: (active: boolean) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+          ),
+        },
+        {
+          path: "/orders",
+          label: t.client.myOrders,
+          badge: unreadNotifCount,
+          icon: (active: boolean) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="18" rx="3" />
+              <path d="M7 8h10M7 12h7M7 16h5" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          ),
+        },
+        {
+          path: "/settings",
+          label: t.common.settings,
+          badge: 0,
+          icon: (active: boolean) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="4" fill={active ? "white" : "none"} stroke={active ? "transparent" : "currentColor"} strokeWidth="1.8" />
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          ),
+        },
       ]
     : [
-        { path: "/", icon: Home, label: t.client.home, badge: 0 },
-        { path: "/cart", icon: ShoppingBag, label: t.client.cart, badge: itemCount },
+        {
+          path: "/",
+          label: t.client.home,
+          badge: 0,
+          icon: (active: boolean) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
+              <path d="M9 21V12h6v9" strokeWidth="1.8" fill="none" stroke="currentColor" />
+            </svg>
+          ),
+        },
+        {
+          path: "/cart",
+          label: t.client.cart,
+          badge: itemCount,
+          icon: (active: boolean) => (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+          ),
+        },
       ];
 
   return (
     <>
+      {/* ─── Header ──────────────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-red-600 overflow-hidden ring-2 ring-red-500/40 shadow-lg shadow-red-600/30 flex items-center justify-center">
-              <img src={logoImg} alt="MAWEJA" className="w-full h-full object-contain p-0.5" />
-            </div>
-            <div>
-              <h1 className="text-base font-black text-gray-900 dark:text-white leading-tight tracking-tight">MAWEJA</h1>
-              <p className="text-[9px] text-red-500 font-bold -mt-0.5 uppercase tracking-widest">Kinshasa · RDC</p>
-            </div>
+
+          {/* Brand */}
+          <div className="flex flex-col leading-none">
+            <span
+              className="text-[22px] text-gray-900 dark:text-white tracking-tight"
+              style={{ fontFamily: "'Georgia', 'Times New Roman', serif", letterSpacing: "-0.02em", fontWeight: 400 }}
+            >
+              MAWEJA
+            </span>
+            <span className="flex items-center gap-1 text-[10px] text-red-500 font-medium tracking-wide mt-0.5">
+              <MapPin size={9} className="flex-shrink-0" strokeWidth={2.5} />
+              Kinshasa, RDC
+            </span>
           </div>
+
+          {/* Right actions */}
           <div className="flex items-center gap-2">
             {user ? (
               <>
@@ -115,8 +183,12 @@ export default function ClientNav() {
         </div>
       </header>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
-        <div className="max-w-lg mx-auto flex items-center px-2 py-1">
+      {/* ─── Bottom navigation ────────────────────────────────────────────────── */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-3 pt-2 pointer-events-none">
+        <div
+          className="pointer-events-auto flex items-center gap-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-[28px] px-2 py-2"
+          style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)" }}
+        >
           {links.map((l) => {
             const isActive = location === l.path || (l.path !== "/" && location.startsWith(l.path));
             return (
@@ -124,33 +196,25 @@ export default function ClientNav() {
                 key={l.path}
                 onClick={() => navigate(l.path)}
                 data-testid={`nav-${l.path.replace(/\//g, "") || "home"}`}
-                className={`flex-1 flex flex-col items-center py-2 px-1 rounded-2xl relative transition-all duration-200 active:scale-90 ${
+                className={`relative flex flex-col items-center justify-center gap-1 rounded-[20px] transition-all duration-250 active:scale-90 ${
                   isActive
-                    ? "text-red-600"
-                    : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                    ? "bg-red-600 text-white px-5 py-2.5 min-w-[72px]"
+                    : "text-gray-400 dark:text-gray-500 px-4 py-2.5 min-w-[60px] hover:text-gray-600 dark:hover:text-gray-300"
                 }`}
               >
-                {isActive && (
-                  <div className="absolute inset-0 bg-red-50 dark:bg-red-900/20 rounded-2xl" />
-                )}
-                <div className="relative z-10">
-                  <div className={`transition-transform duration-200 ${isActive ? "scale-110" : "scale-100"}`}>
-                    <l.icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-                  </div>
-                  {l.badge > 0 && (
-                    <span
-                      className="absolute -top-2 -right-2.5 bg-red-600 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center animate-pulse"
-                      data-testid={`badge-${l.path.replace(/\//g, "") || "home"}`}
-                    >
-                      {l.badge > 99 ? "99+" : l.badge}
-                    </span>
-                  )}
+                <div className={`transition-transform duration-200 ${isActive ? "scale-105" : "scale-100"}`}>
+                  {l.icon(isActive)}
                 </div>
-                <span className={`text-[9px] font-bold mt-0.5 relative z-10 transition-all ${isActive ? "text-red-600" : ""}`}>
+                <span className={`text-[9px] font-bold transition-all leading-none ${isActive ? "opacity-100" : "opacity-0 absolute"}`}>
                   {l.label}
                 </span>
-                {isActive && (
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-red-600 rounded-full" />
+                {l.badge > 0 && (
+                  <span
+                    className={`absolute -top-1 -right-1 text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center ${isActive ? "bg-white text-red-600" : "bg-red-600"}`}
+                    data-testid={`badge-${l.path.replace(/\//g, "") || "home"}`}
+                  >
+                    {l.badge > 99 ? "99+" : l.badge}
+                  </span>
                 )}
               </button>
             );
