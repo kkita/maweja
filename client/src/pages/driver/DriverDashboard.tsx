@@ -41,9 +41,9 @@ function CountdownBadge({ estimatedDelivery }: { estimatedDelivery: string | nul
 
   return (
     <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold ${
-      isLate ? "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 animate-pulse" :
-      isUrgent ? "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400" :
-      "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
+      isLate ? "bg-red-100 text-red-700 animate-pulse" :
+      isUrgent ? "bg-orange-100 text-orange-700" :
+      "bg-emerald-100 text-emerald-700"
     }`}>
       <Timer size={11} />
       <span className="font-mono font-black" data-testid="driver-countdown">{remaining}</span>
@@ -272,14 +272,14 @@ export default function DriverDashboard() {
   const availablePending = pendingOrders.filter(o => !o.driverId);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-28">
+    <div className="min-h-screen bg-gray-50 pb-28">
       {alarm && <AlarmOverlay reason={alarm} onDismiss={() => setAlarm(null)} />}
       <DriverNav />
 
       <div className="max-w-lg mx-auto px-4 pt-4 pb-6 space-y-4">
 
         {/* Hero Header */}
-        <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-3xl p-5 text-white overflow-hidden shadow-xl shadow-red-200/50 dark:shadow-none">
+        <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-3xl p-5 text-white overflow-hidden shadow-xl shadow-red-200/50">
           <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-y-16 translate-x-16" />
           <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/5 translate-y-12 -translate-x-12" />
           <div className="relative flex items-center justify-between">
@@ -317,13 +317,13 @@ export default function DriverDashboard() {
 
         {/* Late orders alert */}
         {lateOrders.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 animate-pulse flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 animate-pulse flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <AlertCircle size={18} className="text-red-600" />
             </div>
             <div>
-              <p className="font-black text-sm text-red-700 dark:text-red-400">Retard détecté !</p>
-              <p className="text-xs text-red-500 dark:text-red-500 mt-0.5">
+              <p className="font-black text-sm text-red-700">Retard détecté !</p>
+              <p className="text-xs text-red-500 mt-0.5">
                 {lateOrders.length} livraison{lateOrders.length > 1 ? "s" : ""} en retard. Accélérez svp.
               </p>
             </div>
@@ -333,16 +333,16 @@ export default function DriverDashboard() {
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Package, label: "En cours", value: activeOrders.length, bg: "bg-blue-50 dark:bg-blue-950/30", iconBg: "bg-blue-100 dark:bg-blue-900/40", iconColor: "text-blue-600", valColor: "text-blue-700 dark:text-blue-400" },
-            { icon: CheckCircle2, label: "Livrées", value: deliveredToday.length, bg: "bg-emerald-50 dark:bg-emerald-950/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", iconColor: "text-emerald-600", valColor: "text-emerald-700 dark:text-emerald-400" },
-            { icon: DollarSign, label: "Gains", value: formatPrice(totalEarnings), bg: "bg-red-50 dark:bg-red-950/30", iconBg: "bg-red-100 dark:bg-red-900/40", iconColor: "text-red-600", valColor: "text-red-700 dark:text-red-400" },
+            { icon: Package, label: "En cours", value: activeOrders.length, bg: "bg-blue-50", iconBg: "bg-blue-100", iconColor: "text-blue-600", valColor: "text-blue-700" },
+            { icon: CheckCircle2, label: "Livrées", value: deliveredToday.length, bg: "bg-emerald-50", iconBg: "bg-emerald-100", iconColor: "text-emerald-600", valColor: "text-emerald-700" },
+            { icon: DollarSign, label: "Gains", value: formatPrice(totalEarnings), bg: "bg-red-50", iconBg: "bg-red-100", iconColor: "text-red-600", valColor: "text-red-700" },
           ].map((stat, i) => (
             <div key={stat.label} className={`${stat.bg} rounded-2xl p-4 text-center`} data-testid={`driver-stat-${stat.label.toLowerCase()}`}>
               <div className={`w-9 h-9 ${stat.iconBg} rounded-xl flex items-center justify-center mx-auto mb-2`}>
                 <stat.icon size={16} className={stat.iconColor} />
               </div>
               <p className={`text-lg font-black ${stat.valColor}`}>{stat.value}</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">{stat.label}</p>
+              <p className="text-[10px] text-gray-500 font-semibold mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -354,12 +354,12 @@ export default function DriverDashboard() {
               onClick={() => setShowMap(m => !m)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold border-2 transition-all ${
                 gpsActive
-                  ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                  : "bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-orange-50 text-orange-700 border-orange-200"
               }`}
               data-testid="toggle-map"
             >
-              <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${gpsActive ? "bg-emerald-100 dark:bg-emerald-900/40" : "bg-orange-100 dark:bg-orange-900/40"}`}>
+              <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${gpsActive ? "bg-emerald-100" : "bg-orange-100"}`}>
                 <Navigation size={13} className={gpsActive ? "text-emerald-600" : "text-orange-600"} />
               </div>
               <span className="flex-1 text-left">
@@ -369,9 +369,9 @@ export default function DriverDashboard() {
               {showMap ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
             {showMap && (
-              <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
+              <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
                 <DriverLiveMap driverLat={driverPos?.lat ?? null} driverLng={driverPos?.lng ?? null} activeOrders={activeOrders} />
-                <div className="bg-white dark:bg-gray-900 px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800">
+                <div className="bg-white px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 border-t border-gray-100">
                   <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600" /> Vous</span>
                   <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-600" /> Livraisons</span>
                   <span className="ml-auto font-bold">{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length} point{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length !== 1 ? "s" : ""}</span>
@@ -383,16 +383,16 @@ export default function DriverDashboard() {
 
         {/* Offline empty state */}
         {!isOnline && (
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Power size={32} className="text-gray-400 dark:text-gray-500" />
+          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Power size={32} className="text-gray-400" />
             </div>
-            <p className="font-black text-xl text-gray-900 dark:text-white mb-2">Vous êtes hors ligne</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
+            <p className="font-black text-xl text-gray-900 mb-2">Vous êtes hors ligne</p>
+            <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
               Passez en ligne pour recevoir des commandes et commencer à livrer
             </p>
             <button onClick={toggleOnline}
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-3.5 rounded-2xl text-sm font-black shadow-lg shadow-red-200 dark:shadow-none hover:shadow-xl transition-all active:scale-95"
+              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-3.5 rounded-2xl text-sm font-black shadow-lg shadow-red-200 hover:shadow-xl transition-all active:scale-95"
               data-testid="go-online">
               <Power size={14} className="inline mr-2" />
               Passer en ligne
@@ -408,23 +408,23 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-ping absolute" />
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
               </div>
-              <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Livraisons en cours</h3>
-              <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full ml-auto">{activeOrders.length}</span>
+              <h3 className="font-black text-sm text-gray-900 ml-0.5">Livraisons en cours</h3>
+              <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-auto">{activeOrders.length}</span>
             </div>
             <div className="space-y-3">
               {activeOrders.map(order => (
                 <div key={order.id}
-                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden"
+                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                   data-testid={`active-order-${order.id}`}>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
+                        <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
                           <Truck size={16} className="text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500">{formatDate(order.createdAt!)}</p>
+                          <p className="font-black text-sm text-gray-900">{order.orderNumber}</p>
+                          <p className="text-[10px] text-gray-400">{formatDate(order.createdAt!)}</p>
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end gap-1">
@@ -435,10 +435,10 @@ export default function DriverDashboard() {
 
                     <div className="flex items-start gap-2 mb-3">
                       <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
-                      <span className="text-xs text-gray-600 dark:text-gray-400 flex-1 line-clamp-2">{order.deliveryAddress}</span>
+                      <span className="text-xs text-gray-600 flex-1 line-clamp-2">{order.deliveryAddress}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
                       <div>
                         <p className="text-[10px] text-gray-400 font-medium">Votre gain</p>
                         <span className="font-black text-emerald-600 text-base">{formatPrice(order.deliveryFee)}</span>
@@ -446,13 +446,13 @@ export default function DriverDashboard() {
                       <div className="flex gap-2">
                         {["confirmed", "preparing"].includes(order.status) && (
                           <button onClick={() => updateStatus(order.id, "picked_up")} data-testid={`pickup-${order.id}`}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-200 dark:shadow-none">
+                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-200">
                             📦 Récupérée
                           </button>
                         )}
                         {order.status === "picked_up" && (
                           <button onClick={() => updateStatus(order.id, "delivered")} data-testid={`deliver-${order.id}`}
-                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:from-emerald-600 hover:to-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-200 dark:shadow-none">
+                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:from-emerald-600 hover:to-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-200">
                             ✓ Livrée
                           </button>
                         )}
@@ -473,32 +473,32 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping absolute" />
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
               </div>
-              <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Commandes disponibles</h3>
-              <span className="text-[10px] font-black bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full ml-auto">{availablePending.length}</span>
+              <h3 className="font-black text-sm text-gray-900 ml-0.5">Commandes disponibles</h3>
+              <span className="text-[10px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-auto">{availablePending.length}</span>
             </div>
 
             {availablePending.length === 0 ? (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Clock size={28} className="text-gray-300 dark:text-gray-600" />
+              <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Clock size={28} className="text-gray-300" />
                 </div>
-                <p className="text-gray-700 dark:text-gray-300 font-bold text-sm">En attente de commandes...</p>
-                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Les nouvelles commandes apparaîtront automatiquement</p>
+                <p className="text-gray-700 font-bold text-sm">En attente de commandes...</p>
+                <p className="text-gray-400 text-xs mt-1">Les nouvelles commandes apparaîtront automatiquement</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {availablePending.map(order => (
                   <div key={order.id}
-                    className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-red-100 dark:border-red-900/40 shadow-sm hover:shadow-lg hover:border-red-300 dark:hover:border-red-700 transition-all"
+                    className="bg-white rounded-2xl border-2 border-red-100 shadow-sm hover:shadow-lg hover:border-red-300:border-red-700 transition-all"
                     data-testid={`pending-order-${order.id}`}>
                     <div className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
+                          <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center">
                             <Package size={16} className="text-red-600" />
                           </div>
                           <div>
-                            <p className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
+                            <p className="font-black text-sm text-gray-900">{order.orderNumber}</p>
                             <p className="text-[10px] text-gray-400">Total: {formatPrice(order.total)}</p>
                           </div>
                         </div>
@@ -512,11 +512,11 @@ export default function DriverDashboard() {
 
                       <div className="flex items-start gap-2 mb-4">
                         <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
-                        <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{order.deliveryAddress}</span>
+                        <span className="text-xs text-gray-600 line-clamp-2">{order.deliveryAddress}</span>
                       </div>
 
                       <button onClick={() => acceptOrder(order.id)} data-testid={`accept-order-${order.id}`}
-                        className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-xl text-xs font-black hover:from-red-700 hover:to-red-800 active:scale-95 transition-all shadow-md shadow-red-200 dark:shadow-none">
+                        className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-xl text-xs font-black hover:from-red-700 hover:to-red-800 active:scale-95 transition-all shadow-md shadow-red-200">
                         🚀 Accepter cette livraison
                       </button>
                     </div>

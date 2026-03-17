@@ -126,15 +126,15 @@ export default function DriverNav() {
   return (
     <>
       {/* ─── Header ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
 
           {/* Brand */}
           <div className="flex flex-col leading-none">
             <div className="flex items-center gap-2">
               <span
-                className="text-[22px] text-gray-900 dark:text-white tracking-tight"
-                style={{ fontFamily: "'Georgia', 'Times New Roman', serif", letterSpacing: "-0.02em", fontWeight: 400 }}
+                className="text-[22px] text-gray-900 tracking-tight"
+                style={{ fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em", fontWeight: 800 }}
               >
                 MAWEJA
               </span>
@@ -142,7 +142,7 @@ export default function DriverNav() {
                 Livreur
               </span>
             </div>
-            <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-medium tracking-wide mt-0.5">
+            <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium tracking-wide mt-0.5">
               <MapPin size={9} className="flex-shrink-0" strokeWidth={2.5} />
               Kinshasa, RDC
             </span>
@@ -157,8 +157,8 @@ export default function DriverNav() {
               data-testid="button-toggle-online"
               className={`relative flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
                 isOnline
-                  ? "bg-green-500 text-white shadow-lg shadow-green-200 dark:shadow-green-900/30"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                  ? "bg-green-500 text-white shadow-lg shadow-green-200"
+                  : "bg-gray-100 text-gray-500"
               } ${toggling ? "opacity-60" : ""}`}
             >
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? "bg-white animate-pulse" : "bg-gray-400"}`} />
@@ -168,7 +168,7 @@ export default function DriverNav() {
             {/* Logout */}
             <button
               onClick={async () => { await logout(); navigate("/driver/login"); }}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-all active:scale-95"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-600:bg-red-900/20:text-red-400 transition-all active:scale-95"
               data-testid="button-logout"
             >
               <LogOut size={16} />
@@ -180,7 +180,7 @@ export default function DriverNav() {
       {/* ─── Bottom navigation ────────────────────────────────────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-3 pt-2 pointer-events-none">
         <div
-          className="pointer-events-auto flex items-center gap-0.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-[28px] px-1.5 py-2"
+          className="pointer-events-auto flex items-center gap-0.5 bg-white/95 backdrop-blur-2xl rounded-[28px] px-1.5 py-2"
           style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)" }}
         >
           {links.map((l) => {
@@ -193,7 +193,7 @@ export default function DriverNav() {
                 className={`relative flex flex-col items-center justify-center gap-1 rounded-[20px] transition-all duration-250 active:scale-90 ${
                   isActive
                     ? "bg-red-600 text-white px-4 py-2.5 min-w-[64px]"
-                    : "text-gray-400 dark:text-gray-500 px-3 py-2.5 min-w-[52px] hover:text-gray-600 dark:hover:text-gray-300"
+                    : "text-gray-400 px-3 py-2.5 min-w-[52px] hover:text-gray-600:text-gray-300"
                 }`}
               >
                 <div className={`transition-transform duration-200 ${isActive ? "scale-105" : "scale-100"}`}>
