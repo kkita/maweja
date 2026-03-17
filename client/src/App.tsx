@@ -27,6 +27,7 @@ import OrderDetailPage from "./pages/client/OrderDetailPage";
 import WalletPage from "./pages/client/WalletPage";
 import AddressPage from "./pages/client/AddressPage";
 import ClientSettings from "./pages/client/ClientSettings";
+import NotificationsPage from "./pages/client/NotificationsPage";
 
 import DriverDashboard from "./pages/driver/DriverDashboard";
 import DriverOrders from "./pages/driver/DriverOrders";
@@ -165,6 +166,7 @@ function AppRoutes() {
           <Route path="/services/new" component={ServiceRequestPage} />
           <Route path="/services/request/:id" component={ServiceRequestPage} />
           <Route path="/settings" component={ClientSettings} />
+          <Route path="/notifications" component={NotificationsPage} />
           <Route component={ClientHome} />
         </Switch>
         <ClientContactBubble />
@@ -198,6 +200,7 @@ function AppRoutes() {
         <Route path="/services/new" component={ServiceRequestPage} />
         <Route path="/services/request/:id" component={ServiceRequestPage} />
         <Route path="/settings" component={ClientSettings} />
+        <Route path="/notifications" component={NotificationsPage} />
         <Route path="/login" component={LoginPage} />
         <Route path="/driver/login" component={DriverLoginPage} />
         <Route path="/admin/login" component={AdminLoginPage} />

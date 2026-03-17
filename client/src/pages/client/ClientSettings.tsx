@@ -8,7 +8,7 @@ import { apiRequest, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   ArrowLeft, Globe, ChevronRight, Bell, Shield, HelpCircle, Info,
-  Sun, Moon, MonitorSmartphone, X, Send, Check, BellOff
+  Sun, Moon, MonitorSmartphone, X, Send, Check, BellOff, LogOut, User, Mail, Phone
 } from "lucide-react";
 import { requestNotifPermission, getNotifPermission, showNotif } from "../../lib/notify";
 
@@ -291,8 +291,17 @@ function AboutModal({ onClose }: { onClose: () => void }) {
 export default function ClientSettings() {
   const [, navigate] = useLocation();
   const { lang, setLang, t } = useI18n();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [modal, setModal] = useState<"notifications" | "privacy" | "support" | "about" | null>(null);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
+  };
+
+  const initials = user?.name
+    ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "?";
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
@@ -303,12 +312,98 @@ export default function ClientSettings() {
       {modal === "about" && <AboutModal onClose={() => setModal(null)} />}
 
       <div className="max-w-lg mx-auto px-4 py-4">
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <button onClick={() => navigate("/")} className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700" data-testid="button-back">
             <ArrowLeft size={18} className="text-gray-700 dark:text-gray-300" />
           </button>
           <h2 className="text-xl font-black text-gray-900 dark:text-white" data-testid="text-settings-title">{t.settings.title}</h2>
         </div>
+
+        {/* ── User Profile Card ─────────────────────────────────────────── */}
+        {user ? (
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl p-5 mb-4 relative overflow-hidden"
+            style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}
+            data-testid="profile-card"
+          >
+            {/* Decorative background */}
+            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-r from-red-600 to-red-700 rounded-t-2xl" />
+
+            <div className="relative pt-2 pb-1">
+              {/* Avatar */}
+              <div
+                className="w-20 h-20 rounded-full bg-gradient-to-br from-red-400 to-red-700 flex items-center justify-center border-4 border-white dark:border-gray-900 mb-3"
+                style={{ boxShadow: "0 4px 16px rgba(220,38,38,0.35)" }}
+                data-testid="profile-avatar"
+              >
+                <span className="text-white font-black text-2xl">{initials}</span>
+              </div>
+
+              {/* Name + email */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-black text-gray-900 dark:text-white text-lg leading-tight" data-testid="text-profile-name">
+                    {user.name || "Utilisateur"}
+                  </p>
+                  {user.email && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Mail size={12} className="text-gray-400" />
+                      <p className="text-gray-500 dark:text-gray-400 text-xs" data-testid="text-profile-email">
+                        {user.email}
+                      </p>
+                    </div>
+                  )}
+                  {user.phone && (
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Phone size={12} className="text-gray-400" />
+                      <p className="text-gray-500 dark:text-gray-400 text-xs" data-testid="text-profile-phone">
+                        {user.phone}
+                      </p>
+                    </div>
+                  )}
+                  <div className="mt-2 inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-950 px-3 py-1 rounded-full">
+                    <User size={11} className="text-red-600" />
+                    <span className="text-red-600 font-bold text-xs capitalize">
+                      {user.role === "client" ? "Client" : user.role}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Logout button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95 transition-transform shadow-sm"
+                  data-testid="button-logout-settings"
+                >
+                  <LogOut size={13} />
+                  Déconnecter
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div
+            className="bg-white dark:bg-gray-900 rounded-2xl p-5 mb-4 flex items-center justify-between"
+            style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <User size={24} className="text-gray-400" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white text-sm">Non connecté</p>
+                <p className="text-gray-400 text-xs mt-0.5">Connectez-vous pour accéder à votre profil</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate("/login")}
+              className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-xs active:scale-95 transition-transform"
+              data-testid="button-login-settings"
+            >
+              Connexion
+            </button>
+          </div>
+        )}
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mb-4">
           <div className="px-5 py-4 border-b border-gray-50 dark:border-gray-800">

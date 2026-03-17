@@ -10,6 +10,8 @@ import { handleWSEvent } from "../lib/notify";
 import { useI18n } from "../lib/i18n";
 import type { Notification as Notif } from "@shared/schema";
 
+const logoRed = "/maweja-logo-red.png";
+
 export default function ClientNav() {
   const [location, navigate] = useLocation();
   const { itemCount } = useCart();
@@ -45,32 +47,32 @@ export default function ClientNav() {
   const unreadNotifCount = notifications.filter(n => !n.isRead && n.type !== "chat").length;
 
   const handleProtectedNav = (path: string) => {
-    if (!user && (path === "/orders" || path === "/settings")) {
+    if (!user && (path === "/orders" || path === "/settings" || path === "/notifications")) {
       navigate("/login");
     } else {
       navigate(path);
     }
   };
 
+  /* 3 tabs: Home / Orders / Settings */
   const navItems = [
-    { path: "/",        icon: Home,        label: t.client.home },
-    { path: "/cart",    icon: ShoppingBag, label: t.client.cart,     badge: itemCount },
-    { path: "/orders",  icon: null,        label: t.client.myOrders, badge: unreadNotifCount },
-    { path: "/settings",icon: User,        label: t.common.settings },
+    { path: "/",        label: t.client.home },
+    { path: "/orders",  label: t.client.myOrders, badge: unreadNotifCount },
+    { path: "/settings",label: t.common.settings },
   ];
 
   return (
     <>
       {/* ─── Header ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-3">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-2.5">
         <div className="max-w-lg mx-auto flex items-center gap-3">
 
           {/* Logo */}
-          <div className="flex-shrink-0 w-9 h-9 rounded-lg overflow-hidden">
+          <div className="flex-shrink-0 w-9 h-9 rounded-xl overflow-hidden bg-gray-100">
             <img
-              src="/maweja-icon.png"
+              src={logoRed}
               alt="MAWEJA"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           </div>
 
@@ -81,15 +83,15 @@ export default function ClientNav() {
             data-testid="button-address-pill"
           >
             <MapPin size={14} className="text-gray-400 flex-shrink-0" />
-            <span className="text-sm text-gray-400 truncate" style={{ fontWeight: 400, fontSize: 13 }}>
+            <span style={{ fontSize: 13, fontWeight: 400, color: "#9CA3AF" }} className="truncate">
               Entrez votre adresse
             </span>
           </button>
 
-          {/* Bell */}
+          {/* Bell → notifications */}
           <button
-            className="relative w-9 h-9 flex items-center justify-center flex-shrink-0"
-            onClick={() => handleProtectedNav("/settings")}
+            className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
+            onClick={() => handleProtectedNav("/notifications")}
             data-testid="button-notifications-header"
           >
             <Bell size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
@@ -100,9 +102,9 @@ export default function ClientNav() {
             )}
           </button>
 
-          {/* Cart */}
+          {/* Cart icon (header only) */}
           <button
-            className="relative w-9 h-9 flex items-center justify-center flex-shrink-0"
+            className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
             onClick={() => navigate("/cart")}
             data-testid="button-cart-header"
           >
@@ -116,9 +118,11 @@ export default function ClientNav() {
         </div>
       </header>
 
-      {/* ─── Bottom navigation ────────────────────────────────────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 flex items-center justify-around px-4 pt-2 pb-4"
-        style={{ boxShadow: "0 -2px 16px rgba(0,0,0,0.06)" }}>
+      {/* ─── Bottom navigation — 3 tabs flat ─────────────────────────────────── */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white flex items-center justify-around px-6 pt-2 pb-5 border-t border-gray-100"
+        style={{ boxShadow: "0 -2px 16px rgba(0,0,0,0.06)" }}
+      >
         {navItems.map((item) => {
           const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
           const color = isActive ? "#3B5BDB" : "#9CA3AF";
@@ -128,37 +132,32 @@ export default function ClientNav() {
               key={item.path}
               onClick={() => handleProtectedNav(item.path)}
               data-testid={`nav-${item.path.replace(/\//g, "") || "home"}`}
-              className="relative flex flex-col items-center justify-center gap-1 min-w-[52px] active:scale-90 transition-transform duration-150"
+              className="relative flex flex-col items-center justify-center gap-1 min-w-[56px] active:scale-90 transition-transform duration-150"
             >
-              {item.path === "/orders" ? (
-                /* Orders — custom receipt icon */
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="2" width="18" height="20" rx="3" />
-                  <path d="M7 7h10M7 11h7M7 15h5" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              ) : item.icon === Home ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+              {item.path === "/" && (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
                   <path d="M9 21V12h6v9" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" />
                 </svg>
-              ) : item.icon === ShoppingBag ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" stroke={isActive ? "white" : color} strokeWidth="1.8" />
-                  <path d="M16 10a4 4 0 01-8 0" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" />
-                </svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4" fill={isActive ? color : "none"} />
-                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
+              )}
+              {item.path === "/orders" && (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="2" width="18" height="20" rx="3" />
+                  <path d="M7 7h10M7 11h7M7 15h5" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               )}
-              {item.badge != null && item.badge > 0 && (
+              {item.path === "/settings" && (
+                <svg width="26" height="26" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" fill={isActive ? color : "none"} stroke={isActive ? "transparent" : color} strokeWidth="1.8" />
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              )}
+              {(item as any).badge != null && (item as any).badge > 0 && (
                 <span
-                  className="absolute -top-1 right-1 bg-red-600 text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center"
+                  className="absolute -top-0.5 right-1 bg-red-600 text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center"
                   data-testid={`badge-${item.path.replace(/\//g, "") || "home"}`}
                 >
-                  {item.badge > 99 ? "99+" : item.badge}
+                  {(item as any).badge > 99 ? "99+" : (item as any).badge}
                 </span>
               )}
             </button>
