@@ -32,7 +32,7 @@ function PhoneMockup({ src, title }: { src: string; title: string }) {
           style={{ borderRadius: "2rem", pointerEvents: "none" }}
         />
       </div>
-      <p className="text-center text-gray-400 text-sm mt-4 font-medium tracking-wide">{title}</p>
+      <p className="text-center text-gray-400 dark:text-gray-500 text-sm mt-4 font-medium tracking-wide">{title}</p>
     </div>
   );
 }
@@ -208,14 +208,14 @@ export default function PresentationPage() {
             ].map(({ n, label }) => (
               <div key={label} className="text-center">
                 <div className="font-black text-red-500" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)" }}>{n}</div>
-                <div className="text-gray-400 text-xs uppercase tracking-widest">{label}</div>
+                <div className="text-gray-400 dark:text-gray-500 text-xs uppercase tracking-widest">{label}</div>
               </div>
             ))}
           </div>
         </div>
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
-          <span className="text-xs tracking-widest uppercase text-gray-500">Défiler</span>
+          <span className="text-xs tracking-widest uppercase text-gray-500 dark:text-gray-400 dark:text-gray-500">Défiler</span>
           <div className="w-px h-12 bg-gradient-to-b from-red-600 to-transparent" />
         </div>
       </section>
@@ -228,7 +228,7 @@ export default function PresentationPage() {
         >
           Un écosystème complet
         </h2>
-        <p className="text-gray-400 max-w-2xl mx-auto mb-16" style={{ fontSize: "clamp(0.9rem, 1.5vw, 1.1rem)" }}>
+        <p className="text-gray-400 dark:text-gray-500 max-w-2xl mx-auto mb-16" style={{ fontSize: "clamp(0.9rem, 1.5vw, 1.1rem)" }}>
           Trois interfaces distinctes, un seul backend robuste. Tout est interconnecté en temps réel.
         </p>
 
@@ -267,7 +267,7 @@ export default function PresentationPage() {
             >
               <div className="text-4xl">{icon}</div>
               <h3 className="text-xl font-bold text-white">{title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{desc}</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm leading-relaxed">{desc}</p>
               <ul className="flex flex-col gap-2 mt-2">
                 {features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
@@ -297,7 +297,7 @@ export default function PresentationPage() {
                 <br />
                 <span className="text-red-500">3 secondes</span>
               </h2>
-              <p className="text-gray-400 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
+              <p className="text-gray-400 dark:text-gray-500 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
                 Interface mobile-first optimisée pour les habitants de Kinshasa.
                 Multilingue (Français / Anglais), géolocalisation intégrée.
               </p>
@@ -331,7 +331,7 @@ export default function PresentationPage() {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse gap-16 items-center">
           <div className="flex-1 flex flex-col gap-8">
             <div>
-              <span className="text-gray-400 text-xs font-bold tracking-widest uppercase">App Driver</span>
+              <span className="text-gray-400 dark:text-gray-500 text-xs font-bold tracking-widest uppercase">App Driver</span>
               <h2
                 className="font-black mt-2 tracking-tight leading-none"
                 style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}
@@ -340,7 +340,7 @@ export default function PresentationPage() {
                 <br />
                 <span style={{ color: "#888" }}>revenus</span>
               </h2>
-              <p className="text-gray-400 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
+              <p className="text-gray-400 dark:text-gray-500 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
                 Interface conçue pour les livreurs professionnels. Simple, rapide et efficace.
               </p>
             </div>
@@ -379,7 +379,7 @@ export default function PresentationPage() {
               <br />
               <span className="text-red-500">plateforme</span>
             </h2>
-            <p className="text-gray-400 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
+            <p className="text-gray-400 dark:text-gray-500 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
               Dashboard analytique complet avec gestion en temps réel de toute l'opération MAWEJA.
             </p>
           </div>
@@ -502,7 +502,7 @@ export default function PresentationPage() {
                     <span className="text-2xl">{icon}</span>
                     <div>
                       <p className="text-white font-semibold text-sm">{name}</p>
-                      <p className="text-gray-500 text-xs">{desc}</p>
+                      <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{desc}</p>
                     </div>
                   </div>
                 ))}
@@ -540,7 +540,7 @@ export default function PresentationPage() {
               >
                 <span className="text-3xl">{icon}</span>
                 <p className="text-white font-semibold text-sm">{name}</p>
-                <p className="text-gray-500 text-xs">{sub}</p>
+                <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{sub}</p>
               </div>
             ))}
           </div>
@@ -580,7 +580,7 @@ export default function PresentationPage() {
             style={{ background: "linear-gradient(90deg, transparent, #dc2626, transparent)" }}
           />
 
-          <p className="text-gray-400 max-w-lg" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
+          <p className="text-gray-400 dark:text-gray-500 max-w-lg" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
             La plateforme de référence pour la livraison de repas et services à domicile à Kinshasa, République Démocratique du Congo.
           </p>
 
@@ -592,11 +592,11 @@ export default function PresentationPage() {
               Khevin Andrew Kita
             </p>
             <p className="text-red-400 font-semibold tracking-widest text-sm uppercase">Développeur</p>
-            <p className="text-gray-400 font-mono text-sm mt-1">0802540138</p>
+            <p className="text-gray-400 dark:text-gray-500 font-mono text-sm mt-1">0802540138</p>
           </div>
 
           <p
-            className="text-gray-700 text-xs tracking-widest uppercase mt-8"
+            className="text-gray-700 dark:text-gray-200 text-xs tracking-widest uppercase mt-8"
           >
             © 2026 MAWEJA · Ed Corporation · Made with ❤️ in Kinshasa
           </p>

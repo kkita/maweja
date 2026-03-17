@@ -113,7 +113,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
   const imgSrc = value ? (value.startsWith("http") ? value : resolveUrl(value)) : "";
 
   return (
-    <div className={`rounded-2xl border-2 transition-all ${rejected ? "border-red-300 bg-red-50" : value ? "border-green-300 bg-green-50" : "border-dashed border-gray-200 bg-gray-50"} ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+    <div className={`rounded-2xl border-2 transition-all ${rejected ? "border-red-300 bg-red-50" : value ? "border-green-300 bg-green-50" : "border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60"} ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
       {rejected && (
         <div className="px-4 pt-3 flex items-center gap-1.5">
           <AlertCircle size={12} className="text-red-500" />
@@ -121,8 +121,8 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
         </div>
       )}
       <div className="p-4">
-        <p className="text-xs font-semibold text-gray-700 mb-3 flex items-center gap-2">
-          <Icon size={14} className={rejected ? "text-red-500" : value ? "text-green-600" : "text-gray-400"} />
+        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
+          <Icon size={14} className={rejected ? "text-red-500" : value ? "text-green-600" : "text-gray-400 dark:text-gray-500"} />
           {label} <span className="text-red-500">*</span>
         </p>
         {value ? (
@@ -132,7 +132,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
               <button onClick={() => { onChange(""); setErrorMsg(null); }}
                 className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white:bg-gray-800"
                 data-testid={`change-${label.toLowerCase().replace(/\s/g, "-")}`}>
-                <X size={12} className="text-gray-600" />
+                <X size={12} className="text-gray-600 dark:text-gray-300" />
               </button>
             )}
             {!rejected && <CheckCircle2 size={20} className="absolute bottom-2 right-2 text-green-600 bg-white rounded-full" />}
@@ -145,9 +145,9 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
               {uploading ? (
                 <Loader2 size={24} className="text-red-500 animate-spin" />
               ) : (
-                <Camera size={24} className={errorMsg ? "text-red-400" : "text-gray-400"} />
+                <Camera size={24} className={errorMsg ? "text-red-400" : "text-gray-400 dark:text-gray-500"} />
               )}
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                 {uploading ? "Envoi en cours..." : isNativeMobile() ? "Appuyez pour choisir depuis la galerie" : "Cliquez pour choisir une photo"}
               </span>
             </button>
@@ -247,19 +247,19 @@ export default function DriverOnboarding() {
           <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock size={36} className="text-orange-500" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900 mb-2">En attente de verification</h1>
-          <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">En attente de verification</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-6 leading-relaxed">
             Vos informations ont ete envoyees avec succes. L'administration est en train de les examiner.
             Vous serez notifie des que votre compte sera valide.
           </p>
-          <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 mb-6">
             <div className="flex items-center gap-3">
               {form.profilePhotoUrl && (
                 <img src={resolveImg(form.profilePhotoUrl)} alt="Profile" className="w-12 h-12 rounded-xl object-cover" />
               )}
               <div className="text-left">
-                <p className="font-bold text-sm text-gray-900">{form.name}</p>
-                <p className="text-xs text-gray-500">{form.email}</p>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">{form.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{form.email}</p>
               </div>
             </div>
           </div>
@@ -276,13 +276,13 @@ export default function DriverOnboarding() {
             <CheckCircle2 size={16} />
             Actualiser le statut
           </button>
-          <p className="text-[10px] text-gray-400 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
         </div>
       </div>
     );
   }
 
-  const inputClass = "w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+  const inputClass = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 to-white">
@@ -291,10 +291,10 @@ export default function DriverOnboarding() {
           <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-200">
             <Shield size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-black text-gray-900 mb-1">
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">
             {isRejected ? "Corrections requises" : "Completez votre profil"}
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
             {isRejected
               ? "Certaines informations doivent etre corrigees avant la validation"
               : "Remplissez vos informations pour activer votre compte livreur"}
@@ -318,14 +318,14 @@ export default function DriverOnboarding() {
         )}
 
         <div className="space-y-4">
-          <div className={`bg-white rounded-2xl border ${isFieldRejected("name") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+          <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("name") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
             {isFieldRejected("name") && (
               <div className="flex items-center gap-1.5 mb-2">
                 <AlertCircle size={12} className="text-red-500" />
                 <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
               </div>
             )}
-            <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
               <User size={12} /> Nom complet <span className="text-red-500">*</span>
             </label>
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
@@ -335,14 +335,14 @@ export default function DriverOnboarding() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("sex") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("sex") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("sex") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
                 <Users size={12} /> Sexe <span className="text-red-500">*</span>
               </label>
               <select value={form.sex} onChange={e => setForm({ ...form, sex: e.target.value })}
@@ -354,14 +354,14 @@ export default function DriverOnboarding() {
               </select>
             </div>
 
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("dateOfBirth") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("dateOfBirth") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("dateOfBirth") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
                 <Calendar size={12} /> Date de naissance <span className="text-red-500">*</span>
               </label>
               <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
@@ -370,14 +370,14 @@ export default function DriverOnboarding() {
             </div>
           </div>
 
-          <div className={`bg-white rounded-2xl border ${isFieldRejected("fullAddress") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+          <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("fullAddress") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
             {isFieldRejected("fullAddress") && (
               <div className="flex items-center gap-1.5 mb-2">
                 <AlertCircle size={12} className="text-red-500" />
                 <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
               </div>
             )}
-            <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
               <MapPin size={12} /> Adresse complete <span className="text-red-500">*</span>
             </label>
             <input type="text" value={form.fullAddress} onChange={e => setForm({ ...form, fullAddress: e.target.value })}
@@ -387,14 +387,14 @@ export default function DriverOnboarding() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("email") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("email") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("email") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
                 <Mail size={12} /> Email <span className="text-red-500">*</span>
               </label>
               <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
@@ -402,14 +402,14 @@ export default function DriverOnboarding() {
                 className={inputClass} />
             </div>
 
-            <div className={`bg-white rounded-2xl border ${isFieldRejected("phone") ? "border-red-300" : "border-gray-100"} shadow-sm p-4`}>
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("phone") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("phone") && (
                 <div className="flex items-center gap-1.5 mb-2">
                   <AlertCircle size={12} className="text-red-500" />
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
                 <Phone size={12} /> Telephone <span className="text-red-500">*</span>
               </label>
               <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
@@ -444,7 +444,7 @@ export default function DriverOnboarding() {
           {submitting ? "Envoi en cours..." : isRejected ? "Renvoyer les corrections" : "Envoyer pour verification"}
         </button>
 
-        <p className="text-center text-[10px] text-gray-400 mt-6">Made By Khevin Andrew Kita - Ed Corporation</p>
+        <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-6">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
     </div>
   );

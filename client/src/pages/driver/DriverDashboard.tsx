@@ -75,12 +75,12 @@ function AlarmOverlay({ reason, onDismiss }: { reason: string; onDismiss: () => 
 
   return (
     <div className="fixed inset-0 z-[100] bg-red-600/95 flex items-center justify-center p-6">
-      <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounce">
+      <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounce">
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Bell size={36} className="text-red-600" />
         </div>
         <h2 className="text-xl font-black text-red-600 mb-2">ALERTE URGENTE</h2>
-        <p className="text-gray-700 text-sm mb-6 leading-relaxed">{reason}</p>
+        <p className="text-gray-700 dark:text-gray-200 text-sm mb-6 leading-relaxed">{reason}</p>
         <button onClick={onDismiss} data-testid="dismiss-alarm"
           className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-red-200">
           J'ai compris
@@ -272,7 +272,7 @@ export default function DriverDashboard() {
   const availablePending = pendingOrders.filter(o => !o.driverId);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-28">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-28">
       {alarm && <AlarmOverlay reason={alarm} onDismiss={() => setAlarm(null)} />}
       <DriverNav />
 
@@ -342,7 +342,7 @@ export default function DriverDashboard() {
                 <stat.icon size={16} className={stat.iconColor} />
               </div>
               <p className={`text-lg font-black ${stat.valColor}`}>{stat.value}</p>
-              <p className="text-[10px] text-gray-500 font-semibold mt-0.5">{stat.label}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 font-semibold mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -369,9 +369,9 @@ export default function DriverDashboard() {
               {showMap ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
             </button>
             {showMap && (
-              <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+              <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
                 <DriverLiveMap driverLat={driverPos?.lat ?? null} driverLng={driverPos?.lng ?? null} activeOrders={activeOrders} />
-                <div className="bg-white px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 border-t border-gray-100">
+                <div className="bg-white px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
                   <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600" /> Vous</span>
                   <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-600" /> Livraisons</span>
                   <span className="ml-auto font-bold">{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length} point{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length !== 1 ? "s" : ""}</span>
@@ -383,12 +383,12 @@ export default function DriverDashboard() {
 
         {/* Offline empty state */}
         {!isOnline && (
-          <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Power size={32} className="text-gray-400" />
+          <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Power size={32} className="text-gray-400 dark:text-gray-500" />
             </div>
-            <p className="font-black text-xl text-gray-900 mb-2">Vous êtes hors ligne</p>
-            <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+            <p className="font-black text-xl text-gray-900 dark:text-white mb-2">Vous êtes hors ligne</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-6 max-w-xs mx-auto">
               Passez en ligne pour recevoir des commandes et commencer à livrer
             </p>
             <button onClick={toggleOnline}
@@ -408,13 +408,13 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-ping absolute" />
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
               </div>
-              <h3 className="font-black text-sm text-gray-900 ml-0.5">Livraisons en cours</h3>
+              <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Livraisons en cours</h3>
               <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-auto">{activeOrders.length}</span>
             </div>
             <div className="space-y-3">
               {activeOrders.map(order => (
                 <div key={order.id}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden"
                   data-testid={`active-order-${order.id}`}>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -423,8 +423,8 @@ export default function DriverDashboard() {
                           <Truck size={16} className="text-blue-600" />
                         </div>
                         <div>
-                          <p className="font-black text-sm text-gray-900">{order.orderNumber}</p>
-                          <p className="text-[10px] text-gray-400">{formatDate(order.createdAt!)}</p>
+                          <p className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500">{formatDate(order.createdAt!)}</p>
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end gap-1">
@@ -435,12 +435,12 @@ export default function DriverDashboard() {
 
                     <div className="flex items-start gap-2 mb-3">
                       <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
-                      <span className="text-xs text-gray-600 flex-1 line-clamp-2">{order.deliveryAddress}</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-300 flex-1 line-clamp-2">{order.deliveryAddress}</span>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
                       <div>
-                        <p className="text-[10px] text-gray-400 font-medium">Votre gain</p>
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Votre gain</p>
                         <span className="font-black text-emerald-600 text-base">{formatPrice(order.deliveryFee)}</span>
                       </div>
                       <div className="flex gap-2">
@@ -473,23 +473,23 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping absolute" />
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
               </div>
-              <h3 className="font-black text-sm text-gray-900 ml-0.5">Commandes disponibles</h3>
+              <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Commandes disponibles</h3>
               <span className="text-[10px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-auto">{availablePending.length}</span>
             </div>
 
             {availablePending.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Clock size={28} className="text-gray-300" />
                 </div>
-                <p className="text-gray-700 font-bold text-sm">En attente de commandes...</p>
-                <p className="text-gray-400 text-xs mt-1">Les nouvelles commandes apparaîtront automatiquement</p>
+                <p className="text-gray-700 dark:text-gray-200 font-bold text-sm">En attente de commandes...</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Les nouvelles commandes apparaîtront automatiquement</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {availablePending.map(order => (
                   <div key={order.id}
-                    className="bg-white rounded-2xl border-2 border-red-100 shadow-sm hover:shadow-lg hover:border-red-300:border-red-700 transition-all"
+                    className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-red-100 shadow-sm hover:shadow-lg hover:border-red-300:border-red-700 transition-all"
                     data-testid={`pending-order-${order.id}`}>
                     <div className="p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -498,12 +498,12 @@ export default function DriverDashboard() {
                             <Package size={16} className="text-red-600" />
                           </div>
                           <div>
-                            <p className="font-black text-sm text-gray-900">{order.orderNumber}</p>
-                            <p className="text-[10px] text-gray-400">Total: {formatPrice(order.total)}</p>
+                            <p className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500">Total: {formatPrice(order.total)}</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] text-gray-400 font-medium">Votre gain</p>
+                          <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Votre gain</p>
                           <p className="font-black text-emerald-600 text-base">{formatPrice(order.deliveryFee)}</p>
                         </div>
                       </div>
@@ -512,7 +512,7 @@ export default function DriverDashboard() {
 
                       <div className="flex items-start gap-2 mb-4">
                         <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
-                        <span className="text-xs text-gray-600 line-clamp-2">{order.deliveryAddress}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{order.deliveryAddress}</span>
                       </div>
 
                       <button onClick={() => acceptOrder(order.id)} data-testid={`accept-order-${order.id}`}

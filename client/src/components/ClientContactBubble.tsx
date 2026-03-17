@@ -129,14 +129,14 @@ export default function ClientContactBubble() {
       >
         {isOpen ? <X size={22} /> : <MessageCircle size={22} />}
         {!isOpen && totalUnread > 0 && (
-          <span className="absolute -top-1 -right-1 bg-white text-red-600 text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-red-600" data-testid="unread-bubble-count">
+          <span className="absolute -top-1 -right-1 bg-white dark:bg-gray-900 text-red-600 text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-red-600" data-testid="unread-bubble-count">
             {totalUnread}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-40 right-4 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden" style={{ maxHeight: "480px" }} data-testid="contact-panel">
+        <div className="fixed bottom-40 right-4 z-50 w-80 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden" style={{ maxHeight: "480px" }} data-testid="contact-panel">
           {view === "menu" && (
             <>
               <div className="bg-red-600 p-4">
@@ -150,13 +150,13 @@ export default function ClientContactBubble() {
                   if (admin) { setSelectedAdmin(admin); setView("chat"); }
                   else toast({ title: "Info", description: "Aucun administrateur disponible pour le moment" });
                 }} data-testid="button-start-chat"
-                  className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                  className="w-full bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 dark:bg-gray-800 transition-all text-left border border-gray-100 dark:border-gray-800">
                   <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
                     <MessageCircle size={18} className="text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-sm text-gray-900">Chat en direct</p>
-                    <p className="text-[10px] text-gray-400">Discutez avec un administrateur</p>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">Chat en direct</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">Discutez avec un administrateur</p>
                   </div>
                   {totalUnread > 0 && (
                     <span className="bg-red-600 text-white text-[9px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
@@ -166,24 +166,24 @@ export default function ClientContactBubble() {
                 </button>
               ) : null}
                 <button onClick={() => window.open(`https://wa.me/${whatsappNumber}?text=Bonjour MAWEJA, j'ai besoin d'aide.`, "_blank")} data-testid="button-whatsapp"
-                  className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                  className="w-full bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 dark:bg-gray-800 transition-all text-left border border-gray-100 dark:border-gray-800">
                   <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center">
                     <SiWhatsapp size={18} className="text-green-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm text-gray-900">WhatsApp</p>
-                    <p className="text-[10px] text-gray-400">Ecrivez-nous sur WhatsApp</p>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">WhatsApp</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500">Ecrivez-nous sur WhatsApp</p>
                   </div>
                 </button>
                 {user && (
                   <button onClick={() => { setView("complaint"); setComplaintSent(false); }} data-testid="button-start-complaint"
-                    className="w-full bg-gray-50 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 transition-all text-left border border-gray-100">
+                    className="w-full bg-gray-50 dark:bg-gray-800 rounded-xl p-3 flex items-center gap-3 hover:bg-gray-100 dark:bg-gray-800 transition-all text-left border border-gray-100 dark:border-gray-800">
                     <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
                       <AlertTriangle size={18} className="text-orange-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-gray-900">Reclamation</p>
-                      <p className="text-[10px] text-gray-400">Signalez un probleme structure</p>
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white">Reclamation</p>
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500">Signalez un probleme structure</p>
                     </div>
                   </button>
                 )}
@@ -198,7 +198,7 @@ export default function ClientContactBubble() {
                   <ArrowLeft size={18} />
                 </button>
                 <div className="relative">
-                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                  <div className="w-8 h-8 bg-white dark:bg-gray-900/20 rounded-lg flex items-center justify-center">
                     <Shield size={14} className="text-white" />
                   </div>
                   {selectedAdmin.isOnline && (
@@ -211,9 +211,9 @@ export default function ClientContactBubble() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50 dark:bg-gray-800">
                 {messages.length === 0 && (
-                  <div className="text-center pt-12 text-gray-400">
+                  <div className="text-center pt-12 text-gray-400 dark:text-gray-500">
                     <MessageCircle size={28} className="mx-auto mb-2 opacity-30" />
                     <p className="text-xs">Envoyez votre premier message</p>
                   </div>
@@ -223,10 +223,10 @@ export default function ClientContactBubble() {
                     <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
                       msg.senderId === user?.id
                         ? "bg-red-600 text-white rounded-br-sm"
-                        : "bg-white text-gray-900 rounded-bl-sm shadow-sm border border-gray-100"
+                        : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-bl-sm shadow-sm border border-gray-100 dark:border-gray-800"
                     }`}>
                       <p>{msg.message}</p>
-                      <p className={`text-[8px] mt-0.5 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400"}`}>
+                      <p className={`text-[8px] mt-0.5 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400 dark:text-gray-500"}`}>
                         {formatTime(msg.createdAt)}
                       </p>
                     </div>
@@ -235,7 +235,7 @@ export default function ClientContactBubble() {
                 <div ref={messagesEnd} />
               </div>
 
-              <div className="p-2 border-t border-gray-100 bg-white">
+              <div className="p-2 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
                 <div className="flex gap-1.5">
                   <input
                     type="text"
@@ -244,7 +244,7 @@ export default function ClientContactBubble() {
                     onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                     placeholder="Votre message..."
                     data-testid="client-chat-input"
-                    className="flex-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
                   <button onClick={sendMessage} data-testid="client-chat-send"
                     className="w-10 h-10 bg-red-600 text-white rounded-lg flex items-center justify-center hover:bg-red-700">
@@ -261,7 +261,7 @@ export default function ClientContactBubble() {
                 <button onClick={() => setView("menu")} className="text-white/80 hover:text-white">
                   <ArrowLeft size={18} />
                 </button>
-                <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-white dark:bg-gray-900/20 rounded-lg flex items-center justify-center">
                   <AlertTriangle size={14} className="text-white" />
                 </div>
                 <div>
@@ -275,16 +275,16 @@ export default function ClientContactBubble() {
                   <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle2 size={28} className="text-green-600" />
                   </div>
-                  <h4 className="font-bold text-sm text-gray-900 mb-1">Reclamation envoyee</h4>
-                  <p className="text-xs text-gray-500">Un administrateur vous repondra dans les plus brefs delais.</p>
+                  <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">Reclamation envoyee</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Un administrateur vous repondra dans les plus brefs delais.</p>
                 </div>
               ) : (
                 <div className="p-3 space-y-3">
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">Sujet</label>
+                    <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase mb-1 block">Sujet</label>
                     <select value={complaintSubject} onChange={e => setComplaintSubject(e.target.value)}
                       data-testid="complaint-subject"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-red-500">
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-red-500">
                       <option value="">Choisir un sujet...</option>
                       <option value="Commande non livree">Commande non livree</option>
                       <option value="Retard de livraison">Retard de livraison</option>
@@ -297,11 +297,11 @@ export default function ClientContactBubble() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-500 uppercase mb-1 block">Description detaillee</label>
+                    <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase mb-1 block">Description detaillee</label>
                     <textarea value={complaintMessage} onChange={e => setComplaintMessage(e.target.value)}
                       placeholder="Decrivez votre probleme en detail..."
                       data-testid="complaint-message"
-                      className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs resize-none h-28 focus:outline-none focus:ring-2 focus:ring-red-500" />
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs resize-none h-28 focus:outline-none focus:ring-2 focus:ring-red-500" />
                   </div>
                   <button onClick={sendComplaint} disabled={!complaintSubject || !complaintMessage.trim()}
                     data-testid="button-send-complaint"

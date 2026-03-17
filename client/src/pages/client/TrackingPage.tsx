@@ -44,7 +44,7 @@ export default function TrackingPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] flex items-center justify-center" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -54,7 +54,7 @@ export default function TrackingPage() {
   const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 pt-5">
 
@@ -62,23 +62,23 @@ export default function TrackingPage() {
         <div className="flex items-center gap-3 mb-5">
           <button
             onClick={() => navigate("/orders")}
-            className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center"
+            className="w-10 h-10 bg-white dark:bg-gray-900 rounded-2xl flex items-center justify-center"
             data-testid="button-back-orders"
             style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
           >
-            <ArrowLeft size={18} className="text-gray-800" />
+            <ArrowLeft size={18} className="text-gray-800 dark:text-gray-100" />
           </button>
           <div>
-            <h2 className="font-bold text-gray-900" style={{ fontSize: 18 }}>
+            <h2 className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 18 }}>
               Commande #{order.orderNumber}
             </h2>
-            <p className="text-gray-400" style={{ fontSize: 12 }}>{formatDate(order.createdAt!)}</p>
+            <p className="text-gray-400 dark:text-gray-500" style={{ fontSize: 12 }}>{formatDate(order.createdAt!)}</p>
           </div>
         </div>
 
         {/* Tracking steps */}
-        <div className="bg-white rounded-3xl p-6 mb-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-          <p className="font-bold text-gray-900 mb-5" style={{ fontSize: 15 }}>Suivi de la commande</p>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 mb-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <p className="font-bold text-gray-900 dark:text-white mb-5" style={{ fontSize: 15 }}>Suivi de la commande</p>
           <div className="space-y-0">
             {steps.map((step, i) => {
               const isCompleted = i <= currentStepIndex;
@@ -114,7 +114,7 @@ export default function TrackingPage() {
                       {step.label}
                     </p>
                     {isCurrent && (
-                      <p className="text-gray-400 mt-0.5" style={{ fontSize: 11 }}>En cours...</p>
+                      <p className="text-gray-400 dark:text-gray-500 mt-0.5" style={{ fontSize: 11 }}>En cours...</p>
                     )}
                   </div>
                 </div>
@@ -125,15 +125,15 @@ export default function TrackingPage() {
 
         {/* Driver */}
         {driver && (
-          <div className="bg-white rounded-3xl p-4 mb-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-            <p className="font-bold text-gray-900 mb-3" style={{ fontSize: 15 }}>Votre livreur</p>
+          <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 mb-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+            <p className="font-bold text-gray-900 dark:text-white mb-3" style={{ fontSize: 15 }}>Votre livreur</p>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center flex-shrink-0">
                 <Truck size={20} className="text-red-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-900 truncate" style={{ fontSize: 14 }}>{driver.name}</p>
-                <p className="text-gray-400" style={{ fontSize: 12 }}>{driver.phone}</p>
+                <p className="font-bold text-gray-900 dark:text-white truncate" style={{ fontSize: 14 }}>{driver.name}</p>
+                <p className="text-gray-400 dark:text-gray-500" style={{ fontSize: 12 }}>{driver.phone}</p>
               </div>
               <button
                 className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 active:scale-95 transition-transform"
@@ -152,38 +152,38 @@ export default function TrackingPage() {
         )}
 
         {/* Order details */}
-        <div className="bg-white rounded-3xl p-4 mb-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-          <p className="font-bold text-gray-900 mb-3" style={{ fontSize: 15 }}>Détails de la commande</p>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 mb-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <p className="font-bold text-gray-900 dark:text-white mb-3" style={{ fontSize: 15 }}>Détails de la commande</p>
           <div className="space-y-2">
             {(items as any[]).map((item: any, i: number) => (
               <div key={i} className="flex justify-between">
-                <span className="text-gray-500" style={{ fontSize: 13 }}>
+                <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500" style={{ fontSize: 13 }}>
                   {item.qty}× {item.name}
                 </span>
-                <span className="font-semibold text-gray-900" style={{ fontSize: 13 }}>
+                <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: 13 }}>
                   {formatPrice(item.price * item.qty)}
                 </span>
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-100 mt-3 pt-3 space-y-1.5">
+          <div className="border-t border-gray-100 dark:border-gray-800 mt-3 pt-3 space-y-1.5">
             <div className="flex justify-between" style={{ fontSize: 13 }}>
-              <span className="text-gray-400">Livraison</span>
-              <span className="text-gray-700 font-semibold">{formatPrice(order.deliveryFee)}</span>
+              <span className="text-gray-400 dark:text-gray-500">Livraison</span>
+              <span className="text-gray-700 dark:text-gray-200 font-semibold">{formatPrice(order.deliveryFee)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-bold text-gray-900" style={{ fontSize: 14 }}>Total</span>
+              <span className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 14 }}>Total</span>
               <span className="font-bold text-red-600" style={{ fontSize: 16 }}>{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>
 
         {/* Delivery address */}
-        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-          <p className="font-bold text-gray-900 mb-2" style={{ fontSize: 15 }}>Adresse de livraison</p>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <p className="font-bold text-gray-900 dark:text-white mb-2" style={{ fontSize: 15 }}>Adresse de livraison</p>
           <div className="flex items-start gap-2">
             <MapPin size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
-            <p className="text-gray-500" style={{ fontSize: 13 }}>{order.deliveryAddress}</p>
+            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500" style={{ fontSize: 13 }}>{order.deliveryAddress}</p>
           </div>
         </div>
       </div>

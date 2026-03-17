@@ -27,7 +27,7 @@ function OrderProgressBar({ status }: { status: string }) {
   if (!pct) return null;
   return (
     <div className="mt-3">
-      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-red-500 to-red-600 rounded-full transition-all duration-700"
           style={{ width: `${pct}%` }}
@@ -64,14 +64,14 @@ export default function OrdersPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <ClientNav />
         <div className="flex flex-col items-center justify-center pt-32 px-8 text-center">
           <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mb-5">
             <ShoppingBag size={36} className="text-red-400" />
           </div>
-          <p className="font-bold text-gray-900 text-lg">Connexion requise</p>
-          <p className="text-gray-400 text-sm mt-1">Connectez-vous pour voir vos commandes</p>
+          <p className="font-bold text-gray-900 dark:text-white text-lg">Connexion requise</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">Connectez-vous pour voir vos commandes</p>
           <button
             onClick={() => navigate("/login")}
             className="mt-6 bg-red-600 text-white px-6 py-3 rounded-2xl font-bold text-sm active:scale-95 transition-transform"
@@ -85,21 +85,21 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
 
       <div className="max-w-lg mx-auto px-4 pt-5">
 
         {/* ── Page title ─── */}
         <div className="mb-5">
-          <h1 className="font-bold text-gray-900" style={{ fontSize: 22 }}>Mes Commandes</h1>
-          <p className="text-gray-400 mt-0.5" style={{ fontSize: 13 }}>
+          <h1 className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 22 }}>Mes Commandes</h1>
+          <p className="text-gray-400 dark:text-gray-500 mt-0.5" style={{ fontSize: 13 }}>
             {activeOrders.length} en cours · {pastOrders.length} terminée{pastOrders.length !== 1 ? "s" : ""}
           </p>
         </div>
 
         {/* ── Tabs ─── */}
-        <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-2xl">
+        <div className="flex gap-1 mb-5 bg-gray-100 dark:bg-gray-800 p-1 rounded-2xl">
           {[
             { key: "active",  label: "En cours",  count: activeOrders.length },
             { key: "history", label: "Historique", count: pastOrders.length  },
@@ -136,13 +136,13 @@ export default function OrdersPage() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-3xl p-5" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+              <div key={i} className="bg-white dark:bg-gray-900 rounded-3xl p-5" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
                 <div className="flex gap-3">
-                  <div className="w-14 h-14 bg-gray-100 animate-pulse rounded-2xl flex-shrink-0" />
+                  <div className="w-14 h-14 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl flex-shrink-0" />
                   <div className="flex-1 space-y-2 pt-1">
-                    <div className="h-4 w-28 bg-gray-100 animate-pulse rounded-full" />
-                    <div className="h-3 w-20 bg-gray-100 animate-pulse rounded-full" />
-                    <div className="h-3 w-40 bg-gray-100 animate-pulse rounded-full" />
+                    <div className="h-4 w-28 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-full" />
+                    <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-full" />
+                    <div className="h-3 w-40 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-full" />
                   </div>
                 </div>
               </div>
@@ -150,17 +150,17 @@ export default function OrdersPage() {
           </div>
         ) : displayed.length === 0 ? (
           <div className="flex flex-col items-center justify-center pt-16 text-center">
-            <div className="w-24 h-24 bg-gray-100 rounded-3xl flex items-center justify-center mb-5">
+            <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-5">
               {tab === "active" ? (
                 <Bike size={40} className="text-gray-300" />
               ) : (
                 <Package size={40} className="text-gray-300" />
               )}
             </div>
-            <p className="font-bold text-gray-800 text-base" data-testid="text-empty-orders">
+            <p className="font-bold text-gray-800 dark:text-gray-100 text-base" data-testid="text-empty-orders">
               {tab === "active" ? "Aucune commande en cours" : "Aucune commande passée"}
             </p>
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
               {tab === "active" ? "Commandez chez l'un de nos restaurants" : "Vos commandes passées apparaîtront ici"}
             </p>
             {tab === "active" && (
@@ -186,12 +186,12 @@ export default function OrdersPage() {
                   key={order.id}
                   onClick={() => navigate(`/order/${order.id}`)}
                   data-testid={`order-card-${order.id}`}
-                  className="w-full bg-white rounded-3xl p-4 text-left active:scale-[0.98] transition-transform"
+                  className="w-full bg-white dark:bg-gray-900 rounded-3xl p-4 text-left active:scale-[0.98] transition-transform"
                   style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}
                 >
                   <div className="flex gap-3">
                     {/* Restaurant image/logo */}
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                       {restaurant?.logoUrl ? (
                         <img src={restaurant.logoUrl} alt={restaurant.name} className="w-full h-full object-cover" loading="lazy" />
                       ) : restaurant?.image ? (
@@ -203,7 +203,7 @@ export default function OrdersPage() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <p className="font-bold text-gray-900 truncate" style={{ fontSize: 14 }}>
+                        <p className="font-bold text-gray-900 dark:text-white truncate" style={{ fontSize: 14 }}>
                           {restaurant?.name || "Restaurant"}
                         </p>
                         <ChevronRight size={16} className="text-gray-300 flex-shrink-0 mt-0.5" />
@@ -220,12 +220,12 @@ export default function OrdersPage() {
 
                       {/* Meta */}
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <div className="flex items-center gap-1 text-gray-400">
+                        <div className="flex items-center gap-1 text-gray-400 dark:text-gray-500">
                           <Clock size={11} strokeWidth={1.8} />
                           <span style={{ fontSize: 11 }}>{formatDate(order.createdAt!)}</span>
                         </div>
                         <div className="w-px h-3 bg-gray-200" />
-                        <span className="text-gray-400" style={{ fontSize: 11 }}>
+                        <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: 11 }}>
                           {itemCount} article{itemCount > 1 ? "s" : ""}
                         </span>
                         <div className="w-px h-3 bg-gray-200" />

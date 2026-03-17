@@ -25,7 +25,7 @@ export default function RestaurantPage() {
   const getItemQty = (itemId: number) => items.find((i) => i.id === itemId)?.quantity || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-32" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <div className="relative h-56">
         {restaurant && !showVideo && (
           <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
@@ -48,7 +48,7 @@ export default function RestaurantPage() {
           data-testid="button-back"
           className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg z-10"
         >
-          <ArrowLeft size={18} className="text-gray-900" />
+          <ArrowLeft size={18} className="text-gray-900 dark:text-white" />
         </button>
         {restaurant?.coverVideoUrl && !showVideo && (
           <button
@@ -57,13 +57,13 @@ export default function RestaurantPage() {
             className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg z-10"
           >
             <Play size={14} className="text-red-600 fill-red-600" />
-            <span className="text-xs font-bold text-gray-900">Video</span>
+            <span className="text-xs font-bold text-gray-900 dark:text-white">Video</span>
           </button>
         )}
         <div className="absolute bottom-4 left-4 right-4 text-white z-10">
           <div className="flex items-center gap-3">
             {restaurant?.logoUrl ? (
-              <div className="w-12 h-12 rounded-xl bg-white flex-shrink-0 shadow-lg overflow-hidden flex items-center justify-center">
+              <div className="w-12 h-12 rounded-xl bg-white dark:bg-gray-900 flex-shrink-0 shadow-lg overflow-hidden flex items-center justify-center">
                 <img src={restaurant.logoUrl} alt={`${restaurant.name} logo`} className="w-full h-full object-contain p-1" data-testid="restaurant-detail-logo" />
               </div>
             ) : (
@@ -114,7 +114,7 @@ export default function RestaurantPage() {
         )}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
           {categories.map((c) => (
-            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white rounded-full font-semibold text-gray-500 transition-all active:bg-red-50 active:text-red-600" style={{ fontSize: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
+            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white rounded-full font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-all active:bg-red-50 active:text-red-600" style={{ fontSize: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
               {c}
             </a>
           ))}
@@ -122,7 +122,7 @@ export default function RestaurantPage() {
 
         {categories.map((cat) => (
           <div key={cat} id={`cat-${cat}`} className="mb-6">
-            <h3 className="font-bold text-gray-900 mb-3 uppercase tracking-wider" style={{ fontSize: 12 }}>{cat}</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wider" style={{ fontSize: 12 }}>{cat}</h3>
             <div className="space-y-3">
               {menu.filter((m) => m.category === cat).map((item) => {
                 const qty = getItemQty(item.id);
@@ -130,18 +130,18 @@ export default function RestaurantPage() {
                   <div
                     key={item.id}
                     data-testid={`menu-item-${item.id}`}
-                    className="bg-white rounded-3xl p-3 flex gap-3"
+                    className="bg-white dark:bg-gray-900 rounded-3xl p-3 flex gap-3"
                     style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}
                   >
                     <img src={item.image} alt={item.name} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-bold text-gray-900" style={{ fontSize: 13 }}>{item.name}</h4>
+                          <h4 className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 13 }}>{item.name}</h4>
                           {item.popular && <span className="inline-block mt-0.5 bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-semibold" style={{ fontSize: 10 }}>⭐ Populaire</span>}
                         </div>
                       </div>
-                      <p className="text-gray-400 mt-1 line-clamp-2" style={{ fontSize: 11 }}>{item.description}</p>
+                      <p className="text-gray-400 dark:text-gray-500 mt-1 line-clamp-2" style={{ fontSize: 11 }}>{item.description}</p>
                       <div className="flex items-center justify-between mt-2">
                         <span className="font-bold text-red-600" style={{ fontSize: 14 }}>{formatPrice(item.price)}</span>
                         {qty > 0 ? (
@@ -149,7 +149,7 @@ export default function RestaurantPage() {
                             <button
                               onClick={() => updateQuantity(item.id, qty - 1)}
                               data-testid={`minus-${item.id}`}
-                              className="w-6 h-6 rounded-lg bg-white border border-red-100 flex items-center justify-center text-red-600"
+                              className="w-6 h-6 rounded-lg bg-white dark:bg-gray-900 border border-red-100 flex items-center justify-center text-red-600"
                             >
                               <Minus size={12} />
                             </button>
@@ -186,7 +186,7 @@ export default function RestaurantPage() {
       </div>
 
       {itemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => navigate("/cart")}
