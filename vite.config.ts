@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     cartographer(),
   ],
+  assetsInclude: ["**/*.mov", "**/*.MOV"],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),

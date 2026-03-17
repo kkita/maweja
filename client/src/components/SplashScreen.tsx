@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
+import splashVideoSrc from "@assets/splash.mov";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -43,7 +44,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       {phase === "video" && (
         <video
           ref={videoRef}
-          src="/splash.mov"
+          src={splashVideoSrc}
           autoPlay
           muted
           playsInline
