@@ -87,24 +87,25 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+      <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 flex flex-col items-center justify-center pt-32">
-          <div className="w-24 h-24 bg-red-50 dark:bg-red-950 rounded-2xl flex items-center justify-center mb-4">
+          <div className="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-5">
             <ShoppingBag size={40} className="text-red-300" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white" data-testid="text-empty-cart">
+          <h2 className="font-bold text-gray-900" style={{ fontSize: 20 }} data-testid="text-empty-cart">
             Votre panier est vide
           </h2>
-          <p className="text-gray-500 text-sm mt-2 text-center">
+          <p className="text-gray-400 text-sm mt-2 text-center">
             Parcourez nos restaurants et ajoutez des plats
           </p>
           <button
             onClick={() => navigate("/")}
             data-testid="button-browse"
-            className="mt-6 bg-red-600 text-white px-8 py-3 rounded-2xl font-semibold text-sm shadow-lg shadow-red-200"
+            className="mt-6 bg-red-600 text-white px-8 py-3 rounded-2xl font-bold text-sm active:scale-95 transition-transform"
+            style={{ boxShadow: "0 4px 16px rgba(220,38,38,0.3)" }}
           >
-            Decouvrir les restaurants
+            Découvrir les restaurants
           </button>
         </div>
       </div>
@@ -114,13 +115,13 @@ export default function CartPage() {
   const restaurantName = items[0].restaurantName;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-48">
+    <div className="min-h-screen bg-gray-50 pb-48" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
-      <div className="max-w-lg mx-auto px-4 py-4 space-y-4">
+      <div className="max-w-lg mx-auto px-4 pt-5 space-y-4">
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white" data-testid="text-cart-title">
+            <h2 className="font-bold text-gray-900" style={{ fontSize: 22 }} data-testid="text-cart-title">
               Mon Panier
             </h2>
             <span
@@ -139,8 +140,8 @@ export default function CartPage() {
           </button>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm">
-          <div className="px-4 py-3 bg-red-50 rounded-t-2xl border-b border-red-100 flex items-center gap-2">
+        <div className="bg-white rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2">
             <ShoppingBag size={16} className="text-red-600" />
             <p className="text-sm font-semibold text-red-700" data-testid="text-restaurant-name">
               {restaurantName}
@@ -213,52 +214,53 @@ export default function CartPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
             <User size={16} className="text-red-600" />
             Informations personnelles
           </h3>
           <div className="space-y-2.5">
-            <div className="flex items-center gap-3 text-sm" data-testid="text-user-name">
+            <div className="flex items-center gap-3" data-testid="text-user-name">
               <User size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="text-gray-700">{user?.name || "Non connecte"}</span>
+              <span className="text-gray-600" style={{ fontSize: 13 }}>{user?.name || "Non connecté"}</span>
             </div>
-            <div className="flex items-center gap-3 text-sm" data-testid="text-user-email">
+            <div className="flex items-center gap-3" data-testid="text-user-email">
               <Mail size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="text-gray-700">{user?.email || "-"}</span>
+              <span className="text-gray-600" style={{ fontSize: 13 }}>{user?.email || "-"}</span>
             </div>
-            <div className="flex items-center gap-3 text-sm" data-testid="text-user-phone">
+            <div className="flex items-center gap-3" data-testid="text-user-phone">
               <Phone size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="text-gray-700">{user?.phone || "-"}</span>
+              <span className="text-gray-600" style={{ fontSize: 13 }}>{user?.phone || "-"}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
             <MessageSquare size={16} className="text-red-600" />
-            Instructions speciales
+            Instructions spéciales
           </h3>
           <textarea
             value={specialInstructions}
             onChange={(e) => setSpecialInstructions(e.target.value)}
             placeholder="Ex: Sans oignon, bien cuit, allergies..."
-            className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 placeholder-gray-400 rounded-xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+            className="w-full border border-gray-100 bg-gray-50 text-gray-700 placeholder-gray-300 rounded-2xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-300"
             rows={3}
             data-testid="input-special-instructions"
           />
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4">
+        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2" style={{ fontSize: 14 }}>
               <MapPin size={16} className="text-red-600" />
               Adresse de livraison
             </h3>
             {defaultAddress && (
               <button
                 onClick={() => navigate("/addresses")}
-                className="text-red-600 text-xs font-semibold flex items-center gap-0.5"
+                className="text-red-600 font-semibold flex items-center gap-0.5"
+                style={{ fontSize: 12 }}
                 data-testid="button-change-address"
               >
                 Changer <ChevronRight size={14} />
@@ -267,11 +269,11 @@ export default function CartPage() {
           </div>
           {defaultAddress ? (
             <div
-              className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"
+              className="bg-gray-50 rounded-2xl p-3 flex items-start gap-2"
               data-testid="text-delivery-address"
             >
               <MapPin size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-              <span>{defaultAddress.address}</span>
+              <span className="text-gray-600" style={{ fontSize: 13 }}>{defaultAddress.address}</span>
             </div>
           ) : (
             <div className="space-y-2">
@@ -280,12 +282,13 @@ export default function CartPage() {
                 value={manualAddress}
                 onChange={(e) => setManualAddress(e.target.value)}
                 placeholder="Entrez votre adresse de livraison"
-                className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+                className="w-full border border-gray-100 bg-gray-50 text-gray-700 placeholder-gray-300 rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-300"
                 data-testid="input-manual-address"
               />
               <button
                 onClick={() => navigate("/addresses")}
-                className="text-red-600 text-xs font-semibold flex items-center gap-1"
+                className="text-red-600 font-semibold flex items-center gap-1"
+                style={{ fontSize: 12 }}
                 data-testid="link-add-address"
               >
                 <Plus size={14} /> Ajouter une adresse
@@ -294,22 +297,22 @@ export default function CartPage() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 space-y-3">
-          <div className="flex justify-between gap-2 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Sous-total</span>
-            <span className="font-semibold dark:text-white" data-testid="text-subtotal">{formatPrice(total)}</span>
+        <div className="bg-white rounded-3xl p-4 space-y-3" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
+            <span className="text-gray-400">Sous-total</span>
+            <span className="font-semibold text-gray-800" data-testid="text-subtotal">{formatPrice(total)}</span>
           </div>
-          <div className="flex justify-between gap-2 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
-            <span className="font-semibold dark:text-white" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
+          <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
+            <span className="text-gray-400">Frais de livraison</span>
+            <span className="font-semibold text-gray-800" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
           </div>
-          <div className="flex justify-between gap-2 text-sm">
-            <span className="text-gray-500 dark:text-gray-400">Taxes (5%)</span>
-            <span className="font-semibold dark:text-white" data-testid="text-tax">{formatPrice(taxAmount)}</span>
+          <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
+            <span className="text-gray-400">Taxes (5%)</span>
+            <span className="font-semibold text-gray-800" data-testid="text-tax">{formatPrice(taxAmount)}</span>
           </div>
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex justify-between gap-2">
-            <span className="font-bold dark:text-white">Total</span>
-            <span className="font-black text-red-600 text-lg" data-testid="text-grand-total">
+          <div className="border-t border-gray-100 pt-3 flex justify-between gap-2 items-center">
+            <span className="font-bold text-gray-900" style={{ fontSize: 15 }}>Total</span>
+            <span className="font-black text-red-600" style={{ fontSize: 20 }} data-testid="text-grand-total">
               {formatPrice(grandTotal)}
             </span>
           </div>

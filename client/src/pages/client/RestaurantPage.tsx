@@ -25,7 +25,7 @@ export default function RestaurantPage() {
   const getItemQty = (itemId: number) => items.find((i) => i.id === itemId)?.quantity || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-32">
+    <div className="min-h-screen bg-gray-50 pb-32" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <div className="relative h-56">
         {restaurant && !showVideo && (
           <img src={restaurant.image} alt={restaurant.name} className="w-full h-full object-cover" />
@@ -94,7 +94,7 @@ export default function RestaurantPage() {
         )}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
           {categories.map((c) => (
-            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-200 hover:text-red-600 transition-all">
+            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white rounded-full font-semibold text-gray-500 transition-all active:bg-red-50 active:text-red-600" style={{ fontSize: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
               {c}
             </a>
           ))}
@@ -102,7 +102,7 @@ export default function RestaurantPage() {
 
         {categories.map((cat) => (
           <div key={cat} id={`cat-${cat}`} className="mb-6">
-            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-3 uppercase tracking-wider">{cat}</h3>
+            <h3 className="font-bold text-gray-900 mb-3 uppercase tracking-wider" style={{ fontSize: 12 }}>{cat}</h3>
             <div className="space-y-3">
               {menu.filter((m) => m.category === cat).map((item) => {
                 const qty = getItemQty(item.id);
@@ -110,29 +110,30 @@ export default function RestaurantPage() {
                   <div
                     key={item.id}
                     data-testid={`menu-item-${item.id}`}
-                    className="bg-white dark:bg-gray-900 rounded-2xl p-3 flex gap-3 border border-gray-100 dark:border-gray-800 shadow-sm"
+                    className="bg-white rounded-3xl p-3 flex gap-3"
+                    style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}
                   >
-                    <img src={item.image} alt={item.name} className="w-20 h-20 rounded-xl object-cover flex-shrink-0" />
+                    <img src={item.image} alt={item.name} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{item.name}</h4>
-                          {item.popular && <span className="text-[10px] bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded font-semibold">Populaire</span>}
+                          <h4 className="font-bold text-gray-900" style={{ fontSize: 13 }}>{item.name}</h4>
+                          {item.popular && <span className="inline-block mt-0.5 bg-red-50 text-red-600 px-1.5 py-0.5 rounded font-semibold" style={{ fontSize: 10 }}>⭐ Populaire</span>}
                         </div>
                       </div>
-                      <p className="text-gray-400 dark:text-gray-500 text-xs mt-1 line-clamp-2">{item.description}</p>
+                      <p className="text-gray-400 mt-1 line-clamp-2" style={{ fontSize: 11 }}>{item.description}</p>
                       <div className="flex items-center justify-between mt-2">
-                        <span className="font-bold text-red-600 text-sm">{formatPrice(item.price)}</span>
+                        <span className="font-bold text-red-600" style={{ fontSize: 14 }}>{formatPrice(item.price)}</span>
                         {qty > 0 ? (
-                          <div className="flex items-center gap-2 bg-red-50 dark:bg-red-950/40 rounded-xl px-2 py-1">
+                          <div className="flex items-center gap-2 bg-red-50 rounded-xl px-2 py-1">
                             <button
                               onClick={() => updateQuantity(item.id, qty - 1)}
                               data-testid={`minus-${item.id}`}
-                              className="w-6 h-6 rounded-lg bg-white dark:bg-gray-800 border border-red-200 dark:border-red-800 flex items-center justify-center text-red-600"
+                              className="w-6 h-6 rounded-lg bg-white border border-red-100 flex items-center justify-center text-red-600"
                             >
                               <Minus size={12} />
                             </button>
-                            <span className="text-sm font-bold text-red-600 w-4 text-center">{qty}</span>
+                            <span className="font-bold text-red-600 w-4 text-center" style={{ fontSize: 13 }}>{qty}</span>
                             <button
                               onClick={() => updateQuantity(item.id, qty + 1)}
                               data-testid={`plus-${item.id}`}
@@ -145,10 +146,11 @@ export default function RestaurantPage() {
                           <button
                             onClick={() => {
                               addItem({ id: item.id, name: item.name, price: item.price, image: item.image, restaurantId: restaurant!.id, restaurantName: restaurant!.name });
-                              toast({ title: "Ajoute au panier", description: item.name });
+                              toast({ title: "Ajouté au panier", description: item.name });
                             }}
                             data-testid={`add-${item.id}`}
-                            className="w-8 h-8 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-200 hover:bg-red-700 transition-all"
+                            className="w-8 h-8 rounded-xl bg-red-600 flex items-center justify-center text-white active:scale-95 transition-transform"
+                            style={{ boxShadow: "0 4px 12px rgba(220,38,38,0.3)" }}
                           >
                             <Plus size={16} />
                           </button>
@@ -164,12 +166,13 @@ export default function RestaurantPage() {
       </div>
 
       {itemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => navigate("/cart")}
               data-testid="button-view-cart"
-              className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold flex items-center justify-between px-6 shadow-xl shadow-red-200 hover:bg-red-700 transition-all"
+              className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold flex items-center justify-between px-6 active:scale-[0.98] transition-transform"
+              style={{ boxShadow: "0 4px 20px rgba(220,38,38,0.35)", fontSize: 14 }}
             >
               <div className="flex items-center gap-2">
                 <ShoppingBag size={18} />

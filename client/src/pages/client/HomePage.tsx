@@ -26,6 +26,7 @@ const FALLBACK_EMOJIS: Record<string, string> = {
   massage: "💆",
   nettoyage: "🧹", ménage: "🧹",
   coursier: "📦",
+  services: "🔧",
 };
 
 function getFallbackEmoji(name: string): string {
@@ -312,6 +313,9 @@ export default function HomePage() {
 
   const activeCategories = serviceCategories.filter(c => c.isActive);
 
+  /* Static "Tous les services" category */
+  const STATIC_SERVICES_CAT = { id: -1, name: "Tous les services", imageUrl: null, isActive: true };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
@@ -344,6 +348,16 @@ export default function HomePage() {
                   width: "max-content",
                 }}
               >
+                {/* Static "Tous les services" entry */}
+                <CategoryItem
+                  key="all-services"
+                  name="Tous les services"
+                  imageUrl={null}
+                  active={false}
+                  testId="cat-all-services"
+                  onClick={() => navigate("/services")}
+                />
+
                 {activeCategories.map(cat => (
                   <CategoryItem
                     key={cat.id}

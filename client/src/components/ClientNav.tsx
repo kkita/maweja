@@ -68,7 +68,7 @@ export default function ClientNav() {
         <div className="max-w-lg mx-auto flex items-center gap-3">
 
           {/* Logo */}
-          <div className="flex-shrink-0 w-9 h-9 rounded-xl overflow-hidden bg-gray-100">
+          <div className="flex-shrink-0 w-9 h-9">
             <img
               src={logoRed}
               alt="MAWEJA"
