@@ -144,9 +144,9 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
             { title: "2. Utilisation des données", body: "Vos données sont utilisées exclusivement pour : traiter et livrer vos commandes, vous envoyer des notifications relatives à vos commandes, améliorer notre service, vous contacter en cas de problème avec votre commande." },
             { title: "3. Partage des données", body: "Nous partageons vos données uniquement avec les livreurs assignés à vos commandes (nom et adresse de livraison) et les restaurants partenaires (détails de commande). Vos données ne sont jamais vendues à des tiers." },
             { title: "4. Sécurité", body: "Vos données sont protégées par des mesures de sécurité standard de l'industrie. Les mots de passe sont chiffrés et ne sont jamais stockés en clair. Nos serveurs sont sécurisés et les accès sont contrôlés." },
-            { title: "5. Vos droits", body: "Vous pouvez à tout moment demander l'accès, la modification ou la suppression de vos données en contactant notre support au +243 819 994 041. Nous traiterons votre demande dans un délai de 30 jours." },
+            { title: "5. Vos droits", body: "Vous pouvez à tout moment demander l'accès, la modification ou la suppression de vos données en contactant notre support au 0802540138. Nous traiterons votre demande dans un délai de 30 jours." },
             { title: "6. Cookies", body: "MAWEJA utilise des cookies de session pour maintenir votre connexion. Aucun cookie de traçage publicitaire n'est utilisé." },
-            { title: "7. Contact", body: "Pour toute question relative à la confidentialité : Ed Corporation - Kinshasa, RDC - Tél : +243 819 994 041 - Email : support@maweja.cd" },
+            { title: "7. Contact", body: "Pour toute question relative à la confidentialité : Ed Corporation - Kinshasa, RDC - Tél : 0802540138 - Email : support@maweja.cd" },
           ].map(({ title, body }) => (
             <div key={title}>
               <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">{title}</h4>
@@ -214,7 +214,7 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
           <>
             <div className="bg-blue-50 dark:bg-blue-950 rounded-2xl p-4 mb-5">
               <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">Support disponible 24h/24</p>
-              <p className="text-xs text-blue-600 dark:text-blue-500">Tél : <a href="tel:+243819994041" className="font-bold">+243 819 994 041</a></p>
+              <p className="text-xs text-blue-600 dark:text-blue-500">Tél : <a href="tel:+243802540138" className="font-bold">0802540138</a></p>
             </div>
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Envoyez-nous un message :</p>
             <textarea
@@ -271,7 +271,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             { label: "Plateforme", value: "Livraison & Services — Kinshasa, RDC" },
             { label: "Développeur", value: "Khevin Andrew Kita" },
             { label: "Entreprise", value: "Ed Corporation" },
-            { label: "Contact", value: "+243 819 994 041" },
+            { label: "Contact", value: "0802540138" },
             { label: "Email", value: "support@maweja.cd" },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">

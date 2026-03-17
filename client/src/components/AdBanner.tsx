@@ -112,7 +112,7 @@ export default function AdBanner() {
           </div>
           <p className="text-sm font-bold text-gray-700 leading-tight">Publiez votre annonce ici</p>
           <p className="text-xs text-gray-400 mt-0.5">Touchez des milliers de clients à Kinshasa</p>
-          <p className="text-[11px] font-semibold text-red-600 mt-1.5">+243 819 994 041</p>
+          <p className="text-[11px] font-semibold text-red-600 mt-1.5">0802540138</p>
         </div>
         <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0 ml-3">
           <Megaphone size={28} className="text-red-400" />

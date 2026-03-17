@@ -16,7 +16,7 @@ const DEFAULTS = {
   loyalty_enabled: "true",
   points_per_order: "10",
   currency: "USD",
-  whatsapp_number: "+243819994041",
+  whatsapp_number: "+243802540138",
 };
 
 export default function AdminSettings() {
@@ -145,7 +145,7 @@ export default function AdminSettings() {
               </div>
             </div>
             <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2">
-              Ce numero apparaitra dans le bouton WhatsApp de l'application client. Exemple: +243819994041
+              Ce numero apparaitra dans le bouton WhatsApp de l'application client. Exemple: +243802540138
             </p>
             {form.whatsapp_number && (
               <a href={`https://wa.me/${form.whatsapp_number.replace(/\s+/g, "").replace("+", "")}`} target="_blank" rel="noopener noreferrer"

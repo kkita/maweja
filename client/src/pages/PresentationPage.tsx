@@ -592,7 +592,7 @@ export default function PresentationPage() {
               Khevin Andrew Kita
             </p>
             <p className="text-red-400 font-semibold tracking-widest text-sm uppercase">Développeur</p>
-            <p className="text-gray-400 font-mono text-sm mt-1">0819 994 041</p>
+            <p className="text-gray-400 font-mono text-sm mt-1">0802540138</p>
           </div>
 
           <p

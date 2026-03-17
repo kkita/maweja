@@ -331,8 +331,8 @@ app.use((req: any, res, next) => {
   await db.execute(sql`
     INSERT INTO users (email, password, name, phone, role, is_online, verification_status)
     VALUES
-      ('admin@maweja.cd', 'admin123', 'Super Admin', '0819994041', 'admin', true, 'not_started'),
-      ('admin@maweja.net', 'Maweja2026', 'Admin MAWEJA', '0819994041', 'admin', true, 'not_started')
+      ('admin@maweja.cd', 'admin123', 'Super Admin', '0802540138', 'admin', true, 'not_started'),
+      ('admin@maweja.net', 'Maweja2026', 'Admin MAWEJA', '0802540138', 'admin', true, 'not_started')
     ON CONFLICT (email) DO NOTHING
   `);
 

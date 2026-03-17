@@ -7,7 +7,7 @@ export async function seedDatabase() {
         return;
     console.log("Seeding database...");
     await db.insert(users).values([
-        { email: "admin@maweja.cd", password: "admin123", name: "Admin MAWEJA", phone: "0819994041", role: "admin", walletBalance: 0, loyaltyPoints: 0, isOnline: true, isBlocked: false },
+        { email: "admin@maweja.cd", password: "admin123", name: "Admin MAWEJA", phone: "0802540138", role: "admin", walletBalance: 0, loyaltyPoints: 0, isOnline: true, isBlocked: false },
         { email: "driver1@maweja.cd", password: "driver123", name: "Jean-Pierre Mutombo", phone: "0823456789", role: "driver", walletBalance: 45000, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3217, lng: 15.3125, vehicleType: "moto", vehiclePlate: "KN-1234-AB", driverLicense: "DL-001234", commissionRate: 15 },
         { email: "driver2@maweja.cd", password: "driver123", name: "David Tshimanga", phone: "0834567890", role: "driver", walletBalance: 32000, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3150, lng: 15.2980, vehicleType: "moto", vehiclePlate: "KN-5678-CD", driverLicense: "DL-005678", commissionRate: 15 },
         { email: "driver3@maweja.cd", password: "driver123", name: "Samuel Ilunga", phone: "0845678901", role: "driver", walletBalance: 28000, loyaltyPoints: 0, isOnline: false, isBlocked: false, lat: -4.3280, lng: 15.3050, vehicleType: "voiture", vehiclePlate: "KN-9012-EF", driverLicense: "DL-009012", commissionRate: 12 },

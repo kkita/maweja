@@ -1407,7 +1407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const settings = await storage.getSettings();
       const defaults: Record<string, string> = {
-        whatsapp_number: "+243819994041",
+        whatsapp_number: "+243802540138",
         app_name: "MAWEJA",
         delivery_fee: "2500",
         min_order: "3000",

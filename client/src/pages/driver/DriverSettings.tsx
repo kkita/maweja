@@ -141,8 +141,8 @@ function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
             { title: "2. Utilisation des données", body: "Vos données servent à : assigner et suivre les livraisons, calculer vos revenus, améliorer la plateforme, vous contacter en cas de problème." },
             { title: "3. Localisation GPS", body: "Votre position GPS n'est partagée avec les clients que pendant une livraison active. Elle est désactivée dès que vous passez hors ligne." },
             { title: "4. Revenus et paiements", body: "Vos données de revenus sont confidentielles et ne sont partagées qu'avec l'administration MAWEJA pour le calcul des commissions." },
-            { title: "5. Vos droits", body: "Vous pouvez demander la modification ou suppression de votre compte à tout moment en contactant le support au +243 819 994 041." },
-            { title: "6. Contact", body: "Ed Corporation — Kinshasa, RDC — Tél : +243 819 994 041 — Email : support@maweja.cd" },
+            { title: "5. Vos droits", body: "Vous pouvez demander la modification ou suppression de votre compte à tout moment en contactant le support au 0802540138." },
+            { title: "6. Contact", body: "Ed Corporation — Kinshasa, RDC — Tél : 0802540138 — Email : support@maweja.cd" },
           ].map(({ title, body }) => (
             <div key={title}>
               <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">{title}</h4>
@@ -209,7 +209,7 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
           <>
             <div className="bg-blue-50 dark:bg-blue-950 rounded-2xl p-4 mb-5">
               <p className="text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">Support Livreur — Disponible 24h/24</p>
-              <p className="text-xs text-blue-600 dark:text-blue-500">Tél : <a href="tel:+243819994041" className="font-bold">+243 819 994 041</a></p>
+              <p className="text-xs text-blue-600 dark:text-blue-500">Tél : <a href="tel:+243802540138" className="font-bold">0802540138</a></p>
             </div>
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Votre message :</p>
             <textarea
@@ -263,7 +263,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             { label: "Plateforme", value: "Livraison & Services — Kinshasa, RDC" },
             { label: "Développeur", value: "Khevin Andrew Kita" },
             { label: "Entreprise", value: "Ed Corporation" },
-            { label: "Contact", value: "+243 819 994 041" },
+            { label: "Contact", value: "0802540138" },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</span>

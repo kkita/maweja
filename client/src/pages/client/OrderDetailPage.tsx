@@ -61,7 +61,7 @@ export default function OrderDetailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const whatsappNumber = (appSettings?.whatsapp_number || "+243819994041")
+  const whatsappNumber = (appSettings?.whatsapp_number || "+243802540138")
     .replace(/\s+/g, "")
     .replace("+", "");
 
