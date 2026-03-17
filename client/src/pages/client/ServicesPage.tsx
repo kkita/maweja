@@ -112,39 +112,39 @@ export default function ServicesPage() {
   };
 
   const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-    pending: { label: t.services.statusPending, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/40", icon: Clock },
-    reviewing: { label: t.services.statusReviewing, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/40", icon: Loader2 },
-    accepted: { label: t.services.statusAccepted, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/40", icon: CheckCircle },
-    rejected: { label: t.services.statusRejected, color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/40", icon: AlertCircle },
-    completed: { label: t.services.statusCompleted, color: "text-gray-600 dark:text-gray-400", bg: "bg-gray-50 dark:bg-gray-800", icon: CheckCircle },
+    pending: { label: t.services.statusPending, color: "text-amber-600", bg: "bg-amber-50", icon: Clock },
+    reviewing: { label: t.services.statusReviewing, color: "text-blue-600", bg: "bg-blue-50", icon: Loader2 },
+    accepted: { label: t.services.statusAccepted, color: "text-green-600", bg: "bg-green-50", icon: CheckCircle },
+    rejected: { label: t.services.statusRejected, color: "text-red-600", bg: "bg-red-50", icon: AlertCircle },
+    completed: { label: t.services.statusCompleted, color: "text-gray-600", bg: "bg-gray-50", icon: CheckCircle },
   };
 
   if (previewItem) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+      <div className="min-h-screen bg-gray-50 pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
             <button onClick={() => setPreviewItem(null)}
-              className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700" data-testid="button-back-preview">
-              <ArrowLeft size={18} className="dark:text-gray-300" />
+              className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200" data-testid="button-back-preview">
+              <ArrowLeft size={18} className="text-gray-600" />
             </button>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{previewItem.name}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{selectedCatalogCategory?.name}</p>
+              <h2 className="text-lg font-bold text-gray-900">{previewItem.name}</h2>
+              <p className="text-xs text-gray-500">{selectedCatalogCategory?.name}</p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mb-4">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden mb-4">
             <div className="relative w-full" style={{ paddingBottom: "100%" }}>
               <img src={previewItem.imageUrl} alt={previewItem.name}
                 className="absolute inset-0 w-full h-full object-cover" data-testid="img-preview-full" />
             </div>
             <div className="p-5">
-              <h3 className="text-xl font-black text-gray-900 dark:text-white">{previewItem.name}</h3>
-              {previewItem.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{previewItem.description}</p>}
+              <h3 className="text-xl font-black text-gray-900">{previewItem.name}</h3>
+              {previewItem.description && <p className="text-sm text-gray-500 mt-2">{previewItem.description}</p>}
               {previewItem.price && (
-                <div className="mt-3 inline-block bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 font-bold text-lg px-4 py-2 rounded-xl">
+                <div className="mt-3 inline-block bg-red-50 text-red-700 font-bold text-lg px-4 py-2 rounded-xl">
                   {previewItem.price}
                 </div>
               )}
@@ -163,7 +163,7 @@ export default function ServicesPage() {
           </button>
           <button
             onClick={() => setPreviewItem(null)}
-            className="w-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-3 rounded-2xl text-sm font-semibold"
+            className="w-full bg-gray-100 text-gray-700 py-3 rounded-2xl text-sm font-semibold"
           >
             {t.common.back}
           </button>
@@ -174,34 +174,34 @@ export default function ServicesPage() {
 
   if (selectedCatalogCategory) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+      <div className="min-h-screen bg-gray-50 pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-2">
             <button onClick={() => { setSelectedCatalogCategory(null); setSelectedItem(null); }}
-              className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700" data-testid="button-back-catalog">
-              <ArrowLeft size={18} className="dark:text-gray-300" />
+              className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-200" data-testid="button-back-catalog">
+              <ArrowLeft size={18} className="text-gray-600" />
             </button>
             <div className="flex-1">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-catalog-title">{selectedCatalogCategory.name}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t.services.catalog} • {catalogItemsForCategory.length} modèles</p>
+              <h2 className="text-lg font-bold text-gray-900" data-testid="text-catalog-title">{selectedCatalogCategory.name}</h2>
+              <p className="text-xs text-gray-500">{t.services.catalog} • {catalogItemsForCategory.length} modèles</p>
             </div>
           </div>
 
-          <p className="text-sm text-gray-400 dark:text-gray-500 mb-5 ml-[52px]">{t.services.browseCatalog}</p>
+          <p className="text-sm text-gray-400 mb-5 ml-[52px]">{t.services.browseCatalog}</p>
 
           {catalogItemsForCategory.length === 0 ? (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 text-center">
-              <Image size={32} className="text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t.services.noCatalogItems}</p>
+            <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+              <Image size={32} className="text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">{t.services.noCatalogItems}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 mb-6">
               {catalogItemsForCategory.map(item => {
                 const isSelected = selectedItem?.id === item.id;
                 return (
-                  <div key={item.id} className={`bg-white dark:bg-gray-900 rounded-2xl border-2 overflow-hidden transition-all ${
-                    isSelected ? "border-red-500 shadow-lg shadow-red-100 scale-[1.02]" : "border-gray-100 dark:border-gray-800 hover:border-red-200 hover:shadow-md"
+                  <div key={item.id} className={`bg-white rounded-2xl border-2 overflow-hidden transition-all ${
+                    isSelected ? "border-red-500 shadow-lg shadow-red-100 scale-[1.02]" : "border-gray-100 hover:border-red-200 hover:shadow-md"
                   }`} data-testid={`catalog-item-${item.id}`}>
                     <button
                       onClick={() => setPreviewItem(item)}
@@ -225,15 +225,15 @@ export default function ServicesPage() {
                       </div>
                     </button>
                     <div className="p-3">
-                      <h4 className="font-bold text-xs text-gray-900 dark:text-white line-clamp-1">{item.name}</h4>
-                      {item.description && <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
+                      <h4 className="font-bold text-xs text-gray-900 line-clamp-1">{item.name}</h4>
+                      {item.description && <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2">{item.description}</p>}
                       <button
                         onClick={() => handleSelectModel(item)}
                         data-testid={`catalog-select-${item.id}`}
                         className={`w-full mt-2 py-2 rounded-xl text-[11px] font-bold transition-all ${
                           isSelected
                             ? "bg-red-600 text-white"
-                            : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                            : "bg-gray-50 text-gray-600 border border-gray-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
                         }`}
                       >
                         {isSelected ? "✓ " + t.services.selectedModel : t.services.selectModel}
@@ -246,14 +246,14 @@ export default function ServicesPage() {
           )}
 
           {selectedItem && (
-            <div className="bg-red-50 dark:bg-red-950/40 rounded-2xl border border-red-200 dark:border-red-800 p-4 mb-4 flex items-center gap-3">
-              <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300 dark:border-red-700" />
+            <div className="bg-red-50 rounded-2xl border border-red-200 p-4 mb-4 flex items-center gap-3">
+              <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300" />
               <div className="flex-1">
                 <p className="text-[10px] font-semibold text-red-500 uppercase">{t.services.selectedModel}</p>
-                <p className="font-bold text-sm text-gray-900 dark:text-white">{selectedItem.name}</p>
-                {selectedItem.price && <p className="text-xs text-red-600 dark:text-red-400 font-semibold">{selectedItem.price}</p>}
+                <p className="font-bold text-sm text-gray-900">{selectedItem.name}</p>
+                {selectedItem.price && <p className="text-xs text-red-600 font-semibold">{selectedItem.price}</p>}
               </div>
-              <button onClick={() => setSelectedItem(null)} className="w-8 h-8 bg-red-100 dark:bg-red-900/50 rounded-lg flex items-center justify-center" data-testid="button-deselect">
+              <button onClick={() => setSelectedItem(null)} className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center" data-testid="button-deselect">
                 <X size={14} className="text-red-600" />
               </button>
             </div>
@@ -265,7 +265,7 @@ export default function ServicesPage() {
             className={`w-full py-4 rounded-2xl text-sm font-bold shadow-xl transition-all ${
               selectedItem
                 ? "bg-red-600 text-white hover:bg-red-700 shadow-red-200"
-                : "bg-gray-800 dark:bg-gray-700 text-white hover:bg-gray-900 shadow-gray-200"
+                : "bg-gray-800 text-white hover:bg-gray-900 shadow-gray-200"
             }`}
           >
             {selectedItem ? `${t.services.requestQuote} — ${selectedItem.name}` : t.services.requestQuote}
@@ -276,12 +276,12 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="mb-6">
-          <h2 className="text-2xl font-black text-gray-900 dark:text-white" data-testid="text-services-title">{t.services.title}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.services.subtitle}</p>
+          <h2 className="text-2xl font-black text-gray-900" data-testid="text-services-title">{t.services.title}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t.services.subtitle}</p>
         </div>
 
         {catsLoading ? (
@@ -290,28 +290,53 @@ export default function ServicesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 mb-8">
-            {activeCategories.map((cat, i) => {
-              const Icon = iconMap[cat.icon] || Briefcase;
+            {activeCategories.map((cat) => {
               const hasCatalog = categoryHasCatalogItems(cat.id);
               const itemCount = catalogItemCount(cat.id);
+              // Extract response time from description e.g. "Réponse < 90 min"
+              const timeMatch = cat.description.match(/Réponse\s*<\s*[\w\s]+/);
+              const responseTime = timeMatch ? timeMatch[0] : null;
+              // Description without the response time suffix
+              const cleanDesc = cat.description.replace(/[.!]?\s*Réponse\s*<\s*[\w\s]+$/, "").trim();
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleCategoryClick(cat)}
                   data-testid={`card-service-${cat.id}`}
-                  className="group relative bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-left hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden"
+                  className="group bg-white rounded-2xl overflow-hidden text-left active:scale-[0.97] transition-all duration-200"
+                  style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)" }}
                 >
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${categoryColors[i % categoryColors.length]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <Icon size={22} className="text-white" />
+                  {/* Real service image */}
+                  <div className="relative w-full" style={{ paddingBottom: "72%" }}>
+                    {cat.imageUrl ? (
+                      <img
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        data-testid={`img-service-${cat.id}`}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                        <Briefcase size={32} className="text-gray-300" />
+                      </div>
+                    )}
+                    {/* Response time badge */}
+                    {responseTime && (
+                      <div className="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                        {responseTime}
+                      </div>
+                    )}
+                    {hasCatalog && (
+                      <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        📸 {itemCount} modèle{itemCount > 1 ? "s" : ""}
+                      </div>
+                    )}
                   </div>
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-white">{cat.name}</h3>
-                  <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-2">{cat.description}</p>
-                  {hasCatalog && (
-                    <span className="inline-flex items-center gap-1 mt-2 text-[9px] font-bold text-red-600 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded-full">
-                      📸 {itemCount} modèles
-                    </span>
-                  )}
-                  <ChevronRight size={16} className="absolute top-4 right-3 text-gray-300 dark:text-gray-600 group-hover:text-red-500 transition-colors" />
+                  {/* Name & description */}
+                  <div className="p-3">
+                    <h3 className="font-black text-[13px] text-gray-900 leading-tight">{cat.name}</h3>
+                    <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">{cleanDesc}</p>
+                  </div>
                 </button>
               );
             })}
@@ -321,8 +346,8 @@ export default function ServicesPage() {
         {user && (
           <>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-my-requests">{t.services.myRequests}</h3>
-              <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">{myRequests.length} {t.services.request}{myRequests.length !== 1 ? "s" : ""}</span>
+              <h3 className="text-lg font-bold text-gray-900" data-testid="text-my-requests">{t.services.myRequests}</h3>
+              <span className="text-xs text-gray-400 font-medium">{myRequests.length} {t.services.request}{myRequests.length !== 1 ? "s" : ""}</span>
             </div>
 
             {reqsLoading ? (
@@ -330,12 +355,12 @@ export default function ServicesPage() {
                 <div className="w-8 h-8 border-3 border-red-600 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : myRequests.length === 0 ? (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 text-center">
-                <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <Briefcase size={28} className="text-gray-300 dark:text-gray-600" />
+              <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+                <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  <Briefcase size={28} className="text-gray-300" />
                 </div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t.services.noRequests}</p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">{t.services.noRequestsDesc}</p>
+                <p className="text-sm font-semibold text-gray-900 mb-1">{t.services.noRequests}</p>
+                <p className="text-xs text-gray-400">{t.services.noRequestsDesc}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -345,14 +370,14 @@ export default function ServicesPage() {
                   return (
                     <div
                       key={req.id}
-                      className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-md transition-shadow cursor-pointer"
+                      className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-shadow cursor-pointer"
                       data-testid={`request-card-${req.id}`}
                       onClick={() => navigate(`/services/request/${req.id}`)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <h4 className="font-bold text-sm text-gray-900 dark:text-white">{req.categoryName}</h4>
-                          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                          <h4 className="font-bold text-sm text-gray-900">{req.categoryName}</h4>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
                             {new Date(req.createdAt!).toLocaleDateString("fr-CD", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
@@ -361,15 +386,15 @@ export default function ServicesPage() {
                           {status.label}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-4 text-[11px] text-gray-500">
                         {req.serviceType && <span>{t.services.type}: {req.serviceType}</span>}
                         {req.budget && <span>{t.admin.budget}: {req.budget}</span>}
                         <span className="capitalize">{req.contactMethod}</span>
                       </div>
                       {req.adminNotes && (
-                        <div className="mt-2 bg-blue-50 dark:bg-blue-950/40 rounded-lg p-2">
-                          <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-400">{t.services.teamNote}:</p>
-                          <p className="text-[11px] text-blue-600 dark:text-blue-300 mt-0.5">{req.adminNotes}</p>
+                        <div className="mt-2 bg-blue-50 rounded-lg p-2">
+                          <p className="text-[10px] font-semibold text-blue-700">{t.services.teamNote}:</p>
+                          <p className="text-[11px] text-blue-600 mt-0.5">{req.adminNotes}</p>
                         </div>
                       )}
                     </div>
@@ -381,8 +406,8 @@ export default function ServicesPage() {
         )}
 
         {!user && (
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-8 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">{t.services.loginToRequest}</p>
+          <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
+            <p className="text-sm text-gray-500">{t.services.loginToRequest}</p>
             <button
               onClick={() => navigate("/login")}
               data-testid="button-login-services"
