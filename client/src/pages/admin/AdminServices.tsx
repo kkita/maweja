@@ -6,14 +6,15 @@ import { useToast } from "../../hooks/use-toast";
 import { useI18n } from "../../lib/i18n";
 import {
   Briefcase, Plus, Search, Clock, CheckCircle, AlertCircle, Loader2,
-  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image
+  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 
 export default function AdminServices() {
   const { toast } = useToast();
   const { t } = useI18n();
-  const [tab, setTab] = useState<"requests" | "categories" | "catalog">("requests");
+  const [tab, setTab] = useState<"requests" | "categories" | "catalog" | "media">("requests");
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
@@ -183,6 +184,11 @@ export default function AdminServices() {
           className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "catalog" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
           data-testid="tab-catalog">
           {t.admin.catalog} ({catalogItems.length})
+        </button>
+        <button onClick={() => setTab("media")}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${tab === "media" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
+          data-testid="tab-media">
+          <ImageIcon size={14} /> Médiathèque
         </button>
       </div>
 
@@ -534,6 +540,103 @@ export default function AdminServices() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Médiathèque ─────────────────────────────────────────────── */}
+      {tab === "media" && (
+        <>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-bold text-gray-900">Médiathèque — Images des services</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Cliquez sur une image pour copier son URL et la réutiliser dans d'autres parties de l'application.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+              {categories.filter(c => c.imageUrl).length} images
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {categories.filter(c => c.imageUrl).map(cat => (
+              <div
+                key={cat.id}
+                className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all"
+                data-testid={`media-card-${cat.id}`}
+              >
+                {/* Image preview */}
+                <div className="relative w-full bg-gray-50" style={{ paddingBottom: "100%" }}>
+                  <img
+                    src={cat.imageUrl!}
+                    alt={cat.name}
+                    className="absolute inset-0 w-full h-full object-contain p-2"
+                    data-testid={`media-img-${cat.id}`}
+                  />
+                </div>
+
+                {/* Info + copy */}
+                <div className="p-3">
+                  <p className="font-bold text-[12px] text-gray-900 line-clamp-1 mb-1">{cat.name}</p>
+                  <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+                    <code className="text-[9px] text-gray-500 flex-1 truncate">{cat.imageUrl}</code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(cat.imageUrl!).then(() => {
+                          setCopiedUrl(cat.imageUrl!);
+                          setTimeout(() => setCopiedUrl(null), 2000);
+                        });
+                      }}
+                      data-testid={`button-copy-${cat.id}`}
+                      className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all hover:bg-gray-200 active:scale-90"
+                      title="Copier l'URL"
+                    >
+                      {copiedUrl === cat.imageUrl ? (
+                        <Check size={12} className="text-green-600" />
+                      ) : (
+                        <Copy size={12} className="text-gray-400" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* URL list for quick reference */}
+          <div className="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-50">
+              <h4 className="font-bold text-sm text-gray-900">Toutes les URLs — Référence rapide</h4>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {categories.filter(c => c.imageUrl).map(cat => (
+                <div key={cat.id} className="flex items-center gap-3 px-5 py-3">
+                  <img src={cat.imageUrl!} alt={cat.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-800 truncate">{cat.name}</p>
+                    <p className="text-[10px] text-gray-400 truncate font-mono">{cat.imageUrl}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(cat.imageUrl!).then(() => {
+                        setCopiedUrl(cat.imageUrl! + "_list");
+                        setTimeout(() => setCopiedUrl(null), 2000);
+                      });
+                    }}
+                    data-testid={`button-copy-list-${cat.id}`}
+                    className="flex-shrink-0 px-2.5 py-1.5 text-[10px] font-bold rounded-lg border transition-all flex items-center gap-1"
+                    style={{
+                      background: copiedUrl === cat.imageUrl + "_list" ? "#dcfce7" : "#f9fafb",
+                      color: copiedUrl === cat.imageUrl + "_list" ? "#16a34a" : "#6b7280",
+                      borderColor: copiedUrl === cat.imageUrl + "_list" ? "#86efac" : "#e5e7eb",
+                    }}
+                  >
+                    {copiedUrl === cat.imageUrl + "_list" ? <><Check size={10} /> Copié</> : <><Copy size={10} /> Copier</>}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
       )}
     </AdminLayout>
   );
