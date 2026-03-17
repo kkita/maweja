@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
-import mawejaLogoSrc from "@assets/image_1772833363714.png";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -8,24 +7,25 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onDone }: SplashScreenProps) {
   const { setLang, setHasChosenLanguage, hasChosenLanguage } = useI18n();
-  const [phase, setPhase] = useState<"intro" | "lang">("intro");
+  const [phase, setPhase] = useState<"video" | "lang">("video");
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
-  const [visible, setVisible] = useState(false);
-  const [textVisible, setTextVisible] = useState(false);
-  const [taglineVisible, setTaglineVisible] = useState(false);
+  const [langVisible, setLangVisible] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
+  /* When the video ends (or fails), transition to next phase */
+  const handleVideoEnd = () => {
+    if (hasChosenLanguage) {
+      onDone?.();
+    } else {
+      setPhase("lang");
+      setTimeout(() => setLangVisible(true), 80);
+    }
+  };
+
+  /* Safety fallback — if video doesn't play within 6 s, skip */
   useEffect(() => {
-    const t0 = setTimeout(() => setVisible(true), 200);
-    const t1 = setTimeout(() => setTextVisible(true), 600);
-    const t2 = setTimeout(() => setTaglineVisible(true), 1000);
-    const t3 = setTimeout(() => {
-      if (hasChosenLanguage) {
-        onDone?.();
-      } else {
-        setPhase("lang");
-      }
-    }, 5000);
-    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    const timer = setTimeout(handleVideoEnd, 6000);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleContinue = () => {
@@ -36,113 +36,108 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden select-none"
-      style={{ backgroundColor: "#dc2626" }}
+      className="fixed inset-0 flex flex-col items-center justify-end select-none overflow-hidden"
+      style={{ backgroundColor: "#dc2626", zIndex: 9999 }}
     >
-      {/* Subtle vignette edges */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.12) 100%)" }} />
+      {/* ── Full-screen video ─────────────────────────────────────── */}
+      {phase === "video" && (
+        <video
+          ref={videoRef}
+          src="/splash.mov"
+          autoPlay
+          muted
+          playsInline
+          onEnded={handleVideoEnd}
+          onError={handleVideoEnd}
+          data-testid="splash-video"
+          className="absolute inset-0 w-full h-full"
+          style={{ objectFit: "cover" }}
+        />
+      )}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center px-6 w-full max-w-sm">
+      {/* ── Language picker — slides up after video ────────────────── */}
+      {phase === "lang" && (
+        <div
+          className="relative z-10 w-full max-w-sm px-6 pb-10 pt-8"
+          style={{
+            transition: "opacity 0.4s, transform 0.4s",
+            opacity: langVisible ? 1 : 0,
+            transform: langVisible ? "translateY(0)" : "translateY(24px)",
+          }}
+        >
+          <p
+            className="text-center text-white/90 font-bold mb-5 tracking-wide uppercase"
+            style={{ fontSize: 13 }}
+            data-testid="text-choose-language"
+          >
+            {selectedLang === "fr" ? "Choisissez votre langue" : "Choose your language"}
+          </p>
 
-        {/* Logo block */}
-        <div className={`flex flex-col items-center transition-all duration-500 ${phase === "lang" ? "mb-10 scale-90" : "mb-0"}`}>
-
-          {/* MAWEJA logo image — white on red, no visible background */}
-          <div className={`transition-all duration-700 ease-out ${visible ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-90 translate-y-6"}`}>
-            <img
-              src={mawejaLogoSrc}
-              alt="MAWEJA"
-              data-testid="text-splash-title"
-              className="w-56 h-auto object-contain"
-              style={{ mixBlendMode: "normal" }}
-            />
-          </div>
-
-          {/* Divider line */}
-          <div className={`mt-4 transition-all duration-500 ${textVisible ? "opacity-100" : "opacity-0"}`}>
-            <div className="flex items-center gap-3">
-              <div className="h-px w-12 bg-white/40" />
-              <div className="w-1.5 h-1.5 rounded-full bg-white/60" />
-              <div className="h-px w-12 bg-white/40" />
-            </div>
-          </div>
-
-          {/* Tagline */}
-          <div className={`mt-3 text-center transition-all duration-500 ${taglineVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
-            <p className="text-white/75 text-sm font-medium tracking-[0.22em] uppercase">
-              Food &amp; Services Delivery
-            </p>
-            <p className="text-white/50 text-xs mt-1.5 tracking-widest font-medium">
-              Kinshasa, RDC
-            </p>
-          </div>
-
-          {/* Loading dots (intro phase only) */}
-          {phase === "intro" && taglineVisible && (
-            <div className="mt-10 flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-              <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-              <div className="w-1.5 h-1.5 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-            </div>
-          )}
-        </div>
-
-        {/* Language picker (only if language not chosen yet) */}
-        {phase === "lang" && (
-          <div className="w-full animate-in fade-in slide-in-from-bottom-6 duration-500">
-            <p className="text-center text-white/85 font-semibold mb-5 text-sm tracking-wide uppercase" data-testid="text-choose-language">
-              {selectedLang === "fr" ? "Choisissez votre langue" : "Choose your language"}
-            </p>
-
-            <div className="space-y-3 mb-6">
-              {[
-                { code: "fr" as Lang, flag: "🇫🇷", label: "Français", sub: "French" },
-                { code: "en" as Lang, flag: "🇬🇧", label: "English", sub: "Anglais" },
-              ].map(({ code, flag, label, sub }) => (
-                <button
-                  key={code}
-                  onClick={() => setSelectedLang(code)}
-                  data-testid={`button-lang-${code}`}
-                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 active:scale-[0.97] ${
-                    selectedLang === code
-                      ? "bg-white shadow-2xl scale-[1.02]"
-                      : "bg-white/15 backdrop-blur-sm border border-white/20 hover:bg-white/25"
-                  }`}
+          <div className="space-y-3 mb-5">
+            {[
+              { code: "fr" as Lang, flag: "🇫🇷", label: "Français", sub: "French" },
+              { code: "en" as Lang, flag: "🇬🇧", label: "English", sub: "Anglais" },
+            ].map(({ code, flag, label, sub }) => (
+              <button
+                key={code}
+                onClick={() => setSelectedLang(code)}
+                data-testid={`button-lang-${code}`}
+                className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-200 active:scale-[0.97]"
+                style={{
+                  background: selectedLang === code ? "#fff" : "rgba(255,255,255,0.15)",
+                  border: selectedLang === code ? "none" : "1px solid rgba(255,255,255,0.25)",
+                  boxShadow: selectedLang === code ? "0 8px 24px rgba(0,0,0,0.25)" : "none",
+                }}
+              >
+                <span className="text-3xl">{flag}</span>
+                <div className="text-left flex-1">
+                  <p
+                    className="font-bold text-base"
+                    style={{ color: selectedLang === code ? "#111827" : "#fff" }}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    className="text-xs mt-0.5"
+                    style={{ color: selectedLang === code ? "#9CA3AF" : "rgba(255,255,255,0.6)" }}
+                  >
+                    {sub}
+                  </p>
+                </div>
+                <div
+                  className="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                  style={{
+                    borderColor: selectedLang === code ? "#dc2626" : "rgba(255,255,255,0.4)",
+                    background: selectedLang === code ? "#dc2626" : "transparent",
+                  }}
                 >
-                  <span className="text-3xl">{flag}</span>
-                  <div className="text-left flex-1">
-                    <p className={`font-bold text-base ${selectedLang === code ? "text-gray-900" : "text-white"}`}>{label}</p>
-                    <p className={`text-xs mt-0.5 ${selectedLang === code ? "text-gray-400" : "text-white/60"}`}>{sub}</p>
-                  </div>
-                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                    selectedLang === code ? "border-red-600 bg-red-600" : "border-white/40"
-                  }`}>
-                    {selectedLang === code && (
-                      <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                        <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleContinue}
-              data-testid="button-splash-continue"
-              className="w-full bg-white text-red-600 py-4 rounded-2xl font-black text-base tracking-wide hover:bg-red-50 active:scale-[0.97] transition-all shadow-2xl"
-              style={{ boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
-            >
-              {selectedLang === "fr" ? "Commencer →" : "Get Started →"}
-            </button>
+                  {selectedLang === code && (
+                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </div>
+              </button>
+            ))}
           </div>
-        )}
-      </div>
 
-      {/* Signature */}
-      <p className="absolute bottom-6 text-[10px] text-white/30 font-medium text-center px-4" data-testid="text-splash-signature">
+          <button
+            onClick={handleContinue}
+            data-testid="button-splash-continue"
+            className="w-full bg-white text-red-600 py-4 rounded-2xl font-black text-base tracking-wide active:scale-[0.97] transition-all"
+            style={{ boxShadow: "0 16px 40px rgba(0,0,0,0.35)" }}
+          >
+            {selectedLang === "fr" ? "Commencer →" : "Get Started →"}
+          </button>
+        </div>
+      )}
+
+      {/* ── Signature ─────────────────────────────────────────────── */}
+      <p
+        className="absolute bottom-4 text-center px-4 w-full"
+        style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", zIndex: 11 }}
+        data-testid="text-splash-signature"
+      >
         Made By Khevin Andrew Kita — Ed Corporation
       </p>
     </div>
