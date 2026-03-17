@@ -155,12 +155,6 @@ export default function ClientNav() {
                   {(item as any).badge > 99 ? "99+" : (item as any).badge}
                 </span>
               )}
-              <span
-                className="text-[10px] font-semibold mt-0.5"
-                style={{ color: isActive ? "#3B5BDB" : "#9CA3AF", fontWeight: isActive ? 700 : 500 }}
-              >
-                {item.label}
-              </span>
             </button>
           );
         })}

@@ -201,9 +201,6 @@ export default function DriverNav() {
                 <div className={`transition-transform duration-200 ${isActive ? "scale-105" : "scale-100"}`}>
                   {l.icon(isActive, iconColor)}
                 </div>
-                <span className={`text-[9px] font-bold transition-all leading-none ${isActive ? "opacity-100" : "opacity-0 absolute"}`}>
-                  {l.label}
-                </span>
                 {l.badge > 0 && (
                   <span
                     className={`absolute -top-1 -right-1 text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center ${isActive ? "bg-white text-red-600" : "bg-red-600"}`}
