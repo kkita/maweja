@@ -90,3 +90,9 @@ id = "VlT7m0UURBIgjDuH0D6Wn"
 uri = "file://MAWEJA_github_final.zip"
 type = "unspecified"
 title = "MAWEJA - Code Source complet (GitHub)"
+
+[[outputs]]
+id = "s46NA2LX2_RJj5c64I_t0"
+uri = "file://MAWEJA_github_v2.zip"
+type = "unspecified"
+title = "MAWEJA - Code Source GitHub v2 (icons-only nav + dark mode complet)"
