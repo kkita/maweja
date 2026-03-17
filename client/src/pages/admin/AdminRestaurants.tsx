@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package } from "lucide-react";
+import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package, Tag } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
@@ -250,12 +250,14 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
   const [deliveryTime, setDeliveryTime] = useState(restaurant.deliveryTime);
   const [phone, setPhone] = useState(restaurant.phone || "");
   const [commissionRate, setCommissionRate] = useState<number>(restaurant.restaurantCommissionRate ?? 20);
+  const [discountPercent, setDiscountPercent] = useState<number>((restaurant as any).discountPercent ?? 0);
+  const [discountLabel, setDiscountLabel] = useState<string>((restaurant as any).discountLabel ?? "");
 
   const mutation = useMutation({
     mutationFn: async () => {
       await apiRequest(`/api/restaurants/${restaurant.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate }),
+        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate, discountPercent, discountLabel: discountLabel || null }),
       });
     },
     onSuccess: () => {
@@ -317,6 +319,58 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
               <span className="text-sm font-bold text-red-600 dark:text-red-400">%</span>
               <p className="text-[11px] text-red-600/70 dark:text-red-400/70 flex-1">Part MAWEJA sur le CA livré</p>
             </div>
+          </div>
+
+          {/* ── Remise / Discount ─────────────────────── */}
+          <div className="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-xl p-3 space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Tag size={14} className="text-green-600" />
+              <label className="text-xs font-semibold text-green-700 dark:text-green-400">Remise / Discount affiché sur la carte</label>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700 rounded-xl px-3 py-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="90"
+                  value={discountPercent}
+                  onChange={e => setDiscountPercent(Math.min(90, Math.max(0, Number(e.target.value))))}
+                  data-testid="input-edit-restaurant-discount"
+                  className="w-16 text-sm font-bold text-green-600 dark:text-green-400 text-center focus:outline-none bg-transparent"
+                />
+                <span className="text-sm font-bold text-green-600 dark:text-green-400">%</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-[11px] text-green-700 dark:text-green-400">
+                  {discountPercent > 0
+                    ? `Badge "${discountPercent}% OFF" affiché sur la carte du restaurant`
+                    : "Mettre 0 pour désactiver la remise"}
+                </p>
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1 block">
+                Libellé personnalisé <span className="font-normal text-green-600/60">(optionnel)</span>
+              </label>
+              <input
+                type="text"
+                value={discountLabel}
+                onChange={e => setDiscountLabel(e.target.value)}
+                placeholder={discountPercent > 0 ? `ex: ${discountPercent}% sur les menus` : "ex: Promo weekend"}
+                data-testid="input-edit-restaurant-discount-label"
+                maxLength={40}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+              />
+              <p className="text-[10px] text-green-600/60 mt-1">Texte affiché sur la bannière de remise. Laissez vide pour afficher "{discountPercent > 0 ? discountPercent + "% OFF" : "X% OFF"}".</p>
+            </div>
+            {discountPercent > 0 && (
+              <div className="flex items-center gap-2 bg-white dark:bg-gray-800 rounded-xl px-3 py-2 border border-green-100">
+                <span className="text-[10px] font-semibold text-green-700 dark:text-green-400">Aperçu badge :</span>
+                <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  -{discountPercent}% {discountLabel ? `· ${discountLabel}` : "OFF"}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <button onClick={() => mutation.mutate()} disabled={mutation.isPending} data-testid="save-restaurant-info"

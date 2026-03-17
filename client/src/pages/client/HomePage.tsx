@@ -132,10 +132,12 @@ function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) 
           {/* Gradient for readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
 
-          {/* Discount badge */}
-          {r.rating >= 4.5 && (
-            <div className="absolute top-2.5 right-2.5 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-              Discount 10%
+          {/* Discount badge — set from admin dashboard */}
+          {(r as any).discountPercent > 0 && (
+            <div className="absolute top-2.5 right-2.5 bg-green-500 text-white font-bold rounded-full px-2.5 py-1 flex items-center gap-1" style={{ fontSize: 10 }}>
+              <span>🏷</span>
+              <span>-{(r as any).discountPercent}%</span>
+              {(r as any).discountLabel && <span>· {(r as any).discountLabel}</span>}
             </div>
           )}
 

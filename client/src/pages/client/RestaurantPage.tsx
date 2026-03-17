@@ -86,10 +86,30 @@ export default function RestaurantPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4">
+        {/* Discount banner */}
+        {(restaurant as any)?.discountPercent > 0 && (
+          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-2xl px-4 py-2.5 mb-3" data-testid="restaurant-discount-banner">
+            <span className="text-lg">🏷️</span>
+            <div className="flex-1">
+              <p className="font-bold text-green-700" style={{ fontSize: 13 }}>
+                -{(restaurant as any).discountPercent}% de réduction
+              </p>
+              {(restaurant as any).discountLabel && (
+                <p className="text-green-600 mt-0.5" style={{ fontSize: 11 }}>
+                  {(restaurant as any).discountLabel}
+                </p>
+              )}
+            </div>
+            <span className="bg-green-500 text-white font-black rounded-full px-3 py-1" style={{ fontSize: 13 }}>
+              -{(restaurant as any).discountPercent}%
+            </span>
+          </div>
+        )}
+
         {restaurant?.prepTime && (
-          <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
+          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
             <ChefHat size={16} className="text-orange-600 flex-shrink-0" />
-            <span className="text-sm font-semibold text-orange-800 dark:text-orange-300">Temps de preparation: {restaurant.prepTime}</span>
+            <span className="text-sm font-semibold text-orange-800">Temps de préparation : {restaurant.prepTime}</span>
           </div>
         )}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
