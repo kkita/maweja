@@ -113,7 +113,7 @@ function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) 
 
   return (
     <div
-      className="bg-white rounded-3xl mb-4 overflow-hidden"
+      className="bg-white dark:bg-gray-900 rounded-3xl mb-4 overflow-hidden"
       style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }}
       data-testid={`restaurant-card-${r.id}`}
     >
@@ -175,11 +175,11 @@ function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <button onClick={onClick} className="text-left flex-1 min-w-0">
-              <p className="font-bold text-gray-900 leading-tight truncate" style={{ fontSize: 14 }}>
+              <p className="font-bold text-gray-900 dark:text-white leading-tight truncate" style={{ fontSize: 14 }}>
                 {r.name}
               </p>
               {r.cuisine && (
-                <p className="text-gray-400 text-xs truncate">{r.cuisine}</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs truncate">{r.cuisine}</p>
               )}
             </button>
             <button
@@ -319,7 +319,7 @@ export default function HomePage() {
   const STATIC_SERVICES_CAT = { id: -1, name: "Tous les services", imageUrl: null, isActive: true };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
 
       <div className="max-w-lg mx-auto px-4 pt-5">
@@ -327,8 +327,8 @@ export default function HomePage() {
         {/* ── Sponsorisés ─────────────────────────────────────── */}
         <section className="mb-5">
           <p
-            className="font-bold text-gray-900 mb-2.5"
-            style={{ fontSize: 15, borderBottom: "2px solid #111", display: "inline-block", paddingBottom: 2 }}
+            className="font-bold text-gray-900 dark:text-white mb-2.5"
+            style={{ fontSize: 15, borderBottom: "2px solid", borderColor: "currentColor", display: "inline-block", paddingBottom: 2 }}
           >
             Sponsorisés
           </p>
@@ -408,7 +408,7 @@ export default function HomePage() {
 
         {/* ── Section title ─────────────────────────────────────── */}
         <div id="restaurants-section" className="flex items-center justify-between mb-4">
-          <p className="font-bold text-gray-900" style={{ fontSize: 15 }}>
+          <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
             {activeCuisine ? activeCuisine : "Tous les établissements"}
           </p>
           {(activeCuisine) && (
@@ -427,24 +427,24 @@ export default function HomePage() {
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }}>
+              <div key={i} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }}>
                 <div className="px-3 pt-3">
-                  <div className="animate-pulse bg-gray-200 rounded-2xl" style={{ height: 188 }} />
+                  <div className="animate-pulse bg-gray-200 dark:bg-gray-800 rounded-2xl" style={{ height: 188 }} />
                 </div>
                 <div className="p-4 flex gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse flex-shrink-0" />
                   <div className="flex-1 space-y-2 pt-1">
-                    <div className="h-4 w-32 bg-gray-200 animate-pulse rounded-full" />
-                    <div className="h-3 w-48 bg-gray-100 animate-pulse rounded-full" />
+                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
+                    <div className="h-3 w-48 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-full" />
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : displayed.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 text-center" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }} data-testid="text-no-results">
-            <p className="text-gray-700 font-semibold text-sm">{t.client.noRestaurant}</p>
-            <p className="text-gray-400 text-xs mt-1">{t.client.noInCategory}</p>
+          <div className="bg-white dark:bg-gray-900 rounded-3xl p-10 text-center" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }} data-testid="text-no-results">
+            <p className="text-gray-700 dark:text-gray-200 font-semibold text-sm">{t.client.noRestaurant}</p>
+            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{t.client.noInCategory}</p>
             <button
               onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}
               className="mt-4 bg-red-600 text-white text-xs font-bold px-5 py-2 rounded-xl active:scale-95 transition-all"

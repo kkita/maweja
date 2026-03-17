@@ -8,7 +8,7 @@ import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/que
 import { useToast } from "../../hooks/use-toast";
 import {
   ArrowLeft, Calendar, Clock, User, Phone, MapPin, Tag, DollarSign,
-  Camera, FileText, MessageCircle, Send, CheckCircle2, Loader2, AlertTriangle
+  FileText, MessageCircle, Send, CheckCircle2, Loader2, AlertTriangle, Zap,
 } from "lucide-react";
 import type { ServiceRequest } from "@shared/schema";
 
@@ -17,11 +17,37 @@ function parseMinPrice(priceStr: string): number | null {
   return match ? parseInt(match[1], 10) : null;
 }
 
-const inputClass = "w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none";
-const inputWithIconClass = "w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none";
-const cardClass = "bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm";
-const labelClass = "text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1 block";
-const sectionTitleClass = "font-bold text-sm text-gray-900 dark:text-white mb-1 flex items-center gap-2";
+/* ─── Shared style constants ───────────────────────────────────────────────── */
+const input =
+  "w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 " +
+  "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 " +
+  "rounded-2xl text-[15px] font-medium focus:ring-2 focus:ring-red-500 focus:border-transparent focus:outline-none transition-all";
+
+const inputIcon =
+  "w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 " +
+  "text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 " +
+  "rounded-2xl text-[15px] font-medium focus:ring-2 focus:ring-red-500 focus:border-transparent focus:outline-none transition-all";
+
+const card =
+  "bg-white dark:bg-gray-900/80 rounded-3xl border border-gray-100 dark:border-gray-800/60 shadow-sm";
+
+const label =
+  "text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 block";
+
+const sectionTitle =
+  "font-black text-[15px] text-gray-900 dark:text-white mb-4 flex items-center gap-2";
+
+const iconBox =
+  "w-8 h-8 bg-red-50 dark:bg-red-950/40 rounded-xl flex items-center justify-center flex-shrink-0";
+
+/* ─── Step number badge ─────────────────────────────────────────────────── */
+function Step({ n }: { n: number }) {
+  return (
+    <span className="w-6 h-6 bg-red-600 text-white rounded-full text-[11px] font-black flex items-center justify-center flex-shrink-0">
+      {n}
+    </span>
+  );
+}
 
 export default function ServiceRequestPage() {
   const [currentPath, navigate] = useLocation();
@@ -174,17 +200,20 @@ export default function ServiceRequestPage() {
     });
   };
 
+  /* ─── Success screen ──────────────────────────────────────────────────── */
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
         <ClientNav />
-        <div className="max-w-lg mx-auto px-4 py-12">
+        <div className="max-w-lg mx-auto px-4 py-10">
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-8 text-center shadow-sm">
-            <div className="w-20 h-20 bg-green-50 dark:bg-green-950/40 rounded-full flex items-center justify-center mx-auto mb-5">
-              <CheckCircle2 size={40} className="text-green-600" />
+            <div className="w-24 h-24 bg-green-50 dark:bg-green-950/40 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 size={48} className="text-green-500" />
             </div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2" data-testid="text-request-sent">{t.services.requestSent}</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{t.services.requestSentDesc}</p>
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2" style={{ fontFamily: "system-ui,-apple-system,sans-serif", letterSpacing: "-0.02em" }} data-testid="text-request-sent">
+              {t.services.requestSent}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-7">{t.services.requestSentDesc}</p>
 
             {hasCatalogModel && catalogItemImage && (
               <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800">
@@ -192,19 +221,37 @@ export default function ServiceRequestPage() {
               </div>
             )}
 
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 mb-6 text-left">
-              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2">{t.services.summary}</p>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-700 dark:text-gray-300"><strong>{t.services.service}:</strong> {categoryName}</p>
-                {catalogItemName && <p className="text-sm text-gray-700 dark:text-gray-300"><strong>{t.services.selectedModel}:</strong> {catalogItemName}</p>}
-                {(budget || catalogItemPrice) && <p className="text-sm text-gray-700 dark:text-gray-300"><strong>{t.services.yourPrice}:</strong> {budget || catalogItemPrice}</p>}
-                <p className="text-sm text-gray-700 dark:text-gray-300"><strong>{t.services.contact}:</strong> {contactMethod === "whatsapp" ? "WhatsApp" : contactMethod === "phone" ? t.services.telephone : t.common.email}</p>
+            <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-5 mb-7 text-left space-y-2">
+              <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t.services.summary}</p>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">{t.services.service}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">{categoryName}</span>
+              </div>
+              {catalogItemName && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{t.services.selectedModel}</span>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{catalogItemName}</span>
+                </div>
+              )}
+              {(budget || catalogItemPrice) && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{t.services.yourPrice}</span>
+                  <span className="text-sm font-bold text-red-600">{budget || catalogItemPrice}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500 dark:text-gray-400">{t.services.contact}</span>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {contactMethod === "whatsapp" ? "WhatsApp" : contactMethod === "phone" ? t.services.telephone : t.common.email}
+                </span>
               </div>
             </div>
+
             <button
               onClick={() => navigate("/services")}
               data-testid="button-back-services"
-              className="w-full bg-red-600 text-white py-3.5 rounded-xl text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200"
+              className="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-[15px] hover:bg-red-700 shadow-xl shadow-red-200 dark:shadow-red-900/40"
+              style={{ fontFamily: "system-ui,-apple-system,sans-serif" }}
             >
               {t.services.backToServices}
             </button>
@@ -214,53 +261,74 @@ export default function ServiceRequestPage() {
     );
   }
 
+  /* ─── View existing request ───────────────────────────────────────────── */
   if (isViewMode && existingRequest) {
     const statusLabels: Record<string, string> = {
-      pending: t.services.statusPending, reviewing: t.services.statusReviewing, accepted: t.services.statusAccepted, rejected: t.services.statusRejected, completed: t.services.statusCompleted,
+      pending: t.services.statusPending,
+      reviewing: t.services.statusReviewing,
+      accepted: t.services.statusAccepted,
+      rejected: t.services.statusRejected,
+      completed: t.services.statusCompleted,
     };
-    const statusColors: Record<string, string> = {
-      pending: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-      reviewing: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-      accepted: "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800",
-      rejected: "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800",
-      completed: "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700",
+    const statusStyles: Record<string, { pill: string; dot: string }> = {
+      pending:   { pill: "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700/40", dot: "bg-amber-500" },
+      reviewing: { pill: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700/40", dot: "bg-blue-500" },
+      accepted:  { pill: "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700/40", dot: "bg-green-500" },
+      rejected:  { pill: "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700/40", dot: "bg-red-500" },
+      completed: { pill: "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700", dot: "bg-gray-400" },
     };
+    const st = statusStyles[existingRequest.status] || statusStyles.pending;
 
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 py-4">
+
+          {/* Header */}
           <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigate("/services")} className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700" data-testid="button-back">
-              <ArrowLeft size={18} className="dark:text-gray-300" />
+            <button onClick={() => navigate("/services")}
+              className="w-11 h-11 bg-white dark:bg-gray-900 rounded-2xl flex items-center justify-center border border-gray-100 dark:border-gray-800 shadow-sm"
+              data-testid="button-back">
+              <ArrowLeft size={18} className="text-gray-600 dark:text-gray-300" />
             </button>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{t.services.request} #{existingRequest.id}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{existingRequest.categoryName}</p>
+            <div className="flex-1">
+              <h2 className="text-lg font-black text-gray-900 dark:text-white" style={{ fontFamily: "system-ui,-apple-system,sans-serif" }}>
+                {t.services.request} #{existingRequest.id}
+              </h2>
+              <p className="text-xs text-gray-400 dark:text-gray-500">{existingRequest.categoryName}</p>
             </div>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border ${st.pill}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
+              {statusLabels[existingRequest.status] || existingRequest.status}
+            </span>
           </div>
 
-          <div className={`rounded-2xl border p-4 mb-4 ${statusColors[existingRequest.status] || statusColors.pending}`}>
-            <p className="font-bold text-sm">{t.common.status}: {statusLabels[existingRequest.status] || existingRequest.status}</p>
-          </div>
+          {/* Details card */}
+          <div className={`${card} p-5 space-y-4`}>
+            {[
+              { label: t.services.fullName, value: existingRequest.fullName },
+              { label: t.common.phone, value: existingRequest.phone },
+              { label: t.common.address, value: existingRequest.address },
+              existingRequest.serviceType ? { label: t.services.type, value: existingRequest.serviceType } : null,
+              existingRequest.budget ? { label: t.admin.budget, value: existingRequest.budget } : null,
+              {
+                label: t.admin.schedule,
+                value: existingRequest.scheduledType === "asap"
+                  ? t.services.asap
+                  : `${existingRequest.scheduledDate} ${existingRequest.scheduledTime}`,
+              },
+              existingRequest.additionalInfo ? { label: t.services.additionalInfo, value: existingRequest.additionalInfo } : null,
+            ].filter(Boolean).map((row: any, i) => (
+              <div key={i} className="flex flex-col gap-0.5">
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{row.label}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{row.value}</p>
+              </div>
+            ))}
 
-          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 space-y-4">
-            <div><p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.services.fullName}</p><p className="text-sm text-gray-900 dark:text-white font-medium">{existingRequest.fullName}</p></div>
-            <div><p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.common.phone}</p><p className="text-sm text-gray-900 dark:text-white font-medium">{existingRequest.phone}</p></div>
-            <div><p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.common.address}</p><p className="text-sm text-gray-900 dark:text-white font-medium">{existingRequest.address}</p></div>
-            {existingRequest.serviceType && <div><p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.services.type}</p><p className="text-sm text-gray-900 dark:text-white font-medium">{existingRequest.serviceType}</p></div>}
-            {existingRequest.budget && <div><p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.admin.budget}</p><p className="text-sm text-gray-900 dark:text-white font-medium">{existingRequest.budget}</p></div>}
-            <div>
-              <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.admin.schedule}</p>
-              <p className="text-sm text-gray-900 dark:text-white font-medium">
-                {existingRequest.scheduledType === "asap" ? t.services.asap : `${existingRequest.scheduledDate} ${existingRequest.scheduledTime}`}
-              </p>
-            </div>
-            {existingRequest.additionalInfo && <div><p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase">{t.services.additionalInfo}</p><p className="text-sm text-gray-700 dark:text-gray-300">{existingRequest.additionalInfo}</p></div>}
             {existingRequest.adminNotes && (
-              <div className="bg-blue-50 dark:bg-blue-950/40 rounded-xl p-4 border border-blue-100 dark:border-blue-800">
-                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase mb-1">{t.services.teamResponse}</p>
-                <p className="text-sm text-blue-800 dark:text-blue-300">{existingRequest.adminNotes}</p>
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-2xl p-4 border border-blue-100 dark:border-blue-800/40 mt-2">
+                <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1.5">{t.services.teamResponse}</p>
+                <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">{existingRequest.adminNotes}</p>
               </div>
             )}
           </div>
@@ -269,130 +337,332 @@ export default function ServiceRequestPage() {
     );
   }
 
+  /* ─── Catalog model form ─────────────────────────────────────────────── */
   if (hasCatalogModel) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
         <ClientNav />
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <div className="flex items-center gap-3 mb-4">
-            <button onClick={() => navigate("/services")} className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700" data-testid="button-back">
-              <ArrowLeft size={18} className="dark:text-gray-300" />
-            </button>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-form-title">{t.services.quickRequest}</h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{categoryName}</p>
-            </div>
-          </div>
+        <div className="max-w-lg mx-auto">
 
-          {catalogItemImage && (
-            <div className="rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-sm mb-4">
-              <img src={catalogItemImage} alt={catalogItemName || ""} className="w-full h-56 object-cover" data-testid="img-selected-model" />
-            </div>
-          )}
-
-          <div className="bg-red-50 dark:bg-red-950/40 rounded-2xl border border-red-200 dark:border-red-800 p-4 mb-4 flex items-center gap-3">
-            {catalogItemImage && (
-              <img src={catalogItemImage} alt={catalogItemName || ""} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300 dark:border-red-700" />
+          {/* Hero image + back button */}
+          <div className="relative">
+            {catalogItemImage ? (
+              <div className="w-full" style={{ height: 240 }}>
+                <img src={catalogItemImage} alt={catalogItemName || ""} className="w-full h-full object-cover" data-testid="img-selected-model" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+              </div>
+            ) : (
+              <div className="w-full h-40 bg-gradient-to-br from-red-600 to-red-800" />
             )}
-            <div className="flex-1">
-              <p className="text-[10px] font-semibold text-red-500 uppercase">{t.services.selectedModel}</p>
-              <p className="font-bold text-sm text-gray-900 dark:text-white" data-testid="text-model-name">{catalogItemName}</p>
-              {catalogItemPrice && <p className="text-xs text-red-600 dark:text-red-400 font-semibold">{catalogItemPrice}</p>}
+
+            {/* Back button over image */}
+            <button onClick={() => navigate("/services")}
+              className="absolute top-4 left-4 w-11 h-11 bg-black/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20"
+              data-testid="button-back">
+              <ArrowLeft size={18} className="text-white" />
+            </button>
+
+            {/* Category + model name overlay */}
+            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
+              <p className="text-white/60 text-[11px] font-semibold uppercase tracking-wider">{categoryName}</p>
+              <h1 className="text-white text-xl font-black leading-tight" style={{ fontFamily: "system-ui,-apple-system,sans-serif", letterSpacing: "-0.02em" }} data-testid="text-form-title">
+                {catalogItemName}
+              </h1>
+              {catalogItemPrice && (
+                <span className="inline-block mt-1 bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full">
+                  {catalogItemPrice}
+                </span>
+              )}
             </div>
           </div>
 
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4 px-1">{t.services.quickRequestDesc}</p>
+          {/* Form */}
+          <div className="px-4 py-5 space-y-4">
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">{t.services.quickRequestDesc}</p>
 
+            <form onSubmit={handleSubmit} className="space-y-4">
+
+              {/* Step 1 — Date/time */}
+              <div className={`${card} p-5`}>
+                <h3 className={sectionTitle}>
+                  <Step n={1} />
+                  {t.services.dateTime}
+                </h3>
+                <div className="flex gap-2 mb-3">
+                  {[
+                    { key: "asap", label: t.services.asap, icon: Zap, testId: "button-asap" },
+                    { key: "scheduled", label: t.services.schedule, icon: Calendar, testId: "button-schedule" },
+                  ].map(opt => (
+                    <button key={opt.key} type="button" onClick={() => setScheduledType(opt.key)}
+                      data-testid={opt.testId}
+                      className={`flex-1 py-3.5 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                        scheduledType === opt.key
+                          ? "bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-red-900/40"
+                          : "bg-gray-50 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700/60"
+                      }`}>
+                      <opt.icon size={15} />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {scheduledType === "scheduled" && (
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className={label}>{t.common.date}</label>
+                      <input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)}
+                        data-testid="input-date" className={input} />
+                    </div>
+                    <div>
+                      <label className={label}>Heure</label>
+                      <input type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)}
+                        data-testid="input-time" className={input} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Step 2 — Contact */}
+              <div className={`${card} p-5 space-y-4`}>
+                <h3 className={sectionTitle}>
+                  <Step n={2} />
+                  {t.services.personalInfo}
+                </h3>
+                <div>
+                  <label className={label}>{t.common.phone} *</label>
+                  <div className="relative">
+                    <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
+                      data-testid="input-phone" placeholder={t.services.phonePlaceholder}
+                      className={inputIcon} />
+                  </div>
+                </div>
+                <div>
+                  <label className={label}>{t.common.address}</label>
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-4 top-4 text-gray-400" />
+                    <input type="text" value={address} onChange={e => setAddress(e.target.value)}
+                      data-testid="input-address" placeholder={t.services.addressPlaceholder}
+                      className={inputIcon} />
+                  </div>
+                </div>
+
+                {/* Budget */}
+                <div>
+                  <label className={label}>
+                    {t.services.yourPrice}
+                    {minPrice && <span className="ml-1 normal-case font-normal text-gray-400">({t.services.minPrice}: ${minPrice})</span>}
+                  </label>
+                  <div className="relative">
+                    <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input type="text" value={budget} onChange={e => handleBudgetChange(e.target.value)}
+                      onBlur={() => validatePrice(budget)}
+                      data-testid="input-budget"
+                      placeholder={catalogItemPrice ? `${t.services.minPrice}: ${catalogItemPrice}` : t.services.budgetPlaceholder}
+                      className={`${inputIcon} ${priceError ? "border-red-400 bg-red-50 dark:bg-red-950/30 focus:ring-red-400" : ""}`} />
+                  </div>
+                  {priceError && (
+                    <div className="flex items-center gap-1.5 mt-2 text-red-600 dark:text-red-400" data-testid="text-price-error">
+                      <AlertTriangle size={13} />
+                      <p className="text-[12px] font-semibold">{priceError}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Step 3 — Notes */}
+              <div className={`${card} p-5`}>
+                <h3 className={sectionTitle}>
+                  <Step n={3} />
+                  {t.services.optionalNotes}
+                </h3>
+                <textarea value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)}
+                  data-testid="input-additional-info" placeholder={t.services.optionalNotesPlaceholder}
+                  className="w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-2xl text-[15px] font-medium resize-none h-24 focus:ring-2 focus:ring-red-500 focus:border-transparent focus:outline-none transition-all" />
+              </div>
+
+              {/* Step 4 — Contact method */}
+              <div className={`${card} p-5`}>
+                <h3 className={sectionTitle}>
+                  <Step n={4} />
+                  {t.services.preferredContact}
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: "phone", label: t.services.telephone, icon: Phone },
+                    { key: "whatsapp", label: t.services.whatsapp, icon: MessageCircle },
+                    { key: "email", label: t.common.email, icon: FileText },
+                  ].map(opt => (
+                    <button key={opt.key} type="button" onClick={() => setContactMethod(opt.key)}
+                      data-testid={`button-contact-${opt.key}`}
+                      className={`py-4 rounded-2xl text-[12px] font-bold flex flex-col items-center gap-2 transition-all ${
+                        contactMethod === opt.key
+                          ? "bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-red-900/40 scale-[1.02]"
+                          : "bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700/60 hover:border-red-200 hover:text-red-600"
+                      }`}>
+                      <opt.icon size={18} />
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button type="submit" disabled={createMutation.isPending}
+                data-testid="button-submit-request"
+                className="w-full bg-red-600 text-white py-4.5 rounded-2xl font-black text-[16px] hover:bg-red-700 disabled:opacity-50 shadow-2xl shadow-red-200 dark:shadow-red-900/40 flex items-center justify-center gap-2.5 transition-all active:scale-[0.98]"
+                style={{ fontFamily: "system-ui,-apple-system,sans-serif", paddingTop: "1.125rem", paddingBottom: "1.125rem" }}>
+                {createMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Send size={18} />}
+                {createMutation.isPending ? t.services.sending : t.services.sendRequest}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─── Standard form (no catalog model) ──────────────────────────────── */
+  const typeOptions = serviceTypeOptions[categoryName] || serviceTypeOptions["Autre"];
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+      <ClientNav />
+      <div className="max-w-lg mx-auto">
+
+        {/* Hero band */}
+        <div className="bg-gradient-to-br from-red-600 via-red-700 to-rose-800 px-5 pt-5 pb-8 relative overflow-hidden">
+          {/* decorative circles */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" />
+          <div className="absolute top-6 -right-4 w-20 h-20 bg-white/5 rounded-full" />
+
+          <button onClick={() => navigate("/services")}
+            className="w-11 h-11 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 mb-5"
+            data-testid="button-back">
+            <ArrowLeft size={18} className="text-white" />
+          </button>
+
+          <p className="text-white/60 text-[11px] font-bold uppercase tracking-widest mb-1">{t.services.newRequest}</p>
+          <h1 className="text-white text-2xl font-black leading-tight" style={{ fontFamily: "system-ui,-apple-system,sans-serif", letterSpacing: "-0.02em" }} data-testid="text-form-title">
+            {categoryName}
+          </h1>
+        </div>
+
+        {/* Form */}
+        <div className="px-4 -mt-4 space-y-4 pb-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className={`${cardClass} p-5`}>
-              <h3 className={sectionTitleClass}>
-                <Calendar size={16} className="text-red-500" />
+
+            {/* Step 1 — Date/time */}
+            <div className={`${card} p-5`}>
+              <h3 className={sectionTitle}>
+                <Step n={1} />
                 {t.services.dateTime}
               </h3>
-              <div className="flex gap-2 mb-3">
-                <button type="button" onClick={() => setScheduledType("asap")}
-                  data-testid="button-asap"
-                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${scheduledType === "asap" ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
-                  <Clock size={14} className="inline mr-1.5" />{t.services.asap}
-                </button>
-                <button type="button" onClick={() => setScheduledType("scheduled")}
-                  data-testid="button-schedule"
-                  className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${scheduledType === "scheduled" ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
-                  <Calendar size={14} className="inline mr-1.5" />{t.services.schedule}
-                </button>
+              <div className="flex gap-2">
+                {[
+                  { key: "asap", label: t.services.asap, icon: Zap, testId: "button-asap" },
+                  { key: "scheduled", label: t.services.schedule, icon: Calendar, testId: "button-schedule" },
+                ].map(opt => (
+                  <button key={opt.key} type="button" onClick={() => setScheduledType(opt.key)}
+                    data-testid={opt.testId}
+                    className={`flex-1 py-3.5 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+                      scheduledType === opt.key
+                        ? "bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-red-900/40"
+                        : "bg-gray-50 dark:bg-gray-800/60 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700/60"
+                    }`}>
+                    <opt.icon size={15} />
+                    {opt.label}
+                  </button>
+                ))}
               </div>
               {scheduledType === "scheduled" && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 mt-3">
                   <div>
-                    <label className={labelClass}>{t.common.date}</label>
+                    <label className={label}>{t.common.date}</label>
                     <input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)}
-                      data-testid="input-date" className={inputClass} />
+                      data-testid="input-date" className={input} />
                   </div>
                   <div>
-                    <label className={labelClass}>Heure</label>
+                    <label className={label}>Heure</label>
                     <input type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)}
-                      data-testid="input-time" className={inputClass} />
+                      data-testid="input-time" className={input} />
                   </div>
                 </div>
               )}
             </div>
 
-            <div className={`${cardClass} p-5 space-y-3`}>
+            {/* Step 2 — Personal info */}
+            <div className={`${card} p-5 space-y-4`}>
+              <h3 className={sectionTitle}>
+                <Step n={2} />
+                {t.services.personalInfo}
+              </h3>
               <div>
-                <label className={labelClass}>{t.common.phone} *</label>
+                <label className={label}>{t.services.fullName} *</label>
                 <div className="relative">
-                  <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required
+                    data-testid="input-fullname" placeholder={t.services.fullNamePlaceholder}
+                    className={inputIcon} />
+                </div>
+              </div>
+              <div>
+                <label className={label}>{t.common.phone} *</label>
+                <div className="relative">
+                  <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
                     data-testid="input-phone" placeholder={t.services.phonePlaceholder}
-                    className={inputWithIconClass} />
+                    className={inputIcon} />
                 </div>
               </div>
-
               <div>
-                <label className={labelClass}>{t.common.address}</label>
+                <label className={label}>{t.common.address} *</label>
                 <div className="relative">
-                  <MapPin size={14} className="absolute left-3 top-3 text-gray-400" />
-                  <input type="text" value={address} onChange={e => setAddress(e.target.value)}
+                  <MapPin size={16} className="absolute left-4 top-4 text-gray-400" />
+                  <input type="text" value={address} onChange={e => setAddress(e.target.value)} required
                     data-testid="input-address" placeholder={t.services.addressPlaceholder}
-                    className={inputWithIconClass} />
+                    className={inputIcon} />
                 </div>
               </div>
+            </div>
 
+            {/* Step 3 — Service details */}
+            <div className={`${card} p-5 space-y-4`}>
+              <h3 className={sectionTitle}>
+                <Step n={3} />
+                {t.services.serviceDetails}
+              </h3>
               <div>
-                <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1 flex items-center gap-1">
-                  <DollarSign size={12} />
-                  {t.services.yourPrice}
-                  {minPrice && <span className="text-gray-400 font-normal">({t.services.minPrice}: ${minPrice})</span>}
-                </label>
+                <label className={label}>{t.services.serviceType} — {categoryName}</label>
                 <div className="relative">
-                  <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="text" value={budget} onChange={e => handleBudgetChange(e.target.value)}
-                    onBlur={() => validatePrice(budget)}
-                    data-testid="input-budget"
-                    placeholder={catalogItemPrice ? `${t.services.minPrice}: ${catalogItemPrice}` : t.services.budgetPlaceholder}
-                    className={`w-full pl-9 pr-3 py-2.5 bg-gray-50 dark:bg-gray-800 border rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:outline-none ${
-                      priceError ? "border-red-400 focus:ring-red-500 bg-red-50 dark:bg-red-950/40" : "border-gray-200 dark:border-gray-700 focus:ring-red-500"
-                    }`} />
+                  <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <select value={serviceType} onChange={e => setServiceType(e.target.value)}
+                    data-testid="select-service-type"
+                    className={inputIcon + " appearance-none"}>
+                    <option value="">{t.services.select}</option>
+                    {typeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                  </select>
                 </div>
-                {priceError && (
-                  <div className="flex items-center gap-1.5 mt-1.5 text-red-600" data-testid="text-price-error">
-                    <AlertTriangle size={12} />
-                    <p className="text-[11px] font-semibold">{priceError}</p>
-                  </div>
-                )}
+              </div>
+              <div>
+                <label className={label}>{t.services.estimatedBudget}</label>
+                <div className="relative">
+                  <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="text" value={budget} onChange={e => setBudget(e.target.value)}
+                    data-testid="input-budget" placeholder={t.services.budgetPlaceholder}
+                    className={inputIcon} />
+                </div>
+              </div>
+              <div>
+                <label className={label}>{t.services.additionalInfo}</label>
+                <textarea value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)}
+                  data-testid="input-additional-info" placeholder={t.services.additionalInfoPlaceholder}
+                  className="w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-2xl text-[15px] font-medium resize-none h-28 focus:ring-2 focus:ring-red-500 focus:border-transparent focus:outline-none transition-all" />
               </div>
             </div>
 
-            <div className={`${cardClass} p-5`}>
-              <label className={labelClass}>{t.services.optionalNotes}</label>
-              <textarea value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)}
-                data-testid="input-additional-info" placeholder={t.services.optionalNotesPlaceholder}
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-xl text-sm resize-none h-20 focus:ring-2 focus:ring-red-500 focus:outline-none" />
-            </div>
-
-            <div className={`${cardClass} p-5`}>
-              <h3 className={sectionTitleClass}>
-                <MessageCircle size={16} className="text-red-500" />
+            {/* Step 4 — Contact method */}
+            <div className={`${card} p-5`}>
+              <h3 className={sectionTitle}>
+                <Step n={4} />
                 {t.services.preferredContact}
               </h3>
               <div className="grid grid-cols-3 gap-2">
@@ -403,166 +673,28 @@ export default function ServiceRequestPage() {
                 ].map(opt => (
                   <button key={opt.key} type="button" onClick={() => setContactMethod(opt.key)}
                     data-testid={`button-contact-${opt.key}`}
-                    className={`py-3 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${contactMethod === opt.key ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
-                    <opt.icon size={16} />
+                    className={`py-4 rounded-2xl text-[12px] font-bold flex flex-col items-center gap-2 transition-all ${
+                      contactMethod === opt.key
+                        ? "bg-red-600 text-white shadow-lg shadow-red-200 dark:shadow-red-900/40 scale-[1.02]"
+                        : "bg-gray-50 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700/60 hover:border-red-200 hover:text-red-600"
+                    }`}>
+                    <opt.icon size={18} />
                     {opt.label}
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Submit */}
             <button type="submit" disabled={createMutation.isPending}
               data-testid="button-submit-request"
-              className="w-full bg-red-600 text-white py-4 rounded-2xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 shadow-xl shadow-red-200 flex items-center justify-center gap-2">
-              {createMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={16} />}
+              className="w-full bg-red-600 text-white rounded-2xl font-black text-[16px] hover:bg-red-700 disabled:opacity-50 shadow-2xl shadow-red-200 dark:shadow-red-900/40 flex items-center justify-center gap-2.5 transition-all active:scale-[0.98]"
+              style={{ fontFamily: "system-ui,-apple-system,sans-serif", paddingTop: "1.125rem", paddingBottom: "1.125rem" }}>
+              {createMutation.isPending ? <Loader2 size={20} className="animate-spin" /> : <Send size={18} />}
               {createMutation.isPending ? t.services.sending : t.services.sendRequest}
             </button>
           </form>
         </div>
-      </div>
-    );
-  }
-
-  const typeOptions = serviceTypeOptions[categoryName] || serviceTypeOptions["Autre"];
-
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
-      <ClientNav />
-      <div className="max-w-lg mx-auto px-4 py-4">
-        <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate("/services")} className="w-10 h-10 bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-700" data-testid="button-back">
-            <ArrowLeft size={18} className="dark:text-gray-300" />
-          </button>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="text-form-title">{t.services.newRequest}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{categoryName}</p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className={`${cardClass} p-5`}>
-            <h3 className={sectionTitleClass}>
-              <Calendar size={16} className="text-red-500" />
-              {t.services.dateTime}
-            </h3>
-            <div className="flex gap-2 mb-3">
-              <button type="button" onClick={() => setScheduledType("asap")}
-                data-testid="button-asap"
-                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${scheduledType === "asap" ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
-                <Clock size={14} className="inline mr-1.5" />{t.services.asap}
-              </button>
-              <button type="button" onClick={() => setScheduledType("scheduled")}
-                data-testid="button-schedule"
-                className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${scheduledType === "scheduled" ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
-                <Calendar size={14} className="inline mr-1.5" />{t.services.schedule}
-              </button>
-            </div>
-            {scheduledType === "scheduled" && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>{t.common.date}</label>
-                  <input type="date" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)}
-                    data-testid="input-date" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Heure</label>
-                  <input type="time" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)}
-                    data-testid="input-time" className={inputClass} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className={`${cardClass} p-5 space-y-3`}>
-            <h3 className={sectionTitleClass}>
-              <User size={16} className="text-red-500" />
-              {t.services.personalInfo}
-            </h3>
-            <div>
-              <label className={labelClass}>{t.services.fullName} *</label>
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} required
-                data-testid="input-fullname" placeholder={t.services.fullNamePlaceholder}
-                className={inputClass} />
-            </div>
-            <div>
-              <label className={labelClass}>{t.common.phone} *</label>
-              <div className="relative">
-                <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required
-                  data-testid="input-phone" placeholder={t.services.phonePlaceholder}
-                  className={inputWithIconClass} />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>{t.common.address} *</label>
-              <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-3 text-gray-400" />
-                <input type="text" value={address} onChange={e => setAddress(e.target.value)} required
-                  data-testid="input-address" placeholder={t.services.addressPlaceholder}
-                  className={inputWithIconClass} />
-              </div>
-            </div>
-          </div>
-
-          <div className={`${cardClass} p-5 space-y-3`}>
-            <h3 className={sectionTitleClass}>
-              <Tag size={16} className="text-red-500" />
-              {t.services.serviceDetails}
-            </h3>
-            <div>
-              <label className={labelClass}>{t.services.serviceType} {categoryName}</label>
-              <select value={serviceType} onChange={e => setServiceType(e.target.value)}
-                data-testid="select-service-type"
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none">
-                <option value="">{t.services.select}</option>
-                {typeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>{t.services.estimatedBudget}</label>
-              <div className="relative">
-                <DollarSign size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="text" value={budget} onChange={e => setBudget(e.target.value)}
-                  data-testid="input-budget" placeholder={t.services.budgetPlaceholder}
-                  className={inputWithIconClass} />
-              </div>
-            </div>
-            <div>
-              <label className={labelClass}>{t.services.additionalInfo}</label>
-              <textarea value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)}
-                data-testid="input-additional-info" placeholder={t.services.additionalInfoPlaceholder}
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-xl text-sm resize-none h-24 focus:ring-2 focus:ring-red-500 focus:outline-none" />
-            </div>
-          </div>
-
-          <div className={`${cardClass} p-5`}>
-            <h3 className={sectionTitleClass}>
-              <MessageCircle size={16} className="text-red-500" />
-              {t.services.preferredContact}
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { key: "phone", label: t.services.telephone, icon: Phone },
-                { key: "whatsapp", label: t.services.whatsapp, icon: MessageCircle },
-                { key: "email", label: t.common.email, icon: FileText },
-              ].map(opt => (
-                <button key={opt.key} type="button" onClick={() => setContactMethod(opt.key)}
-                  data-testid={`button-contact-${opt.key}`}
-                  className={`py-3 rounded-xl text-xs font-semibold flex flex-col items-center gap-1.5 transition-all ${contactMethod === opt.key ? "bg-red-600 text-white shadow-lg shadow-red-200" : "bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}>
-                  <opt.icon size={16} />
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button type="submit" disabled={createMutation.isPending}
-            data-testid="button-submit-request"
-            className="w-full bg-red-600 text-white py-4 rounded-2xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 shadow-xl shadow-red-200 flex items-center justify-center gap-2">
-            {createMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Send size={16} />}
-            {createMutation.isPending ? t.services.sending : t.services.sendRequest}
-          </button>
-        </form>
       </div>
     </div>
   );

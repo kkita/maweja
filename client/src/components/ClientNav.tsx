@@ -54,7 +54,6 @@ export default function ClientNav() {
     }
   };
 
-  /* 3 tabs: Home / Orders / Settings */
   const navItems = [
     { path: "/",        label: t.client.home },
     { path: "/orders",  label: t.client.myOrders, badge: unreadNotifCount },
@@ -64,31 +63,27 @@ export default function ClientNav() {
   return (
     <>
       {/* ─── Header ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 py-2.5">
+      <header className="sticky top-0 z-50 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800/60 px-4 py-2.5 backdrop-blur-xl">
         <div className="max-w-lg mx-auto flex items-center gap-3">
 
           {/* Logo */}
           <div className="flex-shrink-0 w-9 h-9">
-            <img
-              src={logoRed}
-              alt="MAWEJA"
-              className="w-full h-full object-contain"
-            />
+            <img src={logoRed} alt="MAWEJA" className="w-full h-full object-contain" />
           </div>
 
-          {/* Address pill — centre */}
+          {/* Address pill */}
           <button
-            className="flex-1 flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2 text-left active:bg-gray-200 transition-colors"
+            className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-800/70 rounded-xl px-3 py-2 text-left active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
             onClick={() => handleProtectedNav("/settings")}
             data-testid="button-address-pill"
           >
             <MapPin size={14} className="text-gray-400 flex-shrink-0" />
-            <span style={{ fontSize: 13, fontWeight: 400, color: "#9CA3AF" }} className="truncate">
+            <span className="truncate text-[13px] font-normal text-gray-400 dark:text-gray-500">
               Entrez votre adresse
             </span>
           </button>
 
-          {/* Bell → notifications */}
+          {/* Bell */}
           <button
             className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
             onClick={() => handleProtectedNav("/notifications")}
@@ -102,7 +97,7 @@ export default function ClientNav() {
             )}
           </button>
 
-          {/* Cart icon (header only) */}
+          {/* Cart */}
           <button
             className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
             onClick={() => navigate("/cart")}
@@ -118,9 +113,9 @@ export default function ClientNav() {
         </div>
       </header>
 
-      {/* ─── Bottom navigation — 3 tabs flat ─────────────────────────────────── */}
+      {/* ─── Bottom navigation ────────────────────────────────────────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white flex items-center justify-around px-6 pt-2 pb-5 border-t border-gray-100"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 flex items-center justify-around px-6 pt-2 pb-5 border-t border-gray-100 dark:border-gray-800/60"
         style={{ boxShadow: "0 -2px 16px rgba(0,0,0,0.06)" }}
       >
         {navItems.map((item) => {
@@ -160,6 +155,12 @@ export default function ClientNav() {
                   {(item as any).badge > 99 ? "99+" : (item as any).badge}
                 </span>
               )}
+              <span
+                className="text-[10px] font-semibold mt-0.5"
+                style={{ color: isActive ? "#3B5BDB" : "#9CA3AF", fontWeight: isActive ? 700 : 500 }}
+              >
+                {item.label}
+              </span>
             </button>
           );
         })}
