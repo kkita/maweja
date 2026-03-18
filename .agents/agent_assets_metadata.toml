@@ -102,3 +102,9 @@ id = "_BG9zAbGMiiX8iAqi5a8v"
 uri = "file://maweja-latest.zip"
 type = "unspecified"
 title = "MAWEJA — Sources mises à jour (18 mars 2026)"
+
+[[outputs]]
+id = "d8G6lfoCZdPH8V-8fq5pD"
+uri = "file://Maweja_V11_2.zip"
+type = "unspecified"
+title = "Maweja_V11_2 — Sources complètes"
