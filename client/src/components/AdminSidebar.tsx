@@ -54,6 +54,12 @@ export default function AdminSidebar() {
     enabled: isSuperAdmin,
   });
 
+  const { data: pendingOrders = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/orders"],
+    refetchInterval: 10000,
+  });
+  const pendingOrdersCount = pendingOrders.filter((o: any) => o.status === "pending").length;
+
   const allLinks = [
     { path: "/", icon: LayoutDashboard, label: t.admin.dashboard, badgeKey: "dashboard" },
     { path: "/admin/orders", icon: Package, label: t.admin.orders, badgeKey: "orders" },
@@ -77,6 +83,7 @@ export default function AdminSidebar() {
     if (badgeKey === "chat" && unreadChatCount > 0) return { count: unreadChatCount, color: "bg-red-600" };
     if (badgeKey === "dashboard" && unreadNotifCount > 0) return { count: unreadNotifCount, color: "bg-red-600" };
     if (badgeKey === "verifications" && pendingVerifications.length > 0) return { count: pendingVerifications.length, color: "bg-orange-500" };
+    if (badgeKey === "orders" && pendingOrdersCount > 0) return { count: pendingOrdersCount, color: "bg-amber-500" };
     return null;
   };
 

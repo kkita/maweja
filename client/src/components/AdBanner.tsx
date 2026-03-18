@@ -107,33 +107,26 @@ export default function AdBanner() {
         className="rounded-2xl overflow-hidden flex items-center gap-4 px-5"
         style={{
           height: 140,
-          background: "linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%)",
-          border: "1.5px dashed #fca5a5",
+          background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)",
         }}
         data-testid="ad-placeholder"
       >
         {/* Icon */}
-        <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-          <Megaphone size={28} className="text-red-400" />
+        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0 flex-col gap-0.5">
+          <Megaphone size={24} className="text-white" />
         </div>
 
         {/* Text */}
         <div className="flex-1 min-w-0">
-          <div className="inline-flex items-center gap-1.5 bg-red-100 px-2.5 py-0.5 rounded-full mb-1.5">
-            <Megaphone size={9} className="text-red-500" />
-            <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider">Espace publicitaire</span>
+          <div className="inline-flex items-center gap-1.5 bg-white/20 px-2.5 py-0.5 rounded-full mb-1.5">
+            <span className="text-[9px] font-bold text-white uppercase tracking-wider">Espace publicitaire MAWEJA</span>
           </div>
-          <p className="text-sm font-bold text-gray-800 leading-tight">Votre publicité ici</p>
-          <p className="text-xs text-gray-400 mt-0.5 leading-snug">Touchez des milliers de clients à Kinshasa</p>
+          <p className="text-[15px] font-black text-white leading-tight">Votre publicité ici</p>
+          <p className="text-[11px] text-white/80 mt-0.5 leading-snug">Touchez des milliers de clients à Kinshasa</p>
           <div className="flex items-center gap-1.5 mt-2">
-            <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Phone size={11} className="text-red-500" />
-            </div>
-            <span className="text-[12px] font-bold text-red-600">
-              Contactez l'administrateur
-            </span>
+            <Phone size={11} className="text-white/80 flex-shrink-0" />
+            <span className="text-[12px] font-black text-white tracking-wide">{displayNumber}</span>
           </div>
-          <p className="text-[11px] font-black text-red-700 mt-0.5 tracking-wide">{displayNumber}</p>
         </div>
       </div>
     );
