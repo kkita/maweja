@@ -108,3 +108,9 @@ id = "d8G6lfoCZdPH8V-8fq5pD"
 uri = "file://Maweja_V11_2.zip"
 type = "unspecified"
 title = "Maweja_V11_2 — Sources complètes"
+
+[[outputs]]
+id = "6RSFJ_6pOsxx908Zi-cFH"
+uri = "file://Maweja_V12_mobile.zip"
+type = "unspecified"
+title = "Maweja_V12_mobile.zip — Source complet avec fixes mobile"
