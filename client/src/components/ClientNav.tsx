@@ -19,7 +19,6 @@ export default function ClientNav() {
   const { t } = useI18n();
 
   const [scrolled, setScrolled] = useState(false);
-  const [searchActive, setSearchActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,9 +26,9 @@ export default function ClientNav() {
   useEffect(() => {
     const onScroll = () => {
       const sy = window.scrollY;
-      setScrolled(sy > 70);
-      if (sy <= 30) {
-        setSearchActive(false);
+      const wasScrolled = sy > 70;
+      setScrolled(wasScrolled);
+      if (!wasScrolled) {
         setSearchQuery("");
         document.dispatchEvent(new CustomEvent("maweja-search", { detail: { query: "" } }));
       }
@@ -48,16 +47,12 @@ export default function ClientNav() {
     broadcastSearch(q);
   };
 
-  const openSearch = () => {
-    setSearchActive(true);
-    setTimeout(() => searchInputRef.current?.focus(), 80);
-  };
-
-  const closeSearch = () => {
-    setSearchActive(false);
-    setSearchQuery("");
-    broadcastSearch("");
-  };
+  /* ── Auto-focus search when scrolled ───────────────────────────── */
+  useEffect(() => {
+    if (scrolled) {
+      setTimeout(() => searchInputRef.current?.focus(), 320);
+    }
+  }, [scrolled]);
 
   /* ── Notifications ──────────────────────────────────────────────── */
   const { data: notifications = [] } = useQuery<Notif[]>({
@@ -98,99 +93,132 @@ export default function ClientNav() {
   return (
     <>
       {/* ─── Header ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-800/60 backdrop-blur-xl"
-        style={{ boxShadow: scrolled ? "0 2px 12px rgba(0,0,0,0.08)" : "none", transition: "box-shadow 0.3s" }}>
-        <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center gap-3">
+      <header
+        className="sticky top-0 z-50"
+        style={{
+          background: scrolled ? "#dc2626" : "#ffffff",
+          transition: "background 0.38s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: scrolled
+            ? "0 4px 24px rgba(220,38,38,0.25)"
+            : "0 1px 0 rgba(0,0,0,0.06)",
+        }}
+      >
+        <div className="max-w-lg mx-auto px-4 relative" style={{ height: 56 }}>
 
-          {/* ── NORMAL HEADER (not scrolled OR search not active) ── */}
-          {(!scrolled || !searchActive) && (
-            <>
-              {/* Logo */}
-              <div className="flex-shrink-0 w-9 h-9">
-                <img src={logoRed} alt="MAWEJA" className="w-full h-full object-contain" />
-              </div>
+          {/* ── NORMAL CONTENT (logo + address + actions) ────────────────── */}
+          <div
+            className="absolute inset-0 px-4 flex items-center gap-3"
+            style={{
+              opacity: scrolled ? 0 : 1,
+              transform: scrolled ? "translateY(-14px) scale(0.96)" : "translateY(0) scale(1)",
+              transition: "opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
+              pointerEvents: scrolled ? "none" : "auto",
+            }}
+          >
+            {/* Logo */}
+            <div className="flex-shrink-0 w-9 h-9">
+              <img src={logoRed} alt="MAWEJA" className="w-full h-full object-contain" />
+            </div>
 
-              {scrolled ? (
-                /* Scrolled but search not yet opened — show search trigger pill */
-                <button
-                  onClick={openSearch}
-                  data-testid="button-search-pill"
-                  className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-800/70 rounded-xl px-3 py-2 text-left active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
+            {/* Address pill */}
+            <button
+              className="flex-1 flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2 text-left active:bg-gray-200 transition-colors"
+              onClick={() => handleProtectedNav("/address")}
+              data-testid="button-address-pill"
+            >
+              <MapPin size={14} className="text-red-500 flex-shrink-0" />
+              <span className="truncate text-[13px] font-normal text-gray-400">
+                Entrez votre adresse
+              </span>
+            </button>
+
+            {/* Bell */}
+            <button
+              className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
+              onClick={() => handleProtectedNav("/notifications")}
+              data-testid="button-notifications-header"
+            >
+              <Bell size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
+              {unreadNotifCount > 0 && (
+                <span
+                  className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center"
+                  data-testid="badge-notif"
                 >
-                  <Search size={14} className="text-gray-400 flex-shrink-0" />
-                  <span className="truncate text-[13px] text-gray-400 dark:text-gray-500">
-                    Rechercher un plat, restaurant…
-                  </span>
-                </button>
-              ) : (
-                /* Normal — address pill */
-                <button
-                  className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-800/70 rounded-xl px-3 py-2 text-left active:bg-gray-200 dark:active:bg-gray-700 transition-colors"
-                  onClick={() => handleProtectedNav("/address")}
-                  data-testid="button-address-pill"
+                  {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
+                </span>
+              )}
+            </button>
+
+            {/* Cart */}
+            <button
+              className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
+              onClick={() => navigate("/cart")}
+              data-testid="button-cart-header"
+            >
+              <ShoppingBag size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
+              {itemCount > 0 && (
+                <span
+                  className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center"
+                  data-testid="badge-cart-header"
                 >
-                  <MapPin size={14} className="text-red-500 flex-shrink-0" />
-                  <span className="truncate text-[13px] font-normal text-gray-400 dark:text-gray-500">
-                    Entrez votre adresse
-                  </span>
+                  {itemCount > 9 ? "9+" : itemCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* ── SEARCH BAR (apparaît au scroll) ──────────────────────────── */}
+          <div
+            className="absolute inset-0 px-4 flex items-center gap-3"
+            style={{
+              opacity: scrolled ? 1 : 0,
+              transform: scrolled ? "translateY(0) scale(1)" : "translateY(14px) scale(0.96)",
+              transition: "opacity 0.30s cubic-bezier(0.4, 0, 0.2, 1) 0.06s, transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) 0.06s",
+              pointerEvents: scrolled ? "auto" : "none",
+            }}
+          >
+            {/* Search input — white bg on red header */}
+            <div className="flex-1 relative">
+              <Search
+                size={15}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{ color: "#dc2626" }}
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={e => handleSearchChange(e.target.value)}
+                placeholder="Plat, restaurant, service…"
+                data-testid="input-global-search"
+                style={{
+                  background: "rgba(255,255,255,0.97)",
+                  color: "#111827",
+                  borderRadius: 14,
+                  border: "none",
+                  outline: "none",
+                  width: "100%",
+                  paddingLeft: 40,
+                  paddingRight: searchQuery.length > 0 ? 36 : 14,
+                  paddingTop: 10,
+                  paddingBottom: 10,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+                }}
+              />
+              {searchQuery.length > 0 && (
+                <button
+                  onClick={() => handleSearchChange("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  data-testid="button-clear-search"
+                >
+                  <X size={14} style={{ color: "#9ca3af" }} />
                 </button>
               )}
+            </div>
+          </div>
 
-              {/* Bell */}
-              <button
-                className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
-                onClick={() => handleProtectedNav("/notifications")}
-                data-testid="button-notifications-header"
-              >
-                <Bell size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
-                {unreadNotifCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid="badge-notif">
-                    {unreadNotifCount > 9 ? "9+" : unreadNotifCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Cart */}
-              <button
-                className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
-                onClick={() => navigate("/cart")}
-                data-testid="button-cart-header"
-              >
-                <ShoppingBag size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
-                {itemCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid="badge-cart-header">
-                    {itemCount > 9 ? "9+" : itemCount}
-                  </span>
-                )}
-              </button>
-            </>
-          )}
-
-          {/* ── SEARCH BAR (scrolled + search active) ── */}
-          {scrolled && searchActive && (
-            <>
-              <button onClick={closeSearch} className="flex-shrink-0 w-9 h-9 flex items-center justify-center active:scale-90 transition-transform" data-testid="button-close-search">
-                <ArrowLeft size={20} className="text-gray-600 dark:text-gray-300" />
-              </button>
-              <div className="flex-1 relative">
-                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => handleSearchChange(e.target.value)}
-                  placeholder="Plat, restaurant, service…"
-                  data-testid="input-global-search"
-                  className="w-full bg-gray-100 dark:bg-gray-800 rounded-xl pl-9 pr-9 py-2 text-[14px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none border-none"
-                />
-                {searchQuery.length > 0 && (
-                  <button onClick={() => handleSearchChange("")} className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <X size={14} className="text-gray-400" />
-                  </button>
-                )}
-              </div>
-            </>
-          )}
         </div>
       </header>
 
