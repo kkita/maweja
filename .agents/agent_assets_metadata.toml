@@ -96,3 +96,9 @@ id = "s46NA2LX2_RJj5c64I_t0"
 uri = "file://MAWEJA_github_v2.zip"
 type = "unspecified"
 title = "MAWEJA - Code Source GitHub v2 (icons-only nav + dark mode complet)"
+
+[[outputs]]
+id = "_BG9zAbGMiiX8iAqi5a8v"
+uri = "file://maweja-latest.zip"
+type = "unspecified"
+title = "MAWEJA — Sources complètes (18 mars 2026)"
