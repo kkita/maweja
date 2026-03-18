@@ -60,10 +60,12 @@ export default function SearchOverlay({ onClose }: Props) {
 
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div
-        className="flex items-center gap-3 px-4 pt-4 pb-3 flex-shrink-0"
+        className="flex items-center gap-3 px-4 pb-3 flex-shrink-0"
         style={{
           background: "#dc2626",
           boxShadow: "0 4px 24px rgba(220,38,38,0.3)",
+          /* iOS safe area (notch / Dynamic Island) */
+          paddingTop: "max(16px, env(safe-area-inset-top))",
         }}
       >
         {/* Back button */}
@@ -208,7 +210,7 @@ export default function SearchOverlay({ onClose }: Props) {
 
         {/* ── Restaurants matched ── */}
         {filteredRestaurants.length > 0 && (
-          <div className="px-4 pt-4 pb-10">
+          <div className="px-4 pt-4" style={{ paddingBottom: "max(40px, env(safe-area-inset-bottom))" }}>
             <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-2">Restaurants & Établissements</p>
             <div className="space-y-3">
               {filteredRestaurants.map(r => (

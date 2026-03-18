@@ -178,7 +178,10 @@ export default function DriverNav() {
       </header>
 
       {/* ─── Bottom navigation ────────────────────────────────────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-3 pt-2 pointer-events-none">
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pt-2 pointer-events-none"
+        style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+      >
         <div
           className="pointer-events-auto flex items-center gap-0.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-[28px] px-1.5 py-2 border border-gray-100 dark:border-gray-800/60"
           style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}
