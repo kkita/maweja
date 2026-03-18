@@ -10,6 +10,226 @@ import {
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 
+/* ── Static media assets ───────────────────────────────────────────────── */
+const SERVICE_ICONS: { name: string; url: string }[] = [
+  { name: "Carburant",     url: "/services/carburant.png" },
+  { name: "Coiffure",      url: "/services/coiffure.png" },
+  { name: "Conciergerie",  url: "/services/conciergerie.png" },
+  { name: "Domicile",      url: "/services/domicile.png" },
+  { name: "Esthétique",    url: "/services/esthetique.png" },
+  { name: "Événementiel",  url: "/services/evenementiel.png" },
+  { name: "Hôtellerie",    url: "/services/hotellerie.png" },
+  { name: "Logistique",    url: "/services/logistique.png" },
+  { name: "Manucure",      url: "/services/manucure.png" },
+  { name: "Massage",       url: "/services/massage.png" },
+  { name: "Professionnel", url: "/services/professionnel.png" },
+  { name: "Transport",     url: "/services/transport.png" },
+  { name: "Voyage",        url: "/services/voyage.png" },
+];
+
+const LOGOS: { name: string; url: string }[] = [
+  { name: "Logo MAWEJA Rouge", url: "/maweja-logo-red.png" },
+  { name: "Icône MAWEJA",      url: "/maweja-icon.png" },
+  { name: "Logo MAWEJA",       url: "/logo.png" },
+];
+
+function MediaCard({ name, url, testKey, copiedUrl, onCopy }: {
+  name: string; url: string; testKey: string;
+  copiedUrl: string | null; onCopy: (url: string) => void;
+}) {
+  return (
+    <div
+      className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all group"
+      data-testid={`media-card-${testKey}`}
+    >
+      <div className="relative w-full bg-gray-50" style={{ paddingBottom: "100%" }}>
+        <img
+          src={url}
+          alt={name}
+          className="absolute inset-0 w-full h-full object-contain p-3"
+          data-testid={`media-img-${testKey}`}
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center">
+          <button
+            onClick={() => onCopy(url)}
+            className="opacity-0 group-hover:opacity-100 transition-all bg-white shadow-lg rounded-xl px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-gray-700"
+          >
+            {copiedUrl === url ? <><Check size={12} className="text-green-600" /> Copié</> : <><Copy size={12} /> Copier URL</>}
+          </button>
+        </div>
+      </div>
+      <div className="p-2.5">
+        <p className="font-bold text-[11px] text-gray-800 line-clamp-1 mb-1">{name}</p>
+        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
+          <code className="text-[8px] text-gray-400 flex-1 truncate font-mono">{url}</code>
+          <button
+            onClick={() => onCopy(url + "_inline")}
+            className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-all hover:bg-gray-200 active:scale-90"
+          >
+            {copiedUrl === url + "_inline" ? (
+              <Check size={10} className="text-green-600" />
+            ) : (
+              <Copy size={10} className="text-gray-400" />
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
+  categories: ServiceCategory[];
+  copiedUrl: string | null;
+  setCopiedUrl: (url: string | null) => void;
+}) {
+  const catImages = categories.filter(c => c.imageUrl);
+  const totalImages = SERVICE_ICONS.length + LOGOS.length + catImages.length;
+
+  const copy = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    });
+  };
+
+  const allItems = [
+    ...SERVICE_ICONS,
+    ...LOGOS,
+    ...catImages.map(c => ({ name: c.name, url: c.imageUrl! })),
+  ];
+
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-base font-bold text-gray-900">Médiathèque</h3>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Survolez une image et cliquez pour copier son URL. Utilisez-la lors de la création de services ou catégories.
+          </p>
+        </div>
+        <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+          {totalImages} images
+        </span>
+      </div>
+
+      {/* Section 1: Service icons */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1 h-5 bg-red-600 rounded-full" />
+          <h4 className="font-bold text-sm text-gray-800">Icônes de services</h4>
+          <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{SERVICE_ICONS.length} images</span>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+          {SERVICE_ICONS.map(item => (
+            <MediaCard
+              key={item.url}
+              name={item.name}
+              url={item.url}
+              testKey={item.name.toLowerCase()}
+              copiedUrl={copiedUrl}
+              onCopy={copy}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Section 2: MAWEJA logos */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-1 h-5 bg-blue-600 rounded-full" />
+          <h4 className="font-bold text-sm text-gray-800">Logos MAWEJA</h4>
+          <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{LOGOS.length} images</span>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+          {LOGOS.map(item => (
+            <MediaCard
+              key={item.url}
+              name={item.name}
+              url={item.url}
+              testKey={item.name.replace(/\s+/g, "-").toLowerCase()}
+              copiedUrl={copiedUrl}
+              onCopy={copy}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Section 3: DB category images */}
+      {catImages.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-1 h-5 bg-amber-500 rounded-full" />
+            <h4 className="font-bold text-sm text-gray-800">Images de catégories (personnalisées)</h4>
+            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{catImages.length} images</span>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+            {catImages.map(cat => (
+              <MediaCard
+                key={cat.id}
+                name={cat.name}
+                url={cat.imageUrl!}
+                testKey={String(cat.id)}
+                copiedUrl={copiedUrl}
+                onCopy={copy}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick URL reference */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
+          <h4 className="font-bold text-sm text-gray-900">Référence rapide — toutes les URLs</h4>
+          <button
+            onClick={() => {
+              const all = allItems.map(i => `${i.name}: ${i.url}`).join("\n");
+              navigator.clipboard.writeText(all).then(() => {
+                setCopiedUrl("__all__");
+                setTimeout(() => setCopiedUrl(null), 2000);
+              });
+            }}
+            className="text-[10px] font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1 transition-all"
+            style={{
+              background: copiedUrl === "__all__" ? "#dcfce7" : "#f9fafb",
+              color: copiedUrl === "__all__" ? "#16a34a" : "#6b7280",
+              borderColor: copiedUrl === "__all__" ? "#86efac" : "#e5e7eb",
+            }}
+            data-testid="button-copy-all-urls"
+          >
+            {copiedUrl === "__all__" ? <><Check size={10} /> Copié</> : <><Copy size={10} /> Tout copier</>}
+          </button>
+        </div>
+        <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+          {allItems.map((item, idx) => (
+            <div key={idx} className="flex items-center gap-3 px-5 py-3">
+              <img src={item.url} alt={item.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-gray-800 truncate">{item.name}</p>
+                <p className="text-[10px] text-gray-400 truncate font-mono">{item.url}</p>
+              </div>
+              <button
+                onClick={() => copy(item.url + "_ref")}
+                data-testid={`button-copy-ref-${idx}`}
+                className="flex-shrink-0 px-2.5 py-1.5 text-[10px] font-bold rounded-lg border transition-all flex items-center gap-1"
+                style={{
+                  background: copiedUrl === item.url + "_ref" ? "#dcfce7" : "#f9fafb",
+                  color: copiedUrl === item.url + "_ref" ? "#16a34a" : "#6b7280",
+                  borderColor: copiedUrl === item.url + "_ref" ? "#86efac" : "#e5e7eb",
+                }}
+              >
+                {copiedUrl === item.url + "_ref" ? <><Check size={10} /> Copié</> : <><Copy size={10} /> Copier</>}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function AdminServices() {
   const { toast } = useToast();
   const { t } = useI18n();
@@ -544,99 +764,11 @@ export default function AdminServices() {
 
       {/* ── Médiathèque ─────────────────────────────────────────────── */}
       {tab === "media" && (
-        <>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h3 className="text-base font-bold text-gray-900">Médiathèque — Images des services</h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Cliquez sur une image pour copier son URL et la réutiliser dans d'autres parties de l'application.
-              </p>
-            </div>
-            <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-              {categories.filter(c => c.imageUrl).length} images
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.filter(c => c.imageUrl).map(cat => (
-              <div
-                key={cat.id}
-                className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all"
-                data-testid={`media-card-${cat.id}`}
-              >
-                {/* Image preview */}
-                <div className="relative w-full bg-gray-50" style={{ paddingBottom: "100%" }}>
-                  <img
-                    src={cat.imageUrl!}
-                    alt={cat.name}
-                    className="absolute inset-0 w-full h-full object-contain p-2"
-                    data-testid={`media-img-${cat.id}`}
-                  />
-                </div>
-
-                {/* Info + copy */}
-                <div className="p-3">
-                  <p className="font-bold text-[12px] text-gray-900 line-clamp-1 mb-1">{cat.name}</p>
-                  <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-                    <code className="text-[9px] text-gray-500 flex-1 truncate">{cat.imageUrl}</code>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(cat.imageUrl!).then(() => {
-                          setCopiedUrl(cat.imageUrl!);
-                          setTimeout(() => setCopiedUrl(null), 2000);
-                        });
-                      }}
-                      data-testid={`button-copy-${cat.id}`}
-                      className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md transition-all hover:bg-gray-200 active:scale-90"
-                      title="Copier l'URL"
-                    >
-                      {copiedUrl === cat.imageUrl ? (
-                        <Check size={12} className="text-green-600" />
-                      ) : (
-                        <Copy size={12} className="text-gray-400" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* URL list for quick reference */}
-          <div className="mt-8 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-50">
-              <h4 className="font-bold text-sm text-gray-900">Toutes les URLs — Référence rapide</h4>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {categories.filter(c => c.imageUrl).map(cat => (
-                <div key={cat.id} className="flex items-center gap-3 px-5 py-3">
-                  <img src={cat.imageUrl!} alt={cat.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-800 truncate">{cat.name}</p>
-                    <p className="text-[10px] text-gray-400 truncate font-mono">{cat.imageUrl}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(cat.imageUrl!).then(() => {
-                        setCopiedUrl(cat.imageUrl! + "_list");
-                        setTimeout(() => setCopiedUrl(null), 2000);
-                      });
-                    }}
-                    data-testid={`button-copy-list-${cat.id}`}
-                    className="flex-shrink-0 px-2.5 py-1.5 text-[10px] font-bold rounded-lg border transition-all flex items-center gap-1"
-                    style={{
-                      background: copiedUrl === cat.imageUrl + "_list" ? "#dcfce7" : "#f9fafb",
-                      color: copiedUrl === cat.imageUrl + "_list" ? "#16a34a" : "#6b7280",
-                      borderColor: copiedUrl === cat.imageUrl + "_list" ? "#86efac" : "#e5e7eb",
-                    }}
-                  >
-                    {copiedUrl === cat.imageUrl + "_list" ? <><Check size={10} /> Copié</> : <><Copy size={10} /> Copier</>}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
+        <MediaLibrary
+          categories={categories}
+          copiedUrl={copiedUrl}
+          setCopiedUrl={setCopiedUrl}
+        />
       )}
     </AdminLayout>
   );
