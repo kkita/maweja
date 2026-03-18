@@ -10,14 +10,6 @@ packages = ["alsa-lib", "at-spi2-atk", "at-spi2-core", "cairo", "cups", "dbus", 
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 5904
-externalPort = 3000
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
-
 [env]
 PORT = "5000"
 

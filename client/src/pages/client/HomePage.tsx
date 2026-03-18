@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/AdBanner";
 import { useI18n } from "../../lib/i18n";
-import { Star, Clock, Heart, MapPin, ChevronRight } from "lucide-react";
+import { Star, Clock, Heart, MapPin, ChevronRight, Search } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Restaurant, ServiceCategory, ServiceCatalogItem } from "@shared/schema";
 
@@ -244,12 +244,33 @@ export default function HomePage() {
   const [activeCatId, setActiveCatId] = useState<number | null>(null);
   const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
+  const [globalSearch, setGlobalSearch] = useState("");
+
+  /* ── Listen to ClientNav search events ── */
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const q = (e as CustomEvent).detail?.query ?? "";
+      setGlobalSearch(q);
+      if (q) { setActiveCuisine(null); setActiveCatId(null); }
+    };
+    document.addEventListener("maweja-search", handler);
+    return () => document.removeEventListener("maweja-search", handler);
+  }, []);
 
   /* filter restaurants */
   const filtered = restaurants.filter(r => {
+    if (globalSearch) {
+      const q = globalSearch.toLowerCase();
+      return (r.name?.toLowerCase().includes(q) || r.cuisine?.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q));
+    }
     if (activeCuisine && r.cuisine !== activeCuisine) return false;
     return true;
   });
+
+  /* Service categories matching search */
+  const matchedServices = globalSearch
+    ? activeCategories.filter(c => c.name.toLowerCase().includes(globalSearch.toLowerCase()))
+    : [];
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = displayCount < filtered.length;
@@ -406,10 +427,34 @@ export default function HomePage() {
           })}
         </div>
 
+        {/* ── Search results: Services ────────────────────────────── */}
+        {globalSearch && matchedServices.length > 0 && (
+          <section className="mb-5">
+            <p className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
+              <Search size={14} className="text-red-500" />
+              Services trouvés
+            </p>
+            <div className="flex gap-3 flex-wrap">
+              {matchedServices.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => { setGlobalSearch(""); navigate(`/services?cat=${cat.id}`); }}
+                  data-testid={`search-service-${cat.id}`}
+                  className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-2.5 active:scale-95 transition-all"
+                  style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.08)", border: "1px solid rgba(220,38,38,0.15)" }}
+                >
+                  {cat.imageUrl && <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 rounded-lg object-cover" />}
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{cat.name}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── Section title ─────────────────────────────────────── */}
         <div id="restaurants-section" className="flex items-center justify-between mb-4">
           <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
-            {activeCuisine ? activeCuisine : "Tous les établissements"}
+            {globalSearch ? `Résultats pour "${globalSearch}"` : activeCuisine ? activeCuisine : "Tous les établissements"}
           </p>
           {(activeCuisine) && (
             <button

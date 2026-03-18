@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson, apiRequest, queryClient } from "../../lib/queryClient";
@@ -33,9 +34,10 @@ export default function NotificationsPage() {
     refetchInterval: 15000,
   });
 
+  /* ── Fix: correct apiRequest signature (url, options) ── */
   const markRead = useMutation({
     mutationFn: (id: number) =>
-      apiRequest("PATCH", `/api/notifications/${id}/read`, {}),
+      apiRequest(`/api/notifications/${id}/read`, { method: "PATCH" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
@@ -43,13 +45,25 @@ export default function NotificationsPage() {
 
   const markAllRead = useMutation({
     mutationFn: () =>
-      apiRequest("PATCH", `/api/notifications/read-all/${user?.id}`, {}),
+      apiRequest(`/api/notifications/read-all/${user?.id}`, { method: "PATCH" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
     },
   });
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  /* ── Auto-mark-all-read when page opens with unread notifs ── */
+  useEffect(() => {
+    if (!user) return;
+    const unread = notifications.filter(n => !n.isRead && n.type !== "chat");
+    if (unread.length > 0 && !markAllRead.isPending) {
+      const t = setTimeout(() => {
+        markAllRead.mutate();
+      }, 1200);
+      return () => clearTimeout(t);
+    }
+  }, [user?.id, notifications.length]);
+
+  const unreadCount = notifications.filter(n => !n.isRead && n.type !== "chat").length;
   const visibleNotifs = notifications.filter(n => n.type !== "chat");
 
   if (!user) {
@@ -100,12 +114,13 @@ export default function NotificationsPage() {
           {unreadCount > 0 && (
             <button
               onClick={() => markAllRead.mutate()}
-              className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-transform"
+              disabled={markAllRead.isPending}
+              className="flex items-center gap-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 px-3 py-1.5 rounded-xl font-semibold active:scale-95 transition-transform disabled:opacity-50"
               style={{ fontSize: 12 }}
               data-testid="button-mark-all-read"
             >
               <Check size={13} />
-              Tout lire
+              {markAllRead.isPending ? "…" : "Tout lire"}
             </button>
           )}
         </div>
@@ -147,7 +162,7 @@ export default function NotificationsPage() {
                   borderLeft: !n.isRead ? "3px solid #dc2626" : "3px solid transparent",
                 }}
               >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.isRead ? "bg-red-50" : "bg-gray-50 dark:bg-gray-800/60"}`}>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.isRead ? "bg-red-50 dark:bg-red-900/30" : "bg-gray-50 dark:bg-gray-800/60"}`}>
                   {notifIcon(n.type)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -160,9 +175,9 @@ export default function NotificationsPage() {
                     )}
                   </div>
                   {n.message && (
-                    <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 leading-relaxed line-clamp-2">{n.message}</p>
                   )}
-                  <p className="text-gray-300 text-[10px] mt-1 font-medium">
+                  <p className="text-gray-300 dark:text-gray-600 text-[10px] mt-1 font-medium">
                     {timeAgo(n.createdAt || new Date())}
                   </p>
                 </div>

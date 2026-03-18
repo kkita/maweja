@@ -11,9 +11,9 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const [phase, setPhase] = useState<"video" | "lang">("video");
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [langVisible, setLangVisible] = useState(false);
+  const [videoStarted, setVideoStarted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  /* When the video ends (or fails), transition to next phase */
   const handleVideoEnd = () => {
     if (hasChosenLanguage) {
       onDone?.();
@@ -42,18 +42,34 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
     >
       {/* ── Full-screen video ─────────────────────────────────────── */}
       {phase === "video" && (
-        <video
-          ref={videoRef}
-          src={splashVideoSrc}
-          autoPlay
-          muted
-          playsInline
-          onEnded={handleVideoEnd}
-          onError={handleVideoEnd}
-          data-testid="splash-video"
-          className="absolute inset-0 w-full h-full"
-          style={{ objectFit: "cover" }}
-        />
+        <>
+          {/* Red cover — hides video chrome UNTIL video actually plays */}
+          {!videoStarted && (
+            <div
+              className="absolute inset-0 z-20"
+              style={{ backgroundColor: "#dc2626" }}
+            />
+          )}
+          <video
+            ref={videoRef}
+            src={splashVideoSrc}
+            autoPlay
+            muted
+            playsInline
+            controls={false}
+            disablePictureInPicture
+            onPlay={() => setVideoStarted(true)}
+            onPlaying={() => setVideoStarted(true)}
+            onEnded={handleVideoEnd}
+            onError={handleVideoEnd}
+            data-testid="splash-video"
+            className="absolute inset-0 w-full h-full"
+            style={{
+              objectFit: "cover",
+              WebkitMediaControls: "none",
+            } as any}
+          />
+        </>
       )}
 
       {/* ── Language picker — slides up after video ────────────────── */}
@@ -92,16 +108,10 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
               >
                 <span className="text-3xl">{flag}</span>
                 <div className="text-left flex-1">
-                  <p
-                    className="font-bold text-base"
-                    style={{ color: selectedLang === code ? "#111827" : "#fff" }}
-                  >
+                  <p className="font-bold text-base" style={{ color: selectedLang === code ? "#111827" : "#fff" }}>
                     {label}
                   </p>
-                  <p
-                    className="text-xs mt-0.5"
-                    style={{ color: selectedLang === code ? "#9CA3AF" : "rgba(255,255,255,0.6)" }}
-                  >
+                  <p className="text-xs mt-0.5" style={{ color: selectedLang === code ? "#9CA3AF" : "rgba(255,255,255,0.6)" }}>
                     {sub}
                   </p>
                 </div>

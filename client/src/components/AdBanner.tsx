@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Megaphone } from "lucide-react";
+import { ChevronLeft, ChevronRight, Megaphone, Phone } from "lucide-react";
 import type { Advertisement } from "@shared/schema";
 
 function AdSkeleton() {
@@ -25,7 +25,6 @@ function AdMediaItem({ ad, active }: { ad: Advertisement; active: boolean }) {
 
   return (
     <div className="relative w-full h-full">
-      {/* White loading placeholder */}
       {!loaded && (
         <div className="absolute inset-0 bg-white dark:bg-gray-900 flex items-center justify-center z-10">
           <div className="w-8 h-8 border-3 border-red-200 border-t-red-600 rounded-full animate-spin" style={{ borderWidth: 3 }} />
@@ -53,7 +52,6 @@ function AdMediaItem({ ad, active }: { ad: Advertisement; active: boolean }) {
           data-testid={`ad-image-${ad.id}`}
         />
       )}
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
       {ad.title && (
         <div className="absolute bottom-3 left-3 right-3">
@@ -72,9 +70,18 @@ export default function AdBanner() {
     queryKey: ["/api/advertisements?active=true"],
   });
 
+  const { data: appSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const timerRef = useRef<any>(null);
   const visibleAds = ads.slice(0, 5);
+
+  const contactNumber = (appSettings?.whatsapp_number || "+243802540138")
+    .replace(/\s+/g, "");
+  const displayNumber = contactNumber.startsWith("+") ? contactNumber : `+${contactNumber}`;
 
   useEffect(() => {
     if (visibleAds.length <= 1) return;
@@ -97,25 +104,36 @@ export default function AdBanner() {
   if (visibleAds.length === 0) {
     return (
       <div
-        className="rounded-2xl overflow-hidden flex items-center justify-between px-5"
+        className="rounded-2xl overflow-hidden flex items-center gap-4 px-5"
         style={{
           height: 140,
           background: "linear-gradient(135deg, #fff5f5 0%, #fef2f2 100%)",
-          border: "1.5px dashed #fca5a5"
+          border: "1.5px dashed #fca5a5",
         }}
         data-testid="ad-placeholder"
       >
-        <div className="flex-1">
-          <div className="inline-flex items-center gap-1.5 bg-red-100 px-2.5 py-0.5 rounded-full mb-2">
-            <Megaphone size={10} className="text-red-500" />
-            <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Sponsorisé</span>
-          </div>
-          <p className="text-sm font-bold text-gray-700 leading-tight">Publiez votre annonce ici</p>
-          <p className="text-xs text-gray-400 mt-0.5">Touchez des milliers de clients à Kinshasa</p>
-          <p className="text-[11px] font-semibold text-red-600 mt-1.5">0802540138</p>
-        </div>
-        <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0 ml-3">
+        {/* Icon */}
+        <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center flex-shrink-0">
           <Megaphone size={28} className="text-red-400" />
+        </div>
+
+        {/* Text */}
+        <div className="flex-1 min-w-0">
+          <div className="inline-flex items-center gap-1.5 bg-red-100 px-2.5 py-0.5 rounded-full mb-1.5">
+            <Megaphone size={9} className="text-red-500" />
+            <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider">Espace publicitaire</span>
+          </div>
+          <p className="text-sm font-bold text-gray-800 leading-tight">Votre publicité ici</p>
+          <p className="text-xs text-gray-400 mt-0.5 leading-snug">Touchez des milliers de clients à Kinshasa</p>
+          <div className="flex items-center gap-1.5 mt-2">
+            <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Phone size={11} className="text-red-500" />
+            </div>
+            <span className="text-[12px] font-bold text-red-600">
+              Contactez l'administrateur
+            </span>
+          </div>
+          <p className="text-[11px] font-black text-red-700 mt-0.5 tracking-wide">{displayNumber}</p>
         </div>
       </div>
     );
