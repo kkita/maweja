@@ -41,7 +41,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
           <div className="w-24 h-24 mb-8">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
           </div>
           <h2 className="text-5xl font-black text-white leading-tight mb-4" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif" }}>
             La meilleure
@@ -77,7 +77,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
             <div className="w-24 h-24 mx-auto mb-4">
-              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
+              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
             </div>
             <h1
               className="text-3xl text-white"
