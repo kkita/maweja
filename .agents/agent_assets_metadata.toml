@@ -120,3 +120,9 @@ id = "Ryv3C_bxlxFL5DLxV64Sb"
 uri = "file://Maweja_V13_full.zip"
 type = "unspecified"
 title = "Maweja_V13_full.zip — Toutes les améliorations UI"
+
+[[outputs]]
+id = "80TUVmwSpkbOVB0Omn566"
+uri = "file://maweja_github_v14.zip"
+type = "unspecified"
+title = "MAWEJA v14 — Code source complet (GitHub / Mobile)"
