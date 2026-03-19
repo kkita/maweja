@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Truck, Shield } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 
 export default function DriverLoginPage() {
@@ -28,54 +28,58 @@ export default function DriverLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: "#EC0000" }}>
+      {/* Desktop left panel */}
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
           <div className="w-24 h-24 mb-8">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
           </div>
           <h2 className="text-5xl font-black text-white leading-tight mb-4" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif" }}>
             Espace
             <br />
-            <span className="text-red-400">Livreur</span>
+            <span className="text-white/70">Livreur</span>
           </h2>
-          <p className="text-gray-400 text-lg leading-relaxed mb-8">
+          <p className="text-white/70 text-lg leading-relaxed mb-8">
             Gerez vos livraisons, suivez vos gains et restez connecte avec vos clients en temps reel.
           </p>
           <div className="flex items-center gap-6">
             <div className="text-center">
               <p className="text-3xl font-black text-white">GPS</p>
-              <p className="text-xs text-gray-400">Suivi en direct</p>
+              <p className="text-xs text-white/60">Suivi en direct</p>
             </div>
-            <div className="w-px h-10 bg-gray-600" />
+            <div className="w-px h-10 bg-white/30" />
             <div className="text-center">
               <p className="text-3xl font-black text-white">24/7</p>
-              <p className="text-xs text-gray-400">Disponibilite</p>
+              <p className="text-xs text-white/60">Disponibilite</p>
             </div>
-            <div className="w-px h-10 bg-gray-600" />
+            <div className="w-px h-10 bg-white/30" />
             <div className="text-center">
               <p className="text-3xl font-black text-white">$</p>
-              <p className="text-xs text-gray-400">Gains en USD</p>
+              <p className="text-xs text-white/60">Gains en USD</p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Right panel / mobile full screen */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
+          {/* Mobile header */}
           <div className="text-center mb-8 lg:hidden">
             <div className="w-24 h-24 mx-auto mb-4">
-              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
+              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
             </div>
             <h1 className="text-3xl text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Maweja</h1>
-            <p className="text-gray-400 mt-1 text-sm">Espace Livreur</p>
+            <p className="text-white/70 mt-1 text-sm">Espace Livreur</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8">
+            {/* Desktop card header */}
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-red-600 shadow-md shadow-red-600/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-0.5" />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: "#EC0000" }}>
+                  <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-0.5" style={{ mixBlendMode: "multiply" }} />
                 </div>
                 <div>
                   <h1 className="text-xl text-gray-900 dark:text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Maweja</h1>
@@ -114,7 +118,11 @@ export default function DriverLoginPage() {
               )}
 
               <button type="submit" disabled={loading} data-testid="driver-button-submit"
-                className="w-full py-3.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                className="w-full py-3.5 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ backgroundColor: "#EC0000", boxShadow: "0 4px 14px rgba(236,0,0,0.35)" }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#D00000")}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#EC0000")}
+              >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -127,7 +135,7 @@ export default function DriverLoginPage() {
             </form>
           </div>
 
-          <p className="text-center text-gray-500/60 text-xs mt-6">
+          <p className="text-center text-white/40 text-xs mt-6">
             Made By Khevin Andrew Kita - Ed Corporation
           </p>
         </div>

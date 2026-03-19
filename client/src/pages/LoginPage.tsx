@@ -37,7 +37,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-600 via-red-700 to-red-900 flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: "#EC0000" }}>
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
           <div className="w-24 h-24 mb-8">
@@ -48,26 +48,26 @@ export default function LoginPage() {
             <br />
             livraison de
             <br />
-            <span className="text-red-200">Kinshasa</span>
+            <span className="text-white/80">Kinshasa</span>
           </h2>
-          <p className="text-red-200 text-lg leading-relaxed mb-8">
+          <p className="text-white/75 text-lg leading-relaxed mb-8">
             Commandez vos plats preferes et recevez-les en un temps record.
             Plus de 50 restaurants partenaires a votre service.
           </p>
           <div className="flex items-center gap-6">
             <div className="text-center">
               <p className="text-3xl font-black text-white">50+</p>
-              <p className="text-xs text-red-200">Restaurants</p>
+              <p className="text-xs text-white/60">Restaurants</p>
             </div>
-            <div className="w-px h-10 bg-red-400/40" />
+            <div className="w-px h-10 bg-white/30" />
             <div className="text-center">
               <p className="text-3xl font-black text-white">30min</p>
-              <p className="text-xs text-red-200">Livraison moy.</p>
+              <p className="text-xs text-white/60">Livraison moy.</p>
             </div>
-            <div className="w-px h-10 bg-red-400/40" />
+            <div className="w-px h-10 bg-white/30" />
             <div className="text-center">
               <p className="text-3xl font-black text-white">24/7</p>
-              <p className="text-xs text-red-200">Disponible</p>
+              <p className="text-xs text-white/60">Disponible</p>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@ export default function LoginPage() {
             >
               Maweja
             </h1>
-            <p className="text-red-200 mt-1 text-sm">Espace Client</p>
+            <p className="text-white/70 mt-1 text-sm">Espace Client</p>
           </div>
 
           <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8">
@@ -155,7 +155,11 @@ export default function LoginPage() {
               )}
 
               <button type="submit" disabled={loading} data-testid="button-submit"
-                className="w-full py-3.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                className="w-full py-3.5 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ backgroundColor: "#EC0000", boxShadow: "0 4px 14px rgba(236,0,0,0.25)" }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#D00000")}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#EC0000")}
+              >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
@@ -175,7 +179,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <p className="text-center text-red-200/60 text-xs mt-6">
+          <p className="text-center text-white/40 text-xs mt-6">
             Made By Khevin Andrew Kita - Ed Corporation
           </p>
         </div>

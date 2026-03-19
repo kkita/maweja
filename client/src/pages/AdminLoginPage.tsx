@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, LayoutDashboard, Shield } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield } from "lucide-react";
 import logoImg from "@assets/image_1772833363714.png";
 
 export default function AdminLoginPage() {
@@ -28,11 +28,11 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-red-900 flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: "#EC0000" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-24 h-24 mx-auto mb-4">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
           </div>
           <h1
             className="text-3xl text-white"
@@ -40,13 +40,13 @@ export default function AdminLoginPage() {
           >
             Maweja
           </h1>
-          <p className="text-slate-400 mt-1 text-sm">Administration & Dashboard</p>
+          <p className="text-white/70 mt-1 text-sm">Administration & Dashboard</p>
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center">
-              <Shield size={18} className="text-slate-600" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "#EC0000" }}>
+              <Shield size={18} className="text-white" />
             </div>
             <div>
               <h2 className="font-bold text-gray-900 dark:text-white text-sm">Acces Administrateur</h2>
@@ -77,7 +77,11 @@ export default function AdminLoginPage() {
             )}
 
             <button type="submit" disabled={loading} data-testid="admin-button-submit"
-              className="w-full py-3.5 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+              className="w-full py-3.5 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{ backgroundColor: "#EC0000", boxShadow: "0 4px 14px rgba(236,0,0,0.35)" }}
+              onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#D00000")}
+              onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#EC0000")}
+            >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
@@ -90,7 +94,7 @@ export default function AdminLoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-slate-500/60 text-xs mt-6">
+        <p className="text-center text-white/40 text-xs mt-6">
           Made By Khevin Andrew Kita - Ed Corporation
         </p>
       </div>

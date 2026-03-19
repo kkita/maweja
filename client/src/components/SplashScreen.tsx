@@ -38,7 +38,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
     <div
       className="fixed inset-0 flex flex-col items-center select-none overflow-hidden"
       style={{
-        backgroundColor: "#dc2626",
+        backgroundColor: "#EC0000",
         zIndex: 9999,
         fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif",
       }}
