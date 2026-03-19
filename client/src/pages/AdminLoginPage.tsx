@@ -31,8 +31,8 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-red-900 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-3xl mx-auto mb-4 bg-red-600 shadow-2xl shadow-red-900/50 flex items-center justify-center overflow-hidden">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-1" />
+          <div className="w-24 h-24 mx-auto mb-4">
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
           </div>
           <h1
             className="text-3xl text-white"
