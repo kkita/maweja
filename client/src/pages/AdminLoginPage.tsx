@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="w-24 h-24 mx-auto mb-4">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
           </div>
           <h1
             className="text-3xl text-white"

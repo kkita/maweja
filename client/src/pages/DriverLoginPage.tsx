@@ -33,7 +33,7 @@ export default function DriverLoginPage() {
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
           <div className="w-24 h-24 mb-8">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-5xl font-black text-white leading-tight mb-4" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif" }}>
             Espace
@@ -68,7 +68,7 @@ export default function DriverLoginPage() {
           {/* Mobile header */}
           <div className="text-center mb-8 lg:hidden">
             <div className="w-24 h-24 mx-auto mb-4">
-              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
+              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-3xl text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Maweja</h1>
             <p className="text-white/70 mt-1 text-sm">Espace Livreur</p>
@@ -79,7 +79,7 @@ export default function DriverLoginPage() {
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0" style={{ backgroundColor: "#EC0000" }}>
-                  <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-0.5" style={{ mixBlendMode: "multiply" }} />
+                  <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-0.5" />
                 </div>
                 <div>
                   <h1 className="text-xl text-gray-900 dark:text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Maweja</h1>
