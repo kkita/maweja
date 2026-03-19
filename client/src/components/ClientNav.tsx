@@ -2,13 +2,14 @@ import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetchJson, queryClient } from "../lib/queryClient";
-import { Bell, ShoppingBag, MapPin, Search, X, ChevronRight, Check } from "lucide-react";
+import { Bell, ShoppingBag, MapPin, Search, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { onWSMessage } from "../lib/websocket";
 import { handleWSEvent } from "../lib/notify";
 import { useI18n } from "../lib/i18n";
 import SearchOverlay from "./SearchOverlay";
+import AddressPickerModal from "./AddressPickerModal";
 import type { Notification as Notif } from "@shared/schema";
 
 const logoRed = "/maweja-logo-red.png";
@@ -25,13 +26,11 @@ export default function ClientNav() {
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
 
   /* ── Address state ──────────────────────────────────────────────── */
-  const [sessionAddress, setSessionAddress] = useState<string>(() => {
-    return sessionStorage.getItem(SESSION_KEY) || "";
-  });
-  const [showAddressInput, setShowAddressInput] = useState(false);
+  const [sessionAddress, setSessionAddress] = useState<string>(() =>
+    sessionStorage.getItem(SESSION_KEY) || ""
+  );
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [showChangeConfirm, setShowChangeConfirm] = useState(false);
-  const [addressDraft, setAddressDraft] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   /* ── Dark mode tracking ─────────────────────────────────────────── */
   useEffect(() => {
@@ -56,14 +55,6 @@ export default function ClientNav() {
       sessionStorage.setItem(SESSION_KEY, user.address);
     }
   }, [user]);
-
-  /* ── Focus input when modal opens ──────────────────────────────── */
-  useEffect(() => {
-    if (showAddressInput) {
-      setAddressDraft(sessionAddress);
-      setTimeout(() => inputRef.current?.focus(), 80);
-    }
-  }, [showAddressInput]);
 
   /* ── Notifications ──────────────────────────────────────────────── */
   const { data: notifications = [] } = useQuery<Notif[]>({
@@ -97,20 +88,18 @@ export default function ClientNav() {
     if (sessionAddress) {
       setShowChangeConfirm(true);
     } else {
-      setShowAddressInput(true);
+      setShowAddressPicker(true);
     }
   };
 
-  const handleConfirmAddress = () => {
-    const trimmed = addressDraft.trim();
-    if (!trimmed) return;
-    setSessionAddress(trimmed);
-    sessionStorage.setItem(SESSION_KEY, trimmed);
-    setShowAddressInput(false);
+  const handleAddressConfirmed = (address: string) => {
+    setSessionAddress(address);
+    sessionStorage.setItem(SESSION_KEY, address);
+    setShowAddressPicker(false);
   };
 
   /* ─── Header colors ─────────────────────────────────────────────── */
-  const headerBg   = scrolled ? "#dc2626" : isDark ? "#0d0d0d" : "#ffffff";
+  const headerBg = scrolled ? "#dc2626" : isDark ? "#0d0d0d" : "#ffffff";
   const headerShadow = scrolled
     ? "0 4px 24px rgba(220,38,38,0.3)"
     : isDark ? "0 1px 0 rgba(255,255,255,0.06)" : "0 1px 0 rgba(0,0,0,0.06)";
@@ -126,59 +115,13 @@ export default function ClientNav() {
       {/* ── Search overlay ──────────────────────────────────────────── */}
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
 
-      {/* ── Address input modal ─────────────────────────────────────── */}
-      {showAddressInput && (
-        <div
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
-          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
-          onClick={() => setShowAddressInput(false)}
-        >
-          <div
-            className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl p-6"
-            style={{ boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#FEE2E2" }}>
-                  <MapPin size={15} style={{ color: "#EC0000" }} />
-                </div>
-                <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
-                  Adresse de livraison
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAddressInput(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 active:scale-90 transition-transform"
-              >
-                <X size={16} className="text-gray-500" />
-              </button>
-            </div>
-
-            <input
-              ref={inputRef}
-              type="text"
-              value={addressDraft}
-              onChange={e => setAddressDraft(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") handleConfirmAddress(); }}
-              placeholder="Ex: Avenue Kasa-Vubu, Gombe, Kinshasa"
-              className="w-full px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 mb-4"
-              style={{ caretColor: "#EC0000" }}
-              data-testid="input-address-modal"
-            />
-
-            <button
-              onClick={handleConfirmAddress}
-              disabled={!addressDraft.trim()}
-              className="w-full py-3.5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 active:scale-[0.98]"
-              style={{ background: "#EC0000" }}
-              data-testid="button-confirm-address"
-            >
-              <Check size={16} />
-              Confirmer l'adresse
-            </button>
-          </div>
-        </div>
+      {/* ── Address picker modal (map + text) ───────────────────────── */}
+      {showAddressPicker && (
+        <AddressPickerModal
+          initialAddress={sessionAddress}
+          onConfirm={handleAddressConfirmed}
+          onClose={() => setShowAddressPicker(false)}
+        />
       )}
 
       {/* ── Change address confirmation dialog ──────────────────────── */}
@@ -199,7 +142,7 @@ export default function ClientNav() {
               </div>
               <div>
                 <p className="font-bold text-gray-900 dark:text-white text-sm">Adresse actuelle</p>
-                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 leading-snug">{sessionAddress}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 leading-snug line-clamp-2">{sessionAddress}</p>
               </div>
             </div>
 
@@ -218,7 +161,7 @@ export default function ClientNav() {
               <button
                 onClick={() => {
                   setShowChangeConfirm(false);
-                  setShowAddressInput(true);
+                  setShowAddressPicker(true);
                 }}
                 className="flex-1 py-3 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
                 style={{ background: "#EC0000" }}
