@@ -169,54 +169,84 @@ export default function OrderDetailPage() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 mb-4">
-          <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-6">Statut de la commande</h3>
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Statut de la commande</h3>
+            <div
+              className="px-2.5 py-1 rounded-full text-xs font-bold"
+              style={{
+                background: order.status === "delivered" ? "#DCFCE7" : isCancelled ? "#FEE2E2" : "#FEF3C7",
+                color: order.status === "delivered" ? "#16A34A" : isCancelled ? "#dc2626" : "#D97706",
+              }}
+            >
+              {order.status === "delivered" ? "Livrée ✓" : isCancelled ? "Annulée" : "En cours…"}
+            </div>
+          </div>
           {!isCancelled && (
-            <div className="space-y-0">
-              {steps.map((step, i) => {
-                const isCompleted = i < currentStepIndex;
-                const isCurrent = i === currentStepIndex;
-                const isFuture = i > currentStepIndex;
-                return (
-                  <div key={step.key} className="flex gap-4" data-testid={`step-${step.key}`}>
-                    <div className="flex flex-col items-center">
+            <div className="w-full">
+              {/* Icons row with progress line */}
+              <div className="relative flex items-center justify-between w-full">
+                {/* Background line */}
+                <div className="absolute h-0.5 rounded-full bg-gray-200 dark:bg-gray-700" style={{ left: 16, right: 16, top: "50%", transform: "translateY(-50%)", zIndex: 0 }} />
+                {/* Red fill line */}
+                <div
+                  className="absolute h-0.5 rounded-full transition-all duration-700"
+                  style={{
+                    left: 16,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "linear-gradient(to right, #EC0000, #ff5555)",
+                    width: currentStepIndex === 0 ? 0 : `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 32px)`,
+                    zIndex: 0,
+                  }}
+                />
+                {/* Circles */}
+                {steps.map((step, i) => {
+                  const isCompleted = i < currentStepIndex;
+                  const isCurrent = i === currentStepIndex;
+                  const isFuture = i > currentStepIndex;
+                  const StepIcon = step.icon;
+                  return (
+                    <div key={step.key} className="relative flex-shrink-0" style={{ zIndex: 1 }} data-testid={`step-${step.key}`}>
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                          isCurrent
-                            ? "bg-red-600 text-white shadow-lg shadow-red-200"
-                            : isCompleted
-                            ? "bg-green-100 dark:bg-green-900/40 text-green-600"
-                            : "bg-gray-100 dark:bg-gray-800 text-gray-400"
-                        }`}
+                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500"
+                        style={{
+                          background: isCurrent ? "#EC0000" : isCompleted ? "#DCFCE7" : "#F3F4F6",
+                          border: isFuture ? "1.5px dashed #D1D5DB" : "none",
+                          boxShadow: isCurrent ? "0 0 0 3px rgba(236,0,0,0.15)" : "none",
+                        }}
                       >
-                        <step.icon size={18} />
+                        <StepIcon size={14} style={{ color: isCurrent ? "#fff" : isCompleted ? "#16A34A" : "#C4C4C4" }} />
                       </div>
-                      {i < steps.length - 1 && (
-                        <div
-                          className={`w-0.5 h-8 my-1 ${
-                            isCompleted ? "bg-green-300 dark:bg-green-700" : isCurrent ? "bg-red-300" : "bg-gray-200 dark:bg-gray-700"
-                          }`}
-                        />
-                      )}
                     </div>
-                    <div className="pb-4">
+                  );
+                })}
+              </div>
+              {/* Labels row */}
+              <div className="flex justify-between mt-2 w-full">
+                {steps.map((step, i) => {
+                  const isCompleted = i < currentStepIndex;
+                  const isCurrent = i === currentStepIndex;
+                  return (
+                    <div key={step.key} className="flex flex-col items-center" style={{ width: `${100 / steps.length}%` }}>
                       <p
-                        className={`font-semibold text-sm ${
-                          isCurrent
-                            ? "text-red-600"
-                            : isCompleted
-                            ? "text-green-700 dark:text-green-400"
-                            : "text-gray-400 dark:text-gray-600"
-                        }`}
+                        className="text-center leading-tight"
+                        style={{
+                          fontSize: 9,
+                          fontWeight: isCurrent ? 700 : 500,
+                          color: isCurrent ? "#EC0000" : isCompleted ? "#16A34A" : "#9CA3AF",
+                          wordBreak: "break-word",
+                        }}
                       >
                         {step.label}
                       </p>
-                      {isCurrent && i < steps.length - 1 && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">En cours...</p>}
-                      {isCurrent && i === steps.length - 1 && <p className="text-xs text-green-600 dark:text-green-400 font-semibold mt-0.5">Terminé ✓</p>}
+                      {isCurrent && (
+                        <div className="w-1 h-1 rounded-full mt-0.5" style={{ background: "#EC0000", animation: "pulse 1s ease-in-out infinite" }} />
+                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
