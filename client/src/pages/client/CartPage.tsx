@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "../../lib/cart";
 import { useAuth } from "../../lib/auth";
-import { authFetch } from "../../lib/queryClient";
+import { authFetch, resolveImg } from "../../lib/queryClient";
 import ClientNav from "../../components/ClientNav";
 import type { Restaurant } from "@shared/schema";
 import {
@@ -155,7 +155,7 @@ export default function CartPage() {
                 data-testid={`cart-item-${item.id}`}
               >
                 <img
-                  src={item.image}
+                  src={resolveImg(item.image)}
                   alt={item.name}
                   className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
                 />

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { useCart } from "../../lib/cart";
-import { authFetch , authFetchJson} from "../../lib/queryClient";
+import { authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus, Play, ChefHat } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
@@ -133,7 +133,7 @@ export default function RestaurantPage() {
                     className="bg-white dark:bg-gray-900 rounded-3xl p-3 flex gap-3"
                     style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}
                   >
-                    <img src={item.image} alt={item.name} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0" />
+                    <img src={resolveImg(item.image)} alt={item.name} className="w-20 h-20 rounded-2xl object-cover flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between">
                         <div>

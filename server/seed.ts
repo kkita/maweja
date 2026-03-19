@@ -26,17 +26,26 @@ export async function seedDatabase() {
     { email: "driver4@maweja.cd", password: "driver123", name: "Joseph Kalala", phone: "0856789012", role: "driver", walletBalance: 21, loyaltyPoints: 0, isOnline: true, isBlocked: false, lat: -4.3100, lng: 15.3200, vehicleType: "scooter", vehiclePlate: "KN-3456-GH", driverLicense: "DL-003456", commissionRate: 15, verificationStatus: "approved" },
   ]).onConflictDoNothing();
 
+  // ── IMAGE & AD PROTECTION RULE ────────────────────────────────────────────
+  // This seed NEVER touches:
+  //   • advertisements (ads) — managed exclusively via Admin dashboard
+  //   • custom uploaded images (any image/logo already stored in the DB is preserved)
+  //   • orders, users, wallet balances, loyalty points
+  // It only fills in MISSING seed data on a fresh database.
+  // ──────────────────────────────────────────────────────────────────────────
+
   // ── 2. Clean old wrong restaurant/menu data only (services preserved) ────────
   await db.delete(menuItems);
 
-  // ── 3. Fix / upsert restaurants ───────────────────────────────────────────
-  // Update restaurant id=1 (old "Golden Tulip") to become Aldar (preserves order FKs)
-  const aldarData = {
+  // ── 3. Fix / upsert restaurants — PRESERVE existing custom images ─────────
+  // Default Unsplash images (only used when no custom image exists in the DB)
+  const aldarDefaultImage = "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop";
+  const aldarDefaultLogo  = "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&h=200&fit=crop";
+
+  const aldarMeta = {
     name: "Aldar Restaurant",
     description: "Cuisine libanaise et internationale authentique au cœur de Kinshasa — mezze, grillades et pâtisseries orientales",
     cuisine: "Libanais",
-    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=500&fit=crop",
-    logoUrl: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?w=200&h=200&fit=crop",
     coverVideoUrl: null,
     address: "Avenue du Commerce 14, Gombe, Kinshasa",
     rating: 4.7, deliveryTime: "30-45 min", deliveryFee: 2, minOrder: 8,
@@ -44,14 +53,23 @@ export async function seedDatabase() {
     openingHours: "09:00 - 23:00", prepTime: "20-30 min",
   };
 
-  // Check if id=1 exists and update it, otherwise insert it
-  const [existingR1] = await db.select({ id: restaurants.id }).from(restaurants).where(eq(restaurants.id, 1));
+  // Check if id=1 exists; if so, update metadata but KEEP its existing image/logo
+  const [existingR1] = await db
+    .select({ id: restaurants.id, image: restaurants.image, logoUrl: restaurants.logoUrl })
+    .from(restaurants)
+    .where(eq(restaurants.id, 1));
+
   if (existingR1) {
-    await db.update(restaurants).set(aldarData).where(eq(restaurants.id, 1));
+    // Preserve whatever image/logo the admin may have set; only use defaults if empty
+    await db.update(restaurants).set({
+      ...aldarMeta,
+      image:   existingR1.image   || aldarDefaultImage,
+      logoUrl: existingR1.logoUrl || aldarDefaultLogo,
+    }).where(eq(restaurants.id, 1));
   } else {
     await db.execute(sql`
       INSERT INTO restaurants (id, name, description, cuisine, image, logo_url, address, rating, delivery_time, delivery_fee, min_order, is_active, lat, lng, phone, opening_hours, prep_time)
-      VALUES (1, 'Aldar Restaurant', ${aldarData.description}, 'Libanais', ${aldarData.image}, ${aldarData.logoUrl}, ${aldarData.address}, 4.7, '30-45 min', 2, 8, true, -4.3106, 15.3139, '+243 81 234 5678', '09:00 - 23:00', '20-30 min')
+      VALUES (1, 'Aldar Restaurant', ${aldarMeta.description}, 'Libanais', ${aldarDefaultImage}, ${aldarDefaultLogo}, ${aldarMeta.address}, 4.7, '30-45 min', 2, 8, true, -4.3106, 15.3139, '+243 81 234 5678', '09:00 - 23:00', '20-30 min')
     `);
   }
 

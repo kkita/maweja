@@ -11,6 +11,16 @@ function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
+/** Build an absolute URL for an uploaded file.
+ *  Respects reverse-proxy headers (X-Forwarded-Proto / X-Forwarded-Host)
+ *  so the URL is always the public-facing URL whether in dev or production.
+ */
+function buildUploadUrl(req: any, filename: string): string {
+  const proto  = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
+  const host   = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+  return `${proto}://${host}/uploads/${filename}`;
+}
+
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -200,14 +210,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: err.message || "Erreur lors de l'upload" });
       }
       if (!req.file) return res.status(400).json({ message: "Format non supporté. Utilisez JPG, PNG ou WEBP." });
-      const url = `/uploads/${req.file.filename}`;
+      const url = buildUploadUrl(req, req.file.filename);
       res.json({ url });
     });
   });
 
   app.post("/api/upload-media", requireAuth, uploadMedia.single("file"), (req: any, res) => {
     if (!req.file) return res.status(400).json({ message: "Fichier requis (image ou video mp4/webm/mov, max 20MB)" });
-    const url = `/uploads/${req.file.filename}`;
+    const url = buildUploadUrl(req, req.file.filename);
     const isVideo = req.file.mimetype.startsWith("video/");
     res.json({ url, type: isVideo ? "video" : "image" });
   });
@@ -1257,14 +1267,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ message: "Maximum 5 publicites actives autorisees" });
     }
     let mediaUrl = req.body.mediaUrl || "";
-    if (req.file) mediaUrl = `/uploads/${req.file.filename}`;
+    if (req.file) mediaUrl = buildUploadUrl(req, req.file.filename);
     const ad = await storage.createAdvertisement({ ...req.body, mediaUrl });
     res.json(ad);
   });
 
   app.patch("/api/advertisements/:id", requireAdmin, uploadMedia.single("media"), async (req, res) => {
     const data: any = { ...req.body };
-    if (req.file) data.mediaUrl = `/uploads/${req.file.filename}`;
+    if (req.file) data.mediaUrl = buildUploadUrl(req, req.file.filename);
     if (data.isActive !== undefined) data.isActive = data.isActive === "true" || data.isActive === true;
     if (data.sortOrder !== undefined) data.sortOrder = Number(data.sortOrder);
     const updated = await storage.updateAdvertisement(Number(req.params.id), data);

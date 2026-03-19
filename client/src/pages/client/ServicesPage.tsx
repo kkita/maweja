@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { authFetch , authFetchJson} from "../../lib/queryClient";
+import { authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
 import {
   Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle,
   Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, ArrowLeft, Image, Scissors, X
@@ -137,7 +137,7 @@ export default function ServicesPage() {
 
           <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mb-4">
             <div className="relative w-full" style={{ paddingBottom: "100%" }}>
-              <img src={previewItem.imageUrl} alt={previewItem.name}
+              <img src={resolveImg(previewItem.imageUrl)} alt={previewItem.name}
                 className="absolute inset-0 w-full h-full object-cover" data-testid="img-preview-full" />
             </div>
             <div className="p-5">
@@ -209,7 +209,7 @@ export default function ServicesPage() {
                       data-testid={`catalog-preview-${item.id}`}
                     >
                       <div className="relative h-40">
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={resolveImg(item.imageUrl)} alt={item.name} className="w-full h-full object-cover" />
                         {isSelected && (
                           <div className="absolute inset-0 bg-red-600/20 flex items-center justify-center">
                             <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
@@ -247,7 +247,7 @@ export default function ServicesPage() {
 
           {selectedItem && (
             <div className="bg-red-50 dark:bg-red-950/30 rounded-2xl border border-red-200 dark:border-red-800/40 p-4 mb-4 flex items-center gap-3">
-              <img src={selectedItem.imageUrl} alt={selectedItem.name} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300 dark:border-red-700" />
+              <img src={resolveImg(selectedItem.imageUrl)} alt={selectedItem.name} className="w-14 h-14 rounded-xl object-cover border-2 border-red-300 dark:border-red-700" />
               <div className="flex-1">
                 <p className="text-[10px] font-semibold text-red-500 uppercase">{t.services.selectedModel}</p>
                 <p className="font-bold text-sm text-gray-900 dark:text-white">{selectedItem.name}</p>
@@ -310,7 +310,7 @@ export default function ServicesPage() {
                   <div className="relative w-full" style={{ paddingBottom: "72%" }}>
                     {cat.imageUrl ? (
                       <img
-                        src={cat.imageUrl}
+                        src={resolveImg(cat.imageUrl)}
                         alt={cat.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         data-testid={`img-service-${cat.id}`}

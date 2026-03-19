@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Megaphone, Phone } from "lucide-react";
+import { resolveImg } from "../lib/queryClient";
 import type { Advertisement } from "@shared/schema";
 
 function AdSkeleton() {
@@ -34,7 +35,7 @@ function AdMediaItem({ ad, active }: { ad: Advertisement; active: boolean }) {
         <video
           ref={videoRef}
           key={ad.id}
-          src={ad.mediaUrl}
+          src={resolveImg(ad.mediaUrl)}
           autoPlay={active}
           loop
           muted
@@ -45,7 +46,7 @@ function AdMediaItem({ ad, active }: { ad: Advertisement; active: boolean }) {
         />
       ) : (
         <img
-          src={ad.mediaUrl}
+          src={resolveImg(ad.mediaUrl)}
           alt={ad.title || "Publicité"}
           onLoad={() => setLoaded(true)}
           className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}

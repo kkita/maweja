@@ -6,6 +6,7 @@ import AdBanner from "../../components/AdBanner";
 import { useI18n } from "../../lib/i18n";
 import { Star, Clock, Heart, MapPin, ChevronRight, Search } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
+import { resolveImg } from "../../lib/queryClient";
 import type { Restaurant, ServiceCategory, ServiceCatalogItem } from "@shared/schema";
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) 
           style={{ height: 188 }}
         >
           <img
-            src={r.image}
+            src={resolveImg(r.image)}
             alt={r.name}
             className="w-full h-full object-cover"
             loading="lazy"
@@ -159,7 +160,7 @@ function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) 
         >
           {r.logoUrl ? (
             <img
-              src={r.logoUrl}
+              src={resolveImg(r.logoUrl)}
               alt={r.name}
               className="w-full h-full object-cover"
               loading="lazy"
@@ -461,7 +462,7 @@ export default function HomePage() {
                   className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-2.5 active:scale-95 transition-all"
                   style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.08)", border: "1px solid rgba(220,38,38,0.15)" }}
                 >
-                  {cat.imageUrl && <img src={cat.imageUrl} alt={cat.name} className="w-7 h-7 rounded-lg object-cover" />}
+                  {cat.imageUrl && <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="w-7 h-7 rounded-lg object-cover" />}
                   <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{cat.name}</span>
                 </button>
               ))}

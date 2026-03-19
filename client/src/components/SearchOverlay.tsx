@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Search, X, ArrowLeft, Star, Clock, Zap } from "lucide-react";
+import { resolveImg } from "../lib/queryClient";
 import type { Restaurant, ServiceCategory } from "@shared/schema";
 
 const TRENDING = ["Poulet", "Pizza", "Sushi", "Burger", "Transport", "Coiffure"];
@@ -147,7 +148,7 @@ export default function SearchOverlay({ onClose }: Props) {
                   data-testid={`suggestion-restaurant-${r.id}`}
                 >
                   {r.imageUrl ? (
-                    <img src={r.imageUrl} alt={r.name || ""} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                    <img src={resolveImg(r.imageUrl)} alt={r.name || ""} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-xl">🍽️</div>
                   )}
@@ -191,7 +192,7 @@ export default function SearchOverlay({ onClose }: Props) {
                   style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}
                 >
                   {cat.imageUrl ? (
-                    <img src={cat.imageUrl} alt={cat.name} className="w-11 h-11 rounded-xl object-contain bg-gray-50 border border-gray-100 flex-shrink-0 p-1" />
+                    <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="w-11 h-11 rounded-xl object-contain bg-gray-50 border border-gray-100 flex-shrink-0 p-1" />
                   ) : (
                     <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0 text-xl">🔧</div>
                   )}
@@ -222,7 +223,7 @@ export default function SearchOverlay({ onClose }: Props) {
                   style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}
                 >
                   {r.imageUrl ? (
-                    <img src={r.imageUrl} alt={r.name || ""} className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
+                    <img src={resolveImg(r.imageUrl)} alt={r.name || ""} className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-16 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-2xl">🍽️</div>
                   )}
