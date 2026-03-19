@@ -154,28 +154,26 @@ export default function TrackingPage() {
             </div>
           </div>
 
-          {/* Horizontal stepper — full width, no scroll */}
+          {/* Horizontal stepper — icon + label per step, perfectly aligned */}
           <div className="w-full">
-            {/* Progress line + icon row */}
-            <div className="relative flex items-center justify-between w-full">
-              {/* Full background line */}
+            <div className="relative flex justify-between items-start w-full">
+              {/* Background line at circle center (top: 16px = half of 32px) */}
               <div
                 className="absolute h-0.5 rounded-full"
-                style={{ left: 16, right: 16, top: "50%", transform: "translateY(-50%)", background: "#E5E7EB", zIndex: 0 }}
+                style={{ left: 16, right: 16, top: 16, background: "#E5E7EB", zIndex: 0 }}
               />
               {/* Red fill line */}
               <div
                 className="absolute h-0.5 rounded-full transition-all duration-700"
                 style={{
                   left: 16,
-                  top: "50%",
-                  transform: "translateY(-50%)",
+                  top: 16,
                   background: "linear-gradient(to right, #EC0000, #ff4444)",
                   width: currentStepIndex === 0 ? 0 : `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 32px)`,
                   zIndex: 0,
                 }}
               />
-              {/* Step circles */}
+              {/* Step: circle + label stacked */}
               {steps.map((step, i) => {
                 const isCompleted = i < currentStepIndex;
                 const isCurrent = i === currentStepIndex;
@@ -184,13 +182,13 @@ export default function TrackingPage() {
                 return (
                   <div
                     key={step.key}
-                    className="relative flex flex-col items-center"
-                    style={{ zIndex: 1 }}
+                    className="flex flex-col items-center"
+                    style={{ zIndex: 1, width: `${100 / steps.length}%` }}
                     data-testid={`tracking-step-${step.key}`}
                   >
-                    {/* Circle icon */}
+                    {/* Circle */}
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500"
+                      className="relative w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 flex-shrink-0"
                       style={{
                         background: isCurrent ? "#EC0000" : isCompleted ? "#FEE2E2" : "#F3F4F6",
                         border: isFuture ? "1.5px dashed #D1D5DB" : "none",
@@ -209,30 +207,15 @@ export default function TrackingPage() {
                         />
                       )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Labels row */}
-            <div className="flex justify-between mt-2 w-full">
-              {steps.map((step, i) => {
-                const isCompleted = i < currentStepIndex;
-                const isCurrent = i === currentStepIndex;
-                return (
-                  <div
-                    key={step.key}
-                    className="flex flex-col items-center"
-                    style={{ width: `${100 / steps.length}%` }}
-                  >
+                    {/* Label — centered under icon */}
                     <p
-                      className="text-center leading-tight"
+                      className="text-center leading-tight mt-1.5 w-full"
                       style={{
                         fontSize: 9,
                         fontWeight: isCurrent ? 700 : 500,
                         color: isCurrent ? "#EC0000" : isCompleted ? "#374151" : "#9CA3AF",
                         wordBreak: "break-word",
-                        maxWidth: "100%",
+                        hyphens: "auto",
                       }}
                     >
                       {step.label}
