@@ -2,9 +2,9 @@ import { useLocation } from "wouter";
 import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { authFetchJson, queryClient } from "../lib/queryClient";
-import { Bell, ShoppingBag, MapPin, Search } from "lucide-react";
+import { Bell, ShoppingBag, MapPin, Search, X, ChevronRight, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { onWSMessage } from "../lib/websocket";
 import { handleWSEvent } from "../lib/notify";
 import { useI18n } from "../lib/i18n";
@@ -12,6 +12,7 @@ import SearchOverlay from "./SearchOverlay";
 import type { Notification as Notif } from "@shared/schema";
 
 const logoRed = "/maweja-logo-red.png";
+const SESSION_KEY = "maweja_delivery_address";
 
 export default function ClientNav() {
   const [location, navigate] = useLocation();
@@ -22,6 +23,15 @@ export default function ClientNav() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
+
+  /* ── Address state ──────────────────────────────────────────────── */
+  const [sessionAddress, setSessionAddress] = useState<string>(() => {
+    return sessionStorage.getItem(SESSION_KEY) || "";
+  });
+  const [showAddressInput, setShowAddressInput] = useState(false);
+  const [showChangeConfirm, setShowChangeConfirm] = useState(false);
+  const [addressDraft, setAddressDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   /* ── Dark mode tracking ─────────────────────────────────────────── */
   useEffect(() => {
@@ -38,6 +48,22 @@ export default function ClientNav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  /* ── Pre-fill from user profile if nothing in session ──────────── */
+  useEffect(() => {
+    if (!sessionAddress && user?.address) {
+      setSessionAddress(user.address);
+      sessionStorage.setItem(SESSION_KEY, user.address);
+    }
+  }, [user]);
+
+  /* ── Focus input when modal opens ──────────────────────────────── */
+  useEffect(() => {
+    if (showAddressInput) {
+      setAddressDraft(sessionAddress);
+      setTimeout(() => inputRef.current?.focus(), 80);
+    }
+  }, [showAddressInput]);
 
   /* ── Notifications ──────────────────────────────────────────────── */
   const { data: notifications = [] } = useQuery<Notif[]>({
@@ -66,10 +92,24 @@ export default function ClientNav() {
     else navigate(path);
   };
 
-  /* ─── Header colors ──────────────────────────────────────────────
-     Not scrolled  → white (light) / #0d0d0d (dark)
-     Scrolled      → always Maweja red
-  ──────────────────────────────────────────────────────────────── */
+  /* ── Address handlers ───────────────────────────────────────────── */
+  const handleAddressClick = () => {
+    if (sessionAddress) {
+      setShowChangeConfirm(true);
+    } else {
+      setShowAddressInput(true);
+    }
+  };
+
+  const handleConfirmAddress = () => {
+    const trimmed = addressDraft.trim();
+    if (!trimmed) return;
+    setSessionAddress(trimmed);
+    sessionStorage.setItem(SESSION_KEY, trimmed);
+    setShowAddressInput(false);
+  };
+
+  /* ─── Header colors ─────────────────────────────────────────────── */
   const headerBg   = scrolled ? "#dc2626" : isDark ? "#0d0d0d" : "#ffffff";
   const headerShadow = scrolled
     ? "0 4px 24px rgba(220,38,38,0.3)"
@@ -83,8 +123,114 @@ export default function ClientNav() {
 
   return (
     <>
-      {/* ── Search overlay (full-screen) ─────────────────────────────── */}
+      {/* ── Search overlay ──────────────────────────────────────────── */}
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
+
+      {/* ── Address input modal ─────────────────────────────────────── */}
+      {showAddressInput && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowAddressInput(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl p-6"
+            style={{ boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#FEE2E2" }}>
+                  <MapPin size={15} style={{ color: "#EC0000" }} />
+                </div>
+                <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
+                  Adresse de livraison
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddressInput(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 active:scale-90 transition-transform"
+              >
+                <X size={16} className="text-gray-500" />
+              </button>
+            </div>
+
+            <input
+              ref={inputRef}
+              type="text"
+              value={addressDraft}
+              onChange={e => setAddressDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleConfirmAddress(); }}
+              placeholder="Ex: Avenue Kasa-Vubu, Gombe, Kinshasa"
+              className="w-full px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 mb-4"
+              style={{ caretColor: "#EC0000" }}
+              data-testid="input-address-modal"
+            />
+
+            <button
+              onClick={handleConfirmAddress}
+              disabled={!addressDraft.trim()}
+              className="w-full py-3.5 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 active:scale-[0.98]"
+              style={{ background: "#EC0000" }}
+              data-testid="button-confirm-address"
+            >
+              <Check size={16} />
+              Confirmer l'adresse
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Change address confirmation dialog ──────────────────────── */}
+      {showChangeConfirm && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowChangeConfirm(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl p-6"
+            style={{ boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FEE2E2" }}>
+                <MapPin size={18} style={{ color: "#EC0000" }} />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 dark:text-white text-sm">Adresse actuelle</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 leading-snug">{sessionAddress}</p>
+              </div>
+            </div>
+
+            <p className="text-gray-600 dark:text-gray-300 text-sm mb-5">
+              Voulez-vous changer votre adresse de livraison ?
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowChangeConfirm(false)}
+                className="flex-1 py-3 rounded-2xl font-semibold text-sm text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 active:scale-95 transition-transform"
+                data-testid="button-keep-address"
+              >
+                Non, garder
+              </button>
+              <button
+                onClick={() => {
+                  setShowChangeConfirm(false);
+                  setShowAddressInput(true);
+                }}
+                className="flex-1 py-3 rounded-2xl font-bold text-sm text-white flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                style={{ background: "#EC0000" }}
+                data-testid="button-change-address"
+              >
+                Oui, changer
+                <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Sticky header ───────────────────────────────────────────── */}
       <header
@@ -97,7 +243,7 @@ export default function ClientNav() {
       >
         <div className="max-w-lg mx-auto px-4 relative" style={{ height: 56 }}>
 
-          {/* ─── NORMAL MODE: logo + address + icons ─────────────────── */}
+          {/* ─── NORMAL MODE ─────────────────────────────────────────── */}
           <div
             className="absolute inset-0 px-4 flex items-center gap-3"
             style={{
@@ -107,23 +253,31 @@ export default function ClientNav() {
               pointerEvents: scrolled ? "none" : "auto",
             }}
           >
-            {/* Logo only */}
+            {/* Logo */}
             <div className="flex-shrink-0 w-9 h-9">
               <img src={logoRed} alt="Maweja" className="w-full h-full object-contain" />
             </div>
 
+            {/* Address pill */}
             <button
-              className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2 text-left transition-opacity active:opacity-70"
+              className="flex-1 flex items-center gap-2 rounded-xl px-3 py-2 text-left transition-opacity active:opacity-70 min-w-0"
               style={{ background: isDark ? "rgba(255,255,255,0.08)" : "#f3f4f6" }}
-              onClick={() => handleProtectedNav("/addresses")}
+              onClick={handleAddressClick}
               data-testid="button-address-pill"
             >
               <MapPin size={14} className="text-red-500 flex-shrink-0" />
-              <span className="truncate text-[13px]" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>
-                Entrez votre adresse
-              </span>
+              {sessionAddress ? (
+                <span className="truncate text-[12px] font-medium" style={{ color: isDark ? "rgba(255,255,255,0.85)" : "#111827" }}>
+                  {sessionAddress}
+                </span>
+              ) : (
+                <span className="truncate text-[13px]" style={{ color: isDark ? "rgba(255,255,255,0.4)" : "#9ca3af" }}>
+                  Entrez votre adresse
+                </span>
+              )}
             </button>
 
+            {/* Notifications */}
             <button
               className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
               onClick={() => handleProtectedNav("/notifications")}
@@ -137,6 +291,7 @@ export default function ClientNav() {
               )}
             </button>
 
+            {/* Cart */}
             <button
               className="relative w-9 h-9 flex items-center justify-center flex-shrink-0 active:scale-90 transition-transform"
               onClick={() => navigate("/cart")}
@@ -151,7 +306,7 @@ export default function ClientNav() {
             </button>
           </div>
 
-          {/* ─── SCROLL MODE: search trigger button (red bg) ────────────── */}
+          {/* ─── SCROLL MODE ─────────────────────────────────────────── */}
           <div
             className="absolute inset-0 px-4 flex items-center"
             style={{
@@ -184,7 +339,7 @@ export default function ClientNav() {
         </div>
       </header>
 
-      {/* ─── Bottom navigation ───────────────────────────────────────────── */}
+      {/* ─── Bottom navigation ───────────────────────────────────────── */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-950 flex items-center justify-around px-6 pt-2 border-t border-gray-100 dark:border-gray-800/60"
         style={{
@@ -222,7 +377,6 @@ export default function ClientNav() {
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               )}
-              {/* Label */}
               <span
                 style={{
                   fontSize: 10,
