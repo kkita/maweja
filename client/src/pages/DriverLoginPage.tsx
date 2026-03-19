@@ -31,8 +31,8 @@ export default function DriverLoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex">
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
         <div className="max-w-md">
-          <div className="w-20 h-20 mb-8 flex items-center justify-center">
-            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+          <div className="w-20 h-20 rounded-3xl mb-8 bg-red-600 shadow-2xl shadow-red-900/50 flex items-center justify-center overflow-hidden">
+            <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-1" />
           </div>
           <h2 className="text-5xl font-black text-white leading-tight mb-4" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif" }}>
             Espace
@@ -64,8 +64,8 @@ export default function DriverLoginPage() {
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+            <div className="w-20 h-20 rounded-3xl mx-auto mb-4 bg-red-600 shadow-2xl shadow-red-900/30 flex items-center justify-center overflow-hidden">
+              <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-1" />
             </div>
             <h1 className="text-3xl text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Maweja</h1>
             <p className="text-gray-400 mt-1 text-sm">Espace Livreur</p>
@@ -75,7 +75,7 @@ export default function DriverLoginPage() {
             <div className="lg:block hidden mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-red-600 shadow-md shadow-red-600/30 flex items-center justify-center overflow-hidden flex-shrink-0">
-                  <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-0.5" style={{ filter: "brightness(0) invert(1)" }} />
+                  <img src={logoImg} alt="Maweja" className="w-full h-full object-contain p-0.5" />
                 </div>
                 <div>
                   <h1 className="text-xl text-gray-900 dark:text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Maweja</h1>

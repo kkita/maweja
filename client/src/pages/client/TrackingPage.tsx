@@ -131,34 +131,32 @@ export default function TrackingPage() {
           </div>
         </div>
 
-        {/* ── Vertical Tracking Timeline ──────────────────────────────── */}
+        {/* ── Horizontal Tracking Timeline ─────────────────────────────── */}
         <div
           className="bg-white dark:bg-gray-900 rounded-3xl p-5 mb-4"
           style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}
         >
-          <p className="font-bold text-gray-900 dark:text-white mb-5" style={{ fontSize: 15 }}>
-            Suivi de la commande
-          </p>
-
-          <div className="relative">
-            {/* Vertical line */}
+          <div className="flex items-center justify-between mb-4">
+            <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
+              Suivi de la commande
+            </p>
+            {/* Status pill */}
             <div
-              className="absolute left-5 top-5 bottom-5 w-0.5 rounded-full"
-              style={{ background: "#F3F4F6" }}
-            />
-            {/* Completed fill line */}
-            {currentStepIndex > 0 && (
-              <div
-                className="absolute left-5 top-5 w-0.5 rounded-full transition-all duration-700"
-                style={{
-                  background: "linear-gradient(to bottom, #dc2626, #FCA5A5)",
-                  height: `${(currentStepIndex / (steps.length - 1)) * 100}%`,
-                  maxHeight: "calc(100% - 40px)",
-                }}
-              />
-            )}
+              className="px-3 py-1 rounded-full"
+              style={{
+                background: isDelivered ? "#DCFCE7" : "#FEF3C7",
+                border: `1px solid ${isDelivered ? "#BBF7D0" : "#FDE68A"}`,
+              }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 700, color: isDelivered ? "#16A34A" : "#D97706" }}>
+                {isDelivered ? "Livrée ✓" : "En cours…"}
+              </span>
+            </div>
+          </div>
 
-            <div className="space-y-0">
+          {/* Scrollable horizontal steps */}
+          <div className="overflow-x-auto -mx-5 px-5 pb-1 no-scrollbar">
+            <div className="flex items-start" style={{ minWidth: "max-content", gap: 0 }}>
               {steps.map((step, i) => {
                 const isCompleted = i < currentStepIndex;
                 const isCurrent = i === currentStepIndex;
@@ -168,90 +166,80 @@ export default function TrackingPage() {
                 return (
                   <div
                     key={step.key}
-                    className="flex items-start gap-4"
+                    className="flex items-start"
                     data-testid={`tracking-step-${step.key}`}
-                    style={{ paddingBottom: i < steps.length - 1 ? 24 : 0 }}
                   >
-                    {/* Icon circle */}
-                    <div
-                      className="relative z-10 w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500"
-                      style={{
-                        background: isCurrent
-                          ? "#dc2626"
-                          : isCompleted
-                          ? "#FEE2E2"
-                          : "#F9FAFB",
-                        boxShadow: isCurrent
-                          ? "0 4px 16px rgba(220,38,38,0.35), 0 0 0 4px rgba(220,38,38,0.1)"
-                          : "none",
-                        border: isFuture ? "1.5px dashed #E5E7EB" : "none",
-                      }}
-                    >
-                      {isCompleted ? (
-                        <CheckCircle2 size={18} style={{ color: "#dc2626" }} />
-                      ) : (
-                        <StepIcon
-                          size={18}
-                          style={{
-                            color: isCurrent ? "#fff" : "#D1D5DB",
-                          }}
-                        />
-                      )}
-                      {/* Pulse ring on current */}
-                      {isCurrent && (
-                        <span
-                          className="absolute inset-0 rounded-2xl"
-                          style={{
-                            animation: "tracking-pulse 2s ease-in-out infinite",
-                            background: "rgba(220,38,38,0.15)",
-                          }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Text content */}
-                    <div className="flex-1 pt-2">
-                      <p
-                        className="font-semibold"
+                    {/* Step column */}
+                    <div className="flex flex-col items-center" style={{ width: 72 }}>
+                      {/* Icon */}
+                      <div
+                        className="relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-500"
                         style={{
-                          fontSize: 14,
-                          color: isCurrent
+                          background: isCurrent
                             ? "#dc2626"
                             : isCompleted
-                            ? "#111827"
-                            : "#9CA3AF",
+                            ? "#FEE2E2"
+                            : "#F3F4F6",
+                          boxShadow: isCurrent
+                            ? "0 4px 14px rgba(220,38,38,0.4), 0 0 0 4px rgba(220,38,38,0.12)"
+                            : "none",
+                          border: isFuture ? "1.5px dashed #E5E7EB" : "none",
+                        }}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle2 size={18} style={{ color: "#dc2626" }} />
+                        ) : (
+                          <StepIcon
+                            size={18}
+                            style={{ color: isCurrent ? "#fff" : "#D1D5DB" }}
+                          />
+                        )}
+                        {isCurrent && (
+                          <span
+                            className="absolute inset-0 rounded-2xl"
+                            style={{ animation: "tracking-pulse 2s ease-in-out infinite", background: "rgba(220,38,38,0.15)" }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Label */}
+                      <p
+                        className="text-center mt-2 leading-tight"
+                        style={{
+                          fontSize: 10,
+                          fontWeight: isCurrent ? 700 : 500,
+                          color: isCurrent ? "#dc2626" : isCompleted ? "#374151" : "#9CA3AF",
+                          width: 68,
+                          wordBreak: "break-word",
                         }}
                       >
                         {step.label}
                       </p>
-                      <p
-                        style={{
-                          fontSize: 12,
-                          color: isCurrent ? "#6B7280" : isFuture ? "#D1D5DB" : "#9CA3AF",
-                          marginTop: 2,
-                        }}
-                      >
-                        {step.desc}
-                      </p>
+
+                      {/* Live dot */}
                       {isCurrent && (
-                        <div className="flex items-center gap-1.5 mt-2">
+                        <div className="flex items-center gap-1 mt-1">
                           <div
-                            className="w-1.5 h-1.5 rounded-full bg-red-500"
-                            style={{ animation: "pulse 1.2s ease-in-out infinite" }}
+                            className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0"
+                            style={{ animation: "pulse 1s ease-in-out infinite" }}
                           />
-                          <span style={{ fontSize: 11, color: "#dc2626", fontWeight: 600 }}>En cours</span>
+                          <span style={{ fontSize: 9, color: "#dc2626", fontWeight: 600 }}>en cours</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Completed checkmark pill */}
-                    {isCompleted && (
+                    {/* Connector line between steps */}
+                    {i < steps.length - 1 && (
                       <div
-                        className="mt-2 px-2 py-0.5 rounded-full flex-shrink-0"
-                        style={{ background: "#FEE2E2" }}
-                      >
-                        <span style={{ fontSize: 10, color: "#dc2626", fontWeight: 700 }}>✓</span>
-                      </div>
+                        className="flex-shrink-0 h-0.5 rounded-full self-start mt-5"
+                        style={{
+                          width: 24,
+                          background: isCompleted
+                            ? "linear-gradient(to right, #FCA5A5, #dc2626)"
+                            : "#E5E7EB",
+                          transition: "background 0.5s ease",
+                        }}
+                      />
                     )}
                   </div>
                 );
@@ -262,17 +250,14 @@ export default function TrackingPage() {
           {/* Delivered celebration */}
           {isDelivered && (
             <div
-              className="mt-5 rounded-2xl p-4 flex items-center gap-3"
+              className="mt-4 rounded-2xl p-3 flex items-center gap-3"
               style={{ background: "linear-gradient(135deg, #FEF2F2, #FFF7ED)" }}
             >
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "#dc2626" }}
-              >
-                <Star size={18} fill="white" className="text-white" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#dc2626" }}>
+                <Star size={16} fill="white" className="text-white" />
               </div>
               <div>
-                <p className="font-bold text-gray-900" style={{ fontSize: 13 }}>Commande livrée !</p>
+                <p className="font-bold text-gray-900" style={{ fontSize: 13 }}>Commande livrée avec succès !</p>
                 <p className="text-gray-500" style={{ fontSize: 11 }}>Merci de votre confiance 🎉</p>
               </div>
             </div>

@@ -107,23 +107,9 @@ export default function ClientNav() {
               pointerEvents: scrolled ? "none" : "auto",
             }}
           >
-            {/* Logo + "Maweja" text in Montserrat Bold */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              <div className="w-8 h-8">
-                <img src={logoRed} alt="Maweja" className="w-full h-full object-contain" />
-              </div>
-              <span
-                style={{
-                  fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif",
-                  fontWeight: 800,
-                  fontSize: 18,
-                  color: "#dc2626",
-                  letterSpacing: "-0.3px",
-                  lineHeight: 1,
-                }}
-              >
-                Maweja
-              </span>
+            {/* Logo only */}
+            <div className="flex-shrink-0 w-9 h-9">
+              <img src={logoRed} alt="Maweja" className="w-full h-full object-contain" />
             </div>
 
             <button

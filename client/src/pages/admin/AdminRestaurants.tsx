@@ -11,7 +11,7 @@ import ImageCropper, { validateImageFile } from "../../components/ImageCropper";
 /* ── Allowed image types & restrictions ─────────────────────────── */
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_SIZE_MB = 5;
-const MAX_VIDEO_SIZE_MB = 1;
+const MAX_VIDEO_SIZE_MB = 10;
 
 function MediaUploadButton({
   label, accept, onUploaded, current, icon: Icon, testId, onError,
@@ -239,7 +239,7 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
               aspectRatio={16 / 9}
             />
             <MediaUploadButton
-              label="Vidéo de couverture (max 1MB, sans audio)"
+              label="Vidéo de couverture (max 10MB, sans audio)"
               accept="video/mp4,video/webm,video/quicktime"
               current={coverVideoUrl}
               onUploaded={setCoverVideoUrl}
@@ -485,7 +485,7 @@ function EditMediaModal({ restaurant, onClose }: { restaurant: Restaurant; onClo
         <div className="space-y-5">
           <MediaUploadButton label="Logo du restaurant" accept="image/jpeg,image/png,image/webp" current={logoUrl} onUploaded={setLogoUrl} onError={showError} icon={Image} testId="upload-restaurant-logo" aspectRatio={1} />
           <MediaUploadButton label="Image de couverture" accept="image/jpeg,image/png,image/webp" current={image} onUploaded={setImage} onError={showError} icon={Image} testId="upload-restaurant-cover" aspectRatio={16 / 9} />
-          <MediaUploadButton label="Vidéo de couverture (max 1MB, sans audio)" accept="video/mp4,video/webm,video/quicktime" current={coverVideoUrl} onUploaded={setCoverVideoUrl} onError={showError} icon={Video} testId="upload-restaurant-video" />
+          <MediaUploadButton label="Vidéo de couverture (max 10MB, sans audio)" accept="video/mp4,video/webm,video/quicktime" current={coverVideoUrl} onUploaded={setCoverVideoUrl} onError={showError} icon={Video} testId="upload-restaurant-video" />
           {coverVideoUrl && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
               <p className="text-xs text-amber-700">La video sera lue en mode muet. Elle apparaitra sur la page du restaurant cote client.</p>
