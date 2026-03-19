@@ -349,7 +349,7 @@ export default function HomePage() {
         <section className="mb-5">
           <p
             className="font-bold text-gray-900 dark:text-white mb-2.5"
-            style={{ fontSize: 15, borderBottom: "2px solid", borderColor: "currentColor", display: "inline-block", paddingBottom: 2 }}
+            style={{ fontSize: 15, borderBottom: "2px solid #EC0000", display: "inline-block", paddingBottom: 2 }}
           >
             Sponsorisés
           </p>
@@ -369,7 +369,7 @@ export default function HomePage() {
                 letterSpacing: "-0.2px",
               }}
             >
-              Services
+              Catégories
             </p>
           </div>
         )}
