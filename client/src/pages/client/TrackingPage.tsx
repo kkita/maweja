@@ -154,91 +154,93 @@ export default function TrackingPage() {
             </div>
           </div>
 
-          {/* Scrollable horizontal steps */}
-          <div className="overflow-x-auto -mx-5 px-5 pb-1 no-scrollbar">
-            <div className="flex items-start" style={{ minWidth: "max-content", gap: 0 }}>
+          {/* Horizontal stepper — full width, no scroll */}
+          <div className="w-full">
+            {/* Progress line + icon row */}
+            <div className="relative flex items-center justify-between w-full">
+              {/* Full background line */}
+              <div
+                className="absolute h-0.5 rounded-full"
+                style={{ left: 16, right: 16, top: "50%", transform: "translateY(-50%)", background: "#E5E7EB", zIndex: 0 }}
+              />
+              {/* Red fill line */}
+              <div
+                className="absolute h-0.5 rounded-full transition-all duration-700"
+                style={{
+                  left: 16,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "linear-gradient(to right, #EC0000, #ff4444)",
+                  width: currentStepIndex === 0 ? 0 : `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 32px)`,
+                  zIndex: 0,
+                }}
+              />
+              {/* Step circles */}
               {steps.map((step, i) => {
                 const isCompleted = i < currentStepIndex;
                 const isCurrent = i === currentStepIndex;
                 const isFuture = i > currentStepIndex;
                 const StepIcon = step.icon;
-
                 return (
                   <div
                     key={step.key}
-                    className="flex items-start"
+                    className="relative flex flex-col items-center"
+                    style={{ zIndex: 1 }}
                     data-testid={`tracking-step-${step.key}`}
                   >
-                    {/* Step column */}
-                    <div className="flex flex-col items-center" style={{ width: 72 }}>
-                      {/* Icon */}
-                      <div
-                        className="relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-500"
-                        style={{
-                          background: isCurrent
-                            ? "#dc2626"
-                            : isCompleted
-                            ? "#FEE2E2"
-                            : "#F3F4F6",
-                          boxShadow: isCurrent
-                            ? "0 4px 14px rgba(220,38,38,0.4), 0 0 0 4px rgba(220,38,38,0.12)"
-                            : "none",
-                          border: isFuture ? "1.5px dashed #E5E7EB" : "none",
-                        }}
-                      >
-                        {isCompleted ? (
-                          <CheckCircle2 size={18} style={{ color: "#dc2626" }} />
-                        ) : (
-                          <StepIcon
-                            size={18}
-                            style={{ color: isCurrent ? "#fff" : "#D1D5DB" }}
-                          />
-                        )}
-                        {isCurrent && (
-                          <span
-                            className="absolute inset-0 rounded-2xl"
-                            style={{ animation: "tracking-pulse 2s ease-in-out infinite", background: "rgba(220,38,38,0.15)" }}
-                          />
-                        )}
-                      </div>
-
-                      {/* Label */}
-                      <p
-                        className="text-center mt-2 leading-tight"
-                        style={{
-                          fontSize: 10,
-                          fontWeight: isCurrent ? 700 : 500,
-                          color: isCurrent ? "#dc2626" : isCompleted ? "#374151" : "#9CA3AF",
-                          width: 68,
-                          wordBreak: "break-word",
-                        }}
-                      >
-                        {step.label}
-                      </p>
-
-                      {/* Live dot */}
+                    {/* Circle icon */}
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500"
+                      style={{
+                        background: isCurrent ? "#EC0000" : isCompleted ? "#FEE2E2" : "#F3F4F6",
+                        border: isFuture ? "1.5px dashed #D1D5DB" : "none",
+                        boxShadow: isCurrent ? "0 0 0 3px rgba(236,0,0,0.15)" : "none",
+                      }}
+                    >
+                      {isCompleted ? (
+                        <CheckCircle2 size={14} style={{ color: "#EC0000" }} />
+                      ) : (
+                        <StepIcon size={14} style={{ color: isCurrent ? "#fff" : "#C4C4C4" }} />
+                      )}
                       {isCurrent && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <div
-                            className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0"
-                            style={{ animation: "pulse 1s ease-in-out infinite" }}
-                          />
-                          <span style={{ fontSize: 9, color: "#dc2626", fontWeight: 600 }}>en cours</span>
-                        </div>
+                        <span
+                          className="absolute inset-0 rounded-full"
+                          style={{ animation: "tracking-pulse 2s ease-in-out infinite", background: "rgba(236,0,0,0.15)" }}
+                        />
                       )}
                     </div>
+                  </div>
+                );
+              })}
+            </div>
 
-                    {/* Connector line between steps */}
-                    {i < steps.length - 1 && (
+            {/* Labels row */}
+            <div className="flex justify-between mt-2 w-full">
+              {steps.map((step, i) => {
+                const isCompleted = i < currentStepIndex;
+                const isCurrent = i === currentStepIndex;
+                return (
+                  <div
+                    key={step.key}
+                    className="flex flex-col items-center"
+                    style={{ width: `${100 / steps.length}%` }}
+                  >
+                    <p
+                      className="text-center leading-tight"
+                      style={{
+                        fontSize: 9,
+                        fontWeight: isCurrent ? 700 : 500,
+                        color: isCurrent ? "#EC0000" : isCompleted ? "#374151" : "#9CA3AF",
+                        wordBreak: "break-word",
+                        maxWidth: "100%",
+                      }}
+                    >
+                      {step.label}
+                    </p>
+                    {isCurrent && (
                       <div
-                        className="flex-shrink-0 h-0.5 rounded-full self-start mt-5"
-                        style={{
-                          width: 24,
-                          background: isCompleted
-                            ? "linear-gradient(to right, #FCA5A5, #dc2626)"
-                            : "#E5E7EB",
-                          transition: "background 0.5s ease",
-                        }}
+                        className="w-1 h-1 rounded-full mt-0.5"
+                        style={{ background: "#EC0000", animation: "pulse 1s ease-in-out infinite" }}
                       />
                     )}
                   </div>
