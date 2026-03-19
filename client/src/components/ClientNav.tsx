@@ -4,7 +4,7 @@ import { useAuth } from "../lib/auth";
 import { authFetchJson, queryClient } from "../lib/queryClient";
 import { Bell, ShoppingBag, MapPin, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { onWSMessage } from "../lib/websocket";
 import { handleWSEvent } from "../lib/notify";
 import { useI18n } from "../lib/i18n";
@@ -76,9 +76,9 @@ export default function ClientNav() {
     : isDark ? "0 1px 0 rgba(255,255,255,0.06)" : "0 1px 0 rgba(0,0,0,0.06)";
 
   const navItems = [
-    { path: "/",         icon: "home" },
-    { path: "/orders",   icon: "orders",  badge: unreadCount },
-    { path: "/settings", icon: "profile" },
+    { path: "/",         icon: "home",    label: "Accueil" },
+    { path: "/orders",   icon: "orders",  label: "Commandes", badge: unreadCount },
+    { path: "/settings", icon: "profile", label: "Profil" },
   ];
 
   return (
@@ -107,8 +107,23 @@ export default function ClientNav() {
               pointerEvents: scrolled ? "none" : "auto",
             }}
           >
-            <div className="flex-shrink-0 w-9 h-9">
-              <img src={logoRed} alt="MAWEJA" className="w-full h-full object-contain" />
+            {/* Logo + "Maweja" text in Montserrat Bold */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="w-8 h-8">
+                <img src={logoRed} alt="Maweja" className="w-full h-full object-contain" />
+              </div>
+              <span
+                style={{
+                  fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif",
+                  fontWeight: 800,
+                  fontSize: 18,
+                  color: "#dc2626",
+                  letterSpacing: "-0.3px",
+                  lineHeight: 1,
+                }}
+              >
+                Maweja
+              </span>
             </div>
 
             <button
@@ -128,7 +143,7 @@ export default function ClientNav() {
               onClick={() => handleProtectedNav("/notifications")}
               data-testid="button-notifications-header"
             >
-              <Bell size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
+              <Bell size={22} style={{ color: "#dc2626" }} strokeWidth={1.8} />
               {unreadCount > 0 && (
                 <span className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid="badge-notif">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -141,7 +156,7 @@ export default function ClientNav() {
               onClick={() => navigate("/cart")}
               data-testid="button-cart-header"
             >
-              <ShoppingBag size={22} className="text-[#3B5BDB]" strokeWidth={1.8} />
+              <ShoppingBag size={22} style={{ color: "#dc2626" }} strokeWidth={1.8} />
               {itemCount > 0 && (
                 <span className="absolute top-0 right-0 bg-red-600 text-white text-[8px] font-bold min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center" data-testid="badge-cart-header">
                   {itemCount > 9 ? "9+" : itemCount}
@@ -160,7 +175,6 @@ export default function ClientNav() {
               pointerEvents: scrolled ? "auto" : "none",
             }}
           >
-            {/* Tapping this button opens the full-screen overlay — NO inline input */}
             <button
               className="flex-1 flex items-center gap-2.5 active:scale-[0.97] transition-transform"
               style={{
@@ -194,32 +208,46 @@ export default function ClientNav() {
       >
         {navItems.map((item) => {
           const isActive = location === item.path || (item.path !== "/" && location.startsWith(item.path));
-          const color = isActive ? "#3B5BDB" : "#9CA3AF";
+          const activeColor = "#dc2626";
+          const inactiveColor = "#9CA3AF";
+          const color = isActive ? activeColor : inactiveColor;
           return (
             <button
               key={item.path}
               onClick={() => handleProtectedNav(item.path)}
               data-testid={`nav-${item.path.replace(/\//g, "") || "home"}`}
-              className="relative flex flex-col items-center justify-center min-w-[56px] active:scale-90 transition-transform duration-150"
+              className="relative flex flex-col items-center justify-center gap-0.5 min-w-[56px] active:scale-90 transition-transform duration-150"
             >
               {item.icon === "home" && (
-                <svg width="26" height="26" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? activeColor : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
                   <path d="M9 21V12h6v9" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" />
                 </svg>
               )}
               {item.icon === "orders" && (
-                <svg width="26" height="26" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? activeColor : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="2" width="18" height="20" rx="3" />
                   <path d="M7 7h10M7 11h7M7 15h5" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               )}
               {item.icon === "profile" && (
-                <svg width="26" height="26" viewBox="0 0 24 24" fill={isActive ? color : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4" fill={isActive ? color : "none"} stroke={isActive ? "transparent" : color} strokeWidth="1.8" />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill={isActive ? activeColor : "none"} stroke={color} strokeWidth={isActive ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" fill={isActive ? activeColor : "none"} stroke={isActive ? "transparent" : color} strokeWidth="1.8" />
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={isActive ? "white" : color} strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               )}
+              {/* Label */}
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? activeColor : inactiveColor,
+                  letterSpacing: "0.01em",
+                  lineHeight: 1,
+                }}
+              >
+                {item.label}
+              </span>
               {(item as any).badge > 0 && (
                 <span
                   className="absolute -top-0.5 right-1 bg-red-600 text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center"

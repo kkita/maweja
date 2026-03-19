@@ -114,3 +114,9 @@ id = "6RSFJ_6pOsxx908Zi-cFH"
 uri = "file://Maweja_V12_mobile.zip"
 type = "unspecified"
 title = "Maweja_V12_mobile.zip — Source complet avec fixes mobile"
+
+[[outputs]]
+id = "Ryv3C_bxlxFL5DLxV64Sb"
+uri = "file://Maweja_V13_full.zip"
+type = "unspecified"
+title = "Maweja_V13_full.zip — Toutes les améliorations UI"

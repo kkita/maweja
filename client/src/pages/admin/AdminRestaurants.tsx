@@ -6,17 +6,26 @@ import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useState, useRef } from "react";
 import type { Restaurant, MenuItem } from "@shared/schema";
+import ImageCropper, { validateImageFile } from "../../components/ImageCropper";
 
-function MediaUploadButton({ label, accept, onUploaded, current, icon: Icon, testId, onError }: {
-  label: string; accept: string; onUploaded: (url: string) => void; current?: string | null; icon: any; testId: string; onError?: (msg: string) => void;
+/* ── Allowed image types & restrictions ─────────────────────────── */
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE_MB = 5;
+const MAX_VIDEO_SIZE_MB = 1;
+
+function MediaUploadButton({
+  label, accept, onUploaded, current, icon: Icon, testId, onError,
+  aspectRatio = 1,
+}: {
+  label: string; accept: string; onUploaded: (url: string) => void; current?: string | null;
+  icon: any; testId: string; onError?: (msg: string) => void; aspectRatio?: number;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const isVideo = accept.includes("video");
 
-  const handleFile = async (file: File) => {
-    const maxSize = isVideo ? 1 * 1024 * 1024 : 5 * 1024 * 1024;
-    if (file.size > maxSize) { onError?.(isVideo ? "Vidéo trop volumineuse (max 1MB)" : "Image trop volumineuse (max 5MB)"); return; }
+  const uploadFile = async (file: File) => {
     setUploading(true);
     try {
       const fd = new FormData();
@@ -25,25 +34,84 @@ function MediaUploadButton({ label, accept, onUploaded, current, icon: Icon, tes
       const res = await authFetch(endpoint, { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) onUploaded(data.url);
+      else onError?.("Erreur lors de l'upload");
     } catch { onError?.("Erreur lors de l'upload"); }
     setUploading(false);
   };
 
+  const handleRawFile = (file: File) => {
+    if (isVideo) {
+      if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
+        onError?.(`Vidéo trop volumineuse (max ${MAX_VIDEO_SIZE_MB}MB)`);
+        return;
+      }
+      uploadFile(file);
+      return;
+    }
+    /* Image validation */
+    const validationError = validateImageFile(file);
+    if (validationError) { onError?.(validationError); return; }
+    /* Show cropper */
+    setCropFile(file);
+  };
+
+  const handleCropped = (croppedFile: File) => {
+    setCropFile(null);
+    uploadFile(croppedFile);
+  };
+
   return (
-    <div>
-      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">{label}</p>
-      <div className="flex items-center gap-2">
-        {current && !isVideo && <img src={current} alt="" className="w-12 h-12 rounded-xl object-cover border border-gray-200" />}
-        {current && isVideo && <video src={current} className="w-16 h-12 rounded-xl object-cover border border-gray-200" muted />}
-        <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading} data-testid={testId}
-          className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50">
-          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} />}
-          {uploading ? "Upload..." : current ? "Changer" : "Choisir"}
-        </button>
-        {current && <button type="button" onClick={() => onUploaded("")} className="text-gray-400 hover:text-red-500" data-testid={`${testId}-remove`}><X size={14} /></button>}
+    <>
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          aspectRatio={aspectRatio}
+          onCrop={handleCropped}
+          onCancel={() => setCropFile(null)}
+        />
+      )}
+      <div>
+        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">{label}</p>
+        <div className="flex items-center gap-2">
+          {current && !isVideo && (
+            <img
+              src={current}
+              alt=""
+              className="w-12 h-12 rounded-xl object-cover border border-gray-200"
+              onError={(e) => { (e.target as HTMLImageElement).src = "/maweja-logo-red.png"; }}
+            />
+          )}
+          {current && isVideo && <video src={current} className="w-16 h-12 rounded-xl object-cover border border-gray-200" muted />}
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            data-testid={testId}
+            className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50"
+          >
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} />}
+            {uploading ? "Upload..." : current ? "Changer" : "Choisir"}
+          </button>
+          {current && (
+            <button
+              type="button"
+              onClick={() => onUploaded("")}
+              className="text-gray-400 hover:text-red-500"
+              data-testid={`${testId}-remove`}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={isVideo ? accept : ALLOWED_IMAGE_TYPES.join(",")}
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && handleRawFile(e.target.files[0])}
+        />
       </div>
-      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-    </div>
+    </>
   );
 }
 
@@ -158,6 +226,7 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
               onError={showError}
               icon={Image}
               testId="create-upload-logo"
+              aspectRatio={1}
             />
             <MediaUploadButton
               label="Image de couverture"
@@ -167,6 +236,7 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
               onError={showError}
               icon={Image}
               testId="create-upload-cover"
+              aspectRatio={16 / 9}
             />
             <MediaUploadButton
               label="Vidéo de couverture (max 1MB, sans audio)"
@@ -413,8 +483,8 @@ function EditMediaModal({ restaurant, onClose }: { restaurant: Restaurant; onClo
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center" data-testid="close-media-modal"><X size={18} /></button>
         </div>
         <div className="space-y-5">
-          <MediaUploadButton label="Logo du restaurant" accept="image/jpeg,image/png,image/webp" current={logoUrl} onUploaded={setLogoUrl} onError={showError} icon={Image} testId="upload-restaurant-logo" />
-          <MediaUploadButton label="Image de couverture" accept="image/jpeg,image/png,image/webp" current={image} onUploaded={setImage} onError={showError} icon={Image} testId="upload-restaurant-cover" />
+          <MediaUploadButton label="Logo du restaurant" accept="image/jpeg,image/png,image/webp" current={logoUrl} onUploaded={setLogoUrl} onError={showError} icon={Image} testId="upload-restaurant-logo" aspectRatio={1} />
+          <MediaUploadButton label="Image de couverture" accept="image/jpeg,image/png,image/webp" current={image} onUploaded={setImage} onError={showError} icon={Image} testId="upload-restaurant-cover" aspectRatio={16 / 9} />
           <MediaUploadButton label="Vidéo de couverture (max 1MB, sans audio)" accept="video/mp4,video/webm,video/quicktime" current={coverVideoUrl} onUploaded={setCoverVideoUrl} onError={showError} icon={Video} testId="upload-restaurant-video" />
           {coverVideoUrl && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">

@@ -356,6 +356,24 @@ export default function HomePage() {
           <AdBanner />
         </section>
 
+        {/* ── Services title ────────────────────────────────────────── */}
+        {activeCategories.length > 0 && (
+          <div className="mb-3">
+            <p
+              className="font-black text-gray-900 dark:text-white"
+              style={{
+                fontSize: 15,
+                borderBottom: "2.5px solid #dc2626",
+                display: "inline-block",
+                paddingBottom: 3,
+                letterSpacing: "-0.2px",
+              }}
+            >
+              Services
+            </p>
+          </div>
+        )}
+
         {/* ── Category grid — 2-row horizontal scroll — dynamic from Admin ── */}
         {activeCategories.length > 0 && (
           <section className="mb-5">
