@@ -1523,6 +1523,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(files);
   });
 
+  /** Download an image/video from an external URL and save it to uploads/ */
+  app.post("/api/admin/gallery/import-url", requireAdmin, async (req: any, res) => {
+    const { url } = req.body as { url?: string };
+    if (!url || typeof url !== "string") return res.status(400).json({ message: "URL requise" });
+
+    const proto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
+    const host  = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+    const baseUrl = `${proto}://${host}`;
+
+    try {
+      // Detect extension from URL or default to .jpg
+      let ext = path.extname(url.split("?")[0]).toLowerCase();
+      const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+      const imageExts = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
+      if (!imageExts.includes(ext) && !videoExts.includes(ext)) ext = ".jpg";
+
+      const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
+      const filePath = path.join(uploadsDir, filename);
+
+      // Stream the remote file to disk
+      const fetchModule = await import("node-fetch");
+      const fetchFn = (fetchModule as any).default ?? fetchModule;
+      const remote = await fetchFn(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (MAWEJA/1.0)" },
+        follow: 5,
+        timeout: 15000,
+      });
+      if (!remote.ok) return res.status(400).json({ message: `Téléchargement échoué: HTTP ${remote.status}` });
+
+      const dest = fs.createWriteStream(filePath);
+      await new Promise<void>((resolve, reject) => {
+        remote.body.pipe(dest);
+        remote.body.on("error", reject);
+        dest.on("finish", resolve);
+      });
+
+      const stat = fs.statSync(filePath);
+      if (stat.size === 0) { fs.unlinkSync(filePath); return res.status(400).json({ message: "Fichier vide téléchargé" }); }
+
+      res.json({ url: `${baseUrl}/uploads/${filename}`, filename });
+    } catch (err: any) {
+      res.status(500).json({ message: `Erreur: ${err.message}` });
+    }
+  });
+
   /** Delete a file from uploads/ */
   app.delete("/api/admin/gallery/:filename", requireAdmin, (req: any, res) => {
     const filename = path.basename(req.params.filename); // sanitize

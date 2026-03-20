@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 import GalleryPicker from "../../components/GalleryPicker";
+import ImportUrlToGallery from "../../components/ImportUrlToGallery";
 
 /* ── Static media assets ───────────────────────────────────────────────── */
 const SERVICE_ICONS: { name: string; url: string }[] = [
@@ -756,6 +757,12 @@ export default function AdminServices() {
                   filter="image"
                 />
 
+                {catImageUrl && (
+                  <div className="mt-1">
+                    <ImportUrlToGallery url={catImageUrl} onImported={url => setCatImageUrl(url)} size="sm" />
+                  </div>
+                )}
+
                 <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                   <ImageIcon size={10} /> Laissez sans image pour utiliser l'emoji ci-dessous
                 </p>
@@ -839,7 +846,10 @@ export default function AdminServices() {
                   </button>
                 </div>
                 {itemImage && (
-                  <img src={itemImage} alt="preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-gray-700" />
+                  <div className="mt-2 space-y-1.5">
+                    <ImportUrlToGallery url={itemImage} onImported={url => setItemImage(url)} size="md" />
+                    <img src={itemImage} alt="preview" className="w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-gray-700" />
+                  </div>
                 )}
                 <GalleryPicker
                   open={galleryOpenItem}

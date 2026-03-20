@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package, Tag, GalleryHorizontal } from "lucide-react";
 import GalleryPicker from "../../components/GalleryPicker";
+import ImportUrlToGallery from "../../components/ImportUrlToGallery";
 import { formatPrice } from "../../lib/utils";
 import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
@@ -102,6 +103,9 @@ function MediaUploadButton({
           >
             <GalleryHorizontal size={14} /> Galerie
           </button>
+          {current && (
+            <ImportUrlToGallery url={current} onImported={onUploaded} />
+          )}
           {current && (
             <button
               type="button"

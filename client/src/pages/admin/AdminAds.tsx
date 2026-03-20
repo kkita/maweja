@@ -6,6 +6,7 @@ import { useToast } from "../../hooks/use-toast";
 import { Image, Plus, Trash2, Edit2, X, Eye, EyeOff, Film, Flame, Megaphone, GalleryHorizontal } from "lucide-react";
 import type { Advertisement, PromoBanner } from "@shared/schema";
 import GalleryPicker from "../../components/GalleryPicker";
+import ImportUrlToGallery from "../../components/ImportUrlToGallery";
 
 function buildFetchHeaders(extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = { "X-User-Role": getUserRole(), ...extra };
@@ -285,10 +286,13 @@ export default function AdminAds() {
                       </button>
                     </div>
                     {mediaUrl && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 max-h-32">
-                        {mediaType === "video"
-                          ? <video src={mediaUrl} className="w-full max-h-32 object-contain bg-black" muted />
-                          : <img src={mediaUrl} alt="" className="w-full max-h-32 object-contain bg-gray-50" />}
+                      <div className="mt-2 space-y-2">
+                        <ImportUrlToGallery url={mediaUrl} onImported={url => { setMediaUrl(url); setFile(null); }} size="md" />
+                        <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 max-h-32">
+                          {mediaType === "video"
+                            ? <video src={mediaUrl} className="w-full max-h-32 object-contain bg-black" muted />
+                            : <img src={mediaUrl} alt="" className="w-full max-h-32 object-contain bg-gray-50" />}
+                        </div>
                       </div>
                     )}
                   </div>
