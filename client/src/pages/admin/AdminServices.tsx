@@ -6,9 +6,10 @@ import { useToast } from "../../hooks/use-toast";
 import { useI18n } from "../../lib/i18n";
 import {
   Briefcase, Plus, Search, Clock, CheckCircle, AlertCircle, Loader2,
-  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon
+  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon, GalleryHorizontal
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
+import GalleryPicker from "../../components/GalleryPicker";
 
 /* ── Static media assets ───────────────────────────────────────────────── */
 const SERVICE_ICONS: { name: string; url: string }[] = [
@@ -246,6 +247,8 @@ export default function AdminServices() {
   const [catImageUrl, setCatImageUrl] = useState("");
   const [catDesc, setCatDesc] = useState("");
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [galleryOpenCat, setGalleryOpenCat] = useState(false);
+  const [galleryOpenItem, setGalleryOpenItem] = useState(false);
   const [editingCat, setEditingCat] = useState<ServiceCategory | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceCatalogItem | null>(null);
@@ -725,17 +728,33 @@ export default function AdminServices() {
                         </button>
                       ))}
                     </div>
-                    {catImageUrl && (
+                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-1 flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => { setCatImageUrl(""); setShowImagePicker(false); }}
-                        className="w-full py-1.5 text-[11px] font-bold text-gray-500 hover:text-red-600 transition-colors"
+                        onClick={() => { setShowImagePicker(false); setGalleryOpenCat(true); }}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+                        data-testid="button-cat-gallery"
                       >
-                        Supprimer l'image
+                        <GalleryHorizontal size={13} /> Choisir depuis la Galerie
                       </button>
-                    )}
+                      {catImageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => { setCatImageUrl(""); setShowImagePicker(false); }}
+                          className="py-2 px-3 text-[11px] font-bold text-gray-500 hover:text-red-600 transition-colors border border-gray-200 dark:border-gray-700 rounded-xl"
+                        >
+                          Supprimer
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
+                <GalleryPicker
+                  open={galleryOpenCat}
+                  onClose={() => setGalleryOpenCat(false)}
+                  onSelect={url => setCatImageUrl(url)}
+                  filter="image"
+                />
 
                 <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
                   <ImageIcon size={10} /> Laissez sans image pour utiliser l'emoji ci-dessous
@@ -806,12 +825,28 @@ export default function AdminServices() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemImage}</label>
-                <input type="url" value={itemImage} onChange={e => setItemImage(e.target.value)}
-                  data-testid="input-item-image" placeholder="https://..."
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                <div className="flex gap-2">
+                  <input type="url" value={itemImage} onChange={e => setItemImage(e.target.value)}
+                    data-testid="input-item-image" placeholder="https://..."
+                    className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                  <button
+                    type="button"
+                    onClick={() => setGalleryOpenItem(true)}
+                    data-testid="button-item-gallery"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors whitespace-nowrap"
+                  >
+                    <GalleryHorizontal size={14} /> Galerie
+                  </button>
+                </div>
                 {itemImage && (
                   <img src={itemImage} alt="preview" className="mt-2 w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-gray-700" />
                 )}
+                <GalleryPicker
+                  open={galleryOpenItem}
+                  onClose={() => setGalleryOpenItem(false)}
+                  onSelect={url => setItemImage(url)}
+                  filter="image"
+                />
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemPrice}</label>

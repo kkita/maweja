@@ -49,6 +49,7 @@ import AdminMarketing from "./pages/admin/AdminMarketing";
 import AdminServices from "./pages/admin/AdminServices";
 import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
+import AdminGallery from "./pages/admin/AdminGallery";
 import ServicesPage from "./pages/client/ServicesPage";
 import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 import PresentationPage from "./pages/PresentationPage";
@@ -127,6 +128,7 @@ function AppRoutes() {
         <Route path="/admin/ads" component={AdminAds} />
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/accounts" component={AdminAccounts} />
+        <Route path="/admin/gallery" component={AdminGallery} />
         <Route component={AdminDashboard} />
       </Switch>
     );

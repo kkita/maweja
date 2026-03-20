@@ -7,7 +7,7 @@ import type { Notification as Notif } from "@shared/schema";
 import logoImg from "@assets/image_1772833363714.png";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Shield, BarChart3,
-  Briefcase, Image, Megaphone, UserCog
+  Briefcase, Image, Megaphone, UserCog, GalleryHorizontal
 } from "lucide-react";
 
 function canAccess(user: any, badgeKey: string): boolean {
@@ -74,6 +74,7 @@ export default function AdminSidebar() {
     { path: "/admin/ads", icon: Image, label: t.admin.ads, badgeKey: "ads" },
     { path: "/admin/notifications", icon: Megaphone, label: t.admin.notifications, badgeKey: "notifications" },
     { path: "/admin/accounts", icon: UserCog, label: "Comptes Admin", badgeKey: "accounts" },
+    { path: "/admin/gallery", icon: GalleryHorizontal, label: "Galerie Médias", badgeKey: "gallery" },
     { path: "/admin/settings", icon: Settings, label: t.admin.settings, badgeKey: "settings" },
   ];
 

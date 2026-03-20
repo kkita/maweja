@@ -1496,5 +1496,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ ok: true });
   });
 
+  /* ════════════════════════════════════════════════════════════════
+     GALLERY — list / delete / fix-urls
+  ════════════════════════════════════════════════════════════════ */
+
+  /** List every file in uploads/ with its public absolute URL */
+  app.get("/api/admin/gallery", requireAdmin, (req: any, res) => {
+    const proto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
+    const host  = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+    const baseUrl = `${proto}://${host}`;
+
+    let files: Array<{ filename: string; url: string; type: string; size: number; createdAt: number }> = [];
+    if (fs.existsSync(uploadsDir)) {
+      files = fs.readdirSync(uploadsDir)
+        .filter(f => !f.startsWith("."))
+        .map(filename => {
+          const filePath = path.join(uploadsDir, filename);
+          const stat = fs.statSync(filePath);
+          const ext = path.extname(filename).toLowerCase();
+          const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+          const type = videoExts.includes(ext) ? "video" : "image";
+          return { filename, url: `${baseUrl}/uploads/${filename}`, type, size: stat.size, createdAt: stat.mtimeMs };
+        })
+        .sort((a, b) => b.createdAt - a.createdAt);
+    }
+    res.json(files);
+  });
+
+  /** Delete a file from uploads/ */
+  app.delete("/api/admin/gallery/:filename", requireAdmin, (req: any, res) => {
+    const filename = path.basename(req.params.filename); // sanitize
+    const filePath = path.join(uploadsDir, filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ message: "Fichier introuvable" });
+    fs.unlinkSync(filePath);
+    res.json({ ok: true });
+  });
+
+  /** Scan all DB columns for relative /uploads/ paths and update to absolute URL */
+  app.post("/api/admin/gallery/fix-urls", requireAdmin, async (req: any, res) => {
+    const proto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
+    const host  = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+    const baseUrl = `${proto}://${host}`;
+
+    // Use raw SQL with the baseUrl interpolated as a literal string (safe — server-controlled value)
+    const { Pool } = await import("pg");
+    const dbPool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+    const queries = [
+      `UPDATE restaurants SET image = '${baseUrl}' || image WHERE image LIKE '/uploads/%'`,
+      `UPDATE restaurants SET logo_url = '${baseUrl}' || logo_url WHERE logo_url LIKE '/uploads/%'`,
+      `UPDATE restaurants SET cover_video_url = '${baseUrl}' || cover_video_url WHERE cover_video_url LIKE '/uploads/%'`,
+      `UPDATE menu_items SET image = '${baseUrl}' || image WHERE image LIKE '/uploads/%'`,
+      `UPDATE advertisements SET media_url = '${baseUrl}' || media_url WHERE media_url LIKE '/uploads/%'`,
+      `UPDATE service_catalog_items SET image_url = '${baseUrl}' || image_url WHERE image_url LIKE '/uploads/%'`,
+    ];
+
+    for (const q of queries) {
+      await dbPool.query(q);
+    }
+    await dbPool.end();
+
+    res.json({ ok: true, message: "URLs relatives migrées vers URLs absolues" });
+  });
+
   return httpServer;
 }

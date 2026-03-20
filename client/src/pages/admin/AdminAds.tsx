@@ -3,8 +3,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { apiRequest, queryClient, getUserRole, getAuthToken } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { Image, Plus, Trash2, Edit2, X, Eye, EyeOff, Film, Flame, Megaphone } from "lucide-react";
+import { Image, Plus, Trash2, Edit2, X, Eye, EyeOff, Film, Flame, Megaphone, GalleryHorizontal } from "lucide-react";
 import type { Advertisement, PromoBanner } from "@shared/schema";
+import GalleryPicker from "../../components/GalleryPicker";
 
 function buildFetchHeaders(extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = { "X-User-Role": getUserRole(), ...extra };
@@ -25,6 +26,7 @@ export default function AdminAds() {
   const [mediaType, setMediaType] = useState("image");
   const [linkUrl, setLinkUrl] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
   // ─── PROMO BANNER STATE ───────────────────────────────────────────────────
   const [promoTagText, setPromoTagText] = useState("");
@@ -273,10 +275,29 @@ export default function AdminAds() {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Ou URL du média</label>
-                    <input type="url" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} placeholder="https://..."
-                      data-testid="input-ad-url"
-                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                    <div className="flex gap-2">
+                      <input type="url" value={mediaUrl} onChange={e => setMediaUrl(e.target.value)} placeholder="https://..."
+                        data-testid="input-ad-url"
+                        className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                      <button type="button" onClick={() => setGalleryOpen(true)} data-testid="button-ad-gallery"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors whitespace-nowrap">
+                        <GalleryHorizontal size={14} /> Galerie
+                      </button>
+                    </div>
+                    {mediaUrl && (
+                      <div className="mt-2 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 max-h-32">
+                        {mediaType === "video"
+                          ? <video src={mediaUrl} className="w-full max-h-32 object-contain bg-black" muted />
+                          : <img src={mediaUrl} alt="" className="w-full max-h-32 object-contain bg-gray-50" />}
+                      </div>
+                    )}
                   </div>
+                  <GalleryPicker
+                    open={galleryOpen}
+                    onClose={() => setGalleryOpen(false)}
+                    onSelect={url => { setMediaUrl(url); setFile(null); }}
+                    filter={mediaType === "video" ? "video" : "image"}
+                  />
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Lien (optionnel)</label>
                     <input type="url" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="https://..."

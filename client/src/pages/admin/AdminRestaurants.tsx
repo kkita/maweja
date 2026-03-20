@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package, Tag } from "lucide-react";
+import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package, Tag, GalleryHorizontal } from "lucide-react";
+import GalleryPicker from "../../components/GalleryPicker";
 import { formatPrice } from "../../lib/utils";
 import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
@@ -22,6 +23,7 @@ function MediaUploadButton({
 }) {
   const [uploading, setUploading] = useState(false);
   const [cropFile, setCropFile] = useState<File | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const isVideo = accept.includes("video");
 
@@ -72,7 +74,7 @@ function MediaUploadButton({
       )}
       <div>
         <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">{label}</p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {current && !isVideo && (
             <img
               src={current}
@@ -91,6 +93,14 @@ function MediaUploadButton({
           >
             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Icon size={14} />}
             {uploading ? "Upload..." : current ? "Changer" : "Choisir"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setGalleryOpen(true)}
+            data-testid={`${testId}-gallery`}
+            className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+          >
+            <GalleryHorizontal size={14} /> Galerie
           </button>
           {current && (
             <button
@@ -111,6 +121,12 @@ function MediaUploadButton({
           onChange={(e) => e.target.files?.[0] && handleRawFile(e.target.files[0])}
         />
       </div>
+      <GalleryPicker
+        open={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+        onSelect={url => { onUploaded(url); }}
+        filter={isVideo ? "video" : "image"}
+      />
     </>
   );
 }
@@ -515,6 +531,7 @@ function MenuItemForm({ restaurantId, item, onClose }: { restaurantId: number; i
     popular: item?.popular ?? false,
   });
   const [imageUploading, setImageUploading] = useState(false);
+  const [menuGalleryOpen, setMenuGalleryOpen] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
 
   const handleImageFile = async (file: File) => {
@@ -579,15 +596,26 @@ function MenuItemForm({ restaurantId, item, onClose }: { restaurantId: number; i
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Image du plat</label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {form.image && <img src={form.image} alt="" className="w-12 h-12 rounded-lg object-cover border" />}
               <button type="button" onClick={() => imageRef.current?.click()} disabled={imageUploading}
                 className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-dashed border-gray-300 rounded-xl text-xs font-medium text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600 transition-colors">
                 {imageUploading ? <Loader2 size={12} className="animate-spin" /> : <Image size={12} />}
                 {form.image ? "Changer" : "Choisir"}
               </button>
+              <button type="button" onClick={() => setMenuGalleryOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+                data-testid="button-menu-image-gallery">
+                <GalleryHorizontal size={12} /> Galerie
+              </button>
             </div>
             <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && handleImageFile(e.target.files[0])} />
+            <GalleryPicker
+              open={menuGalleryOpen}
+              onClose={() => setMenuGalleryOpen(false)}
+              onSelect={url => setForm(f => ({ ...f, image: url }))}
+              filter="image"
+            />
           </div>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
