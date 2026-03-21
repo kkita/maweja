@@ -182,6 +182,7 @@ export const serviceCategories = pgTable("service_categories", {
   imageUrl: text("image_url").default(""),
   description: text("description").notNull().default(""),
   isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -1161,6 +1161,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(updated);
   });
 
+  app.patch("/api/service-categories/reorder", requireAdmin, async (req, res) => {
+    const { order } = req.body as { order?: { id: number; sortOrder: number }[] };
+    if (!Array.isArray(order)) return res.status(400).json({ message: "order[] requis" });
+    for (const item of order) {
+      await storage.updateServiceCategory(item.id, { sortOrder: item.sortOrder });
+    }
+    res.json({ success: true });
+  });
+
   app.delete("/api/service-categories/:id", requireAdmin, async (req, res) => {
     await storage.deleteServiceCategory(Number(req.params.id));
     res.json({ success: true });

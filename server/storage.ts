@@ -414,7 +414,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getServiceCategories() {
-    return db.select().from(serviceCategories).orderBy(serviceCategories.name);
+    return db.select().from(serviceCategories).orderBy(serviceCategories.sortOrder, serviceCategories.name);
   }
 
   async getServiceCategory(id: number) {
