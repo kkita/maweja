@@ -419,6 +419,8 @@ export default function AdminServices() {
   const [catIcon, setCatIcon] = useState("Briefcase");
   const [catImageUrl, setCatImageUrl] = useState("");
   const [catDesc, setCatDesc] = useState("");
+  const [catServiceTypes, setCatServiceTypes] = useState<string[]>([]);
+  const [newTypeInput, setNewTypeInput] = useState("");
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [galleryOpenCat, setGalleryOpenCat] = useState(false);
   const [galleryOpenItem, setGalleryOpenItem] = useState(false);
@@ -463,12 +465,24 @@ export default function AdminServices() {
     onError: (err: any) => errToast(err, "Impossible de mettre à jour la demande"),
   });
 
+  const addServiceType = () => {
+    const val = newTypeInput.trim();
+    if (val && !catServiceTypes.includes(val)) {
+      setCatServiceTypes([...catServiceTypes, val]);
+    }
+    setNewTypeInput("");
+  };
+
+  const removeServiceType = (idx: number) => {
+    setCatServiceTypes(catServiceTypes.filter((_, i) => i !== idx));
+  };
+
   const createCatMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/service-categories", { method: "POST", body: JSON.stringify(data) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/service-categories"] });
       setShowCatModal(false);
-      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc("");
+      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput("");
       toast({ title: t.common.success, description: t.admin.newCategory });
     },
     onError: (err: any) => errToast(err, "Impossible de créer la catégorie"),
@@ -657,8 +671,8 @@ export default function AdminServices() {
         <CategoriesTab
           categories={categories}
           t={t}
-          onAdd={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); }}
-          onEdit={(cat) => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); }}
+          onAdd={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); }}
+          onEdit={(cat) => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); setCatServiceTypes(cat.serviceTypes || []); setNewTypeInput(""); }}
           onDelete={(id) => { if (confirm(t.common.confirm + "?")) deleteCatMutation.mutate(id); }}
         />
       )}
@@ -930,15 +944,65 @@ export default function AdminServices() {
                   data-testid="input-cat-desc"
                   className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-20 resize-none" />
               </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Types de service</label>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-2">
+                  Ces types s'afficheront dans le formulaire client pour cette catégorie (ex: "Suite VIP", "Chambre double"...)
+                </p>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={newTypeInput}
+                    onChange={e => setNewTypeInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addServiceType(); } }}
+                    placeholder="Ajouter un type..."
+                    data-testid="input-new-type"
+                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={addServiceType}
+                    disabled={!newTypeInput.trim()}
+                    data-testid="button-add-type"
+                    className="px-3 py-2 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+                {catServiceTypes.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {catServiceTypes.map((st, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg text-xs font-semibold text-red-700 dark:text-red-300"
+                      >
+                        {st}
+                        <button
+                          type="button"
+                          onClick={() => removeServiceType(idx)}
+                          className="w-4 h-4 rounded-full bg-red-200 dark:bg-red-800 flex items-center justify-center hover:bg-red-300 dark:hover:bg-red-700"
+                          data-testid={`remove-type-${idx}`}
+                        >
+                          <X size={10} className="text-red-700 dark:text-red-300" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-gray-400 italic">Aucun type ajouté — le client verra un champ texte libre</p>
+                )}
+              </div>
+
               <button onClick={() => {
                 if (!catName.trim()) {
                   toast({ title: "Champ requis", description: "Le nom de la catégorie est obligatoire", variant: "destructive" });
                   return;
                 }
                 if (editingCat) {
-                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc } });
+                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes } });
                 } else {
-                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc });
+                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes });
                 }
               }} data-testid="button-save-category"
                 className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700">

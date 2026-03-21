@@ -10,7 +10,7 @@ import {
   ArrowLeft, Calendar, Clock, User, Phone, MapPin, Tag, DollarSign,
   FileText, MessageCircle, Send, CheckCircle2, Loader2, AlertTriangle, Zap,
 } from "lucide-react";
-import type { ServiceRequest } from "@shared/schema";
+import type { ServiceRequest, ServiceCategory } from "@shared/schema";
 
 function parseMinPrice(priceStr: string): number | null {
   const match = priceStr.match(/\$(\d+)/);
@@ -99,16 +99,14 @@ export default function ServiceRequestPage() {
     }
   }, [user]);
 
-  const serviceTypeOptions: Record<string, string[]> = {
-    Hotellerie: ["Reservation chambre", "Suite VIP", "Salle de conference", "Reception", "Autre"],
-    Transport: ["Vehicule prive", "Minibus", "Camion", "Moto", "Quad", "Autre"],
-    Nettoyage: ["Maison", "Bureau", "Apres evenement", "Vitres", "Tapis", "Autre"],
-    Demenagement: ["Local", "Interurbain", "Bureau", "Entrepot", "Autre"],
-    Evenementiel: ["Mariage", "Anniversaire", "Conference", "Soiree", "Team building", "Autre"],
-    Reparation: ["Plomberie", "Electricite", "Peinture", "Menuiserie", "Electronique", "Autre"],
-    Coursier: ["Document", "Colis petit", "Colis moyen", "Colis lourd", "Achats", "Autre"],
-    Autre: ["A preciser"],
-  };
+  const { data: allCategories = [] } = useQuery<ServiceCategory[]>({
+    queryKey: ["/api/service-categories"],
+  });
+
+  const currentCategory = allCategories.find(c => c.id === Number(categoryId));
+  const dynamicTypes = currentCategory?.serviceTypes?.length
+    ? [...currentCategory.serviceTypes, "Autre"]
+    : null;
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/service-requests", { method: "POST", body: JSON.stringify(data) }),
@@ -521,7 +519,7 @@ export default function ServiceRequestPage() {
   }
 
   /* ─── Standard form (no catalog model) ──────────────────────────────── */
-  const typeOptions = serviceTypeOptions[categoryName] || serviceTypeOptions["Autre"];
+  const typeOptions = dynamicTypes || ["A preciser"];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
