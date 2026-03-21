@@ -59,6 +59,7 @@ export const restaurants = pgTable("restaurants", {
   prepTime: text("prep_time").default("20-30 min"),
   restaurantCommissionRate: integer("restaurant_commission_rate").notNull().default(20),
   discountPercent: integer("discount_percent").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
   discountLabel: text("discount_label"),
 });
 

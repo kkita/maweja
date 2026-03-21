@@ -312,6 +312,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(r);
   });
 
+  app.patch("/api/restaurants/reorder", requireAdmin, async (req, res) => {
+    const { order } = req.body as { order?: { id: number; sortOrder: number }[] };
+    if (!Array.isArray(order)) return res.status(400).json({ message: "order[] requis" });
+    for (const item of order) {
+      await storage.updateRestaurant(item.id, { sortOrder: item.sortOrder });
+    }
+    res.json({ success: true });
+  });
+
   app.patch("/api/restaurants/:id", requireAdmin, async (req, res) => {
     const r = await storage.updateRestaurant(Number(req.params.id), req.body);
     res.json(r);
@@ -1156,11 +1165,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(cat);
   });
 
-  app.patch("/api/service-categories/:id", requireAdmin, async (req, res) => {
-    const updated = await storage.updateServiceCategory(Number(req.params.id), req.body);
-    res.json(updated);
-  });
-
   app.patch("/api/service-categories/reorder", requireAdmin, async (req, res) => {
     const { order } = req.body as { order?: { id: number; sortOrder: number }[] };
     if (!Array.isArray(order)) return res.status(400).json({ message: "order[] requis" });
@@ -1168,6 +1172,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateServiceCategory(item.id, { sortOrder: item.sortOrder });
     }
     res.json({ success: true });
+  });
+
+  app.patch("/api/service-categories/:id", requireAdmin, async (req, res) => {
+    const updated = await storage.updateServiceCategory(Number(req.params.id), req.body);
+    res.json(updated);
   });
 
   app.delete("/api/service-categories/:id", requireAdmin, async (req, res) => {

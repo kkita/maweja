@@ -1,12 +1,12 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package, Tag, GalleryHorizontal } from "lucide-react";
+import { Store, Star, Clock, MapPin, Upload, Image, Video, X, Loader2, Pencil, ChefHat, Mail, User, Building, MapPinned, Plus, Trash2, Check, UtensilsCrossed, DollarSign, AlertTriangle, ChevronDown, ChevronUp, Package, Tag, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown, Save } from "lucide-react";
 import GalleryPicker from "../../components/GalleryPicker";
 import ImportUrlToGallery from "../../components/ImportUrlToGallery";
 import { formatPrice } from "../../lib/utils";
 import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import type { Restaurant, MenuItem } from "@shared/schema";
 import ImageCropper, { validateImageFile } from "../../components/ImageCropper";
 
@@ -744,11 +744,81 @@ export default function AdminRestaurants() {
   const [addingRestaurant, setAddingRestaurant] = useState(false);
   const [search, setSearch] = useState("");
 
-  const filtered = restaurants.filter(r =>
+  const [orderedList, setOrderedList] = useState<Restaurant[]>([]);
+  const [hasOrderChanges, setHasOrderChanges] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+  const touchStartY = useRef(0);
+  const touchIdx = useRef<number | null>(null);
+
+  const sorted = [...restaurants].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  const baseList = hasOrderChanges ? orderedList : sorted;
+
+  const filtered = baseList.filter(r =>
     r.name.toLowerCase().includes(search.toLowerCase()) ||
     r.cuisine.toLowerCase().includes(search.toLowerCase()) ||
     r.address.toLowerCase().includes(search.toLowerCase())
   );
+
+  const canDrag = !search;
+
+  const moveRestaurant = useCallback((from: number, to: number) => {
+    const list = [...(hasOrderChanges ? orderedList : sorted)];
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    setOrderedList(list);
+    setHasOrderChanges(true);
+  }, [orderedList, sorted, hasOrderChanges]);
+
+  const saveOrder = async () => {
+    setSavingOrder(true);
+    try {
+      const order = orderedList.map((r, idx) => ({ id: r.id, sortOrder: idx }));
+      await apiRequest("/api/restaurants/reorder", {
+        method: "PATCH",
+        body: JSON.stringify({ order }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] });
+      setHasOrderChanges(false);
+      toast({ title: "Ordre des restaurants sauvegardé !" });
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de sauvegarder l'ordre", variant: "destructive" });
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleDragStart = (idx: number) => (e: React.DragEvent) => {
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleDragOver = (idx: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setOverIdx(idx);
+  };
+  const handleDrop = (idx: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const from = dragIdx ?? parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (from !== idx) moveRestaurant(from, idx);
+    setDragIdx(null);
+    setOverIdx(null);
+  };
+  const handleTouchStart = (idx: number) => (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchIdx.current = idx;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchIdx.current === null) return;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const threshold = 40;
+    const from = touchIdx.current;
+    if (deltaY > threshold && from < filtered.length - 1) moveRestaurant(from, from + 1);
+    else if (deltaY < -threshold && from > 0) moveRestaurant(from, from - 1);
+    touchIdx.current = null;
+  };
 
   const toggleActive = useMutation({
     mutationFn: (r: Restaurant) => apiRequest(`/api/restaurants/${r.id}`, { method: "PATCH", body: JSON.stringify({ isActive: !r.isActive }) }),
@@ -775,16 +845,34 @@ export default function AdminRestaurants() {
       </div>
 
       <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1">
-            <h3 className="font-bold text-gray-900 dark:text-white whitespace-nowrap">Tous les restaurants</h3>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." data-testid="search-restaurants"
-              className="flex-1 max-w-xs px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
+        <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1">
+              <h3 className="font-bold text-gray-900 dark:text-white whitespace-nowrap">Tous les restaurants</h3>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Rechercher..." data-testid="search-restaurants"
+                className="flex-1 max-w-xs px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500" />
+            </div>
+            <button onClick={() => setAddingRestaurant(true)} data-testid="button-add-restaurant"
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm hover:shadow-red-200 hover:shadow-md whitespace-nowrap">
+              <Plus size={16} /> Ajouter un restaurant
+            </button>
           </div>
-          <button onClick={() => setAddingRestaurant(true)} data-testid="button-add-restaurant"
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all shadow-sm hover:shadow-red-200 hover:shadow-md whitespace-nowrap">
-            <Plus size={16} /> Ajouter un restaurant
-          </button>
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+              <GripVertical size={12} /> Glissez-déposez pour réordonner. L'ordre sera reflété sur l'app client.
+            </p>
+            {hasOrderChanges && (
+              <button
+                onClick={saveOrder}
+                disabled={savingOrder}
+                data-testid="button-save-restaurant-order"
+                className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-green-700 disabled:opacity-50 animate-pulse"
+              >
+                {savingOrder ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                Sauvegarder l'ordre
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoading ? (
@@ -808,9 +896,28 @@ export default function AdminRestaurants() {
           </div>
         ) : (
           <div className="divide-y divide-gray-50 dark:divide-gray-800">
-            {filtered.map(r => (
-              <div key={r.id} data-testid={`restaurant-row-${r.id}`}>
+            {filtered.map((r, idx) => (
+              <div
+                key={r.id}
+                data-testid={`restaurant-row-${r.id}`}
+                draggable={canDrag}
+                onDragStart={canDrag ? handleDragStart(idx) : undefined}
+                onDragOver={canDrag ? handleDragOver(idx) : undefined}
+                onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
+                onDrop={canDrag ? handleDrop(idx) : undefined}
+                onTouchStart={canDrag ? handleTouchStart(idx) : undefined}
+                onTouchEnd={canDrag ? handleTouchEnd : undefined}
+                className={`transition-all ${canDrag ? "cursor-grab active:cursor-grabbing" : ""} ${
+                  dragIdx === idx ? "opacity-40 scale-[0.98]" : ""
+                } ${overIdx === idx && dragIdx !== idx ? "bg-red-50/50 dark:bg-red-950/30" : ""}`}
+              >
                 <div className="p-4 flex items-center gap-3">
+                  {canDrag && (
+                    <div className="flex flex-col items-center gap-0.5 text-gray-300 dark:text-gray-600 flex-shrink-0 select-none">
+                      <GripVertical size={16} />
+                      <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 tabular-nums">{idx + 1}</span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 flex-shrink-0 cursor-pointer" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
                     {r.logoUrl ? (
                       <img src={r.logoUrl} alt="" className="w-10 h-10 rounded-lg object-cover border border-gray-200" />
@@ -835,6 +942,22 @@ export default function AdminRestaurants() {
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {canDrag && (
+                      <>
+                        <button onClick={e => { e.stopPropagation(); if (idx > 0) moveRestaurant(idx, idx - 1); }}
+                          disabled={idx === 0}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-20 transition-colors"
+                          data-testid={`button-moveup-${r.id}`}>
+                          <ArrowUp size={13} className="text-gray-500" />
+                        </button>
+                        <button onClick={e => { e.stopPropagation(); if (idx < filtered.length - 1) moveRestaurant(idx, idx + 1); }}
+                          disabled={idx === filtered.length - 1}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-20 transition-colors"
+                          data-testid={`button-movedown-${r.id}`}>
+                          <ArrowDown size={13} className="text-gray-500" />
+                        </button>
+                      </>
+                    )}
                     <button onClick={e => { e.stopPropagation(); toggleActive.mutate(r); }}
                       data-testid={`toggle-active-${r.id}`}
                       className={`px-2.5 py-1 rounded-full text-xs font-bold transition-colors ${r.isActive ? "bg-green-100 text-green-700 hover:bg-red-100 hover:text-red-700" : "bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-700"}`}>

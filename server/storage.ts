@@ -153,7 +153,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRestaurants() {
-    return db.select().from(restaurants);
+    return db.select().from(restaurants).orderBy(restaurants.sortOrder, restaurants.name);
   }
 
   async getRestaurant(id: number) {
