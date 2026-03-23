@@ -240,13 +240,16 @@ export default function HomePage() {
     return () => document.removeEventListener("maweja-search", handler);
   }, []);
 
-  /* filter restaurants */
+  /* filter restaurants — supports multi-category: cuisine match OR Promos (discountPercent > 0) */
   const filtered = restaurants.filter(r => {
     if (globalSearch) {
       const q = globalSearch.toLowerCase();
       return (r.name?.toLowerCase().includes(q) || r.cuisine?.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q));
     }
-    if (activeCuisine && r.cuisine !== activeCuisine) return false;
+    if (activeCuisine) {
+      if (activeCuisine === "Promos") return (r as any).discountPercent > 0;
+      return r.cuisine === activeCuisine;
+    }
     return true;
   });
 
