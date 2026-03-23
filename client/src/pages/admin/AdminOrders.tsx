@@ -200,7 +200,7 @@ export default function AdminOrders() {
     }
   };
 
-  const statusFilters = ["all", "pending", "confirmed", "preparing", "ready", "picked_up", "delivered", "cancelled"];
+  const statusFilters = ["all", "pending", "confirmed", "preparing", "ready", "picked_up", "delivered", "returned", "cancelled"];
 
   const parseItems = (items: any): any[] => {
     if (typeof items === "string") return JSON.parse(items);

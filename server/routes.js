@@ -1,9 +1,25 @@
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { db } from "./db";
+import { restaurantCategories } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
+function generateToken() {
+    return crypto.randomBytes(32).toString("hex");
+}
+/** Build an absolute URL for an uploaded file.
+ *  Respects reverse-proxy headers (X-Forwarded-Proto / X-Forwarded-Host)
+ *  so the URL is always the public-facing URL whether in dev or production.
+ */
+function buildUploadUrl(req, filename) {
+    const proto = req.headers["x-forwarded-proto"]?.split(",")[0].trim() || req.protocol || "https";
+    const host = req.headers["x-forwarded-host"]?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+    return `${proto}://${host}/uploads/${filename}`;
+}
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir))
     fs.mkdirSync(uploadsDir, { recursive: true });
@@ -13,10 +29,14 @@ const mediaStorage = multer.diskStorage({
 });
 const upload = multer({
     storage: mediaStorage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB pour les photos de livreurs
     fileFilter: (_req, file, cb) => {
-        const allowed = /jpeg|jpg|png|webp/;
-        cb(null, allowed.test(path.extname(file.originalname).toLowerCase()) && allowed.test(file.mimetype.replace("image/", "")));
+        // Accept any image MIME type (includes image/jpeg, image/png, image/webp, image/heic, etc.)
+        if (file.mimetype.startsWith("image/"))
+            return cb(null, true);
+        // Also accept by extension as fallback
+        const allowed = /\.(jpeg|jpg|png|webp|heic|heif)$/i;
+        cb(null, allowed.test(file.originalname));
     },
 });
 const uploadMedia = multer({
@@ -45,19 +65,41 @@ function sendToUser(userId, data) {
         ws.send(JSON.stringify(data));
     }
 }
-function requireAuth(req, res, next) {
-    if (!req.session?.userId) {
-        return res.status(401).json({ message: "Non authentifie" });
+async function resolveUserFromRequest(req) {
+    // 1. Cookie session first (web browser)
+    if (req.session?.userId) {
+        return req.session.userId;
     }
+    // 2. Bearer token fallback (mobile APK — sessionStorage volatile)
+    const authHeader = req.headers["authorization"];
+    if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        if (token) {
+            const user = await storage.getUserByToken(token);
+            if (user && !user.isBlocked) {
+                // Hydrate session so downstream code using req.session.userId still works
+                req.session.userId = user.id;
+                return user.id;
+            }
+        }
+    }
+    return null;
+}
+async function requireAuth(req, res, next) {
+    const userId = await resolveUserFromRequest(req);
+    if (!userId)
+        return res.status(401).json({ message: "Non authentifie" });
     next();
 }
 async function requireAdmin(req, res, next) {
-    const userId = req.session?.userId;
+    const userId = await resolveUserFromRequest(req);
     if (!userId)
         return res.status(401).json({ message: "Non authentifie" });
     const user = await storage.getUser(userId);
     if (!user || user.role !== "admin")
         return res.status(403).json({ message: "Acces interdit" });
+    if (user.isBlocked)
+        return res.status(403).json({ message: "Compte bloqué par un administrateur" });
     next();
 }
 export async function registerRoutes(app) {
@@ -82,8 +124,19 @@ export async function registerRoutes(app) {
             return res.status(403).json({ message: msgs[expectedRole] || "Acces interdit" });
         }
         req.session.userId = user.id;
+        // Generate persistent token for mobile APK auth
+        const token = generateToken();
+        await storage.updateUser(user.id, { authToken: token });
         const { password: _, ...safeUser } = user;
-        res.json(safeUser);
+        const responseData = { ...safeUser, authToken: token };
+        // Explicitly save session to DB BEFORE sending response (prevents race condition)
+        req.session.save((err) => {
+            if (err) {
+                console.error("Session save error:", err);
+                return res.status(500).json({ message: "Erreur de session" });
+            }
+            res.json(responseData);
+        });
     });
     app.post("/api/auth/register", async (req, res) => {
         const { email, password, name, phone, role, address } = req.body;
@@ -102,7 +155,13 @@ export async function registerRoutes(app) {
             address: address || null,
         });
         req.session.userId = user.id;
+        // Generate persistent token for mobile APK auth
+        const regToken = generateToken();
+        await storage.updateUser(user.id, { authToken: regToken });
         const { password: _, ...safeUser } = user;
+        const regResponseData = { ...safeUser, authToken: regToken };
+        // Save session to DB BEFORE sending response (prevents race condition)
+        await new Promise((resolve, reject) => req.session.save((err) => (err ? reject(err) : resolve())));
         // Notify admins of new registration
         const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
         for (const admin of admins) {
@@ -115,10 +174,10 @@ export async function registerRoutes(app) {
             });
             sendToUser(admin.id, { type: "new_user", user: safeUser });
         }
-        res.json(safeUser);
+        res.json(regResponseData);
     });
     app.get("/api/auth/me", async (req, res) => {
-        const userId = req.session?.userId;
+        const userId = await resolveUserFromRequest(req);
         if (!userId)
             return res.status(401).json({ message: "Non authentifie" });
         const user = await storage.getUser(userId);
@@ -130,20 +189,31 @@ export async function registerRoutes(app) {
         res.json(safeUser);
     });
     app.post("/api/auth/logout", (req, res) => {
-        req.session.destroy(() => { });
-        res.json({ ok: true });
+        req.session.destroy((err) => {
+            if (err)
+                console.error("Session destroy error:", err);
+            res.json({ ok: true });
+        });
     });
     app.use("/uploads", (await import("express")).default.static(uploadsDir));
-    app.post("/api/upload", requireAuth, upload.single("file"), (req, res) => {
-        if (!req.file)
-            return res.status(400).json({ message: "Fichier requis (jpg, png, webp, max 5MB)" });
-        const url = `/uploads/${req.file.filename}`;
-        res.json({ url });
+    app.post("/api/upload", requireAuth, (req, res, next) => {
+        upload.single("file")(req, res, (err) => {
+            if (err) {
+                if (err.code === "LIMIT_FILE_SIZE") {
+                    return res.status(400).json({ message: "Fichier trop volumineux (max 10MB)" });
+                }
+                return res.status(400).json({ message: err.message || "Erreur lors de l'upload" });
+            }
+            if (!req.file)
+                return res.status(400).json({ message: "Format non supporté. Utilisez JPG, PNG ou WEBP." });
+            const url = buildUploadUrl(req, req.file.filename);
+            res.json({ url });
+        });
     });
     app.post("/api/upload-media", requireAuth, uploadMedia.single("file"), (req, res) => {
         if (!req.file)
             return res.status(400).json({ message: "Fichier requis (image ou video mp4/webm/mov, max 20MB)" });
-        const url = `/uploads/${req.file.filename}`;
+        const url = buildUploadUrl(req, req.file.filename);
         const isVideo = req.file.mimetype.startsWith("video/");
         res.json({ url, type: isVideo ? "video" : "image" });
     });
@@ -233,6 +303,15 @@ export async function registerRoutes(app) {
         const r = await storage.createRestaurant(req.body);
         res.json(r);
     });
+    app.patch("/api/restaurants/reorder", requireAdmin, async (req, res) => {
+        const { order } = req.body;
+        if (!Array.isArray(order))
+            return res.status(400).json({ message: "order[] requis" });
+        for (const item of order) {
+            await storage.updateRestaurant(item.id, { sortOrder: item.sortOrder });
+        }
+        res.json({ success: true });
+    });
     app.patch("/api/restaurants/:id", requireAdmin, async (req, res) => {
         const r = await storage.updateRestaurant(Number(req.params.id), req.body);
         res.json(r);
@@ -293,6 +372,30 @@ export async function registerRoutes(app) {
         }
         const all = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
         res.json(all);
+    });
+    app.get("/api/orders/export", requireAdmin, async (req, res) => {
+        const filters = {};
+        if (req.query.status)
+            filters.status = req.query.status;
+        if (req.query.dateFrom)
+            filters.dateFrom = new Date(req.query.dateFrom);
+        if (req.query.dateTo)
+            filters.dateTo = new Date(req.query.dateTo);
+        let data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
+        if (req.query.restaurantId) {
+            data = data.filter(o => o.restaurantId === Number(req.query.restaurantId));
+        }
+        const allUsers = await storage.getAllUsers();
+        const allRestaurants = await storage.getRestaurants();
+        const getUserName = (id) => allUsers.find(u => u.id === id)?.name || "";
+        const getRestName = (id) => allRestaurants.find(r => r.id === id)?.name || "";
+        const csv = [
+            "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
+            ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
+        ].join("\n");
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader("Content-Disposition", `attachment; filename=commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`);
+        res.send(csv);
     });
     app.get("/api/orders/:id", requireAuth, async (req, res) => {
         const userId = req.session.userId;
@@ -366,6 +469,13 @@ export async function registerRoutes(app) {
                 });
             }
         }
+        // Increment promo usage count
+        if (req.body.promoCode) {
+            const promo = await storage.getPromotionByCode(req.body.promoCode);
+            if (promo) {
+                await storage.updatePromotion(promo.id, { usedCount: promo.usedCount + 1 });
+            }
+        }
         // Debit loyalty points if used
         if (req.body.pointsUsed && req.body.pointsUsed > 0) {
             const client = await storage.getUser(order.clientId);
@@ -426,6 +536,7 @@ export async function registerRoutes(app) {
                 picked_up: "Votre livreur a recupere votre commande",
                 delivered: "Votre commande a ete livree avec succes",
                 cancelled: "Votre commande a ete annulee",
+                returned: "Votre commande a ete retournee",
             };
             if (statusMessages[req.body.status]) {
                 await storage.createNotification({
@@ -455,6 +566,30 @@ export async function registerRoutes(app) {
                 }
                 // Update payment status
                 await storage.updateOrder(order.id, { paymentStatus: "paid" });
+            }
+            // On return, refund and log automatically
+            if (req.body.status === "returned") {
+                await storage.createFinance({
+                    type: "expense", category: "return", amount: order.total,
+                    description: `Retour commande ${order.orderNumber}`, orderId: order.id, userId: order.clientId,
+                });
+                if (order.paymentMethod === "wallet") {
+                    const client = await storage.getUser(order.clientId);
+                    if (client) {
+                        await storage.updateUser(client.id, { walletBalance: (client.walletBalance || 0) + order.total });
+                        await storage.createWalletTransaction({
+                            userId: client.id, amount: order.total, type: "refund",
+                            description: `Remboursement retour ${order.orderNumber}`, orderId: order.id,
+                        });
+                    }
+                }
+                await storage.createNotification({
+                    userId: order.clientId,
+                    title: `Commande ${order.orderNumber} retournée`,
+                    message: "Votre commande a été retournée. Un remboursement sera traité.",
+                    type: "order", data: { orderId: order.id }, isRead: false,
+                });
+                sendToUser(order.clientId, { type: "order_status", orderId: order.id, status: "returned" });
             }
             // On cancel, refund wallet if applicable
             if (req.body.status === "cancelled" && order.paymentMethod === "wallet") {
@@ -503,20 +638,20 @@ export async function registerRoutes(app) {
         broadcast({ type: "order_cancelled", order: updated });
         res.json(updated);
     });
-    // Promo code validation
+    // Promo code validation (dynamic from DB)
     app.post("/api/promo/validate", requireAuth, async (req, res) => {
         const { code, subtotal } = req.body;
         if (!code)
             return res.status(400).json({ message: "Code promo requis" });
-        const promoCodes = {
-            "MAWEJA10": { type: "percent", value: 10, description: "10% de reduction" },
-            "MAWEJA20": { type: "percent", value: 20, description: "20% de reduction" },
-            "LIVRAISON": { type: "delivery", value: 100, description: "Livraison gratuite" },
-            "BIENVENUE": { type: "fixed", value: 2000, description: "$2000 de reduction" },
-        };
-        const promo = promoCodes[code.toUpperCase()];
-        if (!promo)
+        const promo = await storage.getPromotionByCode(code.toUpperCase());
+        if (!promo || !promo.isActive)
             return res.status(400).json({ message: "Code promo invalide" });
+        if (promo.expiresAt && new Date(promo.expiresAt) < new Date())
+            return res.status(400).json({ message: "Code promo expire" });
+        if (promo.maxUses > 0 && promo.usedCount >= promo.maxUses)
+            return res.status(400).json({ message: "Code promo epuise" });
+        if (promo.minOrder > 0 && (subtotal || 0) < promo.minOrder)
+            return res.status(400).json({ message: `Commande minimum: ${promo.minOrder}` });
         let discount = 0;
         if (promo.type === "percent")
             discount = Math.floor((subtotal || 0) * promo.value / 100);
@@ -524,7 +659,58 @@ export async function registerRoutes(app) {
             discount = promo.value;
         else if (promo.type === "delivery")
             discount = 2500;
-        res.json({ valid: true, code: code.toUpperCase(), discount, description: promo.description, type: promo.type });
+        res.json({ valid: true, code: promo.code, discount, description: promo.description, type: promo.type });
+    });
+    // Promotions CRUD (admin)
+    app.get("/api/promotions", requireAdmin, async (_req, res) => {
+        res.json(await storage.getPromotions());
+    });
+    app.post("/api/promotions", requireAdmin, async (req, res) => {
+        const { code, description, type, value, minOrder, maxUses, isActive, expiresAt } = req.body;
+        if (!code || !description)
+            return res.status(400).json({ message: "Code et description requis" });
+        const promo = await storage.createPromotion({
+            code: code.toUpperCase(),
+            description,
+            type: type || "percent",
+            value: value || 10,
+            minOrder: minOrder || 0,
+            maxUses: maxUses || 0,
+            isActive: isActive !== false,
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+        });
+        res.json(promo);
+    });
+    app.patch("/api/promotions/:id", requireAdmin, async (req, res) => {
+        const promo = await storage.updatePromotion(Number(req.params.id), req.body);
+        if (!promo)
+            return res.status(404).json({ message: "Promotion non trouvee" });
+        res.json(promo);
+    });
+    app.delete("/api/promotions/:id", requireAdmin, async (req, res) => {
+        await storage.deletePromotion(Number(req.params.id));
+        res.json({ ok: true });
+    });
+    // Restaurant Categories CRUD
+    app.get("/api/restaurant-categories", async (_req, res) => {
+        const rows = await db.select().from(restaurantCategories).orderBy(restaurantCategories.sortOrder, restaurantCategories.name);
+        res.json(rows);
+    });
+    app.post("/api/restaurant-categories", requireAdmin, async (req, res) => {
+        const { name, emoji, isActive, sortOrder } = req.body;
+        const [row] = await db.insert(restaurantCategories).values({
+            name, emoji: emoji || "🍽️", isActive: isActive ?? true, sortOrder: sortOrder ?? 0,
+        }).returning();
+        res.json(row);
+    });
+    app.patch("/api/restaurant-categories/:id", requireAdmin, async (req, res) => {
+        const id = Number(req.params.id);
+        const [row] = await db.update(restaurantCategories).set(req.body).where(eq(restaurantCategories.id, id)).returning();
+        res.json(row);
+    });
+    app.delete("/api/restaurant-categories/:id", requireAdmin, async (req, res) => {
+        await db.delete(restaurantCategories).where(eq(restaurantCategories.id, Number(req.params.id)));
+        res.json({ ok: true });
     });
     // Saved addresses
     app.get("/api/saved-addresses", requireAuth, async (req, res) => {
@@ -687,8 +873,8 @@ export async function registerRoutes(app) {
         res.json(contacts);
     });
     app.get("/api/chat/users-by-role/:role", requireAuth, async (req, res) => {
-        const sessionUserId = req.session?.userId;
-        const sessionUser = await storage.getUser(sessionUserId);
+        const sessionUserId = await resolveUserFromRequest(req);
+        const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
         if (!sessionUser)
             return res.status(401).json({ message: "Non authentifie" });
         const requestedRole = req.params.role;
@@ -840,29 +1026,63 @@ export async function registerRoutes(app) {
         res.setHeader("Content-Disposition", `attachment; filename=finances_maweja_${new Date().toISOString().split("T")[0]}.csv`);
         res.send(csv);
     });
-    app.get("/api/orders/export", requireAdmin, async (req, res) => {
-        const filters = {};
-        if (req.query.status)
-            filters.status = req.query.status;
-        if (req.query.dateFrom)
-            filters.dateFrom = new Date(req.query.dateFrom);
-        if (req.query.dateTo)
-            filters.dateTo = new Date(req.query.dateTo);
-        let data = await storage.getOrders(Object.keys(filters).length ? filters : undefined);
-        if (req.query.restaurantId) {
-            data = data.filter(o => o.restaurantId === Number(req.query.restaurantId));
-        }
-        const allUsers = await storage.getAllUsers();
+    // ─── Restaurant Payouts ───────────────────────────────────────────────────
+    app.get("/api/restaurant-payouts", requireAdmin, async (_req, res) => {
+        const payouts = await storage.getRestaurantPayouts();
+        res.json(payouts);
+    });
+    app.post("/api/restaurant-payouts", requireAdmin, async (req, res) => {
+        const payout = await storage.createRestaurantPayout(req.body);
+        res.json(payout);
+    });
+    app.post("/api/restaurant-payouts/generate", requireAdmin, async (req, res) => {
+        const { dateFrom, dateTo, period } = req.body;
+        if (!dateFrom || !dateTo || !period)
+            return res.status(400).json({ message: "dateFrom, dateTo et period sont requis" });
+        const allOrders = await storage.getOrders({
+            dateFrom: new Date(dateFrom),
+            dateTo: new Date(dateTo),
+            status: "delivered",
+        });
         const allRestaurants = await storage.getRestaurants();
-        const getUserName = (id) => allUsers.find(u => u.id === id)?.name || "";
-        const getRestName = (id) => allRestaurants.find(r => r.id === id)?.name || "";
-        const csv = [
-            "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
-            ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
-        ].join("\n");
-        res.setHeader("Content-Type", "text/csv");
-        res.setHeader("Content-Disposition", `attachment; filename=commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`);
-        res.send(csv);
+        const byRestaurant = {};
+        for (const o of allOrders) {
+            if (!byRestaurant[o.restaurantId])
+                byRestaurant[o.restaurantId] = { count: 0, gross: 0 };
+            byRestaurant[o.restaurantId].count++;
+            byRestaurant[o.restaurantId].gross += o.subtotal;
+        }
+        const created = [];
+        for (const [rid, stats] of Object.entries(byRestaurant)) {
+            const rest = allRestaurants.find(r => r.id === Number(rid));
+            if (!rest || stats.count === 0)
+                continue;
+            const rate = rest.restaurantCommissionRate ?? 20;
+            const mawejaCommission = Math.round(stats.gross * rate / 100);
+            const netAmount = stats.gross - mawejaCommission;
+            const payout = await storage.createRestaurantPayout({
+                restaurantId: Number(rid),
+                restaurantName: rest.name,
+                period,
+                orderCount: stats.count,
+                grossAmount: stats.gross,
+                mawejaCommission,
+                netAmount,
+                isPaid: false,
+            });
+            created.push(payout);
+        }
+        res.json({ created: created.length, payouts: created });
+    });
+    app.patch("/api/restaurant-payouts/:id", requireAdmin, async (req, res) => {
+        const payout = await storage.updateRestaurantPayout(Number(req.params.id), req.body);
+        if (!payout)
+            return res.status(404).json({ message: "Paiement non trouvé" });
+        res.json(payout);
+    });
+    app.delete("/api/restaurant-payouts/:id", requireAdmin, async (req, res) => {
+        await storage.deleteRestaurantPayout(Number(req.params.id));
+        res.json({ ok: true });
     });
     // Dashboard stats
     app.get("/api/dashboard/stats", requireAdmin, async (_req, res) => {
@@ -955,28 +1175,108 @@ export async function registerRoutes(app) {
             paymentBreakdown[o.paymentMethod] = (paymentBreakdown[o.paymentMethod] || 0) + 1;
         });
         const statusBreakdown = {};
-        allOrders.filter(o => !["delivered", "cancelled"].includes(o.status)).forEach(o => {
+        allOrders.forEach(o => {
             statusBreakdown[o.status] = (statusBreakdown[o.status] || 0) + 1;
+        });
+        const returnedOrders = periodOrders.filter(o => o.status === "returned");
+        // Restaurant market share
+        const restaurantRevenue = {};
+        periodOrders.forEach(o => {
+            const r = allRestaurants.find(r => r.id === o.restaurantId);
+            if (!r)
+                return;
+            if (!restaurantRevenue[r.id])
+                restaurantRevenue[r.id] = { id: r.id, name: r.name, revenue: 0, orderCount: 0, avgRating: 0, ratingCount: 0 };
+            restaurantRevenue[r.id].revenue += o.total;
+            restaurantRevenue[r.id].orderCount++;
+            if (o.rating) {
+                restaurantRevenue[r.id].avgRating += o.rating;
+                restaurantRevenue[r.id].ratingCount++;
+            }
+        });
+        const marketShare = Object.values(restaurantRevenue).map(r => ({
+            ...r, avgRating: r.ratingCount > 0 ? +(r.avgRating / r.ratingCount).toFixed(1) : 0,
+            sharePercent: totalRevenue > 0 ? +(r.revenue / totalRevenue * 100).toFixed(1) : 0,
+        })).sort((a, b) => b.revenue - a.revenue);
+        // Client insights: preferences, frequency, revenue contribution
+        const clientInsights = clients.map(c => {
+            const userOrders = periodOrders.filter(o => o.clientId === c.id);
+            const restFreq = {};
+            userOrders.forEach(o => { restFreq[o.restaurantId] = (restFreq[o.restaurantId] || 0) + 1; });
+            const favRestId = Object.entries(restFreq).sort((a, b) => b[1] - a[1])[0];
+            const favRest = favRestId ? allRestaurants.find(r => r.id === Number(favRestId[0])) : null;
+            const lastOrder = userOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+            const daysSinceLast = lastOrder ? Math.floor((Date.now() - new Date(lastOrder.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : -1;
+            const totalSpent = userOrders.reduce((s, o) => s + o.total, 0);
+            const cuisines = {};
+            userOrders.forEach(o => {
+                const r = allRestaurants.find(r => r.id === o.restaurantId);
+                if (r?.cuisine)
+                    cuisines[r.cuisine] = (cuisines[r.cuisine] || 0) + 1;
+            });
+            const topCuisines = Object.entries(cuisines).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c);
+            return {
+                id: c.id, name: c.name, email: c.email, phone: c.phone,
+                orderCount: userOrders.length,
+                totalSpent,
+                avgOrder: userOrders.length > 0 ? Math.round(totalSpent / userOrders.length) : 0,
+                favoriteRestaurant: favRest?.name || null,
+                favoriteRestaurantId: favRest?.id || null,
+                topCuisines,
+                daysSinceLastOrder: daysSinceLast,
+                isInactive: daysSinceLast > 14,
+                revenueContribution: totalRevenue > 0 ? +(totalSpent / totalRevenue * 100).toFixed(1) : 0,
+            };
+        }).sort((a, b) => b.totalSpent - a.totalSpent);
+        // New clients in period
+        const newClients = clients.filter(c => {
+            const firstOrder = allOrders.filter(o => o.clientId === c.id).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
+            if (!firstOrder)
+                return false;
+            const d = new Date(firstOrder.createdAt);
+            return d >= dateFrom && d <= dateTo;
+        }).map(c => ({ id: c.id, name: c.name, email: c.email, phone: c.phone, createdAt: c.id }));
+        // Client-restaurant affinity matrix (top 20 clients x top 10 restaurants)
+        const top20Clients = clientInsights.slice(0, 20);
+        const top10Restaurants = marketShare.slice(0, 10);
+        const affinityMatrix = top20Clients.map(c => {
+            const row = { clientName: 0 };
+            const userOrders = periodOrders.filter(o => o.clientId === c.id);
+            top10Restaurants.forEach(r => {
+                row[r.name] = userOrders.filter(o => o.restaurantId === r.id).length;
+            });
+            return { clientName: c.name, clientId: c.id, ...row };
+        });
+        // Order frequency by day of week
+        const ordersByDayOfWeek = new Array(7).fill(0);
+        periodOrders.forEach(o => {
+            ordersByDayOfWeek[new Date(o.createdAt).getDay()]++;
         });
         res.json({
             kpis: {
                 totalOrders: periodOrders.length,
                 deliveredOrders: deliveredOrders.length,
                 cancelledOrders: cancelledOrders.length,
+                returnedOrders: returnedOrders.length,
                 onTimeRate: deliveredOrders.length > 0 ? Math.round(onTimeDelivered.length / deliveredOrders.length * 100) : 0,
                 avgRating: +avgRating.toFixed(1),
                 totalRevenue,
                 avgOrderAmount,
                 avgDeliveryCost,
                 totalClients: clients.length,
+                newClientsCount: newClients.length,
             },
             topProducts,
             dailyTrend,
             ordersByHour,
-            topClients: clientsWithOrders,
+            ordersByDayOfWeek,
+            topClients: clientInsights.slice(0, 30),
+            newClients,
             driverPerformance,
             paymentBreakdown,
             statusBreakdown,
+            marketShare,
+            affinityMatrix,
         });
     });
     // ===== SERVICE CATEGORIES =====
@@ -987,6 +1287,15 @@ export async function registerRoutes(app) {
     app.post("/api/service-categories", requireAdmin, async (req, res) => {
         const cat = await storage.createServiceCategory(req.body);
         res.json(cat);
+    });
+    app.patch("/api/service-categories/reorder", requireAdmin, async (req, res) => {
+        const { order } = req.body;
+        if (!Array.isArray(order))
+            return res.status(400).json({ message: "order[] requis" });
+        for (const item of order) {
+            await storage.updateServiceCategory(item.id, { sortOrder: item.sortOrder });
+        }
+        res.json({ success: true });
     });
     app.patch("/api/service-categories/:id", requireAdmin, async (req, res) => {
         const updated = await storage.updateServiceCategory(Number(req.params.id), req.body);
@@ -1098,14 +1407,14 @@ export async function registerRoutes(app) {
         }
         let mediaUrl = req.body.mediaUrl || "";
         if (req.file)
-            mediaUrl = `/uploads/${req.file.filename}`;
+            mediaUrl = buildUploadUrl(req, req.file.filename);
         const ad = await storage.createAdvertisement({ ...req.body, mediaUrl });
         res.json(ad);
     });
     app.patch("/api/advertisements/:id", requireAdmin, uploadMedia.single("media"), async (req, res) => {
         const data = { ...req.body };
         if (req.file)
-            data.mediaUrl = `/uploads/${req.file.filename}`;
+            data.mediaUrl = buildUploadUrl(req, req.file.filename);
         if (data.isActive !== undefined)
             data.isActive = data.isActive === "true" || data.isActive === true;
         if (data.sortOrder !== undefined)
@@ -1116,6 +1425,25 @@ export async function registerRoutes(app) {
     app.delete("/api/advertisements/:id", requireAdmin, async (req, res) => {
         await storage.deleteAdvertisement(Number(req.params.id));
         res.json({ success: true });
+    });
+    // ===== PROMO BANNER =====
+    app.get("/api/promo-banner", async (_req, res) => {
+        const banner = await storage.getPromoBanner();
+        res.json(banner || {
+            tagText: "Offre Spéciale",
+            title: "Livraison gratuite",
+            subtitle: "Sur votre première commande",
+            buttonText: "Commander maintenant",
+            bgColorFrom: "#dc2626",
+            bgColorTo: "#b91c1c",
+            isActive: true,
+            linkUrl: null,
+        });
+    });
+    app.patch("/api/promo-banner", requireAdmin, async (req, res) => {
+        const { tagText, title, subtitle, buttonText, linkUrl, bgColorFrom, bgColorTo, isActive } = req.body;
+        const banner = await storage.upsertPromoBanner({ tagText, title, subtitle, buttonText, linkUrl, bgColorFrom, bgColorTo, isActive });
+        res.json(banner);
     });
     // ===== PUSH NOTIFICATIONS (Broadcast) =====
     app.post("/api/notifications/broadcast", requireAdmin, async (req, res) => {
@@ -1230,6 +1558,200 @@ export async function registerRoutes(app) {
             }
             catch { }
         });
+    });
+    // ─── App Settings ────────────────────────────────────────────────────
+    app.get("/api/settings", async (_req, res) => {
+        try {
+            const settings = await storage.getSettings();
+            const defaults = {
+                whatsapp_number: "+243802540138",
+                app_name: "MAWEJA",
+                delivery_fee: "2500",
+                min_order: "3000",
+                max_radius: "15",
+                notifications: "true",
+                auto_assign: "true",
+                loyalty_enabled: "true",
+                points_per_order: "10",
+                currency: "USD",
+            };
+            res.json({ ...defaults, ...settings });
+        }
+        catch {
+            res.json({});
+        }
+    });
+    app.patch("/api/settings", requireAdmin, async (req, res) => {
+        try {
+            const data = {};
+            for (const [k, v] of Object.entries(req.body)) {
+                data[k] = String(v);
+            }
+            await storage.setSettings(data);
+            res.json({ ok: true });
+        }
+        catch (e) {
+            res.status(500).json({ error: "Erreur sauvegarde" });
+        }
+    });
+    // Admin sub-accounts management
+    app.get("/api/admin/accounts", requireAdmin, async (_req, res) => {
+        const allUsers = await storage.getAllUsers();
+        const admins = allUsers.filter(u => u.role === "admin");
+        res.json(admins.map(u => ({
+            id: u.id, name: u.name, email: u.email, phone: u.phone,
+            adminRole: u.adminRole, adminPermissions: u.adminPermissions,
+            isBlocked: u.isBlocked, createdAt: u.createdAt
+        })));
+    });
+    app.post("/api/admin/accounts", requireAdmin, async (req, res) => {
+        const { name, email, password, phone, adminRole, adminPermissions } = req.body;
+        if (!name || !email || !password || !phone)
+            return res.status(400).json({ message: "Champs requis: name, email, password, phone" });
+        const existing = await storage.getUserByEmail(email);
+        if (existing)
+            return res.status(409).json({ message: "Cet email est déjà utilisé" });
+        const user = await storage.createUser({ name, email, password, phone, role: "admin", adminRole: adminRole || null, adminPermissions: adminPermissions || [] });
+        res.json({ id: user.id, name: user.name, email: user.email, phone: user.phone, adminRole: user.adminRole, adminPermissions: user.adminPermissions });
+    });
+    app.patch("/api/admin/accounts/:id", requireAdmin, async (req, res) => {
+        const id = Number(req.params.id);
+        const { adminRole, adminPermissions, password, name, phone, isBlocked } = req.body;
+        const target = await storage.getUser(id);
+        if (!target)
+            return res.status(404).json({ message: "Compte introuvable" });
+        // Protect primary superadmin from being blocked
+        if ((target.email === "admin@maweja.cd" || target.email === "admin@maweja.net") && isBlocked) {
+            return res.status(403).json({ message: "Ce compte ne peut pas être bloqué" });
+        }
+        const update = {};
+        if (adminRole !== undefined)
+            update.adminRole = adminRole;
+        if (adminPermissions !== undefined)
+            update.adminPermissions = adminPermissions;
+        if (password)
+            update.password = password;
+        if (name)
+            update.name = name;
+        if (phone)
+            update.phone = phone;
+        if (isBlocked !== undefined)
+            update.isBlocked = isBlocked;
+        const updated = await storage.updateUser(id, update);
+        if (!updated)
+            return res.status(404).json({ message: "Compte introuvable" });
+        res.json({ id: updated.id, name: updated.name, email: updated.email, phone: updated.phone, adminRole: updated.adminRole, adminPermissions: updated.adminPermissions, isBlocked: updated.isBlocked });
+    });
+    app.delete("/api/admin/accounts/:id", requireAdmin, async (req, res) => {
+        const id = Number(req.params.id);
+        // Don't delete the primary superadmin accounts
+        const u = await storage.getUser(id);
+        if (!u)
+            return res.status(404).json({ message: "Compte introuvable" });
+        if (u.email === "admin@maweja.cd" || u.email === "admin@maweja.net") {
+            return res.status(403).json({ message: "Ce compte ne peut pas être supprimé" });
+        }
+        await storage.deleteUser(id);
+        res.json({ ok: true });
+    });
+    /* ════════════════════════════════════════════════════════════════
+       GALLERY — list / delete / fix-urls
+    ════════════════════════════════════════════════════════════════ */
+    /** List every file in uploads/ with its public absolute URL */
+    app.get("/api/admin/gallery", requireAdmin, (req, res) => {
+        const proto = req.headers["x-forwarded-proto"]?.split(",")[0].trim() || req.protocol || "https";
+        const host = req.headers["x-forwarded-host"]?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+        const baseUrl = `${proto}://${host}`;
+        let files = [];
+        if (fs.existsSync(uploadsDir)) {
+            files = fs.readdirSync(uploadsDir)
+                .filter(f => !f.startsWith("."))
+                .map(filename => {
+                const filePath = path.join(uploadsDir, filename);
+                const stat = fs.statSync(filePath);
+                const ext = path.extname(filename).toLowerCase();
+                const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+                const type = videoExts.includes(ext) ? "video" : "image";
+                return { filename, url: `${baseUrl}/uploads/${filename}`, type, size: stat.size, createdAt: stat.mtimeMs };
+            })
+                .sort((a, b) => b.createdAt - a.createdAt);
+        }
+        res.json(files);
+    });
+    /** Download an image/video from an external URL and save it to uploads/ */
+    app.post("/api/admin/gallery/import-url", requireAdmin, async (req, res) => {
+        const { url } = req.body;
+        if (!url || typeof url !== "string")
+            return res.status(400).json({ message: "URL requise" });
+        const proto = req.headers["x-forwarded-proto"]?.split(",")[0].trim() || req.protocol || "https";
+        const host = req.headers["x-forwarded-host"]?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+        const baseUrl = `${proto}://${host}`;
+        try {
+            // Detect extension from URL or default to .jpg
+            let ext = path.extname(url.split("?")[0]).toLowerCase();
+            const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+            const imageExts = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
+            if (!imageExts.includes(ext) && !videoExts.includes(ext))
+                ext = ".jpg";
+            const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
+            const filePath = path.join(uploadsDir, filename);
+            // Stream the remote file to disk
+            const fetchModule = await import("node-fetch");
+            const fetchFn = fetchModule.default ?? fetchModule;
+            const remote = await fetchFn(url, {
+                headers: { "User-Agent": "Mozilla/5.0 (MAWEJA/1.0)" },
+                follow: 5,
+                timeout: 15000,
+            });
+            if (!remote.ok)
+                return res.status(400).json({ message: `Téléchargement échoué: HTTP ${remote.status}` });
+            const dest = fs.createWriteStream(filePath);
+            await new Promise((resolve, reject) => {
+                remote.body.pipe(dest);
+                remote.body.on("error", reject);
+                dest.on("finish", resolve);
+            });
+            const stat = fs.statSync(filePath);
+            if (stat.size === 0) {
+                fs.unlinkSync(filePath);
+                return res.status(400).json({ message: "Fichier vide téléchargé" });
+            }
+            res.json({ url: `${baseUrl}/uploads/${filename}`, filename });
+        }
+        catch (err) {
+            res.status(500).json({ message: `Erreur: ${err.message}` });
+        }
+    });
+    /** Delete a file from uploads/ */
+    app.delete("/api/admin/gallery/:filename", requireAdmin, (req, res) => {
+        const filename = path.basename(req.params.filename); // sanitize
+        const filePath = path.join(uploadsDir, filename);
+        if (!fs.existsSync(filePath))
+            return res.status(404).json({ message: "Fichier introuvable" });
+        fs.unlinkSync(filePath);
+        res.json({ ok: true });
+    });
+    /** Scan all DB columns for relative /uploads/ paths and update to absolute URL */
+    app.post("/api/admin/gallery/fix-urls", requireAdmin, async (req, res) => {
+        const proto = req.headers["x-forwarded-proto"]?.split(",")[0].trim() || req.protocol || "https";
+        const host = req.headers["x-forwarded-host"]?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+        const baseUrl = `${proto}://${host}`;
+        // Use raw SQL with the baseUrl interpolated as a literal string (safe — server-controlled value)
+        const { Pool } = await import("pg");
+        const dbPool = new Pool({ connectionString: process.env.DATABASE_URL });
+        const queries = [
+            `UPDATE restaurants SET image = '${baseUrl}' || image WHERE image LIKE '/uploads/%'`,
+            `UPDATE restaurants SET logo_url = '${baseUrl}' || logo_url WHERE logo_url LIKE '/uploads/%'`,
+            `UPDATE restaurants SET cover_video_url = '${baseUrl}' || cover_video_url WHERE cover_video_url LIKE '/uploads/%'`,
+            `UPDATE menu_items SET image = '${baseUrl}' || image WHERE image LIKE '/uploads/%'`,
+            `UPDATE advertisements SET media_url = '${baseUrl}' || media_url WHERE media_url LIKE '/uploads/%'`,
+            `UPDATE service_catalog_items SET image_url = '${baseUrl}' || image_url WHERE image_url LIKE '/uploads/%'`,
+        ];
+        for (const q of queries) {
+            await dbPool.query(q);
+        }
+        await dbPool.end();
+        res.json({ ok: true, message: "URLs relatives migrées vers URLs absolues" });
     });
     return httpServer;
 }

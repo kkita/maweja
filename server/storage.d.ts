@@ -1,7 +1,8 @@
-import { type User, type InsertUser, type Restaurant, type InsertRestaurant, type MenuItem, type InsertMenuItem, type Order, type InsertOrder, type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage, type WalletTransaction, type InsertWalletTransaction, type Finance, type InsertFinance, type SavedAddress, type InsertSavedAddress, type ServiceCategory, type InsertServiceCategory, type ServiceRequest, type InsertServiceRequest, type ServiceCatalogItem, type InsertServiceCatalogItem, type Advertisement, type InsertAdvertisement } from "@shared/schema";
+import { type User, type InsertUser, type Restaurant, type InsertRestaurant, type MenuItem, type InsertMenuItem, type Order, type InsertOrder, type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage, type WalletTransaction, type InsertWalletTransaction, type Finance, type InsertFinance, type SavedAddress, type InsertSavedAddress, type ServiceCategory, type InsertServiceCategory, type ServiceRequest, type InsertServiceRequest, type ServiceCatalogItem, type InsertServiceCatalogItem, type Advertisement, type InsertAdvertisement, type PromoBanner, type InsertPromoBanner, type RestaurantPayout, type InsertRestaurantPayout, type Promotion, type InsertPromotion } from "@shared/schema";
 export interface IStorage {
     getUser(id: number): Promise<User | undefined>;
     getUserByEmail(email: string): Promise<User | undefined>;
+    getUserByToken(token: string): Promise<User | undefined>;
     createUser(user: InsertUser): Promise<User>;
     updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
     deleteUser(id: number): Promise<void>;
@@ -74,6 +75,22 @@ export interface IStorage {
     createAdvertisement(ad: InsertAdvertisement): Promise<Advertisement>;
     updateAdvertisement(id: number, data: Partial<Advertisement>): Promise<Advertisement | undefined>;
     deleteAdvertisement(id: number): Promise<void>;
+    getPromoBanner(): Promise<PromoBanner | undefined>;
+    getSettings(): Promise<Record<string, string>>;
+    setSetting(key: string, value: string): Promise<void>;
+    setSettings(data: Record<string, string>): Promise<void>;
+    upsertPromoBanner(data: Partial<InsertPromoBanner>): Promise<PromoBanner>;
+    getRestaurantPayouts(): Promise<RestaurantPayout[]>;
+    getRestaurantPayout(id: number): Promise<RestaurantPayout | undefined>;
+    createRestaurantPayout(data: InsertRestaurantPayout): Promise<RestaurantPayout>;
+    updateRestaurantPayout(id: number, data: Partial<RestaurantPayout>): Promise<RestaurantPayout | undefined>;
+    deleteRestaurantPayout(id: number): Promise<void>;
+    getPromotions(): Promise<Promotion[]>;
+    getPromotion(id: number): Promise<Promotion | undefined>;
+    getPromotionByCode(code: string): Promise<Promotion | undefined>;
+    createPromotion(data: InsertPromotion): Promise<Promotion>;
+    updatePromotion(id: number, data: Partial<Promotion>): Promise<Promotion | undefined>;
+    deletePromotion(id: number): Promise<void>;
     getDashboardStats(): Promise<any>;
 }
 export declare class DatabaseStorage implements IStorage {
@@ -103,6 +120,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }>;
     getUserByEmail(email: string): Promise<{
@@ -131,6 +151,40 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
+        createdAt: Date | null;
+    }>;
+    getUserByToken(token: string): Promise<{
+        id: number;
+        email: string;
+        password: string;
+        name: string;
+        phone: string;
+        role: string;
+        avatar: string | null;
+        walletBalance: number;
+        loyaltyPoints: number;
+        isOnline: boolean;
+        isBlocked: boolean;
+        lat: number | null;
+        lng: number | null;
+        address: string | null;
+        vehicleType: string | null;
+        vehiclePlate: string | null;
+        driverLicense: string | null;
+        commissionRate: number | null;
+        sex: string | null;
+        dateOfBirth: string | null;
+        fullAddress: string | null;
+        idPhotoUrl: string | null;
+        profilePhotoUrl: string | null;
+        verificationStatus: string | null;
+        rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }>;
     createUser(user: InsertUser): Promise<{
@@ -159,6 +213,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }>;
     updateUser(id: number, data: Partial<User>): Promise<{
@@ -187,6 +244,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }>;
     deleteUser(id: number): Promise<void>;
@@ -216,6 +276,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }[]>;
     getOnlineDrivers(): Promise<{
@@ -244,6 +307,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }[]>;
     getClients(): Promise<{
@@ -272,6 +338,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }[]>;
     getAllUsers(): Promise<{
@@ -300,6 +369,9 @@ export declare class DatabaseStorage implements IStorage {
         profilePhotoUrl: string | null;
         verificationStatus: string | null;
         rejectedFields: unknown;
+        adminRole: string | null;
+        adminPermissions: unknown;
+        authToken: string | null;
         createdAt: Date | null;
     }[]>;
     getRestaurants(): Promise<{
@@ -325,6 +397,11 @@ export declare class DatabaseStorage implements IStorage {
         brandName: string | null;
         hqAddress: string | null;
         prepTime: string | null;
+        restaurantCommissionRate: number;
+        discountPercent: number;
+        sortOrder: number;
+        discountLabel: string | null;
+        isFeatured: boolean;
     }[]>;
     getRestaurant(id: number): Promise<{
         id: number;
@@ -349,6 +426,11 @@ export declare class DatabaseStorage implements IStorage {
         brandName: string | null;
         hqAddress: string | null;
         prepTime: string | null;
+        restaurantCommissionRate: number;
+        discountPercent: number;
+        sortOrder: number;
+        discountLabel: string | null;
+        isFeatured: boolean;
     }>;
     createRestaurant(r: InsertRestaurant): Promise<{
         id: number;
@@ -373,6 +455,11 @@ export declare class DatabaseStorage implements IStorage {
         brandName: string | null;
         hqAddress: string | null;
         prepTime: string | null;
+        restaurantCommissionRate: number;
+        discountPercent: number;
+        sortOrder: number;
+        discountLabel: string | null;
+        isFeatured: boolean;
     }>;
     updateRestaurant(id: number, data: Partial<Restaurant>): Promise<{
         id: number;
@@ -397,6 +484,11 @@ export declare class DatabaseStorage implements IStorage {
         brandName: string | null;
         hqAddress: string | null;
         prepTime: string | null;
+        restaurantCommissionRate: number;
+        discountPercent: number;
+        sortOrder: number;
+        discountLabel: string | null;
+        isFeatured: boolean;
     }>;
     deleteRestaurant(id: number): Promise<void>;
     getMenuItems(restaurantId: number): Promise<{
@@ -461,6 +553,8 @@ export declare class DatabaseStorage implements IStorage {
         rating: number | null;
         feedback: string | null;
         cancelReason: string | null;
+        orderName: string | null;
+        orderPhone: string | null;
         taxAmount: number;
         promoCode: string | null;
         promoDiscount: number;
@@ -491,6 +585,8 @@ export declare class DatabaseStorage implements IStorage {
         rating: number | null;
         feedback: string | null;
         cancelReason: string | null;
+        orderName: string | null;
+        orderPhone: string | null;
         taxAmount: number;
         promoCode: string | null;
         promoDiscount: number;
@@ -521,6 +617,8 @@ export declare class DatabaseStorage implements IStorage {
         rating: number | null;
         feedback: string | null;
         cancelReason: string | null;
+        orderName: string | null;
+        orderPhone: string | null;
         taxAmount: number;
         promoCode: string | null;
         promoDiscount: number;
@@ -535,6 +633,7 @@ export declare class DatabaseStorage implements IStorage {
         rating: number | null;
         deliveryFee: number;
         restaurantId: number;
+        notes: string | null;
         orderNumber: string;
         clientId: number;
         driverId: number | null;
@@ -548,10 +647,11 @@ export declare class DatabaseStorage implements IStorage {
         deliveryAddress: string;
         deliveryLat: number | null;
         deliveryLng: number | null;
-        notes: string | null;
         estimatedDelivery: string | null;
         feedback: string | null;
         cancelReason: string | null;
+        orderName: string | null;
+        orderPhone: string | null;
         taxAmount: number;
         promoCode: string | null;
         promoDiscount: number;
@@ -581,6 +681,8 @@ export declare class DatabaseStorage implements IStorage {
         rating: number | null;
         feedback: string | null;
         cancelReason: string | null;
+        orderName: string | null;
+        orderPhone: string | null;
         taxAmount: number;
         promoCode: string | null;
         promoDiscount: number;
@@ -702,6 +804,63 @@ export declare class DatabaseStorage implements IStorage {
             expense: number;
         }[];
     }>;
+    getRestaurantPayouts(): Promise<{
+        id: number;
+        restaurantId: number;
+        restaurantName: string;
+        period: string;
+        orderCount: number;
+        grossAmount: number;
+        mawejaCommission: number;
+        netAmount: number;
+        isPaid: boolean;
+        paidAt: Date | null;
+        notes: string | null;
+        createdAt: Date | null;
+    }[]>;
+    getRestaurantPayout(id: number): Promise<{
+        id: number;
+        restaurantId: number;
+        restaurantName: string;
+        period: string;
+        orderCount: number;
+        grossAmount: number;
+        mawejaCommission: number;
+        netAmount: number;
+        isPaid: boolean;
+        paidAt: Date | null;
+        notes: string | null;
+        createdAt: Date | null;
+    }>;
+    createRestaurantPayout(data: InsertRestaurantPayout): Promise<{
+        id: number;
+        createdAt: Date | null;
+        restaurantId: number;
+        restaurantName: string;
+        period: string;
+        orderCount: number;
+        grossAmount: number;
+        mawejaCommission: number;
+        netAmount: number;
+        isPaid: boolean;
+        paidAt: Date | null;
+        notes: string | null;
+    }>;
+    updateRestaurantPayout(id: number, data: Partial<RestaurantPayout>): Promise<{
+        id: number;
+        restaurantId: number;
+        restaurantName: string;
+        period: string;
+        orderCount: number;
+        grossAmount: number;
+        mawejaCommission: number;
+        netAmount: number;
+        isPaid: boolean;
+        paidAt: Date | null;
+        notes: string | null;
+        createdAt: Date | null;
+    }>;
+    deleteRestaurantPayout(id: number): Promise<void>;
     getDashboardStats(): Promise<{
         orders: {
             total: number;
@@ -771,16 +930,22 @@ export declare class DatabaseStorage implements IStorage {
         id: number;
         name: string;
         icon: string;
+        imageUrl: string | null;
         description: string;
         isActive: boolean;
+        sortOrder: number;
+        serviceTypes: string[] | null;
         createdAt: Date | null;
     }[]>;
     getServiceCategory(id: number): Promise<{
         id: number;
         name: string;
         icon: string;
+        imageUrl: string | null;
         description: string;
         isActive: boolean;
+        sortOrder: number;
+        serviceTypes: string[] | null;
         createdAt: Date | null;
     }>;
     createServiceCategory(cat: InsertServiceCategory): Promise<{
@@ -789,14 +954,20 @@ export declare class DatabaseStorage implements IStorage {
         createdAt: Date | null;
         description: string;
         isActive: boolean;
+        sortOrder: number;
         icon: string;
+        imageUrl: string | null;
+        serviceTypes: string[] | null;
     }>;
     updateServiceCategory(id: number, data: Partial<ServiceCategory>): Promise<{
         id: number;
         name: string;
         icon: string;
+        imageUrl: string | null;
         description: string;
         isActive: boolean;
+        sortOrder: number;
+        serviceTypes: string[] | null;
         createdAt: Date | null;
     }>;
     deleteServiceCategory(id: number): Promise<void>;
@@ -916,10 +1087,10 @@ export declare class DatabaseStorage implements IStorage {
         createdAt: Date | null;
         description: string;
         isActive: boolean;
-        price: string | null;
-        categoryId: number;
-        imageUrl: string;
         sortOrder: number;
+        price: string | null;
+        imageUrl: string;
+        categoryId: number;
     }>;
     updateServiceCatalogItem(id: number, data: Partial<ServiceCatalogItem>): Promise<{
         id: number;
@@ -957,8 +1128,8 @@ export declare class DatabaseStorage implements IStorage {
         id: number;
         createdAt: Date | null;
         isActive: boolean;
-        title: string;
         sortOrder: number;
+        title: string;
         mediaUrl: string;
         mediaType: string;
         linkUrl: string | null;
@@ -974,6 +1145,39 @@ export declare class DatabaseStorage implements IStorage {
         createdAt: Date | null;
     }>;
     deleteAdvertisement(id: number): Promise<void>;
+    getPromoBanner(): Promise<{
+        id: number;
+        tagText: string;
+        title: string;
+        subtitle: string;
+        buttonText: string;
+        linkUrl: string | null;
+        bgColorFrom: string;
+        bgColorTo: string;
+        isActive: boolean;
+        updatedAt: Date | null;
+    }>;
+    upsertPromoBanner(data: Partial<InsertPromoBanner>): Promise<{
+        id: number;
+        isActive: boolean;
+        updatedAt: Date | null;
+        title: string;
+        linkUrl: string | null;
+        tagText: string;
+        subtitle: string;
+        buttonText: string;
+        bgColorFrom: string;
+        bgColorTo: string;
+    }>;
+    getSettings(): Promise<Record<string, string>>;
+    setSetting(key: string, value: string): Promise<void>;
+    setSettings(data: Record<string, string>): Promise<void>;
+    getPromotions(): Promise<Promotion[]>;
+    getPromotion(id: number): Promise<Promotion | undefined>;
+    getPromotionByCode(code: string): Promise<Promotion | undefined>;
+    createPromotion(data: InsertPromotion): Promise<Promotion>;
+    updatePromotion(id: number, data: Partial<Promotion>): Promise<Promotion | undefined>;
+    deletePromotion(id: number): Promise<void>;
 }
 export declare const storage: DatabaseStorage;
 //# sourceMappingURL=storage.d.ts.map

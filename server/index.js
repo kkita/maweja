@@ -1,18 +1,68 @@
 import express from "express";
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic } from "./vite";
 import { seedDatabase } from "./seed";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
 const app = express();
+// Faire confiance au reverse proxy Replit (nécessaire pour les cookies sécurisés en prod)
+app.set("trust proxy", 1);
+const CAPACITOR_ORIGINS = [
+    "capacitor://localhost",
+    "capacitor://com.edcorp.maweja",
+    "capacitor://com.edcorp.maweja.driver",
+    "ionic://localhost",
+    "https://localhost",
+    "http://localhost",
+    "http://localhost:8100",
+    "https://localhost:8100",
+    "https://maweja.net",
+    "https://www.maweja.net",
+];
+const IS_PROD = process.env.NODE_ENV === "production";
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const isCapacitor = origin &&
+        (CAPACITOR_ORIGINS.includes(origin) ||
+            origin.startsWith("capacitor://") ||
+            origin.startsWith("ionic://") ||
+            origin === "null");
+    if (isCapacitor && origin) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type,X-User-Role,Authorization");
+        if (req.method === "OPTIONS") {
+            res.sendStatus(204);
+            return;
+        }
+    }
+    next();
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const PgSession = connectPgSimple(session);
+const pgStore = new PgSession({
+    pool,
+    tableName: "user_sessions",
+    createTableIfMissing: true,
+});
 const sessionOpts = {
+    store: pgStore,
     secret: process.env.SESSION_SECRET || "maweja-secret-2024",
-    resave: false,
+    resave: true,
     saveUninitialized: false,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 },
+    rolling: true,
+    cookie: {
+        // En production: sameSite=none + secure=true pour les apps APK Capacitor (cross-origin)
+        // En développement: sameSite=lax + secure=false pour le navigateur local
+        secure: IS_PROD,
+        httpOnly: true,
+        sameSite: (IS_PROD ? "none" : "lax"),
+        maxAge: 14 * 24 * 60 * 60 * 1000,
+    },
 };
 const adminSession = session({ ...sessionOpts, name: "sid_admin" });
 const driverSession = session({ ...sessionOpts, name: "sid_driver" });
@@ -243,6 +293,23 @@ app.use((req, res, next) => {
       sort_order INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMP DEFAULT NOW()
     )
+  `);
+    // Colonnes supplémentaires utilisateurs (ajoutées progressivement)
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS sex TEXT`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth TEXT`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS full_address TEXT`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS id_photo_url TEXT`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo_url TEXT`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'not_started'`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS rejected_fields JSONB`);
+    await db.execute(sql `ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_token TEXT`);
+    // Seed admin par défaut — crée les comptes s'ils n'existent pas encore
+    await db.execute(sql `
+    INSERT INTO users (email, password, name, phone, role, is_online, verification_status)
+    VALUES
+      ('admin@maweja.cd', 'admin123', 'Super Admin', '0802540138', 'admin', true, 'not_started'),
+      ('admin@maweja.net', 'Maweja2026', 'Admin MAWEJA', '0802540138', 'admin', true, 'not_started')
+    ON CONFLICT (email) DO NOTHING
   `);
     // Seed default service categories
     const existingCats = await db.execute(sql `SELECT COUNT(*) as count FROM service_categories`);

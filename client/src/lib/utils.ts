@@ -27,6 +27,7 @@ export const statusLabels: Record<string, string> = {
   ready: "Prete",
   picked_up: "En livraison",
   delivered: "Livree",
+  returned: "Retournee",
   cancelled: "Annulee",
 };
 
@@ -37,6 +38,7 @@ export const statusColors: Record<string, string> = {
   ready: "bg-green-100 text-green-800",
   picked_up: "bg-purple-100 text-purple-800",
   delivered: "bg-emerald-100 text-emerald-800",
+  returned: "bg-amber-100 text-amber-800",
   cancelled: "bg-red-100 text-red-800",
 };
 

@@ -14,6 +14,16 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
 ## Recent Changes (March 23, 2026)
+- **Returned Orders**: New "returned" order status with automatic refund for wallet payments, finance logging, and client notification. Available in admin order status dropdown alongside existing statuses.
+- **Advanced Analytics Dashboard**: Rebuilt Marketing & Analytics page with 5 tabs:
+  - **Vue d'ensemble**: 11 KPI cards (including returned orders, new clients), trends with switchable chart types (bar/pie/area/line), orders by hour/day of week, payment modes, product ranking, status breakdown
+  - **Part de marché**: Restaurant revenue ranking with share %, volume charts, rating comparison
+  - **Comportement clients**: Client profiles with favorite restaurants, cuisine preferences, revenue contribution, inactivity detection, expenditure details, system revenue generated per client
+  - **Livreurs**: Driver performance table with ponctuality rate bars, rating, online status
+  - **Rétention & Alertes**: Inactive client alerts (+14 days), client-restaurant affinity matrix (heatmap), automated push notification suggestions based on preferences and behavior
+- **Dynamic Restaurant Categories**: `restaurant_categories` table replaces hardcoded food filter pills. Admin page at `/admin/restaurant-categories` with emoji picker (auto-suggestions based on category name, WhatsApp-style). Client-side filters update dynamically.
+- **Auto Promos Category**: Special "Promos" category that auto-includes restaurants with `discountPercent > 0`. Restaurants can belong to multiple categories simultaneously.
+- **Logo Centering**: Dashboard sidebar logo now properly centered.
 - **Forced Login**: Unauthenticated users are now redirected to /login before accessing any client feature. Only login, register, and presentation pages remain public.
 - **Promotions Admin (CRUD)**: New `promotions` DB table replaces hardcoded promo codes. Full admin page at `/admin/promotions` with create/edit/delete, toggle active/inactive, expiration dates, usage limits, and minimum order thresholds. Sidebar entry added.
 - **Featured Stores (Partenaires)**: `isFeatured` boolean on restaurants. Admin toggle in restaurant edit form. Featured restaurants appear first in client list with a gold "Partenaire" badge.

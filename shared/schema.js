@@ -26,6 +26,9 @@ export const users = pgTable("users", {
     profilePhotoUrl: text("profile_photo_url"),
     verificationStatus: text("verification_status").default("not_started"),
     rejectedFields: jsonb("rejected_fields"),
+    adminRole: text("admin_role"),
+    adminPermissions: jsonb("admin_permissions"),
+    authToken: text("auth_token"),
     createdAt: timestamp("created_at").defaultNow(),
 });
 export const restaurants = pgTable("restaurants", {
@@ -51,6 +54,25 @@ export const restaurants = pgTable("restaurants", {
     brandName: text("brand_name"),
     hqAddress: text("hq_address"),
     prepTime: text("prep_time").default("20-30 min"),
+    restaurantCommissionRate: integer("restaurant_commission_rate").notNull().default(20),
+    discountPercent: integer("discount_percent").notNull().default(0),
+    sortOrder: integer("sort_order").notNull().default(0),
+    discountLabel: text("discount_label"),
+    isFeatured: boolean("is_featured").notNull().default(false),
+});
+export const restaurantPayouts = pgTable("restaurant_payouts", {
+    id: serial("id").primaryKey(),
+    restaurantId: integer("restaurant_id").notNull(),
+    restaurantName: text("restaurant_name").notNull(),
+    period: text("period").notNull(),
+    orderCount: integer("order_count").notNull().default(0),
+    grossAmount: integer("gross_amount").notNull().default(0),
+    mawejaCommission: integer("maweja_commission").notNull().default(0),
+    netAmount: integer("net_amount").notNull().default(0),
+    isPaid: boolean("is_paid").notNull().default(false),
+    paidAt: timestamp("paid_at"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").defaultNow(),
 });
 export const menuItems = pgTable("menu_items", {
     id: serial("id").primaryKey(),
@@ -85,6 +107,8 @@ export const orders = pgTable("orders", {
     rating: integer("rating"),
     feedback: text("feedback"),
     cancelReason: text("cancel_reason"),
+    orderName: text("order_name"),
+    orderPhone: text("order_phone"),
     taxAmount: integer("tax_amount").notNull().default(0),
     promoCode: text("promo_code"),
     promoDiscount: integer("promo_discount").notNull().default(0),
@@ -147,8 +171,11 @@ export const serviceCategories = pgTable("service_categories", {
     id: serial("id").primaryKey(),
     name: text("name").notNull(),
     icon: text("icon").notNull().default("Briefcase"),
+    imageUrl: text("image_url").default(""),
     description: text("description").notNull().default(""),
     isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    serviceTypes: text("service_types").array().default([]),
     createdAt: timestamp("created_at").defaultNow(),
 });
 export const serviceRequests = pgTable("service_requests", {
@@ -193,6 +220,32 @@ export const advertisements = pgTable("advertisements", {
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow(),
 });
+export const promoBanners = pgTable("promo_banners", {
+    id: serial("id").primaryKey(),
+    tagText: text("tag_text").notNull().default("Offre Spéciale"),
+    title: text("title").notNull().default("Livraison gratuite"),
+    subtitle: text("subtitle").notNull().default("Sur votre première commande"),
+    buttonText: text("button_text").notNull().default("Commander maintenant"),
+    linkUrl: text("link_url"),
+    bgColorFrom: text("bg_color_from").notNull().default("#dc2626"),
+    bgColorTo: text("bg_color_to").notNull().default("#b91c1c"),
+    isActive: boolean("is_active").notNull().default(true),
+    updatedAt: timestamp("updated_at").defaultNow(),
+});
+export const promotions = pgTable("promotions", {
+    id: serial("id").primaryKey(),
+    code: text("code").notNull().unique(),
+    description: text("description").notNull(),
+    type: text("type").notNull().default("percent"),
+    value: integer("value").notNull().default(10),
+    minOrder: integer("min_order").notNull().default(0),
+    maxUses: integer("max_uses").notNull().default(0),
+    usedCount: integer("used_count").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    expiresAt: timestamp("expires_at"),
+    createdAt: timestamp("created_at").defaultNow(),
+});
+export const insertPromotionSchema = createInsertSchema(promotions).omit({ id: true, createdAt: true, usedCount: true });
 export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({ id: true, createdAt: true });
 export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertServiceCatalogItemSchema = createInsertSchema(serviceCatalogItems).omit({ id: true, createdAt: true });
@@ -206,4 +259,19 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
 export const insertFinanceSchema = createInsertSchema(finances).omit({ id: true, createdAt: true });
+export const appSettings = pgTable("app_settings", {
+    key: text("key").primaryKey(),
+    value: text("value").notNull(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+});
+export const insertPromoBannerSchema = createInsertSchema(promoBanners).omit({ id: true, updatedAt: true });
+export const insertRestaurantPayoutSchema = createInsertSchema(restaurantPayouts).omit({ id: true, createdAt: true });
+export const restaurantCategories = pgTable("restaurant_categories", {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    emoji: text("emoji").notNull().default("🍽️"),
+    isActive: boolean("is_active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+});
+export const insertRestaurantCategorySchema = createInsertSchema(restaurantCategories).omit({ id: true });
 //# sourceMappingURL=schema.js.map

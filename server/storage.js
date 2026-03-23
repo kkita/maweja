@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { eq, desc, and, or, sql, gte, lte } from "drizzle-orm";
-import { users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses, serviceCategories, serviceRequests, serviceCatalogItems, advertisements, } from "@shared/schema";
+import { users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses, serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings, restaurantPayouts, promotions, } from "@shared/schema";
 export class DatabaseStorage {
     async getUser(id) {
         const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -8,6 +8,10 @@ export class DatabaseStorage {
     }
     async getUserByEmail(email) {
         const [user] = await db.select().from(users).where(eq(users.email, email));
+        return user;
+    }
+    async getUserByToken(token) {
+        const [user] = await db.select().from(users).where(eq(users.authToken, token));
         return user;
     }
     async createUser(user) {
@@ -34,7 +38,7 @@ export class DatabaseStorage {
         return db.select().from(users).orderBy(desc(users.createdAt));
     }
     async getRestaurants() {
-        return db.select().from(restaurants);
+        return db.select().from(restaurants).orderBy(desc(restaurants.isFeatured), restaurants.sortOrder, restaurants.name);
     }
     async getRestaurant(id) {
         const [r] = await db.select().from(restaurants).where(eq(restaurants.id, id));
@@ -181,6 +185,24 @@ export class DatabaseStorage {
         }).from(finances).where(whereClause).groupBy(sql `to_char(${finances.createdAt}, 'YYYY-MM-DD')`).orderBy(sql `to_char(${finances.createdAt}, 'YYYY-MM-DD')`);
         return { summary, byCategory, daily };
     }
+    async getRestaurantPayouts() {
+        return db.select().from(restaurantPayouts).orderBy(desc(restaurantPayouts.createdAt));
+    }
+    async getRestaurantPayout(id) {
+        const [payout] = await db.select().from(restaurantPayouts).where(eq(restaurantPayouts.id, id));
+        return payout;
+    }
+    async createRestaurantPayout(data) {
+        const [payout] = await db.insert(restaurantPayouts).values(data).returning();
+        return payout;
+    }
+    async updateRestaurantPayout(id, data) {
+        const [payout] = await db.update(restaurantPayouts).set(data).where(eq(restaurantPayouts.id, id)).returning();
+        return payout;
+    }
+    async deleteRestaurantPayout(id) {
+        await db.delete(restaurantPayouts).where(eq(restaurantPayouts.id, id));
+    }
     async getDashboardStats() {
         const [orderStats] = await db.select({
             total: sql `count(*)`,
@@ -234,7 +256,7 @@ export class DatabaseStorage {
         await db.update(savedAddresses).set({ isDefault: true }).where(and(eq(savedAddresses.id, addressId), eq(savedAddresses.userId, userId)));
     }
     async getServiceCategories() {
-        return db.select().from(serviceCategories).orderBy(serviceCategories.name);
+        return db.select().from(serviceCategories).orderBy(serviceCategories.sortOrder, serviceCategories.name);
     }
     async getServiceCategory(id) {
         const [cat] = await db.select().from(serviceCategories).where(eq(serviceCategories.id, id));
@@ -311,6 +333,70 @@ export class DatabaseStorage {
     }
     async deleteAdvertisement(id) {
         await db.delete(advertisements).where(eq(advertisements.id, id));
+    }
+    async getPromoBanner() {
+        const [banner] = await db.select().from(promoBanners).limit(1);
+        return banner;
+    }
+    async upsertPromoBanner(data) {
+        const existing = await this.getPromoBanner();
+        if (existing) {
+            const [updated] = await db.update(promoBanners).set({ ...data, updatedAt: new Date() }).where(eq(promoBanners.id, existing.id)).returning();
+            return updated;
+        }
+        else {
+            const [created] = await db.insert(promoBanners).values({
+                tagText: "Offre Spéciale",
+                title: "Livraison gratuite",
+                subtitle: "Sur votre première commande",
+                buttonText: "Commander maintenant",
+                bgColorFrom: "#dc2626",
+                bgColorTo: "#b91c1c",
+                isActive: true,
+                ...data,
+            }).returning();
+            return created;
+        }
+    }
+    async getSettings() {
+        const rows = await db.select().from(appSettings);
+        const result = {};
+        for (const row of rows)
+            result[row.key] = row.value;
+        return result;
+    }
+    async setSetting(key, value) {
+        await db.insert(appSettings).values({ key, value }).onConflictDoUpdate({
+            target: appSettings.key,
+            set: { value, updatedAt: new Date() },
+        });
+    }
+    async setSettings(data) {
+        for (const [key, value] of Object.entries(data)) {
+            await this.setSetting(key, value);
+        }
+    }
+    async getPromotions() {
+        return db.select().from(promotions).orderBy(desc(promotions.createdAt));
+    }
+    async getPromotion(id) {
+        const [p] = await db.select().from(promotions).where(eq(promotions.id, id));
+        return p;
+    }
+    async getPromotionByCode(code) {
+        const [p] = await db.select().from(promotions).where(eq(promotions.code, code));
+        return p;
+    }
+    async createPromotion(data) {
+        const [p] = await db.insert(promotions).values(data).returning();
+        return p;
+    }
+    async updatePromotion(id, data) {
+        const [p] = await db.update(promotions).set(data).where(eq(promotions.id, id)).returning();
+        return p;
+    }
+    async deletePromotion(id) {
+        await db.delete(promotions).where(eq(promotions.id, id));
     }
 }
 export const storage = new DatabaseStorage();

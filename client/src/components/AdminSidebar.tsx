@@ -93,9 +93,9 @@ export default function AdminSidebar() {
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 h-screen flex flex-col fixed left-0 top-0 z-40">
       <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center gap-3">
           <img src={logoImg} alt="MAWEJA" className="w-10 h-10 rounded-xl object-cover" />
-          <div>
+          <div className="text-center">
             <h1 className="text-lg font-black text-gray-900 dark:text-white">MAWEJA</h1>
             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">{t.admin.adminPanel}</p>
           </div>

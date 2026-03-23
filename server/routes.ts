@@ -559,6 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         picked_up: "Votre livreur a recupere votre commande",
         delivered: "Votre commande a ete livree avec succes",
         cancelled: "Votre commande a ete annulee",
+        returned: "Votre commande a ete retournee",
       };
       if (statusMessages[req.body.status]) {
         await storage.createNotification({
@@ -589,6 +590,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         // Update payment status
         await storage.updateOrder(order.id, { paymentStatus: "paid" });
+      }
+
+      if (req.body.status === "returned" && order.status !== "returned") {
+        await storage.createFinance({
+          type: "expense", category: "return", amount: order.total,
+          description: `Retour commande ${order.orderNumber}`, orderId: order.id, userId: order.clientId,
+        });
+        if (order.paymentMethod === "wallet") {
+          const client = await storage.getUser(order.clientId);
+          if (client) {
+            await storage.updateUser(client.id, { walletBalance: (client.walletBalance || 0) + order.total });
+            await storage.createWalletTransaction({
+              userId: client.id, amount: order.total, type: "refund",
+              description: `Remboursement retour ${order.orderNumber}`, orderId: order.id,
+            });
+          }
+        }
       }
 
       // On cancel, refund wallet if applicable
@@ -1190,8 +1208,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     const statusBreakdown: Record<string, number> = {};
-    allOrders.filter(o => !["delivered", "cancelled"].includes(o.status)).forEach(o => {
+    periodOrders.forEach(o => {
       statusBreakdown[o.status] = (statusBreakdown[o.status] || 0) + 1;
+    });
+
+    const returnedOrders = periodOrders.filter(o => o.status === "returned");
+
+    // Restaurant market share
+    const restaurantRevenue: Record<number, { id: number; name: string; revenue: number; orderCount: number; avgRating: number; ratingCount: number }> = {};
+    periodOrders.forEach(o => {
+      const r = allRestaurants.find(r => r.id === o.restaurantId);
+      if (!r) return;
+      if (!restaurantRevenue[r.id]) restaurantRevenue[r.id] = { id: r.id, name: r.name, revenue: 0, orderCount: 0, avgRating: 0, ratingCount: 0 };
+      restaurantRevenue[r.id].revenue += o.total;
+      restaurantRevenue[r.id].orderCount++;
+      if (o.rating) { restaurantRevenue[r.id].avgRating += o.rating; restaurantRevenue[r.id].ratingCount++; }
+    });
+    const marketShare = Object.values(restaurantRevenue).map(r => ({
+      ...r, avgRating: r.ratingCount > 0 ? +(r.avgRating / r.ratingCount).toFixed(1) : 0,
+      sharePercent: totalRevenue > 0 ? +(r.revenue / totalRevenue * 100).toFixed(1) : 0,
+    })).sort((a, b) => b.revenue - a.revenue);
+
+    // Client insights: preferences, frequency, revenue contribution
+    const clientInsights = clients.map(c => {
+      const userOrders = periodOrders.filter(o => o.clientId === c.id);
+      const restFreq: Record<number, number> = {};
+      userOrders.forEach(o => { restFreq[o.restaurantId] = (restFreq[o.restaurantId] || 0) + 1; });
+      const favRestId = Object.entries(restFreq).sort((a, b) => b[1] - a[1])[0];
+      const favRest = favRestId ? allRestaurants.find(r => r.id === Number(favRestId[0])) : null;
+      const lastOrder = userOrders.sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())[0];
+      const daysSinceLast = lastOrder ? Math.floor((Date.now() - new Date(lastOrder.createdAt!).getTime()) / (1000 * 60 * 60 * 24)) : -1;
+      const totalSpent = userOrders.reduce((s, o) => s + o.total, 0);
+      const cuisines: Record<string, number> = {};
+      userOrders.forEach(o => {
+        const r = allRestaurants.find(r => r.id === o.restaurantId);
+        if (r?.cuisine) cuisines[r.cuisine] = (cuisines[r.cuisine] || 0) + 1;
+      });
+      const topCuisines = Object.entries(cuisines).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c);
+      return {
+        id: c.id, name: c.name, email: c.email, phone: c.phone,
+        orderCount: userOrders.length,
+        totalSpent,
+        avgOrder: userOrders.length > 0 ? Math.round(totalSpent / userOrders.length) : 0,
+        favoriteRestaurant: favRest?.name || null,
+        favoriteRestaurantId: favRest?.id || null,
+        topCuisines,
+        daysSinceLastOrder: daysSinceLast,
+        isInactive: daysSinceLast > 14,
+        revenueContribution: totalRevenue > 0 ? +(totalSpent / totalRevenue * 100).toFixed(1) : 0,
+      };
+    }).sort((a, b) => b.totalSpent - a.totalSpent);
+
+    // New clients in period
+    const newClients = clients.filter(c => {
+      const firstOrder = allOrders.filter(o => o.clientId === c.id).sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime())[0];
+      if (!firstOrder) return false;
+      const d = new Date(firstOrder.createdAt!);
+      return d >= dateFrom && d <= dateTo;
+    }).map(c => ({ id: c.id, name: c.name, email: c.email, phone: c.phone, createdAt: c.id }));
+
+    // Client-restaurant affinity matrix (top 20 clients x top 10 restaurants)
+    const top20Clients = clientInsights.slice(0, 20);
+    const top10Restaurants = marketShare.slice(0, 10);
+    const affinityMatrix = top20Clients.map(c => {
+      const row: Record<string, number> = {};
+      const userOrders = periodOrders.filter(o => o.clientId === c.id);
+      top10Restaurants.forEach(r => {
+        row[r.name] = userOrders.filter(o => o.restaurantId === r.id).length;
+      });
+      return { clientName: c.name, clientId: c.id, ...row };
+    });
+
+    // Order frequency by day of week
+    const ordersByDayOfWeek = new Array(7).fill(0);
+    periodOrders.forEach(o => {
+      ordersByDayOfWeek[new Date(o.createdAt!).getDay()]++;
     });
 
     res.json({
@@ -1199,20 +1290,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalOrders: periodOrders.length,
         deliveredOrders: deliveredOrders.length,
         cancelledOrders: cancelledOrders.length,
+        returnedOrders: returnedOrders.length,
         onTimeRate: deliveredOrders.length > 0 ? Math.round(onTimeDelivered.length / deliveredOrders.length * 100) : 0,
         avgRating: +avgRating.toFixed(1),
         totalRevenue,
         avgOrderAmount,
         avgDeliveryCost,
         totalClients: clients.length,
+        newClientsCount: newClients.length,
       },
       topProducts,
       dailyTrend,
       ordersByHour,
-      topClients: clientsWithOrders,
+      ordersByDayOfWeek,
+      topClients: clientInsights.slice(0, 30),
+      newClients,
       driverPerformance,
       paymentBreakdown,
       statusBreakdown,
+      marketShare,
+      affinityMatrix,
     });
   });
 
