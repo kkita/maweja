@@ -7,7 +7,7 @@ import { useI18n } from "../../lib/i18n";
 import { Star, Clock, Heart, MapPin, ChevronRight, Search } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { resolveImg } from "../../lib/queryClient";
-import type { Restaurant, ServiceCategory, ServiceCatalogItem } from "@shared/schema";
+import type { Restaurant, ServiceCategory, ServiceCatalogItem, RestaurantCategory } from "@shared/schema";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CATEGORY ITEM — dynamic from API with image
@@ -92,19 +92,7 @@ function CategoryItem({ name, imageUrl, active, testId, onClick }: CategoryItemP
   );
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
-   FOOD FILTER PILLS
-───────────────────────────────────────────────────────────────────────────── */
-const FOOD_PILLS = [
-  { key: "Pizzas",     emoji: "🍕", cuisine: "Pizza" },
-  { key: "Sushis",     emoji: "🍣", cuisine: "Japonais" },
-  { key: "Sandwichs",  emoji: "🥪", cuisine: "Fast Food" },
-  { key: "Burgers",    emoji: "🍔", cuisine: "Burgers" },
-  { key: "Congolais",  emoji: "🇨🇩", cuisine: "Congolais" },
-  { key: "Brunch",     emoji: "☕", cuisine: "Café & Brunch" },
-  { key: "Grillades",  emoji: "🔥", cuisine: "Grillades" },
-  { key: "Libanais",   emoji: "🧆", cuisine: "Libanais" },
-];
+/* FOOD FILTER PILLS — now loaded dynamically from /api/restaurant-categories */
 
 /* ────────────────────────────────────────────────────────────────────────────
    RESTAURANT CARD — cover fully rounded + logo left of text
@@ -233,6 +221,8 @@ export default function HomePage() {
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
   const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
   const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
+  const { data: restaurantCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
+  const activeRestCats = restaurantCategories.filter(c => c.isActive);
 
   const [activeCatId, setActiveCatId] = useState<number | null>(null);
   const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
@@ -407,36 +397,52 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* ── Food type pills ───────────────────────────────────── */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 mb-5 pb-0.5" data-testid="food-pills">
-          {FOOD_PILLS.map(pill => {
-            const isActive = activeCuisine === pill.cuisine;
-            return (
-              <button
-                key={pill.key}
-                onClick={() => handlePill(pill.cuisine)}
-                data-testid={`pill-${pill.key.toLowerCase()}`}
-                className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white active:scale-95 transition-all"
-                style={{
-                  border: isActive ? "1.5px solid #dc2626" : "1.5px solid #E5E7EB",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                }}
-              >
-                <span style={{ fontSize: 14 }}>{pill.emoji}</span>
-                <span
+        {/* ── Title: Tous les établissements ──────────────────── */}
+        <p
+          className="font-black text-gray-900 dark:text-white mb-3"
+          style={{
+            fontSize: 15,
+            borderBottom: "2.5px solid #EC0000",
+            display: "inline-block",
+            paddingBottom: 3,
+            letterSpacing: "-0.2px",
+          }}
+        >
+          Tous les établissements
+        </p>
+
+        {/* ── Food type pills — dynamic from admin ─────────── */}
+        {activeRestCats.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 mb-5 pb-0.5" data-testid="food-pills">
+            {activeRestCats.map(cat => {
+              const isActive = activeCuisine === cat.name;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handlePill(cat.name)}
+                  data-testid={`pill-${cat.id}`}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-gray-900 active:scale-95 transition-all"
                   style={{
-                    fontSize: 12,
-                    fontWeight: isActive ? 700 : 500,
-                    color: isActive ? "#dc2626" : "#374151",
-                    whiteSpace: "nowrap",
+                    border: isActive ? "1.5px solid #dc2626" : "1.5px solid #E5E7EB",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                   }}
                 >
-                  {pill.key}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span style={{ fontSize: 14 }}>{cat.emoji}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "#dc2626" : "#374151",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {cat.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* ── Search results: Services ────────────────────────────── */}
         {globalSearch && matchedServices.length > 0 && (
@@ -464,9 +470,11 @@ export default function HomePage() {
 
         {/* ── Section title ─────────────────────────────────────── */}
         <div id="restaurants-section" className="flex items-center justify-between mb-4">
-          <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
-            {globalSearch ? `Résultats pour "${globalSearch}"` : activeCuisine ? activeCuisine : "Tous les établissements"}
-          </p>
+          {(globalSearch || activeCuisine) && (
+            <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
+              {globalSearch ? `Résultats pour "${globalSearch}"` : activeCuisine}
+            </p>
+          )}
           {(activeCuisine) && (
             <button
               onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}

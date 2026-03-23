@@ -51,6 +51,7 @@ import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminGallery from "./pages/admin/AdminGallery";
 import AdminPromotions from "./pages/admin/AdminPromotions";
+import AdminRestaurantCategories from "./pages/admin/AdminRestaurantCategories";
 import ServicesPage from "./pages/client/ServicesPage";
 import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 import PresentationPage from "./pages/PresentationPage";
@@ -127,6 +128,7 @@ function AppRoutes() {
         <Route path="/admin/marketing" component={AdminMarketing} />
         <Route path="/admin/services" component={AdminServices} />
         <Route path="/admin/promotions" component={AdminPromotions} />
+        <Route path="/admin/restaurant-categories" component={AdminRestaurantCategories} />
         <Route path="/admin/ads" component={AdminAds} />
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/accounts" component={AdminAccounts} />

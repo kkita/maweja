@@ -2,6 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
+import { db } from "./db";
+import { restaurantCategories } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -678,6 +681,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   app.delete("/api/promotions/:id", requireAdmin, async (req, res) => {
     await storage.deletePromotion(Number(req.params.id));
+    res.json({ ok: true });
+  });
+
+  // Restaurant Categories CRUD
+  app.get("/api/restaurant-categories", async (_req, res) => {
+    const rows = await db.select().from(restaurantCategories).orderBy(restaurantCategories.sortOrder, restaurantCategories.name);
+    res.json(rows);
+  });
+
+  app.post("/api/restaurant-categories", requireAdmin, async (req, res) => {
+    const { name, emoji, isActive, sortOrder } = req.body;
+    const [row] = await db.insert(restaurantCategories).values({
+      name, emoji: emoji || "🍽️", isActive: isActive ?? true, sortOrder: sortOrder ?? 0,
+    }).returning();
+    res.json(row);
+  });
+
+  app.patch("/api/restaurant-categories/:id", requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    const [row] = await db.update(restaurantCategories).set(req.body).where(eq(restaurantCategories.id, id)).returning();
+    res.json(row);
+  });
+
+  app.delete("/api/restaurant-categories/:id", requireAdmin, async (req, res) => {
+    await db.delete(restaurantCategories).where(eq(restaurantCategories.id, Number(req.params.id)));
     res.json({ ok: true });
   });
 

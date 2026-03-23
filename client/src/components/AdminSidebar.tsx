@@ -7,7 +7,7 @@ import type { Notification as Notif } from "@shared/schema";
 import logoImg from "@assets/image_1772833363714.png";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Shield, BarChart3,
-  Briefcase, Image, Megaphone, UserCog, GalleryHorizontal, Tag
+  Briefcase, Image, Megaphone, UserCog, GalleryHorizontal, Tag, UtensilsCrossed
 } from "lucide-react";
 
 function canAccess(user: any, badgeKey: string): boolean {
@@ -66,6 +66,7 @@ export default function AdminSidebar() {
     { path: "/admin/drivers", icon: Truck, label: t.admin.drivers, badgeKey: "drivers" },
     { path: "/admin/verifications", icon: Shield, label: t.admin.verifications, badgeKey: "verifications" },
     { path: "/admin/restaurants", icon: Store, label: t.admin.restaurants, badgeKey: "restaurants" },
+    { path: "/admin/restaurant-categories", icon: UtensilsCrossed, label: "Catégories Restaurants", badgeKey: "restaurant_categories" },
     { path: "/admin/customers", icon: Users, label: t.admin.customers, badgeKey: "customers" },
     { path: "/admin/chat", icon: MessageCircle, label: t.admin.chat, badgeKey: "chat" },
     { path: "/admin/finance", icon: DollarSign, label: t.admin.finance, badgeKey: "finance" },

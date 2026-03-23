@@ -322,3 +322,15 @@ export type InsertPromoBanner = z.infer<typeof insertPromoBannerSchema>;
 export const insertRestaurantPayoutSchema = createInsertSchema(restaurantPayouts).omit({ id: true, createdAt: true });
 export type RestaurantPayout = typeof restaurantPayouts.$inferSelect;
 export type InsertRestaurantPayout = z.infer<typeof insertRestaurantPayoutSchema>;
+
+export const restaurantCategories = pgTable("restaurant_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  emoji: text("emoji").notNull().default("🍽️"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertRestaurantCategorySchema = createInsertSchema(restaurantCategories).omit({ id: true });
+export type RestaurantCategory = typeof restaurantCategories.$inferSelect;
+export type InsertRestaurantCategory = z.infer<typeof insertRestaurantCategorySchema>;
