@@ -482,6 +482,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Increment promo usage count
+    if (req.body.promoCode) {
+      const promo = await storage.getPromotionByCode(req.body.promoCode);
+      if (promo) {
+        await storage.updatePromotion(promo.id, { usedCount: promo.usedCount + 1 });
+      }
+    }
+
     // Debit loyalty points if used
     if (req.body.pointsUsed && req.body.pointsUsed > 0) {
       const client = await storage.getUser(order.clientId);
@@ -628,23 +636,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(updated);
   });
 
-  // Promo code validation
+  // Promo code validation (dynamic from DB)
   app.post("/api/promo/validate", requireAuth, async (req, res) => {
     const { code, subtotal } = req.body;
     if (!code) return res.status(400).json({ message: "Code promo requis" });
-    const promoCodes: Record<string, { type: string; value: number; description: string }> = {
-      "MAWEJA10": { type: "percent", value: 10, description: "10% de reduction" },
-      "MAWEJA20": { type: "percent", value: 20, description: "20% de reduction" },
-      "LIVRAISON": { type: "delivery", value: 100, description: "Livraison gratuite" },
-      "BIENVENUE": { type: "fixed", value: 2000, description: "$2000 de reduction" },
-    };
-    const promo = promoCodes[code.toUpperCase()];
-    if (!promo) return res.status(400).json({ message: "Code promo invalide" });
+    const promo = await storage.getPromotionByCode(code.toUpperCase());
+    if (!promo || !promo.isActive) return res.status(400).json({ message: "Code promo invalide" });
+    if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) return res.status(400).json({ message: "Code promo expire" });
+    if (promo.maxUses > 0 && promo.usedCount >= promo.maxUses) return res.status(400).json({ message: "Code promo epuise" });
+    if (promo.minOrder > 0 && (subtotal || 0) < promo.minOrder) return res.status(400).json({ message: `Commande minimum: ${promo.minOrder}` });
     let discount = 0;
     if (promo.type === "percent") discount = Math.floor((subtotal || 0) * promo.value / 100);
     else if (promo.type === "fixed") discount = promo.value;
     else if (promo.type === "delivery") discount = 2500;
-    res.json({ valid: true, code: code.toUpperCase(), discount, description: promo.description, type: promo.type });
+    res.json({ valid: true, code: promo.code, discount, description: promo.description, type: promo.type });
+  });
+
+  // Promotions CRUD (admin)
+  app.get("/api/promotions", requireAdmin, async (_req, res) => {
+    res.json(await storage.getPromotions());
+  });
+  app.post("/api/promotions", requireAdmin, async (req, res) => {
+    const { code, description, type, value, minOrder, maxUses, isActive, expiresAt } = req.body;
+    if (!code || !description) return res.status(400).json({ message: "Code et description requis" });
+    const promo = await storage.createPromotion({
+      code: code.toUpperCase(),
+      description,
+      type: type || "percent",
+      value: value || 10,
+      minOrder: minOrder || 0,
+      maxUses: maxUses || 0,
+      isActive: isActive !== false,
+      expiresAt: expiresAt ? new Date(expiresAt) : null,
+    });
+    res.json(promo);
+  });
+  app.patch("/api/promotions/:id", requireAdmin, async (req, res) => {
+    const promo = await storage.updatePromotion(Number(req.params.id), req.body);
+    if (!promo) return res.status(404).json({ message: "Promotion non trouvee" });
+    res.json(promo);
+  });
+  app.delete("/api/promotions/:id", requireAdmin, async (req, res) => {
+    await storage.deletePromotion(Number(req.params.id));
+    res.json({ ok: true });
   });
 
   // Saved addresses

@@ -208,19 +208,11 @@ function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) 
               <span style={{ fontSize: 11 }}>{r.deliveryTime || "—"}</span>
             </div>
             <div className="w-px h-3 bg-gray-200" />
-            {r.deliveryFee != null && r.deliveryFee > 0 ? (
-              <span className="text-gray-500" style={{ fontSize: 11 }}>{formatPrice(r.deliveryFee)} livraison</span>
-            ) : (
-              <span className="text-green-600 font-semibold" style={{ fontSize: 11 }}>Livraison offerte</span>
-            )}
-            {r.address && (
-              <>
-                <div className="w-px h-3 bg-gray-200" />
-                <div className="flex items-center gap-0.5 text-gray-400 min-w-0">
-                  <MapPin size={10} strokeWidth={1.8} className="flex-shrink-0" />
-                  <span className="truncate" style={{ fontSize: 10 }}>{r.address.split(",")[0]}</span>
-                </div>
-              </>
+            {(r as any).isFeatured && (
+              <span className="text-amber-500 font-bold flex items-center gap-0.5" style={{ fontSize: 11 }}>
+                <Star size={10} className="fill-amber-400 text-amber-400" />
+                Partenaire
+              </span>
             )}
           </div>
         </div>

@@ -342,12 +342,13 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
   const [commissionRate, setCommissionRate] = useState<number>(restaurant.restaurantCommissionRate ?? 20);
   const [discountPercent, setDiscountPercent] = useState<number>((restaurant as any).discountPercent ?? 0);
   const [discountLabel, setDiscountLabel] = useState<string>((restaurant as any).discountLabel ?? "");
+  const [isFeatured, setIsFeatured] = useState<boolean>((restaurant as any).isFeatured ?? false);
 
   const mutation = useMutation({
     mutationFn: async () => {
       await apiRequest(`/api/restaurants/${restaurant.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate, discountPercent, discountLabel: discountLabel || null }),
+        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate, discountPercent, discountLabel: discountLabel || null, isFeatured }),
       });
     },
     onSuccess: () => {
@@ -463,6 +464,26 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
             )}
           </div>
         </div>
+
+        <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4 border border-amber-200 dark:border-amber-800/40">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Star size={16} className="text-amber-500" />
+              <div>
+                <p className="text-sm font-bold text-amber-800 dark:text-amber-300">Store Partenaire</p>
+                <p className="text-[10px] text-amber-600/70">Epingler ce restaurant en haut de la liste client</p>
+              </div>
+            </div>
+            <div
+              className={`relative w-11 h-6 rounded-full cursor-pointer transition-colors ${isFeatured ? "bg-amber-500" : "bg-gray-300 dark:bg-gray-600"}`}
+              onClick={() => setIsFeatured(!isFeatured)}
+              data-testid="toggle-featured"
+            >
+              <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isFeatured ? "translate-x-5" : "translate-x-0"}`} />
+            </div>
+          </div>
+        </div>
+
         <button onClick={() => mutation.mutate()} disabled={mutation.isPending} data-testid="save-restaurant-info"
           className="w-full mt-5 py-3 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
           {mutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}

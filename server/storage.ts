@@ -3,6 +3,7 @@ import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
   serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings, restaurantPayouts,
+  promotions,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -15,6 +16,7 @@ import {
   type Advertisement, type InsertAdvertisement,
   type PromoBanner, type InsertPromoBanner,
   type RestaurantPayout, type InsertRestaurantPayout,
+  type Promotion, type InsertPromotion,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -103,6 +105,13 @@ export interface IStorage {
   updateRestaurantPayout(id: number, data: Partial<RestaurantPayout>): Promise<RestaurantPayout | undefined>;
   deleteRestaurantPayout(id: number): Promise<void>;
 
+  getPromotions(): Promise<Promotion[]>;
+  getPromotion(id: number): Promise<Promotion | undefined>;
+  getPromotionByCode(code: string): Promise<Promotion | undefined>;
+  createPromotion(data: InsertPromotion): Promise<Promotion>;
+  updatePromotion(id: number, data: Partial<Promotion>): Promise<Promotion | undefined>;
+  deletePromotion(id: number): Promise<void>;
+
   getDashboardStats(): Promise<any>;
 }
 
@@ -153,7 +162,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRestaurants() {
-    return db.select().from(restaurants).orderBy(restaurants.sortOrder, restaurants.name);
+    return db.select().from(restaurants).orderBy(desc(restaurants.isFeatured), restaurants.sortOrder, restaurants.name);
   }
 
   async getRestaurant(id: number) {
@@ -550,6 +559,29 @@ export class DatabaseStorage implements IStorage {
     for (const [key, value] of Object.entries(data)) {
       await this.setSetting(key, value);
     }
+  }
+
+  async getPromotions(): Promise<Promotion[]> {
+    return db.select().from(promotions).orderBy(desc(promotions.createdAt));
+  }
+  async getPromotion(id: number): Promise<Promotion | undefined> {
+    const [p] = await db.select().from(promotions).where(eq(promotions.id, id));
+    return p;
+  }
+  async getPromotionByCode(code: string): Promise<Promotion | undefined> {
+    const [p] = await db.select().from(promotions).where(eq(promotions.code, code));
+    return p;
+  }
+  async createPromotion(data: InsertPromotion): Promise<Promotion> {
+    const [p] = await db.insert(promotions).values(data).returning();
+    return p;
+  }
+  async updatePromotion(id: number, data: Partial<Promotion>): Promise<Promotion | undefined> {
+    const [p] = await db.update(promotions).set(data).where(eq(promotions.id, id)).returning();
+    return p;
+  }
+  async deletePromotion(id: number): Promise<void> {
+    await db.delete(promotions).where(eq(promotions.id, id));
   }
 }
 

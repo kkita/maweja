@@ -50,6 +50,7 @@ import AdminServices from "./pages/admin/AdminServices";
 import AdminAds from "./pages/admin/AdminAds";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminGallery from "./pages/admin/AdminGallery";
+import AdminPromotions from "./pages/admin/AdminPromotions";
 import ServicesPage from "./pages/client/ServicesPage";
 import ServiceRequestPage from "./pages/client/ServiceRequestPage";
 import PresentationPage from "./pages/PresentationPage";
@@ -125,6 +126,7 @@ function AppRoutes() {
         <Route path="/admin/verifications" component={AdminVerifications} />
         <Route path="/admin/marketing" component={AdminMarketing} />
         <Route path="/admin/services" component={AdminServices} />
+        <Route path="/admin/promotions" component={AdminPromotions} />
         <Route path="/admin/ads" component={AdminAds} />
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/accounts" component={AdminAccounts} />
@@ -187,30 +189,13 @@ function AppRoutes() {
   }
 
   return (
-    <>
-      <Switch>
-        <Route path="/" component={ClientHome} />
-        <Route path="/restaurant/:id" component={RestaurantPage} />
-        <Route path="/cart" component={CartPage} />
-        <Route path="/checkout" component={CheckoutPage} />
-        <Route path="/orders" component={OrdersPage} />
-        <Route path="/order/:id" component={OrderDetailPage} />
-        <Route path="/tracking/:id" component={TrackingPage} />
-        <Route path="/wallet" component={WalletPage} />
-        <Route path="/addresses" component={AddressPage} />
-        <Route path="/services" component={ServicesPage} />
-        <Route path="/services/new" component={ServiceRequestPage} />
-        <Route path="/services/request/:id" component={ServiceRequestPage} />
-        <Route path="/settings" component={ClientSettings} />
-        <Route path="/notifications" component={NotificationsPage} />
-        <Route path="/login" component={LoginPage} />
-        <Route path="/driver/login" component={DriverLoginPage} />
-        <Route path="/admin/login" component={AdminLoginPage} />
-        <Route path="/presentation" component={PresentationPage} />
-        <Route component={ClientHome} />
-      </Switch>
-      <ClientContactBubble />
-    </>
+    <Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/driver/login" component={DriverLoginPage} />
+      <Route path="/admin/login" component={AdminLoginPage} />
+      <Route path="/presentation" component={PresentationPage} />
+      <Route component={LoginPage} />
+    </Switch>
   );
 }
 

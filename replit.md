@@ -13,7 +13,16 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 **Business Vision & Market Potential:**
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
-## Recent Changes (March 2026)
+## Recent Changes (March 23, 2026)
+- **Forced Login**: Unauthenticated users are now redirected to /login before accessing any client feature. Only login, register, and presentation pages remain public.
+- **Promotions Admin (CRUD)**: New `promotions` DB table replaces hardcoded promo codes. Full admin page at `/admin/promotions` with create/edit/delete, toggle active/inactive, expiration dates, usage limits, and minimum order thresholds. Sidebar entry added.
+- **Featured Stores (Partenaires)**: `isFeatured` boolean on restaurants. Admin toggle in restaurant edit form. Featured restaurants appear first in client list with a gold "Partenaire" badge.
+- **Fixed Service Fee ($0.76)**: Replaced the 5% tax with a flat $0.76 service fee per order, displayed in CartPage and CheckoutPage. Fee is included in the final total.
+- **Editable Recipient at Checkout**: Summary step now shows editable name + phone fields (pre-filled from profile). Users can order for another person while keeping their own account for tracking.
+- **Restaurant Cards Simplified**: Removed address and delivery fee from client-facing restaurant cards.
+- **Photo Persistence**: Uploads stored in `uploads/` directory which persists across Replit deployments. Seed script protects all custom data (never overwrites user-uploaded images, ads, or orders).
+
+## Previous Changes (March 2026)
 - **Gallery Feature**: New "Galerie Médias" menu in admin sidebar. `GET /api/admin/gallery` returns all uploaded files with absolute URLs. `DELETE /api/admin/gallery/:filename` deletes a file. `POST /api/admin/gallery/fix-urls` migrates all relative `/uploads/…` paths in the DB to absolute URLs (for production fixes). Gallery page has grid/list view, tab filtering (images/video), search, copy-URL, open-in-new-tab, and delete per file. GalleryPicker component (modal) added to AdminAds (URL media field), AdminRestaurants (all MediaUploadButton instances + menu item form), and AdminServices (category image + catalog item image). `requireAdmin` middleware guards all gallery endpoints. `canAccess("gallery")` added to sidebar permission system.
 
 

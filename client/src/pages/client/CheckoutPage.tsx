@@ -9,7 +9,7 @@ import ClientNav from "../../components/ClientNav";
 import {
   Banknote, Smartphone, Wallet, CreditCard, Tag, Gift, Star, Receipt,
   ArrowLeft, Check, Loader2, MapPin, ChevronRight, ShoppingBag,
-  Clock, Shield, Sparkles, X
+  Clock, Shield, Sparkles, X, User
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 
@@ -51,6 +51,8 @@ export default function CheckoutPage() {
   const [promoType, setPromoType] = useState("");
   const [usePoints, setUsePoints] = useState(false);
   const [promoLoading, setPromoLoading] = useState(false);
+  const [orderName, setOrderName] = useState("");
+  const [orderPhone, setOrderPhone] = useState("");
 
   const { data: settings } = useQuery<Record<string, string>>({
     queryKey: ["/api/settings"],
@@ -66,15 +68,22 @@ export default function CheckoutPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      setOrderName(user.name || "");
+      setOrderPhone(user.phone || "");
+    }
+  }, [user]);
+
   if (!user) { navigate("/login"); return null; }
   if (items.length === 0) { navigate("/cart"); return null; }
 
   const subtotal = total;
   const baseDeliveryFee = settings?.delivery_fee ? parseInt(settings.delivery_fee, 10) : 2500;
   const deliveryFee = promoType === "delivery" ? 0 : baseDeliveryFee;
-  const taxAmount = Math.floor(subtotal * 0.05);
+  const serviceFee = 0.76;
   const effectivePromoDiscount = promoType === "delivery" ? 0 : promoDiscount;
-  const totalBeforeDiscounts = subtotal + deliveryFee + taxAmount;
+  const totalBeforeDiscounts = Math.round(subtotal + deliveryFee + serviceFee);
   const remainingAfterPromo = totalBeforeDiscounts - effectivePromoDiscount;
   const pointsValue = user.loyaltyPoints * 100;
   const pointsDiscount = usePoints ? Math.min(pointsValue, Math.max(0, remainingAfterPromo)) : 0;
@@ -121,14 +130,20 @@ export default function CheckoutPage() {
           items: JSON.stringify(items.map((i) => ({ name: i.name, qty: i.quantity, price: i.price }))),
           subtotal,
           deliveryFee,
-          taxAmount,
+          taxAmount: Math.round(serviceFee * 100),
           total: netTotal,
           paymentMethod,
           paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
           deliveryAddress: checkoutData.deliveryAddress || "Adresse non specifiee",
           deliveryLat: checkoutData.deliveryLat,
           deliveryLng: checkoutData.deliveryLng,
-          notes: checkoutData.notes || "",
+          notes: [
+            checkoutData.notes || "",
+            orderName !== user.name ? `Destinataire: ${orderName}` : "",
+            orderPhone !== user.phone ? `Tel destinataire: ${orderPhone}` : "",
+          ].filter(Boolean).join(" | ") || "",
+          orderName: orderName || user.name,
+          orderPhone: orderPhone || user.phone,
           promoCode: promoCode || null,
           promoDiscount: effectivePromoDiscount + pointsDiscount,
           pointsUsed: usePoints ? Math.ceil(pointsDiscount / 100) : 0,
@@ -205,6 +220,36 @@ export default function CheckoutPage() {
 
           <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-4">
             <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <User size={15} className="text-red-600" />
+              Destinataire
+            </h3>
+            <p className="text-xs text-gray-400 mb-3">Vous pouvez modifier le nom et le numero pour commander pour une autre personne</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Nom complet</label>
+                <input
+                  type="text"
+                  value={orderName}
+                  onChange={(e) => setOrderName(e.target.value)}
+                  data-testid="input-order-name"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Numero de telephone</label>
+                <input
+                  type="tel"
+                  value={orderPhone}
+                  onChange={(e) => setOrderPhone(e.target.value)}
+                  data-testid="input-order-phone"
+                  className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-5 mb-4">
+            <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3 flex items-center gap-2">
               <MapPin size={15} className="text-red-600" />
               Livraison
             </h3>
@@ -249,8 +294,8 @@ export default function CheckoutPage() {
                 )}
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Taxes (5%)</span>
-                <span className="text-gray-900 dark:text-white font-medium">{formatPrice(taxAmount)}</span>
+                <span className="text-gray-500 dark:text-gray-400">Frais de service</span>
+                <span className="text-gray-900 dark:text-white font-medium">{formatPrice(serviceFee)}</span>
               </div>
               {effectivePromoDiscount > 0 && (
                 <div className="flex justify-between text-sm">
@@ -385,8 +430,8 @@ export default function CheckoutPage() {
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Taxes (5%)</span>
-              <span className="text-gray-900 dark:text-white">{formatPrice(taxAmount)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Frais de service</span>
+              <span className="text-gray-900 dark:text-white">{formatPrice(serviceFee)}</span>
             </div>
             {effectivePromoDiscount > 0 && (
               <div className="flex justify-between text-sm">

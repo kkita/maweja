@@ -53,8 +53,8 @@ export default function CartPage() {
     savedAddresses?.find((a) => a.isDefault) || savedAddresses?.[0] || null;
 
   const deliveryFee = restaurant?.deliveryFee ?? 2;
-  const taxAmount = Math.round(total * 0.05 * 100) / 100;
-  const grandTotal = total + deliveryFee + taxAmount;
+  const serviceFee = 0.76;
+  const grandTotal = total + deliveryFee + serviceFee;
 
   const resolvedAddress = defaultAddress?.address || manualAddress;
 
@@ -307,8 +307,8 @@ export default function CartPage() {
             <span className="font-semibold text-gray-800" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
           </div>
           <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
-            <span className="text-gray-400">Taxes (5%)</span>
-            <span className="font-semibold text-gray-800" data-testid="text-tax">{formatPrice(taxAmount)}</span>
+            <span className="text-gray-400">Frais de service</span>
+            <span className="font-semibold text-gray-800" data-testid="text-tax">{formatPrice(serviceFee)}</span>
           </div>
           <div className="border-t border-gray-100 pt-3 flex justify-between gap-2 items-center">
             <span className="font-bold text-gray-900" style={{ fontSize: 15 }}>Total</span>

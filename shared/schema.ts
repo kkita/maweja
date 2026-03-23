@@ -61,6 +61,7 @@ export const restaurants = pgTable("restaurants", {
   discountPercent: integer("discount_percent").notNull().default(0),
   sortOrder: integer("sort_order").notNull().default(0),
   discountLabel: text("discount_label"),
+  isFeatured: boolean("is_featured").notNull().default(false),
 });
 
 export const restaurantPayouts = pgTable("restaurant_payouts", {
@@ -112,6 +113,8 @@ export const orders = pgTable("orders", {
   rating: integer("rating"),
   feedback: text("feedback"),
   cancelReason: text("cancel_reason"),
+  orderName: text("order_name"),
+  orderPhone: text("order_phone"),
   taxAmount: integer("tax_amount").notNull().default(0),
   promoCode: text("promo_code"),
   promoDiscount: integer("promo_discount").notNull().default(0),
@@ -245,6 +248,24 @@ export const promoBanners = pgTable("promo_banners", {
   isActive: boolean("is_active").notNull().default(true),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const promotions = pgTable("promotions", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  description: text("description").notNull(),
+  type: text("type").notNull().default("percent"),
+  value: integer("value").notNull().default(10),
+  minOrder: integer("min_order").notNull().default(0),
+  maxUses: integer("max_uses").notNull().default(0),
+  usedCount: integer("used_count").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPromotionSchema = createInsertSchema(promotions).omit({ id: true, createdAt: true, usedCount: true });
+export type Promotion = typeof promotions.$inferSelect;
+export type InsertPromotion = z.infer<typeof insertPromotionSchema>;
 
 export const insertServiceCategorySchema = createInsertSchema(serviceCategories).omit({ id: true, createdAt: true });
 export const insertServiceRequestSchema = createInsertSchema(serviceRequests).omit({ id: true, createdAt: true, updatedAt: true });
