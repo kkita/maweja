@@ -1,0 +1,19 @@
+DRIVE APP
+Concernant les livreurs voici ce qu’il faut savoir:
+1. Ils doivent avoir le détails de toute la commande ( facture + informationdu client et du restaurant et le mode de paiement) y compris l’adresse dans lemaps pour localiser le client et la possibilité d’appeler le client et le service client
+directement sur WhatsApp. 2. Il doit leur rajouter dans leur application une option RAPPORTÇa doit résumer toutes les commandes effectuées par le livreur en donnant letotal général de chaque livraison effectuées pour une journée ou périodesélectionnée. (Ça permet au livreur de savoir en temps réel la somme d’argent qu’il doit verserà la caisse et au trésorier la somme qu’il doit recevoir sans avoir à faire uncalcul
+manuel pour déterminer le montant)
+3. Il doit aussi avoir dans leur application une option *Frais de livraison*Ici on doit avoir uniquement le total de frais de livraison de chaque commandeeffectué et avoir la possibilité de sélectionner une période ou une date préciseet
+dans ce cas on doit avoir le total général pour la période sélectionné. ( lacommission des livreurs sera calculée manuellement)
+NB: les livreurs sont de journalier et indépendant c’est à dire qu’il peuvent
+arrêter de travailler à n’importe quel moment et aller faire autre chose, nousdevons avoir la possibilité de bloquer le compte d’un livreur pour qu’il ne puissepas avoir accès à l’application s’il arrête de travailler pour nous. Nous devons aussi avoir la possibilité de bloqué l’option frais de livraisondansleur application pour qu’ils ne voient pas le frais de livraison ( il y’auradesituations qui pourront nous pousser à faire recours à ça )
+4. AUTRES INFORMATIONS SUPPLÉMENTAIRES
+1. Supprimer l’écran d’animation au démarrage. 2. Dans la création de compte livreur : - Retirer l’email - Retirer la commission %
+- Retirer le permis, Remplacer “permis” par “numéro de pièce d’identité” (voir lacapture).
+3. NOUS AVONS CONSTATÉ Une fois enregistré en tant que client, l’utilisateur nepeut pas être à la fois client et livreur. Exemple : lors de la création d’un compte livreur avec mon adresse email, celan’apas fonctionné car j’étais déjà enregistré comme client. 4. Améliorer la qualité de Maps : - Les adresses ne sont pas exactes. - La qualité des cartes n’est pas satisfaisante. Possible d’utiliser un autre servcie Maps, voir la capture
+Tupuca : Utilise « Mappr »
+Maweja : Utilise «Leaflet »
+5. MODIFIER LE FORMAT DU NUMÉRO ID
+La structure doit être : M + 8 chiffres. Exemple :
+M00000001, M00000002, M00000003... M00222302 etc. Ou quelque chosedecomme ça
+6. AJOUTER UNE SONNERIE Nous avions demandé qu’à chaque nouvelle entréede commande, une sonnerie soit déclenchée pour prévenir. 7. Afficher sur la carte Maps l’adresse où le livreur doit aller livrer le client. Si celaest trop compliqué à mettre en place immédiatement, vous pouvez retirer cettefonction pour le moment et l’inclure plus tard. Cependant, 

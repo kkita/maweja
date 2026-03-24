@@ -6,7 +6,7 @@ import { useToast } from "../../hooks/use-toast";
 import { onWSMessage } from "../../lib/websocket";
 
 import {
-  Upload, Camera, User, Mail, Phone, MapPin, Calendar, Users, Shield,
+  Upload, Camera, User, Phone, MapPin, Calendar, Users, Shield,
   CheckCircle2, Clock, AlertCircle, Loader2, X, ChevronRight
 } from "lucide-react";
 
@@ -19,8 +19,8 @@ const FIELD_LABELS: Record<string, string> = {
   sex: "Sexe",
   dateOfBirth: "Date de naissance",
   fullAddress: "Adresse complete",
-  email: "Adresse email",
   phone: "Numero de telephone",
+  idNumber: "Numero de piece d'identite",
   idPhotoUrl: "Photo de la piece d'identite",
   profilePhotoUrl: "Photo de profil",
 };
@@ -180,8 +180,8 @@ export default function DriverOnboarding() {
     sex: user?.sex || "",
     dateOfBirth: user?.dateOfBirth || "",
     fullAddress: user?.fullAddress || "",
-    email: user?.email || "",
     phone: user?.phone || "",
+    idNumber: user?.driverLicense || "",
     idPhotoUrl: user?.idPhotoUrl || "",
     profilePhotoUrl: user?.profilePhotoUrl || "",
   });
@@ -259,7 +259,7 @@ export default function DriverOnboarding() {
               )}
               <div className="text-left">
                 <p className="font-bold text-sm text-gray-900 dark:text-white">{form.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{form.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{form.phone}</p>
               </div>
             </div>
           </div>
@@ -387,21 +387,6 @@ export default function DriverOnboarding() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("email") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
-              {isFieldRejected("email") && (
-                <div className="flex items-center gap-1.5 mb-2">
-                  <AlertCircle size={12} className="text-red-500" />
-                  <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
-                </div>
-              )}
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
-                <Mail size={12} /> Email <span className="text-red-500">*</span>
-              </label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                disabled={isFieldDisabled("email")} data-testid="input-onboard-email"
-                className={inputClass} />
-            </div>
-
             <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("phone") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
               {isFieldRejected("phone") && (
                 <div className="flex items-center gap-1.5 mb-2">
@@ -414,6 +399,22 @@ export default function DriverOnboarding() {
               </label>
               <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                 disabled={isFieldDisabled("phone")} data-testid="input-onboard-phone"
+                className={inputClass} />
+            </div>
+
+            <div className={`bg-white dark:bg-gray-900 rounded-2xl border ${isFieldRejected("idNumber") ? "border-red-300" : "border-gray-100 dark:border-gray-800"} shadow-sm p-4`}>
+              {isFieldRejected("idNumber") && (
+                <div className="flex items-center gap-1.5 mb-2">
+                  <AlertCircle size={12} className="text-red-500" />
+                  <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
+                </div>
+              )}
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+                <Shield size={12} /> N° pièce d'identité
+              </label>
+              <input type="text" value={form.idNumber} onChange={e => setForm({ ...form, idNumber: e.target.value })}
+                disabled={isFieldDisabled("idNumber")} data-testid="input-onboard-id-number"
+                placeholder="Ex: AB1234567"
                 className={inputClass} />
             </div>
           </div>

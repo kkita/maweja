@@ -229,12 +229,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const userId = (req.session as any).userId;
     const user = await storage.getUser(userId);
     if (!user || user.role !== "driver") return res.status(403).json({ message: "Acces interdit" });
-    const { name, sex, dateOfBirth, fullAddress, email, phone, idPhotoUrl, profilePhotoUrl } = req.body;
-    if (!name || !sex || !dateOfBirth || !fullAddress || !email || !phone || !idPhotoUrl || !profilePhotoUrl) {
+    const { name, sex, dateOfBirth, fullAddress, phone, idPhotoUrl, profilePhotoUrl, idNumber } = req.body;
+    if (!name || !sex || !dateOfBirth || !fullAddress || !phone || !idPhotoUrl || !profilePhotoUrl) {
       return res.status(400).json({ message: "Tous les champs sont obligatoires" });
     }
     await storage.updateUser(userId, {
-      name, sex, dateOfBirth, fullAddress, email, phone, idPhotoUrl, profilePhotoUrl,
+      name, sex, dateOfBirth, fullAddress, phone, idPhotoUrl, profilePhotoUrl,
+      driverLicense: idNumber || null,
       verificationStatus: "pending",
       rejectedFields: null,
     });
@@ -426,7 +427,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (sessionUser?.role === "admin" && req.body.clientId) {
       clientId = req.body.clientId;
     }
-    const orderNumber = `MAW-${Date.now().toString(36).toUpperCase()}`;
+    const lastOrder = await db.execute(
+      `SELECT order_number FROM orders WHERE order_number LIKE 'M%' AND LENGTH(order_number) = 9 ORDER BY order_number DESC LIMIT 1`
+    );
+    let nextNum = 1;
+    if (lastOrder.rows.length > 0) {
+      const lastNum = parseInt((lastOrder.rows[0] as any).order_number.substring(1), 10);
+      if (!isNaN(lastNum)) nextNum = lastNum + 1;
+    }
+    const orderNumber = `M${nextNum.toString().padStart(8, "0")}`;
     const commission = Math.round(req.body.subtotal * 0.15);
     const restaurant = await storage.getRestaurant(req.body.restaurantId);
     const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
@@ -851,6 +860,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       type: "alarm",
       isRead: false,
     });
+    res.json({ ok: true });
+  });
+
+  app.get("/api/settings/:key", requireAuth, async (req, res) => {
+    const result = await db.execute(`SELECT value FROM app_settings WHERE key = $1`, [req.params.key]);
+    if (result.rows.length === 0) return res.json({ value: null });
+    res.json({ value: (result.rows[0] as any).value });
+  });
+
+  app.put("/api/settings/:key", requireAdmin, async (req, res) => {
+    const { value } = req.body;
+    await db.execute(
+      `INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
+      [req.params.key, String(value)]
+    );
     res.json({ ok: true });
   });
 

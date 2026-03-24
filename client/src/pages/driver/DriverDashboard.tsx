@@ -208,15 +208,43 @@ export default function DriverDashboard() {
     return () => clearInterval(interval);
   }, [isOnline, sendLocation]);
 
+  const playOrderSound = useCallback(() => {
+    try {
+      const ctx = new AudioContext();
+      const playNote = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        gain.gain.setValueAtTime(0.4, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      const now = ctx.currentTime;
+      playNote(880, now, 0.15);
+      playNote(1100, now + 0.15, 0.15);
+      playNote(1320, now + 0.3, 0.15);
+      playNote(1100, now + 0.5, 0.15);
+      playNote(1320, now + 0.65, 0.15);
+      playNote(1760, now + 0.8, 0.3);
+      setTimeout(() => ctx.close(), 2000);
+    } catch {}
+    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
+  }, []);
+
   useEffect(() => {
     return onWSMessage(data => {
       if (data.type === "order_assigned" || data.type === "new_order") {
-        toast({ title: "Nouvelle commande!", description: "Une commande est disponible" });
+        playOrderSound();
+        toast({ title: "🔔 Nouvelle commande!", description: "Une commande est disponible" });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       }
       if (data.type === "alarm") setAlarm(data.reason || "Alerte de l'administration");
     });
-  }, [toast]);
+  }, [toast, playOrderSound]);
 
   useEffect(() => {
     if (lateOrders.length > 0 && isOnline) {
