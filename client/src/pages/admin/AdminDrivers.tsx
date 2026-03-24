@@ -132,6 +132,19 @@ export default function AdminDrivers() {
   const [expandedBusyDriver, setExpandedBusyDriver] = useState<number | null>(null);
   const [assigningOrderId, setAssigningOrderId] = useState<number | null>(null);
 
+  const { data: hideFeeSetting } = useQuery<{ value: string | null }>({
+    queryKey: ["/api/settings", "hideDeliveryFees"],
+    queryFn: () => authFetchJson("/api/settings/hideDeliveryFees"),
+  });
+  const hideFeesFromDrivers = hideFeeSetting?.value === "true";
+
+  const toggleHideFees = async () => {
+    const newVal = hideFeesFromDrivers ? "false" : "true";
+    await apiRequest("/api/settings/hideDeliveryFees", { method: "PUT", body: JSON.stringify({ value: newVal }) });
+    queryClient.invalidateQueries({ queryKey: ["/api/settings", "hideDeliveryFees"] });
+    toast({ title: newVal === "true" ? "Frais masqués pour les livreurs" : "Frais visibles pour les livreurs" });
+  };
+
   const { data: drivers = [] } = useQuery<any[]>({
     queryKey: ["/api/drivers"],
     queryFn: () => authFetchJson("/api/drivers"),
@@ -724,6 +737,20 @@ export default function AdminDrivers() {
         </div>
       </div>
 
+      <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 px-4 py-3 mb-4">
+        <div>
+          <p className="text-sm font-bold text-gray-900 dark:text-white">Masquer frais de livraison</p>
+          <p className="text-[10px] text-gray-500">Les livreurs ne verront pas leurs gains</p>
+        </div>
+        <button
+          onClick={toggleHideFees}
+          data-testid="toggle-hide-fees"
+          className={`relative w-12 h-7 rounded-full transition-colors ${hideFeesFromDrivers ? "bg-red-600" : "bg-gray-300"}`}
+        >
+          <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${hideFeesFromDrivers ? "translate-x-5" : "translate-x-0.5"}`} />
+        </button>
+      </div>
+
       {dispatchTab !== "gestion" ? (
         renderDispatchContent()
       ) : (
@@ -775,7 +802,7 @@ export default function AdminDrivers() {
                     { label: "Telephone *", key: "phone", type: "tel", testid: "input-driver-phone" },
                     ...(!editingDriver ? [{ label: "Mot de passe *", key: "password", type: "password", testid: "input-driver-password" }] : []),
                     { label: "Plaque", key: "vehiclePlate", type: "text", testid: "input-vehicle-plate" },
-                    { label: "Permis", key: "driverLicense", type: "text", testid: "input-license" },
+                    { label: "N° pièce d'identité", key: "driverLicense", type: "text", testid: "input-license" },
                   ].map(f => (
                     <div key={f.key}>
                       <label className="text-[10px] font-semibold text-gray-500 mb-1 block">{f.label}</label>
@@ -909,9 +936,9 @@ export default function AdminDrivers() {
                           <span className="font-semibold">{sd.vehiclePlate}</span>
                         </div>
                       )}
-                      {sd.driverLicense && (
+                      {sd.driverLicense && (/* N° pièce d'identité */
                         <div className="flex items-center justify-between">
-                          <span className="text-gray-400">Permis</span>
+                          <span className="text-gray-400">Pièce d'identité</span>
                           <span className="font-semibold">{sd.driverLicense}</span>
                         </div>
                       )}

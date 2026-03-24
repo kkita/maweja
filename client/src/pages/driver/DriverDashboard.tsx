@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { useToast } from "../../hooks/use-toast";
 import { apiRequest, queryClient, authFetch, authFetchJson } from "../../lib/queryClient";
@@ -154,6 +155,7 @@ function DriverLiveMap({ driverLat, driverLng, activeOrders }: DriverMapProps) {
 export default function DriverDashboard() {
   const { user, setUser } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
   const [gpsActive, setGpsActive] = useState(false);
   const [alarm, setAlarm] = useState<string | null>(null);
@@ -442,8 +444,9 @@ export default function DriverDashboard() {
             <div className="space-y-3">
               {activeOrders.map(order => (
                 <div key={order.id}
-                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden"
-                  data-testid={`active-order-${order.id}`}>
+                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
+                  data-testid={`active-order-${order.id}`}
+                  onClick={() => navigate(`/driver/order/${order.id}`)}>
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -473,13 +476,13 @@ export default function DriverDashboard() {
                       </div>
                       <div className="flex gap-2">
                         {["confirmed", "preparing"].includes(order.status) && (
-                          <button onClick={() => updateStatus(order.id, "picked_up")} data-testid={`pickup-${order.id}`}
+                          <button onClick={(e) => { e.stopPropagation(); updateStatus(order.id, "picked_up"); }} data-testid={`pickup-${order.id}`}
                             className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-200">
                             📦 Récupérée
                           </button>
                         )}
                         {order.status === "picked_up" && (
-                          <button onClick={() => updateStatus(order.id, "delivered")} data-testid={`deliver-${order.id}`}
+                          <button onClick={(e) => { e.stopPropagation(); updateStatus(order.id, "delivered"); }} data-testid={`deliver-${order.id}`}
                             className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:from-emerald-600 hover:to-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-200">
                             ✓ Livrée
                           </button>

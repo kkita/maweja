@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson } from "../../lib/queryClient";
 import DriverNav from "../../components/DriverNav";
@@ -13,7 +14,7 @@ const TAB_FILTERS: { key: string; label: string; status?: string[] }[] = [
   { key: "all", label: "Tous" },
 ];
 
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
   const statusBg: Record<string, string> = {
     delivered: "bg-green-50 border-green-200",
     picked_up: "bg-blue-50 border-blue-200",
@@ -33,8 +34,9 @@ function OrderCard({ order }: { order: Order }) {
 
   return (
     <div
-      className={`rounded-2xl border p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] ${bg}`}
+      className={`rounded-2xl border p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.99] cursor-pointer ${bg}`}
       data-testid={`driver-order-${order.id}`}
+      onClick={onTap}
     >
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
@@ -101,6 +103,7 @@ function SkeletonCard() {
 
 export default function DriverOrders() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("active");
 
   const { data: orders = [], isLoading, refetch } = useQuery<Order[]>({
@@ -188,7 +191,7 @@ export default function DriverOrders() {
         ) : (
           <div className="space-y-3">
             {filtered.map((order) => (
-              <OrderCard key={order.id} order={order} />
+              <OrderCard key={order.id} order={order} onTap={() => navigate(`/driver/order/${order.id}`)} />
             ))}
           </div>
         )}

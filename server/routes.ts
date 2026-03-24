@@ -884,6 +884,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(cl.map(({ password: _, ...c }) => c));
   });
 
+  app.get("/api/users/:id", requireAuth, async (req, res) => {
+    const sessionUserId = (req.session as any)?.userId;
+    const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
+    if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
+    const targetId = Number(req.params.id);
+    if (sessionUser.role !== "admin" && sessionUserId !== targetId) {
+      if (sessionUser.role === "driver") {
+        const driverOrders = await storage.getOrders({ driverId: sessionUserId });
+        const hasOrderForUser = driverOrders.some(o => o.clientId === targetId);
+        if (!hasOrderForUser) return res.status(403).json({ message: "Acces interdit" });
+      } else {
+        return res.status(403).json({ message: "Acces interdit" });
+      }
+    }
+    const user = await storage.getUser(targetId);
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouve" });
+    const { password: _, ...safe } = user;
+    if (sessionUser.role === "driver" && sessionUserId !== targetId) {
+      const { name, phone } = safe;
+      return res.json({ id: safe.id, name, phone, role: safe.role });
+    }
+    res.json(safe);
+  });
+
   // Notifications
   app.get("/api/notifications/:userId", requireAuth, async (req, res) => {
     const sessionUserId = (req.session as any)?.userId;

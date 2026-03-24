@@ -35,6 +35,8 @@ import DriverEarnings from "./pages/driver/DriverEarnings";
 import DriverChat from "./pages/driver/DriverChat";
 import DriverOnboarding from "./pages/driver/DriverOnboarding";
 import DriverSettings from "./pages/driver/DriverSettings";
+import DriverRapport from "./pages/driver/DriverRapport";
+import DriverOrderDetail from "./pages/driver/DriverOrderDetail";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -147,8 +149,10 @@ function AppRoutes() {
         <Route path="/" component={DriverDashboard} />
         <Route path="/driver/login" component={DriverLoginPage} />
         <Route path="/driver/orders" component={DriverOrders} />
+        <Route path="/driver/order/:id" component={DriverOrderDetail} />
         <Route path="/driver/chat" component={DriverChat} />
         <Route path="/driver/earnings" component={DriverEarnings} />
+        <Route path="/driver/rapport" component={DriverRapport} />
         <Route path="/driver/settings" component={DriverSettings} />
         <Route component={DriverDashboard} />
       </Switch>

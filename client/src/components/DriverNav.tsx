@@ -111,6 +111,17 @@ export default function DriverNav() {
       ),
     },
     {
+      path: "/driver/rapport",
+      label: "Rapport",
+      badge: 0,
+      icon: (active: boolean, col: string) => (
+        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <path d="M8 12h8M8 8h8M8 16h5" fill="none" stroke={active ? "white" : col} strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      ),
+    },
+    {
       path: "/driver/settings",
       label: t.driver.settings,
       badge: 0,

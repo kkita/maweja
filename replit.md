@@ -13,7 +13,22 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 **Business Vision & Market Potential:**
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
-## Recent Changes (March 23, 2026)
+## Recent Changes (March 24, 2026)
+- **Driver App Major Overhaul**:
+  - Order number format changed to `M` + 8-digit sequential (e.g. M00000001)
+  - SplashScreen removed for driver role (immediate access to dashboard)
+  - Sound/vibration notification on new order assignment (AudioContext melody)
+  - Driver registration simplified: no email field, no commission %, "permis" → "numéro de pièce d'identité"
+  - `idNumber` field maps to `driverLicense` DB column
+- **New Driver Pages**:
+  - `DriverRapport.tsx`: Order summary by day/period with custom date filter
+  - `DriverOrderDetail.tsx`: Full invoice, Leaflet map, client info, call+WhatsApp buttons, status update buttons
+  - `DriverEarnings.tsx` rewritten with period filter + admin hide-fees support
+- **Driver Navigation**: DriverNav now has 6 tabs (added "Rapport" tab); active order cards are clickable → navigate to detail page
+- **Admin Features**: Toggle to hide delivery fees from drivers (AdminDrivers page); Settings API (`GET/PUT /api/settings/:key`); `/api/users/:id` endpoint with IDOR protection (admin/self/assigned-driver only, minimal fields for drivers)
+- **Routing**: Added `/driver/order/:id` and `/driver/rapport` routes in App.tsx
+
+## Changes (March 23, 2026)
 - **Returned Orders**: New "returned" order status with automatic refund for wallet payments, finance logging, and client notification. Available in admin order status dropdown alongside existing statuses.
 - **Advanced Analytics Dashboard**: Rebuilt Marketing & Analytics page with 5 tabs:
   - **Vue d'ensemble**: 11 KPI cards (including returned orders, new clients), trends with switchable chart types (bar/pie/area/line), orders by hour/day of week, payment modes, product ranking, status breakdown
