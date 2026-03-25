@@ -558,6 +558,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isRead: false,
       });
       sendToUser(req.body.driverId, { type: "order_assigned", order });
+
+      await storage.createNotification({
+        userId: order.clientId,
+        title: `Commande ${order.orderNumber}`,
+        message: "Un livreur a ete assigne a votre commande",
+        type: "order",
+        data: { orderId: order.id },
+        isRead: false,
+      });
+      sendToUser(order.clientId, { type: "order_assigned", order });
     }
 
     if (req.body.status) {
@@ -1581,6 +1591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: message || "",
         type: type || "promo",
         data: { broadcast: true },
+        isRead: false,
       });
       const ws = clients.get(u.id);
       if (ws && ws.readyState === WebSocket.OPEN) {

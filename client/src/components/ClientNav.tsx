@@ -66,7 +66,7 @@ export default function ClientNav() {
 
   useEffect(() => {
     return onWSMessage((data) => {
-      if (["chat_message", "notification", "order_status", "order_updated"].includes(data.type)) {
+      if (["chat_message", "notification", "order_status", "order_updated", "order_assigned", "order_cancelled"].includes(data.type)) {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });

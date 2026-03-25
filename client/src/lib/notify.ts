@@ -55,7 +55,9 @@ export async function getNotifPermission(): Promise<"granted" | "denied" | "defa
   return Notification.permission;
 }
 
-export async function showNotif(title: string, body: string, icon = "/maweja-icon.png") {
+const NOTIF_LOGO = "/maweja-logo-red.png";
+
+export async function showNotif(title: string, body: string, icon = NOTIF_LOGO) {
   if (isNative()) {
     try {
       const plugin = getLocalNotificationsPlugin();
@@ -69,10 +71,12 @@ export async function showNotif(title: string, body: string, icon = "/maweja-ico
           id: notifId++,
           title,
           body,
-          smallIcon: "ic_launcher_foreground",
-          iconColor: "#dc2626",
+          smallIcon: "ic_stat_notify",
+          largeIcon: "ic_launcher_foreground",
+          iconColor: "#EC0000",
           sound: "default",
           autoCancel: true,
+          channelId: "maweja_default",
         }],
       });
     } catch (e) {
@@ -82,7 +86,7 @@ export async function showNotif(title: string, body: string, icon = "/maweja-ico
     if (!("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
     try {
-      new Notification(title, { body, icon, badge: icon, tag: "maweja" });
+      new Notification(title, { body, icon, badge: icon, tag: `maweja-${Date.now()}` });
     } catch (e) {
       console.error("[MAWEJA] Browser Notification error:", e);
     }
@@ -121,6 +125,12 @@ export function handleWSEvent(data: any) {
       showNotif("🛵 MAWEJA – Nouvelle commande", o ? `Commande #${o.orderNumber} disponible !` : "Nouvelle commande disponible !");
       break;
     }
+    case "order_cancelled": {
+      if (!notifOrders) return;
+      const oc = data.order;
+      showNotif("❌ MAWEJA – Commande annulée", oc ? `Commande #${oc.orderNumber} a été annulée` : "Une commande a été annulée");
+      break;
+    }
     case "notification": {
       const n = data.notification || data.data || {};
       const title = n.title || data.title || "MAWEJA";
@@ -129,16 +139,25 @@ export function handleWSEvent(data: any) {
       break;
     }
     case "chat_message": {
-      const promoOk = localStorage.getItem("maweja_notif_promos") !== "false";
-      if (!promoOk) return;
+      const chatOk = localStorage.getItem("maweja_notif_messages") !== "false";
+      if (!chatOk) return;
       showNotif("💬 MAWEJA – Message", data.notification?.message || "Nouveau message reçu");
       break;
     }
+    case "alarm":
+      showNotif("🚨 MAWEJA – ALERTE", data.reason || "Urgence - Contactez l'administration");
+      break;
     case "verification_approved":
       showNotif("✅ MAWEJA – Vérification", "Votre compte a été approuvé !");
       break;
     case "verification_rejected":
       showNotif("⚠️ MAWEJA – Vérification", "Des corrections sont requises sur votre profil.");
+      break;
+    case "driver_verification":
+      showNotif("📋 MAWEJA – Admin", "Un livreur a soumis ses documents pour vérification");
+      break;
+    case "new_user":
+      showNotif("👤 MAWEJA – Admin", "Un nouvel utilisateur s'est inscrit");
       break;
     default:
       break;

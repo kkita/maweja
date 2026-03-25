@@ -37,7 +37,8 @@ export default function DriverNav() {
   useEffect(() => {
     return onWSMessage((data) => {
       if (data.type === "chat_message" || data.type === "notification" ||
-          data.type === "order_assigned" || data.type === "new_order") {
+          data.type === "order_assigned" || data.type === "new_order" ||
+          data.type === "order_cancelled" || data.type === "order_status") {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
