@@ -150,3 +150,9 @@ id = "2KGlPSV6A-X9pUwncD8uK"
 uri = "file://MAWEJA_COMPLET_v15.zip"
 type = "unspecified"
 title = "MAWEJA Complet v15 — Source + Mobile Client & Driver (GitHub)"
+
+[[outputs]]
+id = "YX4RJ5D2bv96_h7zQbt9f"
+uri = "file://MAWEJA_COMPLET_v16.zip"
+type = "unspecified"
+title = "MAWEJA Complet v16 — Splash + Icons + Mobile Apps (GitHub)"

@@ -100,19 +100,20 @@ function AppRoutes() {
     setShowSplash(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400 font-medium">{t.common.loading}</p>
-        </div>
-      </div>
-    );
+  if (showSplash) {
+    return <SplashScreen onDone={dismissSplash} />;
   }
 
-  if (showSplash && user?.role !== "admin") {
-    return <SplashScreen onDone={dismissSplash} />;
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: "#EC0000", zIndex: 9998 }}>
+        <img
+          src="/maweja-logo-red.png"
+          alt="Maweja"
+          style={{ width: 120, height: 120, objectFit: "contain", filter: "brightness(0) invert(1)" }}
+        />
+      </div>
+    );
   }
 
   if (user?.role === "admin" && MOBILE_MODE !== "client" && MOBILE_MODE !== "driver") {
@@ -160,6 +161,15 @@ function AppRoutes() {
   }
 
   if (user?.role === "client") {
+    if (MOBILE_MODE === "driver") {
+      return (
+        <Switch>
+          <Route path="/" component={DriverLoginPage} />
+          <Route path="/driver/login" component={DriverLoginPage} />
+          <Route component={DriverLoginPage} />
+        </Switch>
+      );
+    }
     return (
       <>
         <Switch>
