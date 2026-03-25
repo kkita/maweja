@@ -134,14 +134,14 @@ export default function DriverEarnings() {
 
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mb-2">
+            <div className="w-10 h-10 bg-green-50 dark:bg-green-950/30 rounded-xl flex items-center justify-center mb-2">
               <Package size={18} className="text-green-600" />
             </div>
             <p className="text-2xl font-black text-gray-900 dark:text-white" data-testid="text-delivery-count">{filtered.length}</p>
             <p className="text-xs text-gray-500">Livraisons terminees</p>
           </div>
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-2">
+            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950/30 rounded-xl flex items-center justify-center mb-2">
               <Clock size={18} className="text-blue-600" />
             </div>
             <p className="text-2xl font-black text-gray-900 dark:text-white">{formatPrice(avgPerDelivery)}</p>

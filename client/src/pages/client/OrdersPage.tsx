@@ -108,22 +108,21 @@ export default function OrdersPage() {
               key={t.key}
               onClick={() => setTab(t.key as "active" | "history")}
               data-testid={`tab-${t.key}`}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold transition-all active:scale-95"
-              style={{
-                fontSize: 13,
-                background: tab === t.key ? "#fff" : "transparent",
-                color: tab === t.key ? "#111827" : "#9CA3AF",
-                boxShadow: tab === t.key ? "0 1px 6px rgba(0,0,0,0.1)" : "none",
-              }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold transition-all active:scale-95 ${
+                tab === t.key
+                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow"
+                  : "text-gray-400 dark:text-gray-500"
+              }`}
+              style={{ fontSize: 13 }}
             >
               {t.label}
               {t.count > 0 && (
                 <span
-                  className="min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold px-1.5"
-                  style={{
-                    background: tab === t.key ? "#dc2626" : "#E5E7EB",
-                    color: tab === t.key ? "#fff" : "#6B7280",
-                  }}
+                  className={`min-w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold px-1.5 ${
+                    tab === t.key
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300"
+                  }`}
                 >
                   {t.count}
                 </span>
@@ -224,11 +223,11 @@ export default function OrdersPage() {
                           <Clock size={11} strokeWidth={1.8} />
                           <span style={{ fontSize: 11 }}>{formatDate(order.createdAt!)}</span>
                         </div>
-                        <div className="w-px h-3 bg-gray-200" />
+                        <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
                         <span className="text-gray-400 dark:text-gray-500" style={{ fontSize: 11 }}>
                           {itemCount} article{itemCount > 1 ? "s" : ""}
                         </span>
-                        <div className="w-px h-3 bg-gray-200" />
+                        <div className="w-px h-3 bg-gray-200 dark:bg-gray-700" />
                         <span className="font-bold text-red-600" style={{ fontSize: 13 }}>
                           {formatPrice(order.total)}
                         </span>

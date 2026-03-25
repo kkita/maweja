@@ -215,7 +215,7 @@ export default function PresentationPage() {
         </div>
 
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
-          <span className="text-xs tracking-widest uppercase text-gray-500 dark:text-gray-400 dark:text-gray-500">Défiler</span>
+          <span className="text-xs tracking-widest uppercase text-gray-500 dark:text-gray-400">Défiler</span>
           <div className="w-px h-12 bg-gradient-to-b from-red-600 to-transparent" />
         </div>
       </section>
@@ -502,7 +502,7 @@ export default function PresentationPage() {
                     <span className="text-2xl">{icon}</span>
                     <div>
                       <p className="text-white font-semibold text-sm">{name}</p>
-                      <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{desc}</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-xs">{desc}</p>
                     </div>
                   </div>
                 ))}
@@ -540,7 +540,7 @@ export default function PresentationPage() {
               >
                 <span className="text-3xl">{icon}</span>
                 <p className="text-white font-semibold text-sm">{name}</p>
-                <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{sub}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-xs">{sub}</p>
               </div>
             ))}
           </div>

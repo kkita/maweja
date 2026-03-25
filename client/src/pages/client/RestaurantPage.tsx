@@ -88,7 +88,7 @@ export default function RestaurantPage() {
       <div className="max-w-lg mx-auto px-4 py-4">
         {/* Discount banner */}
         {(restaurant as any)?.discountPercent > 0 && (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-2xl px-4 py-2.5 mb-3" data-testid="restaurant-discount-banner">
+          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-2xl px-4 py-2.5 mb-3" data-testid="restaurant-discount-banner">
             <span className="text-lg">🏷️</span>
             <div className="flex-1">
               <p className="font-bold text-green-700" style={{ fontSize: 13 }}>
@@ -107,14 +107,14 @@ export default function RestaurantPage() {
         )}
 
         {restaurant?.prepTime && (
-          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
+          <div className="flex items-center gap-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-xl px-4 py-2.5 mb-4" data-testid="restaurant-prep-time-banner">
             <ChefHat size={16} className="text-orange-600 flex-shrink-0" />
-            <span className="text-sm font-semibold text-orange-800">Temps de préparation : {restaurant.prepTime}</span>
+            <span className="text-sm font-semibold text-orange-800 dark:text-orange-300">Temps de préparation : {restaurant.prepTime}</span>
           </div>
         )}
         <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6">
           {categories.map((c) => (
-            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white rounded-full font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 transition-all active:bg-red-50 active:text-red-600" style={{ fontSize: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
+            <a key={c} href={`#cat-${c}`} className="flex-shrink-0 px-4 py-2 bg-white dark:bg-gray-800 rounded-full font-semibold text-gray-500 dark:text-gray-300 transition-all active:bg-red-50 dark:active:bg-red-950/30 active:text-red-600" style={{ fontSize: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" }}>
               {c}
             </a>
           ))}
@@ -186,7 +186,7 @@ export default function RestaurantPage() {
       </div>
 
       {itemCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800">
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-t border-gray-100 dark:border-gray-800">
           <div className="max-w-lg mx-auto">
             <button
               onClick={() => navigate("/cart")}

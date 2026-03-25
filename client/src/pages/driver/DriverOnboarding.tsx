@@ -130,7 +130,7 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
             <img src={imgSrc} alt={label} className="w-full h-40 object-cover rounded-xl" />
             {!disabled && (
               <button onClick={() => { onChange(""); setErrorMsg(null); }}
-                className="absolute top-2 right-2 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white:bg-gray-800"
+                className="absolute top-2 right-2 w-7 h-7 bg-white/90 dark:bg-gray-800/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white dark:hover:bg-gray-700"
                 data-testid={`change-${label.toLowerCase().replace(/\s/g, "-")}`}>
                 <X size={12} className="text-gray-600 dark:text-gray-300" />
               </button>
@@ -141,13 +141,13 @@ function FileUploadField({ label, icon: Icon, value, onChange, rejected, disable
           <>
             <button onClick={handleClick} disabled={uploading}
               data-testid={`upload-${label.toLowerCase().replace(/\s/g, "-")}`}
-              className="w-full py-8 border border-dashed border-gray-300 rounded-xl flex flex-col items-center gap-2 hover:bg-white:bg-gray-700 transition-colors">
+              className="w-full py-8 border border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center gap-2 hover:bg-white dark:hover:bg-gray-700 transition-colors">
               {uploading ? (
                 <Loader2 size={24} className="text-red-500 animate-spin" />
               ) : (
                 <Camera size={24} className={errorMsg ? "text-red-400" : "text-gray-400 dark:text-gray-500"} />
               )}
-              <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {uploading ? "Envoi en cours..." : isNativeMobile() ? "Appuyez pour choisir depuis la galerie" : "Cliquez pour choisir une photo"}
               </span>
             </button>
@@ -242,13 +242,13 @@ export default function DriverOnboarding() {
 
   if (isPending) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-b from-red-50 to-white dark:from-[#0d0d0d] dark:to-[#0d0d0d] flex items-center justify-center p-6">
         <div className="max-w-sm w-full text-center">
-          <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/40 rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock size={36} className="text-orange-500" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">En attente de verification</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-6 leading-relaxed">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
             Vos informations ont ete envoyees avec succes. L'administration est en train de les examiner.
             Vous serez notifie des que votre compte sera valide.
           </p>
@@ -259,11 +259,11 @@ export default function DriverOnboarding() {
               )}
               <div className="text-left">
                 <p className="font-bold text-sm text-gray-900 dark:text-white">{form.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{form.phone}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{form.phone}</p>
               </div>
             </div>
           </div>
-          <div className="bg-orange-50 rounded-xl p-3 border border-orange-200 mb-4">
+          <div className="bg-orange-50 dark:bg-orange-950/30 rounded-xl p-3 border border-orange-200 dark:border-orange-800 mb-4">
             <p className="text-xs text-orange-700 flex items-center gap-2 justify-center">
               <Loader2 size={14} className="animate-spin" /> Verification en cours...
             </p>
@@ -271,7 +271,7 @@ export default function DriverOnboarding() {
           <button
             onClick={() => refreshUser()}
             data-testid="button-refresh-status"
-            className="w-full py-3 rounded-xl border-2 border-red-200 text-red-600 text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50:bg-red-950/30 transition-colors"
+            className="w-full py-3 rounded-xl border-2 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
           >
             <CheckCircle2 size={16} />
             Actualiser le statut
@@ -285,16 +285,16 @@ export default function DriverOnboarding() {
   const inputClass = "w-full px-4 py-3 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white dark:from-[#0d0d0d] dark:to-[#0d0d0d]">
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-200">
+          <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-200 dark:shadow-red-900/40">
             <Shield size={28} className="text-white" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-1">
             {isRejected ? "Corrections requises" : "Completez votre profil"}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {isRejected
               ? "Certaines informations doivent etre corrigees avant la validation"
               : "Remplissez vos informations pour activer votre compte livreur"}
@@ -302,7 +302,7 @@ export default function DriverOnboarding() {
         </div>
 
         {isRejected && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl p-4 mb-6">
             <div className="flex items-center gap-2 mb-2">
               <AlertCircle size={16} className="text-red-600" />
               <span className="font-bold text-sm text-red-700">Champs a corriger</span>
@@ -325,7 +325,7 @@ export default function DriverOnboarding() {
                 <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
               </div>
             )}
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
               <User size={12} /> Nom complet <span className="text-red-500">*</span>
             </label>
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
@@ -342,7 +342,7 @@ export default function DriverOnboarding() {
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Users size={12} /> Sexe <span className="text-red-500">*</span>
               </label>
               <select value={form.sex} onChange={e => setForm({ ...form, sex: e.target.value })}
@@ -361,7 +361,7 @@ export default function DriverOnboarding() {
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Calendar size={12} /> Date de naissance <span className="text-red-500">*</span>
               </label>
               <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })}
@@ -377,7 +377,7 @@ export default function DriverOnboarding() {
                 <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
               </div>
             )}
-            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
               <MapPin size={12} /> Adresse complete <span className="text-red-500">*</span>
             </label>
             <input type="text" value={form.fullAddress} onChange={e => setForm({ ...form, fullAddress: e.target.value })}
@@ -394,7 +394,7 @@ export default function DriverOnboarding() {
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Phone size={12} /> Telephone <span className="text-red-500">*</span>
               </label>
               <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
@@ -409,7 +409,7 @@ export default function DriverOnboarding() {
                   <span className="text-[10px] font-bold text-red-600">A CORRIGER</span>
                 </div>
               )}
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-1.5 flex items-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 flex items-center gap-2">
                 <Shield size={12} /> N° pièce d'identité
               </label>
               <input type="text" value={form.idNumber} onChange={e => setForm({ ...form, idNumber: e.target.value })}

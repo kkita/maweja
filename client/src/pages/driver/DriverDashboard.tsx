@@ -42,9 +42,9 @@ function CountdownBadge({ estimatedDelivery }: { estimatedDelivery: string | nul
 
   return (
     <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold ${
-      isLate ? "bg-red-100 text-red-700 animate-pulse" :
-      isUrgent ? "bg-orange-100 text-orange-700" :
-      "bg-emerald-100 text-emerald-700"
+      isLate ? "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 animate-pulse" :
+      isUrgent ? "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400" :
+      "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
     }`}>
       <Timer size={11} />
       <span className="font-mono font-black" data-testid="driver-countdown">{remaining}</span>
@@ -347,8 +347,8 @@ export default function DriverDashboard() {
 
         {/* Late orders alert */}
         {lateOrders.length > 0 && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 animate-pulse flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+          <div className="bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 animate-pulse flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
               <AlertCircle size={18} className="text-red-600" />
             </div>
             <div>
@@ -363,16 +363,16 @@ export default function DriverDashboard() {
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Package, label: "En cours", value: activeOrders.length, bg: "bg-blue-50", iconBg: "bg-blue-100", iconColor: "text-blue-600", valColor: "text-blue-700" },
-            { icon: CheckCircle2, label: "Livrées", value: deliveredToday.length, bg: "bg-emerald-50", iconBg: "bg-emerald-100", iconColor: "text-emerald-600", valColor: "text-emerald-700" },
-            { icon: DollarSign, label: "Gains", value: formatPrice(totalEarnings), bg: "bg-red-50", iconBg: "bg-red-100", iconColor: "text-red-600", valColor: "text-red-700" },
+            { icon: Package, label: "En cours", value: activeOrders.length, bg: "bg-blue-50 dark:bg-blue-950/30", iconBg: "bg-blue-100 dark:bg-blue-900/40", iconColor: "text-blue-600", valColor: "text-blue-700 dark:text-blue-400" },
+            { icon: CheckCircle2, label: "Livrées", value: deliveredToday.length, bg: "bg-emerald-50 dark:bg-emerald-950/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", iconColor: "text-emerald-600", valColor: "text-emerald-700 dark:text-emerald-400" },
+            { icon: DollarSign, label: "Gains", value: formatPrice(totalEarnings), bg: "bg-red-50 dark:bg-red-950/30", iconBg: "bg-red-100 dark:bg-red-900/40", iconColor: "text-red-600", valColor: "text-red-700 dark:text-red-400" },
           ].map((stat, i) => (
             <div key={stat.label} className={`${stat.bg} rounded-2xl p-4 text-center`} data-testid={`driver-stat-${stat.label.toLowerCase()}`}>
               <div className={`w-9 h-9 ${stat.iconBg} rounded-xl flex items-center justify-center mx-auto mb-2`}>
                 <stat.icon size={16} className={stat.iconColor} />
               </div>
               <p className={`text-lg font-black ${stat.valColor}`}>{stat.value}</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 font-semibold mt-0.5">{stat.label}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -384,12 +384,12 @@ export default function DriverDashboard() {
               onClick={() => setShowMap(m => !m)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold border-2 transition-all ${
                 gpsActive
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                  : "bg-orange-50 text-orange-700 border-orange-200"
+                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                  : "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
               }`}
               data-testid="toggle-map"
             >
-              <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${gpsActive ? "bg-emerald-100" : "bg-orange-100"}`}>
+              <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${gpsActive ? "bg-emerald-100 dark:bg-emerald-900/40" : "bg-orange-100 dark:bg-orange-900/40"}`}>
                 <Navigation size={13} className={gpsActive ? "text-emerald-600" : "text-orange-600"} />
               </div>
               <span className="flex-1 text-left">
@@ -401,7 +401,7 @@ export default function DriverDashboard() {
             {showMap && (
               <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
                 <DriverLiveMap driverLat={driverPos?.lat ?? null} driverLng={driverPos?.lng ?? null} activeOrders={activeOrders} />
-                <div className="bg-white px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800">
+                <div className="bg-white dark:bg-gray-900 px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800">
                   <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600" /> Vous</span>
                   <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-600" /> Livraisons</span>
                   <span className="ml-auto font-bold">{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length} point{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length !== 1 ? "s" : ""}</span>
@@ -418,7 +418,7 @@ export default function DriverDashboard() {
               <Power size={32} className="text-gray-400 dark:text-gray-500" />
             </div>
             <p className="font-black text-xl text-gray-900 dark:text-white mb-2">Vous êtes hors ligne</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-6 max-w-xs mx-auto">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
               Passez en ligne pour recevoir des commandes et commencer à livrer
             </p>
             <button onClick={toggleOnline}
@@ -439,7 +439,7 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
               </div>
               <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Livraisons en cours</h3>
-              <span className="text-[10px] font-black bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full ml-auto">{activeOrders.length}</span>
+              <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full ml-auto">{activeOrders.length}</span>
             </div>
             <div className="space-y-3">
               {activeOrders.map(order => (
@@ -450,7 +450,7 @@ export default function DriverDashboard() {
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
                           <Truck size={16} className="text-blue-600" />
                         </div>
                         <div>
@@ -505,7 +505,7 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
               </div>
               <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Commandes disponibles</h3>
-              <span className="text-[10px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-full ml-auto">{availablePending.length}</span>
+              <span className="text-[10px] font-black bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full ml-auto">{availablePending.length}</span>
             </div>
 
             {availablePending.length === 0 ? (
@@ -520,12 +520,12 @@ export default function DriverDashboard() {
               <div className="space-y-3">
                 {availablePending.map(order => (
                   <div key={order.id}
-                    className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-red-100 shadow-sm hover:shadow-lg hover:border-red-300:border-red-700 transition-all"
+                    className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-red-100 dark:border-red-900 shadow-sm hover:shadow-lg hover:border-red-300 dark:hover:border-red-700 transition-all"
                     data-testid={`pending-order-${order.id}`}>
                     <div className="p-4">
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 bg-red-100 rounded-xl flex items-center justify-center">
+                          <div className="w-9 h-9 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
                             <Package size={16} className="text-red-600" />
                           </div>
                           <div>

@@ -87,16 +87,16 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 flex flex-col items-center justify-center pt-32">
-          <div className="w-24 h-24 bg-red-50 rounded-3xl flex items-center justify-center mb-5">
+          <div className="w-24 h-24 bg-red-50 dark:bg-red-950/30 rounded-3xl flex items-center justify-center mb-5">
             <ShoppingBag size={40} className="text-red-300" />
           </div>
-          <h2 className="font-bold text-gray-900" style={{ fontSize: 20 }} data-testid="text-empty-cart">
+          <h2 className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 20 }} data-testid="text-empty-cart">
             Votre panier est vide
           </h2>
-          <p className="text-gray-400 text-sm mt-2 text-center">
+          <p className="text-gray-400 dark:text-gray-500 text-sm mt-2 text-center">
             Parcourez nos restaurants et ajoutez des plats
           </p>
           <button
@@ -115,13 +115,13 @@ export default function CartPage() {
   const restaurantName = items[0].restaurantName;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-48" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-48" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 pt-5 space-y-4">
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="font-bold text-gray-900" style={{ fontSize: 22 }} data-testid="text-cart-title">
+            <h2 className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 22 }} data-testid="text-cart-title">
               Mon Panier
             </h2>
             <span
@@ -140,14 +140,14 @@ export default function CartPage() {
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-          <div className="px-4 py-3 bg-red-50 border-b border-red-100 flex items-center gap-2">
+        <div className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <div className="px-4 py-3 bg-red-50 dark:bg-red-950/30 border-b border-red-100 dark:border-red-900/40 flex items-center gap-2">
             <ShoppingBag size={16} className="text-red-600" />
-            <p className="text-sm font-semibold text-red-700" data-testid="text-restaurant-name">
+            <p className="text-sm font-semibold text-red-700 dark:text-red-400" data-testid="text-restaurant-name">
               {restaurantName}
             </p>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 dark:divide-gray-800">
             {items.map((item) => (
               <div
                 key={item.id}
@@ -161,33 +161,33 @@ export default function CartPage() {
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-semibold text-sm text-gray-900 truncate">
+                    <h4 className="font-semibold text-sm text-gray-900 dark:text-white truncate">
                       {item.name}
                     </h4>
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="text-gray-300 hover:text-red-500 flex-shrink-0"
+                      className="text-gray-300 dark:text-gray-600 hover:text-red-500 flex-shrink-0"
                       data-testid={`remove-${item.id}`}
                     >
                       <Trash2 size={14} />
                     </button>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                     {formatPrice(item.price)} / unite
                   </p>
                   <div className="flex items-center justify-between mt-2 gap-2">
                     <span className="font-bold text-red-600 text-sm" data-testid={`price-${item.id}`}>
                       {formatPrice(item.price * item.quantity)}
                     </span>
-                    <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-2 py-1">
+                    <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-xl px-2 py-1">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center"
+                        className="w-7 h-7 rounded-lg bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 flex items-center justify-center text-gray-700 dark:text-gray-200"
                         data-testid={`cart-minus-${item.id}`}
                       >
                         <Minus size={12} />
                       </button>
-                      <span className="text-sm font-bold w-5 text-center" data-testid={`qty-${item.id}`}>
+                      <span className="text-sm font-bold w-5 text-center text-gray-900 dark:text-white" data-testid={`qty-${item.id}`}>
                         {item.quantity}
                       </span>
                       <button
@@ -203,7 +203,7 @@ export default function CartPage() {
               </div>
             ))}
           </div>
-          <div className="px-4 py-3 border-t border-gray-100">
+          <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={() => navigate(`/restaurant/${restaurantId}`)}
               className="w-full py-2.5 rounded-xl border-2 border-red-600 text-red-600 text-sm font-semibold flex items-center justify-center gap-2"
@@ -214,29 +214,29 @@ export default function CartPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <h3 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
             <User size={16} className="text-red-600" />
             Informations personnelles
           </h3>
           <div className="space-y-2.5">
             <div className="flex items-center gap-3" data-testid="text-user-name">
-              <User size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="text-gray-600" style={{ fontSize: 13 }}>{user?.name || "Non connecté"}</span>
+              <User size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: 13 }}>{user?.name || "Non connecté"}</span>
             </div>
             <div className="flex items-center gap-3" data-testid="text-user-email">
-              <Mail size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="text-gray-600" style={{ fontSize: 13 }}>{user?.email || "-"}</span>
+              <Mail size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: 13 }}>{user?.email || "-"}</span>
             </div>
             <div className="flex items-center gap-3" data-testid="text-user-phone">
-              <Phone size={14} className="text-gray-400 flex-shrink-0" />
-              <span className="text-gray-600" style={{ fontSize: 13 }}>{user?.phone || "-"}</span>
+              <Phone size={14} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
+              <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: 13 }}>{user?.phone || "-"}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
-          <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+          <h3 className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
             <MessageSquare size={16} className="text-red-600" />
             Instructions spéciales
           </h3>
@@ -244,15 +244,15 @@ export default function CartPage() {
             value={specialInstructions}
             onChange={(e) => setSpecialInstructions(e.target.value)}
             placeholder="Ex: Sans oignon, bien cuit, allergies..."
-            className="w-full border border-gray-100 bg-gray-50 text-gray-700 placeholder-gray-300 rounded-2xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-300"
+            className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 rounded-2xl p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900/40 focus:border-red-300 dark:focus:border-red-700"
             rows={3}
             data-testid="input-special-instructions"
           />
         </div>
 
-        <div className="bg-white rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2" style={{ fontSize: 14 }}>
+            <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2" style={{ fontSize: 14 }}>
               <MapPin size={16} className="text-red-600" />
               Adresse de livraison
             </h3>
@@ -269,11 +269,11 @@ export default function CartPage() {
           </div>
           {defaultAddress ? (
             <div
-              className="bg-gray-50 rounded-2xl p-3 flex items-start gap-2"
+              className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-3 flex items-start gap-2"
               data-testid="text-delivery-address"
             >
               <MapPin size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
-              <span className="text-gray-600" style={{ fontSize: 13 }}>{defaultAddress.address}</span>
+              <span className="text-gray-600 dark:text-gray-300" style={{ fontSize: 13 }}>{defaultAddress.address}</span>
             </div>
           ) : (
             <div className="space-y-2">
@@ -282,7 +282,7 @@ export default function CartPage() {
                 value={manualAddress}
                 onChange={(e) => setManualAddress(e.target.value)}
                 placeholder="Entrez votre adresse de livraison"
-                className="w-full border border-gray-100 bg-gray-50 text-gray-700 placeholder-gray-300 rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-100 focus:border-red-300"
+                className="w-full border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200 placeholder-gray-300 dark:placeholder-gray-600 rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-100 dark:focus:ring-red-900/40 focus:border-red-300 dark:focus:border-red-700"
                 data-testid="input-manual-address"
               />
               <button
@@ -297,21 +297,21 @@ export default function CartPage() {
           )}
         </div>
 
-        <div className="bg-white rounded-3xl p-4 space-y-3" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
+        <div className="bg-white dark:bg-gray-900 rounded-3xl p-4 space-y-3" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}>
           <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
-            <span className="text-gray-400">Sous-total</span>
-            <span className="font-semibold text-gray-800" data-testid="text-subtotal">{formatPrice(total)}</span>
+            <span className="text-gray-400 dark:text-gray-500">Sous-total</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-subtotal">{formatPrice(total)}</span>
           </div>
           <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
-            <span className="text-gray-400">Frais de livraison</span>
-            <span className="font-semibold text-gray-800" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
+            <span className="text-gray-400 dark:text-gray-500">Frais de livraison</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
           </div>
           <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
-            <span className="text-gray-400">Frais de service</span>
-            <span className="font-semibold text-gray-800" data-testid="text-tax">{formatPrice(serviceFee)}</span>
+            <span className="text-gray-400 dark:text-gray-500">Frais de service</span>
+            <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-tax">{formatPrice(serviceFee)}</span>
           </div>
-          <div className="border-t border-gray-100 pt-3 flex justify-between gap-2 items-center">
-            <span className="font-bold text-gray-900" style={{ fontSize: 15 }}>Total</span>
+          <div className="border-t border-gray-100 dark:border-gray-800 pt-3 flex justify-between gap-2 items-center">
+            <span className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>Total</span>
             <span className="font-black text-red-600" style={{ fontSize: 20 }} data-testid="text-grand-total">
               {formatPrice(grandTotal)}
             </span>

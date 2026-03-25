@@ -16,10 +16,10 @@ const TAB_FILTERS: { key: string; label: string; status?: string[] }[] = [
 
 function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
   const statusBg: Record<string, string> = {
-    delivered: "bg-green-50 border-green-200",
-    picked_up: "bg-blue-50 border-blue-200",
-    on_way: "bg-orange-50 border-orange-200",
-    ready: "bg-amber-50 border-amber-200",
+    delivered: "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800",
+    picked_up: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800",
+    on_way: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800",
+    ready: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800",
     default: "bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800",
   };
   const bg = statusBg[order.status] || statusBg.default;
@@ -41,9 +41,9 @@ function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-            order.status === "delivered" ? "bg-green-100" :
-            order.status === "on_way" || order.status === "picked_up" ? "bg-blue-100" :
-            "bg-amber-100"
+            order.status === "delivered" ? "bg-green-100 dark:bg-green-900/40" :
+            order.status === "on_way" || order.status === "picked_up" ? "bg-blue-100 dark:bg-blue-900/40" :
+            "bg-amber-100 dark:bg-amber-900/40"
           }`}>
             <StatusIcon size={18} className={
               order.status === "delivered" ? "text-green-600" :
@@ -133,11 +133,11 @@ export default function DriverOrders() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-xl font-black text-gray-900 dark:text-white">Mes livraisons</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">{orders.length} livraison{orders.length !== 1 ? "s" : ""} au total</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{orders.length} livraison{orders.length !== 1 ? "s" : ""} au total</p>
           </div>
           <button
             onClick={() => refetch()}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 active:scale-90 transition-all shadow-sm"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 active:scale-90 transition-all shadow-sm"
             data-testid="button-refresh-orders"
           >
             <RotateCcw size={15} />
@@ -146,13 +146,13 @@ export default function DriverOrders() {
 
         <div className="grid grid-cols-3 gap-2 mb-5">
           {[
-            { label: "En cours", value: activeCount, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "Livrés", value: deliveredCount, color: "text-green-600", bg: "bg-green-50" },
-            { label: "Gains", value: `$${totalEarnings}`, color: "text-red-600", bg: "bg-red-50" },
+            { label: "En cours", value: activeCount, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/30" },
+            { label: "Livrés", value: deliveredCount, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/30" },
+            { label: "Gains", value: `$${totalEarnings}`, color: "text-red-600", bg: "bg-red-50 dark:bg-red-950/30" },
           ].map((stat, i) => (
             <div key={i} className={`${stat.bg} rounded-2xl p-3 text-center`} data-testid={`stat-driver-${stat.label.toLowerCase()}`}>
               <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 dark:text-gray-500 font-semibold mt-0.5">{stat.label}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">{stat.label}</p>
             </div>
           ))}
         </div>
@@ -165,8 +165,8 @@ export default function DriverOrders() {
               data-testid={`tab-orders-${tab.key}`}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === tab.key
-                  ? "bg-red-600 text-white shadow-md shadow-red-200"
-                  : "text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:bg-gray-800/60:bg-gray-800"
+                  ? "bg-red-600 text-white shadow-md shadow-red-200 dark:shadow-red-900/40"
+                  : "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               {tab.label}
@@ -183,7 +183,7 @@ export default function DriverOrders() {
             <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
               <Package size={32} className="text-gray-300" />
             </div>
-            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 font-medium">Aucune livraison</p>
+            <p className="text-gray-500 dark:text-gray-400 font-medium">Aucune livraison</p>
             <p className="text-gray-400 dark:text-gray-500 text-sm mt-1">
               {activeTab === "active" ? "Pas de livraison en cours" : "Aucune livraison dans cette catégorie"}
             </p>

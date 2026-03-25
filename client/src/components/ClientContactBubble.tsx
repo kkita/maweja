@@ -276,12 +276,12 @@ export default function ClientContactBubble() {
                     <CheckCircle2 size={28} className="text-green-600" />
                   </div>
                   <h4 className="font-bold text-sm text-gray-900 dark:text-white mb-1">Reclamation envoyee</h4>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Un administrateur vous repondra dans les plus brefs delais.</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Un administrateur vous repondra dans les plus brefs delais.</p>
                 </div>
               ) : (
                 <div className="p-3 space-y-3">
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase mb-1 block">Sujet</label>
+                    <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1 block">Sujet</label>
                     <select value={complaintSubject} onChange={e => setComplaintSubject(e.target.value)}
                       data-testid="complaint-subject"
                       className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-red-500">
@@ -297,7 +297,7 @@ export default function ClientContactBubble() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase mb-1 block">Description detaillee</label>
+                    <label className="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1 block">Description detaillee</label>
                     <textarea value={complaintMessage} onChange={e => setComplaintMessage(e.target.value)}
                       placeholder="Decrivez votre probleme en detail..."
                       data-testid="complaint-message"

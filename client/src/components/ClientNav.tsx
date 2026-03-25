@@ -262,12 +262,12 @@ export default function ClientNav() {
             <button
               className="flex-1 flex items-center gap-2.5 active:scale-[0.97] transition-transform"
               style={{
-                background: "rgba(255,255,255,0.97)",
+                background: isDark ? "rgba(30,30,40,0.97)" : "rgba(255,255,255,0.97)",
                 borderRadius: 14,
                 paddingLeft: 14,
                 paddingRight: 14,
                 height: 38,
-                boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+                boxShadow: isDark ? "0 2px 12px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.12)",
               }}
               onClick={() => setSearchOpen(true)}
               data-testid="button-open-search"

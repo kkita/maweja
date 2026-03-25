@@ -27,8 +27,8 @@ function ThemePicker() {
           data-testid={`button-theme-${value}`}
           className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all text-xs font-semibold ${
             theme === value
-              ? "bg-red-50 border-red-500 text-red-600"
-              : "bg-gray-50 dark:bg-gray-800/60 border-transparent text-gray-600 dark:text-gray-300 hover:border-gray-200 dark:border-gray-700:border-gray-600"
+              ? "bg-red-50 dark:bg-red-950/30 border-red-500 text-red-600"
+              : "bg-gray-50 dark:bg-gray-800/60 border-transparent text-gray-600 dark:text-gray-300 hover:border-gray-200 dark:hover:border-gray-600"
           }`}
         >
           <Icon size={18} />
@@ -61,16 +61,16 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-50 dark:bg-red-950/30 rounded-xl flex items-center justify-center">
               <Bell size={18} className="text-red-600" />
             </div>
             <h3 className="text-lg font-black text-gray-900 dark:text-white">Notifications</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-            <X size={16} className="text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+            <X size={16} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
@@ -103,7 +103,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
             <div key={key} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-4">
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">{label}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{desc}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{desc}</p>
               </div>
               <button
                 onClick={() => toggle(key, !val, set)}
@@ -123,16 +123,16 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
 function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10 max-h-[85vh] flex flex-col animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl p-6 pb-10 max-h-[85vh] flex flex-col animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-50 dark:bg-red-950/30 rounded-xl flex items-center justify-center">
               <Shield size={18} className="text-red-600" />
             </div>
             <h3 className="text-lg font-black text-gray-900 dark:text-white">Politique de Confidentialité</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-            <X size={16} className="text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+            <X size={16} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
         <div className="overflow-y-auto flex-1 space-y-4 pr-1">
@@ -183,16 +183,16 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-50 dark:bg-red-950/30 rounded-xl flex items-center justify-center">
               <HelpCircle size={18} className="text-red-600" />
             </div>
             <h3 className="text-lg font-black text-gray-900 dark:text-white">Contacter le Support</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-            <X size={16} className="text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+            <X size={16} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
@@ -202,7 +202,7 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
               <Check size={28} className="text-green-600" />
             </div>
             <h4 className="text-lg font-black text-gray-900 dark:text-white mb-2">Message envoyé !</h4>
-            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">L'administration vous répondra dans les meilleurs délais.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">L'administration vous répondra dans les meilleurs délais.</p>
             <button onClick={onClose} className="mt-6 bg-red-600 text-white px-8 py-3 rounded-2xl font-bold text-sm">Fermer</button>
           </div>
         ) : (
@@ -239,16 +239,16 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
 function AboutModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-lg bg-white rounded-t-3xl p-6 pb-10 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-top" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-red-50 dark:bg-red-950/30 rounded-xl flex items-center justify-center">
               <Info size={18} className="text-red-600" />
             </div>
             <h3 className="text-lg font-black text-gray-900 dark:text-white">À propos</h3>
           </div>
           <button onClick={onClose} className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-            <X size={16} className="text-gray-500 dark:text-gray-400 dark:text-gray-500" />
+            <X size={16} className="text-gray-500 dark:text-gray-400" />
           </button>
         </div>
         <div className="text-center mb-6">
@@ -256,7 +256,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             <span className="text-white text-3xl font-black">M</span>
           </div>
           <h2 className="text-2xl font-black text-gray-900 dark:text-white">MAWEJA Driver</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Version 1.0.0</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Version 1.0.0</p>
         </div>
         <div className="space-y-3">
           {[
@@ -266,7 +266,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
             { label: "Contact", value: "0802540138" },
           ].map(({ label, value }) => (
             <div key={label} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800/60 rounded-xl px-4 py-3">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</span>
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</span>
               <span className="text-sm font-bold text-gray-900 dark:text-white">{value}</span>
             </div>
           ))}
@@ -302,14 +302,14 @@ export default function DriverSettings() {
             </div>
             <div>
               <h3 className="font-bold text-gray-900 dark:text-white">{user.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{user.email}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
               <p className="text-xs text-gray-400 dark:text-gray-500">{user.phone}</p>
             </div>
           </div>
         )}
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mb-4">
-          <div className="px-5 py-4 border-b border-gray-50">
+          <div className="px-5 py-4 border-b border-gray-50 dark:border-gray-800">
             <h3 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
               <MonitorSmartphone size={16} className="text-red-500" />
               Thème de l'application
@@ -321,7 +321,7 @@ export default function DriverSettings() {
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden mb-4">
-          <div className="px-5 py-4 border-b border-gray-50">
+          <div className="px-5 py-4 border-b border-gray-50 dark:border-gray-800">
             <h3 className="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
               <Globe size={16} className="text-red-500" />
               {t.settings.language}
@@ -331,7 +331,7 @@ export default function DriverSettings() {
             <button
               onClick={() => setLang("fr")}
               data-testid="button-lang-fr"
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${lang === "fr" ? "bg-red-50 border-2 border-red-500" : "bg-gray-50 dark:bg-gray-800/60 border-2 border-transparent hover:border-gray-200 dark:border-gray-700:border-gray-600"}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${lang === "fr" ? "bg-red-50 dark:bg-red-950/30 border-2 border-red-500" : "bg-gray-50 dark:bg-gray-800/60 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-600"}`}
             >
               <span className="text-xl">🇫🇷</span>
               <span className="font-semibold text-sm text-gray-900 dark:text-white">{t.common.french}</span>
@@ -340,7 +340,7 @@ export default function DriverSettings() {
             <button
               onClick={() => setLang("en")}
               data-testid="button-lang-en"
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${lang === "en" ? "bg-red-50 border-2 border-red-500" : "bg-gray-50 dark:bg-gray-800/60 border-2 border-transparent hover:border-gray-200 dark:border-gray-700:border-gray-600"}`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${lang === "en" ? "bg-red-50 dark:bg-red-950/30 border-2 border-red-500" : "bg-gray-50 dark:bg-gray-800/60 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-600"}`}
             >
               <span className="text-xl">🇬🇧</span>
               <span className="font-semibold text-sm text-gray-900 dark:text-white">{t.common.english}</span>
@@ -361,7 +361,7 @@ export default function DriverSettings() {
                 key={item.label}
                 data-testid={item.testId}
                 onClick={() => setModal(item.action)}
-                className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:bg-gray-800/60:bg-gray-800 transition-colors"
+                className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <item.icon size={18} className="text-gray-400 dark:text-gray-500" />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 flex-1 text-left">{item.label}</span>

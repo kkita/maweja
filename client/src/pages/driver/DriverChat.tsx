@@ -154,7 +154,7 @@ export default function DriverChat() {
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Messagerie</h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-6">Contactez l'administration</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Contactez l'administration</p>
 
         <div className="space-y-3">
           {admins.map((admin: any) => (
@@ -189,7 +189,7 @@ export default function DriverChat() {
           {admins.length === 0 && (
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
               <Shield size={36} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm font-medium">Aucun administrateur disponible</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Aucun administrateur disponible</p>
             </div>
           )}
         </div>

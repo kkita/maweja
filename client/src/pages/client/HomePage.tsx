@@ -55,12 +55,12 @@ function CategoryItem({ name, imageUrl, active, testId, onClick }: CategoryItemP
       style={{ width: 68 }}
     >
       <div
-        className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center"
-        style={{
-          border: active ? "2.5px solid #F59E0B" : "1.5px solid rgba(0,0,0,0.07)",
-          boxShadow: active ? "0 0 0 3px rgba(245,158,11,0.15)" : "0 1px 6px rgba(0,0,0,0.07)",
-          background: imageUrl ? "transparent" : "#F9FAFB",
-        }}
+        className={`w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center border-[1.5px] transition-all ${
+          active
+            ? "border-amber-400 shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+            : "border-gray-200/60 dark:border-gray-700/60 shadow-sm"
+        } ${!imageUrl ? "bg-gray-50 dark:bg-gray-800" : ""}`}
+        style={active ? { borderWidth: "2.5px" } : {}}
       >
         {imageUrl ? (
           <img
@@ -74,11 +74,9 @@ function CategoryItem({ name, imageUrl, active, testId, onClick }: CategoryItemP
         )}
       </div>
       <span
-        className="text-center leading-tight"
+        className={`text-center leading-tight ${active ? "text-amber-500 font-bold" : "text-gray-600 dark:text-gray-400 font-medium"}`}
         style={{
           fontSize: 10,
-          fontWeight: active ? 700 : 500,
-          color: active ? "#F59E0B" : "#374151",
           width: 68,
           display: "-webkit-box",
           WebkitLineClamp: 2,
@@ -253,6 +251,8 @@ export default function HomePage() {
     return true;
   });
 
+  const activeCategories = serviceCategories.filter(c => c.isActive);
+
   /* Service categories matching search */
   const matchedServices = globalSearch
     ? activeCategories.filter(c => c.name.toLowerCase().includes(globalSearch.toLowerCase()))
@@ -319,8 +319,6 @@ export default function HomePage() {
     setActiveCuisine(prev => prev === cuisine ? null : cuisine);
     setActiveCatId(null);
   };
-
-  const activeCategories = serviceCategories.filter(c => c.isActive);
 
   /* Static "Tous les services" category */
   const STATIC_SERVICES_CAT = { id: -1, name: "Tous les services", imageUrl: null, isActive: true };
@@ -426,16 +424,15 @@ export default function HomePage() {
                   data-testid={`pill-${cat.id}`}
                   className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-gray-900 active:scale-95 transition-all"
                   style={{
-                    border: isActive ? "1.5px solid #dc2626" : "1.5px solid #E5E7EB",
+                    border: isActive ? "1.5px solid #dc2626" : "1.5px solid transparent",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
                   }}
                 >
                   <span style={{ fontSize: 14 }}>{cat.emoji}</span>
                   <span
+                    className={isActive ? "text-red-600 font-bold" : "text-gray-600 dark:text-gray-300 font-medium"}
                     style={{
                       fontSize: 12,
-                      fontWeight: isActive ? 700 : 500,
-                      color: isActive ? "#dc2626" : "#374151",
                       whiteSpace: "nowrap",
                     }}
                   >
