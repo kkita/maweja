@@ -126,3 +126,15 @@ id = "80TUVmwSpkbOVB0Omn566"
 uri = "file://maweja_github_v14.zip"
 type = "unspecified"
 title = "MAWEJA v14 — Code source complet (GitHub / Mobile)"
+
+[[outputs]]
+id = "2Lg2QXkd5kHAN6IIGHDV_"
+uri = "file://maweja-client-mobile.zip"
+type = "unspecified"
+title = "MAWEJA Client - App Mobile (Android + iOS)"
+
+[[outputs]]
+id = "sir3d3y45PWFHwOVdIbdG"
+uri = "file://maweja-driver-mobile.zip"
+type = "unspecified"
+title = "MAWEJA Driver - App Mobile (Android)"

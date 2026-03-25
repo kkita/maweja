@@ -15,9 +15,9 @@ const config: CapacitorConfig = {
   },
   plugins: {
     LocalNotifications: {
-      smallIcon: "ic_stat_maweja",
-      iconColor: "#dc2626",
-      sound: "beep.wav",
+      smallIcon: "ic_stat_notify",
+      iconColor: "#EC0000",
+      sound: "default",
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

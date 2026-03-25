@@ -5,7 +5,9 @@ const config: CapacitorConfig = {
   appName: "MAWEJA",
   webDir: "www",
   server: {
+    url: "https://maweja.net",
     androidScheme: "https",
+    cleartext: false,
   },
   android: {
     backgroundColor: "#dc2626",
@@ -37,8 +39,8 @@ const config: CapacitorConfig = {
       presentationOptions: ["badge", "sound", "alert"],
     },
     LocalNotifications: {
-      smallIcon: "ic_launcher_foreground",
-      iconColor: "#dc2626",
+      smallIcon: "ic_stat_notify",
+      iconColor: "#EC0000",
       sound: "default",
     },
     Geolocation: {
