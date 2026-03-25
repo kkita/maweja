@@ -48,6 +48,9 @@ if [ -d "$ANDROID_RES" ]; then
     cp "${ROOT}/resources/android/notification/ic_stat_notify_${density}.png" \
        "${ANDROID_RES}/drawable-${density}/ic_stat_notify.png" 2>/dev/null && \
        echo "   ✓ ic_stat_notify → drawable-${density}" || true
+    cp "${ROOT}/resources/android/notification/ic_notif_large_${density}.png" \
+       "${ANDROID_RES}/drawable-${density}/ic_notif_large.png" 2>/dev/null && \
+       echo "   ✓ ic_notif_large → drawable-${density}" || true
   done
 else
   echo "   ! (Android pas encore initialisé, icons copiés après 'npx cap add android')"

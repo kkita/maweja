@@ -9,6 +9,7 @@ const STATUS_FR: Record<string, string> = {
 };
 
 let notifId = 1;
+let channelCreated = false;
 
 function isNative(): boolean {
   return typeof (window as any).Capacitor !== "undefined" &&
@@ -21,6 +22,24 @@ function getLocalNotificationsPlugin(): any | null {
   } catch {
     return null;
   }
+}
+
+async function ensureNotifChannel() {
+  if (channelCreated || !isNative()) return;
+  try {
+    const plugin = getLocalNotificationsPlugin();
+    if (!plugin?.createChannel) return;
+    await plugin.createChannel({
+      id: "maweja_default",
+      name: "MAWEJA",
+      description: "Notifications MAWEJA",
+      importance: 4,
+      visibility: 1,
+      sound: "default",
+      vibration: true,
+    });
+    channelCreated = true;
+  } catch {}
 }
 
 export async function requestNotifPermission(): Promise<boolean> {
@@ -62,6 +81,7 @@ export async function showNotif(title: string, body: string, icon = NOTIF_LOGO) 
     try {
       const plugin = getLocalNotificationsPlugin();
       if (!plugin) return;
+      await ensureNotifChannel();
       const perms = await plugin.checkPermissions();
       if (perms.display !== "granted") {
         await plugin.requestPermissions();
@@ -72,7 +92,7 @@ export async function showNotif(title: string, body: string, icon = NOTIF_LOGO) 
           title,
           body,
           smallIcon: "ic_stat_notify",
-          largeIcon: "ic_launcher_foreground",
+          largeIcon: "ic_notif_large",
           iconColor: "#EC0000",
           sound: "default",
           autoCancel: true,

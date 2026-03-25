@@ -156,3 +156,9 @@ id = "YX4RJ5D2bv96_h7zQbt9f"
 uri = "file://MAWEJA_COMPLET_v16.zip"
 type = "unspecified"
 title = "MAWEJA Complet v16 — Splash + Icons + Mobile Apps (GitHub)"
+
+[[outputs]]
+id = "3aDMoVc8zjmTuszIV7Pr0"
+uri = "file://MAWEJA_COMPLET_v17.zip"
+type = "unspecified"
+title = "MAWEJA Complet v17 — Icônes notification Maweja corrigées (GitHub)"
