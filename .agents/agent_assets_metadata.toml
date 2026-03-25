@@ -144,3 +144,9 @@ id = "96Pwa2CZbco1AXfiNcEqS"
 uri = "file://maweja-mobile-apps.zip"
 type = "unspecified"
 title = "MAWEJA Mobile Apps (Client + Driver)"
+
+[[outputs]]
+id = "2KGlPSV6A-X9pUwncD8uK"
+uri = "file://MAWEJA_COMPLET_v15.zip"
+type = "unspecified"
+title = "MAWEJA Complet v15 — Source + Mobile Client & Driver (GitHub)"
