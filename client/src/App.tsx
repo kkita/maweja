@@ -111,7 +111,7 @@ function AppRoutes() {
     );
   }
 
-  if (showSplash && user?.role !== "admin" && user?.role !== "driver") {
+  if (showSplash && user?.role !== "admin") {
     return <SplashScreen onDone={dismissSplash} />;
   }
 
