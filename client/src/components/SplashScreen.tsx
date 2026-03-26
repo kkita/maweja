@@ -7,149 +7,182 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onDone }: SplashScreenProps) {
   const { setLang, setHasChosenLanguage, hasChosenLanguage } = useI18n();
-  const [phase, setPhase] = useState<"logo" | "lang">("logo");
-  const [step, setStep] = useState(0);
+  const [phase, setPhase] = useState<"video" | "lang">("video");
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
   const mounted = useRef(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hasEnded = useRef(false);
 
   useEffect(() => {
     return () => { mounted.current = false; };
   }, []);
 
   useEffect(() => {
-    const t1 = setTimeout(() => mounted.current && setStep(1), 50);
-    const t2 = setTimeout(() => mounted.current && setStep(2), 350);
-    const t3 = setTimeout(() => mounted.current && setStep(3), 650);
-    const t4 = setTimeout(() => {
+    const t1 = setTimeout(() => mounted.current && setShowOverlay(true), 400);
+    return () => clearTimeout(t1);
+  }, []);
+
+  const handleVideoEnd = () => {
+    if (!mounted.current || hasEnded.current) return;
+    hasEnded.current = true;
+    if (hasChosenLanguage) {
+      setFadeOut(true);
+      setTimeout(() => mounted.current && onDone?.(), 400);
+    } else {
+      setPhase("lang");
+      setTimeout(() => mounted.current && setLangVisible(true), 80);
+    }
+  };
+
+  useEffect(() => {
+    const fallback = setTimeout(() => {
       if (!mounted.current) return;
-      if (hasChosenLanguage) {
-        setFadeOut(true);
-        setTimeout(() => mounted.current && onDone?.(), 350);
-      } else {
-        setPhase("lang");
-        setTimeout(() => mounted.current && setLangVisible(true), 60);
-      }
-    }, 1400);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+      handleVideoEnd();
+    }, 4000);
+    return () => clearTimeout(fallback);
   }, []);
 
   const handleContinue = () => {
     setLang(selectedLang);
     setHasChosenLanguage(true);
     setFadeOut(true);
-    setTimeout(() => onDone?.(), 350);
+    setTimeout(() => onDone?.(), 400);
   };
 
   return (
     <div
       className="fixed inset-0 flex flex-col items-center select-none overflow-hidden"
       style={{
-        backgroundColor: "#EC0000",
+        backgroundColor: "#000",
         zIndex: 9999,
         opacity: fadeOut ? 0 : 1,
-        transform: fadeOut ? "scale(1.05)" : "scale(1)",
-        transition: "opacity 0.35s ease, transform 0.35s ease",
+        transform: fadeOut ? "scale(1.03)" : "scale(1)",
+        transition: "opacity 0.4s ease, transform 0.4s ease",
       }}
     >
-      {phase === "logo" && (
-        <div className="flex-1 flex flex-col items-center justify-center w-full px-8">
+      {phase === "video" && (
+        <>
+          <video
+            ref={videoRef}
+            src="/maweja-splash.mp4"
+            autoPlay
+            muted
+            playsInline
+            onEnded={handleVideoEnd}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ zIndex: 1 }}
+            data-testid="video-splash"
+          />
+
           <div
+            className="absolute inset-0"
             style={{
-              position: "absolute",
-              width: 280,
-              height: 280,
-              borderRadius: "50%",
-              background: "radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)",
-              opacity: step >= 1 ? 1 : 0,
-              transform: step >= 1 ? "scale(1)" : "scale(0.3)",
-              transition: "opacity 0.5s ease, transform 0.6s cubic-bezier(0.22,1,0.36,1)",
+              zIndex: 2,
+              background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, transparent 55%, rgba(0,0,0,0.6) 100%)",
             }}
           />
 
           <div
+            className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-24 px-6"
             style={{
-              position: "relative",
-              zIndex: 2,
-              opacity: step >= 1 ? 1 : 0,
-              transform: step >= 1 ? "scale(1) translateY(0)" : "scale(0.5) translateY(24px)",
-              transition: "opacity 0.4s ease, transform 0.55s cubic-bezier(0.22,1,0.36,1)",
+              zIndex: 3,
+              opacity: showOverlay ? 1 : 0,
+              transform: showOverlay ? "translateY(0)" : "translateY(20px)",
+              transition: "opacity 0.8s ease, transform 0.8s ease",
             }}
           >
             <img
-              src="/maweja-logo-red.png"
+              src="/maweja-icon.png"
               alt="Maweja"
               style={{
-                width: 160,
-                height: 160,
-                objectFit: "contain",
-                filter: "brightness(0) invert(1)",
+                width: 64,
+                height: 64,
+                borderRadius: 16,
+                objectFit: "cover",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
               data-testid="img-splash-logo"
             />
-          </div>
-
-          <div
-            style={{
-              opacity: step >= 2 ? 1 : 0,
-              transform: step >= 2 ? "translateY(0)" : "translateY(10px)",
-              transition: "opacity 0.4s ease, transform 0.4s ease",
-              marginTop: 20,
-              textAlign: "center",
-            }}
-          >
+            <h1
+              style={{
+                fontFamily: "'SF Pro Display', system-ui, -apple-system, sans-serif",
+                fontWeight: 800,
+                fontSize: 28,
+                color: "#fff",
+                letterSpacing: "-0.01em",
+                marginTop: 14,
+                textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+              }}
+            >
+              MAWEJA
+            </h1>
             <p
               style={{
+                fontFamily: "system-ui, -apple-system, sans-serif",
                 fontWeight: 500,
                 fontSize: 13,
-                color: "rgba(255,255,255,0.7)",
-                letterSpacing: "0.08em",
-                fontFamily: "system-ui, -apple-system, sans-serif",
+                color: "rgba(255,255,255,0.8)",
+                letterSpacing: "0.06em",
+                marginTop: 6,
+                textShadow: "0 1px 8px rgba(0,0,0,0.5)",
               }}
             >
               Livraison ultra-rapide à Kinshasa
             </p>
-          </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 5,
-              marginTop: 40,
-              opacity: step >= 3 ? 1 : 0,
-              transition: "opacity 0.3s ease",
-            }}
-          >
-            {[0, 1, 2].map(i => (
-              <div
-                key={i}
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.55)",
-                  animation: `mw-pulse 0.9s ease-in-out ${i * 0.15}s infinite`,
-                }}
-              />
-            ))}
+            <div
+              style={{
+                display: "flex",
+                gap: 5,
+                marginTop: 28,
+              }}
+            >
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.6)",
+                    animation: `mw-pulse 0.9s ease-in-out ${i * 0.15}s infinite`,
+                  }}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {phase === "lang" && (
-        <div className="flex-1 flex flex-col w-full">
+        <div className="flex-1 flex flex-col w-full" style={{ backgroundColor: "#EC0000" }}>
           <div className="flex-1 flex flex-col items-center justify-center">
             <img
-              src="/maweja-logo-red.png"
+              src="/maweja-icon.png"
               alt="Maweja"
               style={{
-                width: 90,
-                height: 90,
-                objectFit: "contain",
-                filter: "brightness(0) invert(1)",
+                width: 80,
+                height: 80,
+                borderRadius: 20,
+                objectFit: "cover",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
               }}
             />
+            <h2
+              style={{
+                fontFamily: "'SF Pro Display', system-ui, sans-serif",
+                fontWeight: 800,
+                fontSize: 22,
+                color: "#fff",
+                marginTop: 12,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              MAWEJA
+            </h2>
           </div>
 
           <div
@@ -234,7 +267,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
 
       <p
         className="absolute bottom-4 text-center px-4 w-full"
-        style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", zIndex: 11, fontFamily: "system-ui, sans-serif" }}
+        style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", zIndex: 11, fontFamily: "system-ui, sans-serif" }}
         data-testid="text-splash-signature"
       >
         Made By Khevin Andrew Kita — Ed Corporation

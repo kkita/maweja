@@ -106,12 +106,13 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center" style={{ backgroundColor: "#EC0000", zIndex: 9998 }}>
+      <div className="fixed inset-0 flex flex-col items-center justify-center" style={{ backgroundColor: "#EC0000", zIndex: 9998 }}>
         <img
-          src="/maweja-logo-red.png"
+          src="/maweja-icon.png"
           alt="Maweja"
-          style={{ width: 120, height: 120, objectFit: "contain", filter: "brightness(0) invert(1)" }}
+          style={{ width: 72, height: 72, borderRadius: 18, objectFit: "cover", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}
         />
+        <p style={{ color: "rgba(255,255,255,0.9)", fontWeight: 800, fontSize: 20, marginTop: 12, fontFamily: "system-ui, sans-serif", letterSpacing: "-0.01em" }}>MAWEJA</p>
       </div>
     );
   }

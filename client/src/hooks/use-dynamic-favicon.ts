@@ -11,7 +11,7 @@ function getThemeFromPath(path: string): FaviconTheme {
 
 function applyTintedFavicon(theme: FaviconTheme) {
   const img = new Image();
-  img.src = "/logo.png";
+  img.src = "/maweja-icon.png";
   img.onload = () => {
     const size = 64;
     const canvas = document.createElement("canvas");

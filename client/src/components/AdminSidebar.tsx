@@ -4,7 +4,7 @@ import { authFetchJson } from "../lib/queryClient";
 import { useI18n } from "../lib/i18n";
 import { useQuery } from "@tanstack/react-query";
 import type { Notification as Notif } from "@shared/schema";
-import logoImg from "@assets/image_1772833363714.png";
+const logoImg = "/maweja-icon.png";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Shield, BarChart3,
   Briefcase, Image, Megaphone, UserCog, GalleryHorizontal, Tag, UtensilsCrossed
