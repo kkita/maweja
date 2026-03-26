@@ -162,3 +162,9 @@ id = "3aDMoVc8zjmTuszIV7Pr0"
 uri = "file://MAWEJA_COMPLET_v17.zip"
 type = "unspecified"
 title = "MAWEJA Complet v17 — Icônes notification Maweja corrigées (GitHub)"
+
+[[outputs]]
+id = "fwgHe1LrzXw7txKJJdvJG"
+uri = "file://MAWEJA_COMPLET_v18.zip"
+type = "unspecified"
+title = "MAWEJA v18 - Projet complet pour GitHub"
