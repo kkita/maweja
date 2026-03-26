@@ -205,20 +205,20 @@ export async function seedDatabase() {
   }));
   await db.insert(menuItems).values(menuInsertValues);
 
-  async function upsertCategory(name: string, icon: string, description: string): Promise<number> {
+  async function upsertCategory(name: string, icon: string, description: string, imageUrl?: string): Promise<number> {
     const [existing] = await db.select({ id: serviceCategories.id }).from(serviceCategories).where(eq(serviceCategories.name, name));
     if (existing) {
-      await db.update(serviceCategories).set({ icon, description, isActive: true }).where(eq(serviceCategories.id, existing.id));
+      await db.update(serviceCategories).set({ icon, description, isActive: true, ...(imageUrl ? { imageUrl } : {}) }).where(eq(serviceCategories.id, existing.id));
       return existing.id;
     }
-    const [inserted] = await db.insert(serviceCategories).values({ name, icon, description, isActive: true }).returning({ id: serviceCategories.id });
+    const [inserted] = await db.insert(serviceCategories).values({ name, icon, description, isActive: true, ...(imageUrl ? { imageUrl } : {}) }).returning({ id: serviceCategories.id });
     return inserted.id;
   }
 
-  const coiffureId  = await upsertCategory("Coiffure", "Scissors", "Tresses, nattes, perruques, défrisage, coloration et coupes professionnelles à domicile");
-  const pedicureId  = await upsertCategory("Pédicure & Manucure", "Hand", "Soins complets des ongles, nail art, soins des pieds et massage relaxant à domicile");
-  const massageId   = await upsertCategory("Massage & Bien-être", "Heart", "Massages relaxants, thérapeutiques et sportifs par des professionnels certifiés");
-  const menageId    = await upsertCategory("Ménage à domicile", "Home", "Nettoyage professionnel de votre domicile — cuisine, salles de bain, sols et vitres");
+  const coiffureId  = await upsertCategory("Coiffure", "Scissors", "Tresses, nattes, perruques, défrisage, coloration et coupes professionnelles à domicile", "/uploads/service-coiffure-domicile.png");
+  const pedicureId  = await upsertCategory("Pédicure & Manucure", "Hand", "Soins complets des ongles, nail art, soins des pieds et massage relaxant à domicile", "/uploads/service-manicure-pedicure.png");
+  const massageId   = await upsertCategory("Massage & Bien-être", "Heart", "Massages relaxants, thérapeutiques et sportifs par des professionnels certifiés", "/uploads/service-coiffure-domicile.png");
+  const menageId    = await upsertCategory("Ménage à domicile", "Home", "Nettoyage professionnel de votre domicile — cuisine, salles de bain, sols et vitres", "/uploads/service-aide-demenagement.png");
 
   const allCatalogItems = [
     { categoryId: coiffureId, name: "Tresses Box Braids", description: "Tresses box braids longues ou courtes, durée ~4h", imageUrl: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?w=400&h=400&fit=crop", price: "$15–$35", isActive: true, sortOrder: 1 },

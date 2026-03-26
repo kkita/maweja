@@ -14,14 +14,11 @@ function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
 }
 
-/** Build an absolute URL for an uploaded file.
- *  Respects reverse-proxy headers (X-Forwarded-Proto / X-Forwarded-Host)
- *  so the URL is always the public-facing URL whether in dev or production.
+/** Build a relative URL for an uploaded file.
+ *  Always returns /uploads/filename — avoids domain-lock issues across environments.
  */
-function buildUploadUrl(req: any, filename: string): string {
-  const proto  = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
-  const host   = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
-  return `${proto}://${host}/uploads/${filename}`;
+function buildUploadUrl(_req: any, filename: string): string {
+  return `/uploads/${filename}`;
 }
 
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -109,7 +106,35 @@ async function requireAdmin(req: any, res: any, next: any) {
   next();
 }
 
+async function normalizeUploadUrls() {
+  try {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const uploadsPattern = '%/uploads/%';
+    const queries = [
+      `UPDATE service_categories SET image_url = '/uploads/' || substring(image_url from '.*/uploads/(.*)$') WHERE image_url LIKE '${uploadsPattern}' AND image_url NOT LIKE '/uploads/%'`,
+      `UPDATE service_catalog_items SET image_url = '/uploads/' || substring(image_url from '.*/uploads/(.*)$') WHERE image_url LIKE '${uploadsPattern}' AND image_url NOT LIKE '/uploads/%'`,
+      `UPDATE restaurants SET image = '/uploads/' || substring(image from '.*/uploads/(.*)$') WHERE image LIKE '${uploadsPattern}' AND image NOT LIKE '/uploads/%'`,
+      `UPDATE menu_items SET image = '/uploads/' || substring(image from '.*/uploads/(.*)$') WHERE image LIKE '${uploadsPattern}' AND image NOT LIKE '/uploads/%'`,
+      `UPDATE users SET profile_photo_url = '/uploads/' || substring(profile_photo_url from '.*/uploads/(.*)$') WHERE profile_photo_url LIKE '${uploadsPattern}' AND profile_photo_url NOT LIKE '/uploads/%'`,
+      `UPDATE users SET id_photo_url = '/uploads/' || substring(id_photo_url from '.*/uploads/(.*)$') WHERE id_photo_url LIKE '${uploadsPattern}' AND id_photo_url NOT LIKE '/uploads/%'`,
+      `UPDATE advertisements SET media_url = '/uploads/' || substring(media_url from '.*/uploads/(.*)$') WHERE media_url LIKE '${uploadsPattern}' AND media_url NOT LIKE '/uploads/%'`,
+    ];
+    let fixed = 0;
+    for (const q of queries) {
+      const r = await pool.query(q);
+      fixed += r.rowCount || 0;
+    }
+    await pool.end();
+    if (fixed > 0) console.log(`🔧 Normalized ${fixed} absolute upload URLs → relative paths`);
+  } catch (err) {
+    console.error("URL normalization error:", err);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
+  await normalizeUploadUrls();
+
   // Auth
   app.post("/api/auth/login", async (req, res) => {
     const { email, password, expectedRole } = req.body;
