@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, queryClient } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useI18n } from "../../lib/i18n";
 import {
   Briefcase, Plus, Search, Clock, CheckCircle, AlertCircle, Loader2,
-  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown, Save
+  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown, Save, Upload
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 import GalleryPicker from "../../components/GalleryPicker";
@@ -424,6 +424,10 @@ export default function AdminServices() {
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [galleryOpenCat, setGalleryOpenCat] = useState(false);
   const [galleryOpenItem, setGalleryOpenItem] = useState(false);
+  const [catUploading, setCatUploading] = useState(false);
+  const [itemUploading, setItemUploading] = useState(false);
+  const catFileRef = useRef<HTMLInputElement>(null);
+  const itemFileRef = useRef<HTMLInputElement>(null);
   const [editingCat, setEditingCat] = useState<ServiceCategory | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceCatalogItem | null>(null);
@@ -453,6 +457,39 @@ export default function AdminServices() {
 
   const errToast = (err: any, fallback = "Une erreur est survenue") =>
     toast({ title: "Erreur", description: err?.message || fallback, variant: "destructive" });
+
+  const handleFileUpload = async (file: File, setUrl: (url: string) => void, setLoading: (v: boolean) => void) => {
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+    if (!allowed.includes(file.type)) {
+      toast({ title: "Format non supporté", description: "Utilisez JPG, PNG ou WEBP", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Fichier trop volumineux", description: "Max 5 MB", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await authFetch("/api/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || `Erreur serveur (${res.status})`);
+      }
+      const data = await res.json();
+      if (data.url) {
+        setUrl(data.url);
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/gallery"] });
+        toast({ title: "Image uploadée avec succès" });
+      } else {
+        toast({ title: "Erreur", description: "Upload échoué", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Impossible d'uploader le fichier", variant: "destructive" });
+    }
+    setLoading(false);
+  };
 
   const updateRequestMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
@@ -890,22 +927,45 @@ export default function AdminServices() {
                         </button>
                       ))}
                     </div>
-                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-1 flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => { setShowImagePicker(false); setGalleryOpenCat(true); }}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
-                        data-testid="button-cat-gallery"
-                      >
-                        <GalleryHorizontal size={13} /> Choisir depuis la Galerie
-                      </button>
+                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { setShowImagePicker(false); setGalleryOpenCat(true); }}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+                          data-testid="button-cat-gallery"
+                        >
+                          <GalleryHorizontal size={13} /> Galerie
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => catFileRef.current?.click()}
+                          disabled={catUploading}
+                          data-testid="button-cat-upload-file"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                        >
+                          {catUploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                          {catUploading ? "Upload..." : "Depuis l'appareil"}
+                        </button>
+                        <input
+                          ref={catFileRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={e => {
+                            const f = e.target.files?.[0];
+                            if (f) handleFileUpload(f, setCatImageUrl, setCatUploading);
+                            e.target.value = "";
+                          }}
+                        />
+                      </div>
                       {catImageUrl && (
                         <button
                           type="button"
                           onClick={() => { setCatImageUrl(""); setShowImagePicker(false); }}
-                          className="py-2 px-3 text-[11px] font-bold text-gray-500 hover:text-red-600 transition-colors border border-gray-200 dark:border-gray-700 rounded-xl"
+                          className="w-full py-1.5 text-[11px] font-bold text-gray-500 hover:text-red-600 transition-colors border border-gray-200 dark:border-gray-700 rounded-xl"
                         >
-                          Supprimer
+                          Supprimer l'image
                         </button>
                       )}
                     </div>
@@ -1055,6 +1115,27 @@ export default function AdminServices() {
                   >
                     <GalleryHorizontal size={14} /> Galerie
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => itemFileRef.current?.click()}
+                    disabled={itemUploading}
+                    data-testid="button-item-upload-file"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors whitespace-nowrap disabled:opacity-50"
+                  >
+                    {itemUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    {itemUploading ? "..." : "Upload"}
+                  </button>
+                  <input
+                    ref={itemFileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      if (f) handleFileUpload(f, setItemImage, setItemUploading);
+                      e.target.value = "";
+                    }}
+                  />
                 </div>
                 {itemImage && (
                   <div className="mt-2 space-y-1.5">
