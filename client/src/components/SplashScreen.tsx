@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
+import splashIcon from "@assets/maweja-icon-512.png";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -7,42 +8,32 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onDone }: SplashScreenProps) {
   const { setLang, setHasChosenLanguage, hasChosenLanguage } = useI18n();
-  const [phase, setPhase] = useState<"video" | "lang">("video");
+  const [phase, setPhase] = useState<"intro" | "lang">("intro");
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(false);
+  const [introStep, setIntroStep] = useState(0);
   const mounted = useRef(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hasEnded = useRef(false);
 
   useEffect(() => {
     return () => { mounted.current = false; };
   }, []);
 
   useEffect(() => {
-    const t1 = setTimeout(() => mounted.current && setShowOverlay(true), 400);
-    return () => clearTimeout(t1);
-  }, []);
-
-  const handleVideoEnd = () => {
-    if (!mounted.current || hasEnded.current) return;
-    hasEnded.current = true;
-    if (hasChosenLanguage) {
-      setFadeOut(true);
-      setTimeout(() => mounted.current && onDone?.(), 400);
-    } else {
-      setPhase("lang");
-      setTimeout(() => mounted.current && setLangVisible(true), 80);
-    }
-  };
-
-  useEffect(() => {
-    const fallback = setTimeout(() => {
+    const t1 = setTimeout(() => mounted.current && setIntroStep(1), 100);
+    const t2 = setTimeout(() => mounted.current && setIntroStep(2), 600);
+    const t3 = setTimeout(() => mounted.current && setIntroStep(3), 1100);
+    const t4 = setTimeout(() => {
       if (!mounted.current) return;
-      handleVideoEnd();
-    }, 4000);
-    return () => clearTimeout(fallback);
+      if (hasChosenLanguage) {
+        setFadeOut(true);
+        setTimeout(() => mounted.current && onDone?.(), 400);
+      } else {
+        setPhase("lang");
+        setTimeout(() => mounted.current && setLangVisible(true), 80);
+      }
+    }, 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, []);
 
   const handleContinue = () => {
@@ -56,112 +47,98 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
     <div
       className="fixed inset-0 flex flex-col items-center select-none overflow-hidden"
       style={{
-        backgroundColor: "#000",
+        backgroundColor: "#EC0000",
         zIndex: 9999,
         opacity: fadeOut ? 0 : 1,
         transform: fadeOut ? "scale(1.03)" : "scale(1)",
         transition: "opacity 0.4s ease, transform 0.4s ease",
       }}
     >
-      {phase === "video" && (
-        <>
-          <video
-            ref={videoRef}
-            src="/maweja-splash.mp4"
-            autoPlay
-            muted
-            playsInline
-            onEnded={handleVideoEnd}
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ zIndex: 1 }}
-            data-testid="video-splash"
-          />
-
+      {phase === "intro" && (
+        <div className="flex-1 flex flex-col items-center justify-center w-full">
           <div
-            className="absolute inset-0"
             style={{
-              zIndex: 2,
-              background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, transparent 55%, rgba(0,0,0,0.6) 100%)",
-            }}
-          />
-
-          <div
-            className="absolute bottom-0 left-0 right-0 flex flex-col items-center pb-24 px-6"
-            style={{
-              zIndex: 3,
-              opacity: showOverlay ? 1 : 0,
-              transform: showOverlay ? "translateY(0)" : "translateY(20px)",
-              transition: "opacity 0.8s ease, transform 0.8s ease",
+              opacity: introStep >= 1 ? 1 : 0,
+              transform: introStep >= 1 ? "scale(1)" : "scale(0.6)",
+              transition: "opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)",
             }}
           >
             <img
-              src="/maweja-icon.png"
+              src={splashIcon}
               alt="Maweja"
               style={{
-                width: 64,
-                height: 64,
-                borderRadius: 16,
+                width: 100,
+                height: 100,
+                borderRadius: 24,
                 objectFit: "cover",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
               }}
               data-testid="img-splash-logo"
             />
-            <h1
-              style={{
-                fontFamily: "'SF Pro Display', system-ui, -apple-system, sans-serif",
-                fontWeight: 800,
-                fontSize: 28,
-                color: "#fff",
-                letterSpacing: "-0.01em",
-                marginTop: 14,
-                textShadow: "0 2px 12px rgba(0,0,0,0.5)",
-              }}
-            >
-              MAWEJA
-            </h1>
-            <p
-              style={{
-                fontFamily: "system-ui, -apple-system, sans-serif",
-                fontWeight: 500,
-                fontSize: 13,
-                color: "rgba(255,255,255,0.8)",
-                letterSpacing: "0.06em",
-                marginTop: 6,
-                textShadow: "0 1px 8px rgba(0,0,0,0.5)",
-              }}
-            >
-              Livraison ultra-rapide à Kinshasa
-            </p>
-
-            <div
-              style={{
-                display: "flex",
-                gap: 5,
-                marginTop: 28,
-              }}
-            >
-              {[0, 1, 2].map(i => (
-                <div
-                  key={i}
-                  style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: "50%",
-                    background: "rgba(255,255,255,0.6)",
-                    animation: `mw-pulse 0.9s ease-in-out ${i * 0.15}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
           </div>
-        </>
+
+          <h1
+            style={{
+              fontFamily: "'Montserrat', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+              fontWeight: 900,
+              fontSize: 36,
+              color: "#fff",
+              letterSpacing: "0.04em",
+              marginTop: 20,
+              opacity: introStep >= 2 ? 1 : 0,
+              transform: introStep >= 2 ? "translateY(0)" : "translateY(16px)",
+              transition: "opacity 0.5s ease, transform 0.5s ease",
+            }}
+          >
+            MAWEJA
+          </h1>
+
+          <p
+            style={{
+              fontFamily: "system-ui, -apple-system, sans-serif",
+              fontWeight: 500,
+              fontSize: 14,
+              color: "rgba(255,255,255,0.85)",
+              letterSpacing: "0.05em",
+              marginTop: 10,
+              opacity: introStep >= 3 ? 1 : 0,
+              transform: introStep >= 3 ? "translateY(0)" : "translateY(12px)",
+              transition: "opacity 0.5s ease, transform 0.5s ease",
+            }}
+          >
+            Livraison ultra-rapide à Kinshasa
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              gap: 6,
+              marginTop: 40,
+              opacity: introStep >= 3 ? 1 : 0,
+              transition: "opacity 0.5s ease 0.2s",
+            }}
+          >
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "rgba(255,255,255,0.7)",
+                  animation: `mw-pulse 0.9s ease-in-out ${i * 0.15}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
       )}
 
       {phase === "lang" && (
-        <div className="flex-1 flex flex-col w-full" style={{ backgroundColor: "#EC0000" }}>
+        <div className="flex-1 flex flex-col w-full">
           <div className="flex-1 flex flex-col items-center justify-center">
             <img
-              src="/maweja-icon.png"
+              src={splashIcon}
               alt="Maweja"
               style={{
                 width: 80,
@@ -173,12 +150,12 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
             />
             <h2
               style={{
-                fontFamily: "'SF Pro Display', system-ui, sans-serif",
+                fontFamily: "'Montserrat', 'SF Pro Display', system-ui, sans-serif",
                 fontWeight: 800,
                 fontSize: 22,
                 color: "#fff",
                 marginTop: 12,
-                letterSpacing: "-0.01em",
+                letterSpacing: "0.03em",
               }}
             >
               MAWEJA
