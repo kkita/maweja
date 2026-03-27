@@ -186,3 +186,9 @@ id = "20QTl-Ebc9xVjNXrG-vaN"
 uri = "file://MAWEJA_UPDATE_v20.zip"
 type = "unspecified"
 title = "MAWEJA UPDATE v20 — Workflow GitHub Actions corrigé + tous les fichiers"
+
+[[outputs]]
+id = "KSGxICnl20IXUy-iKD7Gw"
+uri = "file://MAWEJA_UPDATE_v21.zip"
+type = "unspecified"
+title = "MAWEJA v21 — styles.xml corrigé + workflow sans conflit de thème"

@@ -108,34 +108,6 @@ jobs:
 
           echo "✓ Config splash (styles, colors, drawable) copiée (Client)"
 
-      - name: Appliquer le thème splash dans AndroidManifest (Client)
-        working-directory: mobile/client/android/app/src/main
-        run: |
-          python3 << 'EOF'
-          content = open('AndroidManifest.xml').read()
-          content = content.replace('android:theme="@style/AppTheme"', 'android:theme="@style/AppTheme.Splash"')
-          open('AndroidManifest.xml', 'w').write(content)
-          print('✓ Thème splash appliqué dans AndroidManifest (Client)')
-          EOF
-
-      - name: Injecter setTheme dans MainActivity (Client)
-        run: |
-          MAIN_ACTIVITY=$(find mobile/client/android -name "MainActivity.java" | head -1)
-          if [ -n "$MAIN_ACTIVITY" ]; then
-            python3 << EOF
-          content = open('$MAIN_ACTIVITY').read()
-          if 'setTheme' not in content:
-              content = content.replace(
-                  'super.onCreate(savedInstanceState);',
-                  'setTheme(R.style.AppTheme);\n        super.onCreate(savedInstanceState);'
-              )
-              open('$MAIN_ACTIVITY', 'w').write(content)
-              print('✓ setTheme injecté dans MainActivity (Client)')
-          else:
-              print('ℹ setTheme déjà présent')
-          EOF
-          fi
-
       - name: Injecter les permissions Android (Client)
         working-directory: mobile/client/android/app/src/main
         run: |
@@ -291,34 +263,6 @@ jobs:
           cp "$REPO_RES/values-v31/styles.xml" "$CAP_RES/values-v31/styles.xml"
 
           echo "✓ Config splash (styles, colors, drawable) copiée (Driver)"
-
-      - name: Appliquer le thème splash dans AndroidManifest (Driver)
-        working-directory: mobile/driver/android/app/src/main
-        run: |
-          python3 << 'EOF'
-          content = open('AndroidManifest.xml').read()
-          content = content.replace('android:theme="@style/AppTheme"', 'android:theme="@style/AppTheme.Splash"')
-          open('AndroidManifest.xml', 'w').write(content)
-          print('✓ Thème splash appliqué dans AndroidManifest (Driver)')
-          EOF
-
-      - name: Injecter setTheme dans MainActivity (Driver)
-        run: |
-          MAIN_ACTIVITY=$(find mobile/driver/android -name "MainActivity.java" | head -1)
-          if [ -n "$MAIN_ACTIVITY" ]; then
-            python3 << EOF
-          content = open('$MAIN_ACTIVITY').read()
-          if 'setTheme' not in content:
-              content = content.replace(
-                  'super.onCreate(savedInstanceState);',
-                  'setTheme(R.style.AppTheme);\n        super.onCreate(savedInstanceState);'
-              )
-              open('$MAIN_ACTIVITY', 'w').write(content)
-              print('✓ setTheme injecté dans MainActivity (Driver)')
-          else:
-              print('ℹ setTheme déjà présent')
-          EOF
-          fi
 
       - name: Injecter les permissions Android (Driver)
         working-directory: mobile/driver/android/app/src/main
