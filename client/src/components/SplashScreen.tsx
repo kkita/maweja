@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import lottie from "lottie-web";
 import { useI18n, type Lang } from "../lib/i18n";
-import splashAnimation from "@assets/maweja-splash.json";
+import splashGif from "@assets/maweja-splash.gif";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -13,9 +12,9 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
+  const [gifLoaded, setGifLoaded] = useState(false);
   const mounted = useRef(true);
   const hasEnded = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => { mounted.current = false; };
@@ -34,40 +33,11 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   }, [hasChosenLanguage, onDone]);
 
   useEffect(() => {
-    if (phase !== "anim" || !containerRef.current) return;
-
-    let anim: any = null;
-
-    try {
-      anim = lottie.loadAnimation({
-        container: containerRef.current,
-        renderer: "svg",
-        loop: false,
-        autoplay: true,
-        animationData: splashAnimation,
-      });
-
-      anim.addEventListener("complete", () => {
-        if (mounted.current) goNext();
-      });
-
-      anim.addEventListener("error", () => {
-        if (mounted.current) goNext();
-      });
-    } catch (e) {
-      goNext();
-    }
-
-    const fallback = setTimeout(() => {
+    if (phase !== "anim") return;
+    const timer = setTimeout(() => {
       if (mounted.current && !hasEnded.current) goNext();
-    }, 5000);
-
-    return () => {
-      clearTimeout(fallback);
-      if (anim) {
-        try { anim.destroy(); } catch (_) {}
-      }
-    };
+    }, 4000);
+    return () => clearTimeout(timer);
   }, [phase, goNext]);
 
   const handleContinue = () => {
@@ -95,10 +65,19 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           style={{ backgroundColor: "#EC0000" }}
           onClick={() => goNext()}
         >
-          <div
-            ref={containerRef}
-            style={{ width: 280, height: 280 }}
-            data-testid="lottie-splash"
+          <img
+            src={splashGif}
+            alt="MAWEJA"
+            onLoad={() => setGifLoaded(true)}
+            onError={() => goNext()}
+            style={{
+              width: 300,
+              height: 300,
+              objectFit: "contain",
+              opacity: gifLoaded ? 1 : 0,
+              transition: "opacity 0.2s ease",
+            }}
+            data-testid="gif-splash"
           />
         </div>
       )}
