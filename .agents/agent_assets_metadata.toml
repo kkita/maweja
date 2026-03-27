@@ -174,3 +174,9 @@ id = "xoFx3l5Lx8I4qTwgeFgvS"
 uri = "file://MAWEJA_COMPLET_v19.zip"
 type = "unspecified"
 title = "MAWEJA COMPLET v19 — Code source complet pour GitHub"
+
+[[outputs]]
+id = "epBOJ77ovueFXKL3ePl8O"
+uri = "file://MAWEJA_UPDATE_v19.zip"
+type = "unspecified"
+title = "MAWEJA UPDATE v19 — Tous les fichiers modifiés pour GitHub"
