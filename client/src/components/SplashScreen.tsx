@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
 import splashIcon from "@assets/maweja-icon-512.png";
 
@@ -8,33 +8,62 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onDone }: SplashScreenProps) {
   const { setLang, setHasChosenLanguage, hasChosenLanguage } = useI18n();
-  const [phase, setPhase] = useState<"intro" | "lang">("intro");
+  const [phase, setPhase] = useState<"video" | "lang">("video");
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
-  const [introStep, setIntroStep] = useState(0);
+  const [videoReady, setVideoReady] = useState(false);
   const mounted = useRef(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const hasEnded = useRef(false);
 
   useEffect(() => {
     return () => { mounted.current = false; };
   }, []);
 
+  const goNext = useCallback(() => {
+    if (!mounted.current || hasEnded.current) return;
+    hasEnded.current = true;
+    if (hasChosenLanguage) {
+      setFadeOut(true);
+      setTimeout(() => mounted.current && onDone?.(), 400);
+    } else {
+      setPhase("lang");
+      setTimeout(() => mounted.current && setLangVisible(true), 80);
+    }
+  }, [hasChosenLanguage, onDone]);
+
   useEffect(() => {
-    const t1 = setTimeout(() => mounted.current && setIntroStep(1), 100);
-    const t2 = setTimeout(() => mounted.current && setIntroStep(2), 600);
-    const t3 = setTimeout(() => mounted.current && setIntroStep(3), 1100);
-    const t4 = setTimeout(() => {
-      if (!mounted.current) return;
-      if (hasChosenLanguage) {
-        setFadeOut(true);
-        setTimeout(() => mounted.current && onDone?.(), 400);
-      } else {
-        setPhase("lang");
-        setTimeout(() => mounted.current && setLangVisible(true), 80);
-      }
-    }, 2800);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
-  }, []);
+    const v = videoRef.current;
+    if (!v) return;
+
+    const tryPlay = () => {
+      v.play().then(() => {
+        if (mounted.current) setVideoReady(true);
+      }).catch(() => {
+        if (mounted.current) {
+          setVideoReady(true);
+          goNext();
+        }
+      });
+    };
+
+    if (v.readyState >= 3) {
+      tryPlay();
+    } else {
+      v.addEventListener("canplay", tryPlay, { once: true });
+    }
+
+    const fallback = setTimeout(() => {
+      if (!mounted.current || hasEnded.current) return;
+      goNext();
+    }, 10000);
+
+    return () => {
+      clearTimeout(fallback);
+      v.removeEventListener("canplay", tryPlay);
+    };
+  }, [goNext]);
 
   const handleContinue = () => {
     setLang(selectedLang);
@@ -54,88 +83,65 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         transition: "opacity 0.4s ease, transform 0.4s ease",
       }}
     >
-      {phase === "intro" && (
-        <div className="flex-1 flex flex-col items-center justify-center w-full">
-          <div
+      {phase === "video" && (
+        <div className="absolute inset-0" style={{ backgroundColor: "#EC0000" }}>
+          <video
+            ref={videoRef}
+            src="/maweja-splash.mp4"
+            muted
+            playsInline
+            preload="auto"
+            onEnded={goNext}
+            onError={goNext}
             style={{
-              opacity: introStep >= 1 ? 1 : 0,
-              transform: introStep >= 1 ? "scale(1)" : "scale(0.6)",
-              transition: "opacity 0.6s cubic-bezier(0.16,1,0.3,1), transform 0.6s cubic-bezier(0.16,1,0.3,1)",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              backgroundColor: "#EC0000",
+              opacity: videoReady ? 1 : 0,
+              transition: "opacity 0.3s ease",
+              pointerEvents: "none",
             }}
-          >
-            <img
-              src={splashIcon}
-              alt="Maweja"
-              style={{
-                width: 100,
-                height: 100,
-                borderRadius: 24,
-                objectFit: "cover",
-                boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
-              }}
-              data-testid="img-splash-logo"
-            />
-          </div>
-
-          <h1
-            style={{
-              fontFamily: "'Montserrat', 'SF Pro Display', system-ui, -apple-system, sans-serif",
-              fontWeight: 900,
-              fontSize: 36,
-              color: "#fff",
-              letterSpacing: "0.04em",
-              marginTop: 20,
-              opacity: introStep >= 2 ? 1 : 0,
-              transform: introStep >= 2 ? "translateY(0)" : "translateY(16px)",
-              transition: "opacity 0.5s ease, transform 0.5s ease",
-            }}
-          >
-            MAWEJA
-          </h1>
-
-          <p
-            style={{
-              fontFamily: "system-ui, -apple-system, sans-serif",
-              fontWeight: 500,
-              fontSize: 14,
-              color: "rgba(255,255,255,0.85)",
-              letterSpacing: "0.05em",
-              marginTop: 10,
-              opacity: introStep >= 3 ? 1 : 0,
-              transform: introStep >= 3 ? "translateY(0)" : "translateY(12px)",
-              transition: "opacity 0.5s ease, transform 0.5s ease",
-            }}
-          >
-            Livraison ultra-rapide à Kinshasa
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              gap: 6,
-              marginTop: 40,
-              opacity: introStep >= 3 ? 1 : 0,
-              transition: "opacity 0.5s ease 0.2s",
-            }}
-          >
-            {[0, 1, 2].map(i => (
-              <div
-                key={i}
+            controls={false}
+            disablePictureInPicture
+            data-testid="video-splash"
+          />
+          {!videoReady && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ backgroundColor: "#EC0000" }}>
+              <img
+                src={splashIcon}
+                alt="Maweja"
                 style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.7)",
-                  animation: `mw-pulse 0.9s ease-in-out ${i * 0.15}s infinite`,
+                  width: 80,
+                  height: 80,
+                  borderRadius: 20,
+                  objectFit: "cover",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+                  animation: "mw-breathe 1.5s ease-in-out infinite",
                 }}
               />
-            ))}
-          </div>
+              <h1
+                style={{
+                  fontFamily: "'Montserrat', system-ui, sans-serif",
+                  fontWeight: 900,
+                  fontSize: 28,
+                  color: "#fff",
+                  letterSpacing: "0.04em",
+                  marginTop: 16,
+                }}
+              >
+                MAWEJA
+              </h1>
+            </div>
+          )}
         </div>
       )}
 
       {phase === "lang" && (
-        <div className="flex-1 flex flex-col w-full">
+        <div className="flex-1 flex flex-col w-full" style={{ backgroundColor: "#EC0000" }}>
           <div className="flex-1 flex flex-col items-center justify-center">
             <img
               src={splashIcon}
@@ -251,9 +257,9 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       </p>
 
       <style>{`
-        @keyframes mw-pulse {
-          0%, 80%, 100% { transform: scale(0.7); opacity: 0.35; }
-          40% { transform: scale(1); opacity: 1; }
+        @keyframes mw-breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.06); }
         }
       `}</style>
     </div>
