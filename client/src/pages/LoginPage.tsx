@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
 import { MapPin, Eye, EyeOff, User, Mail, Lock, Phone, ArrowRight, Utensils } from "lucide-react";
-import logoImg from "@assets/image_1772833363714.png";
+const logoImg = "/maweja-icon.png";
 
 export default function LoginPage() {
   const { login, register } = useAuth();

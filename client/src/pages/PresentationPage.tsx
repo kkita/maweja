@@ -1,4 +1,4 @@
-import logoPath from "@assets/image_1772833363714.png";
+const logoPath = "/maweja-icon.png";
 import { useEffect, useRef } from "react";
 
 const APP_URL = window.location.origin;
