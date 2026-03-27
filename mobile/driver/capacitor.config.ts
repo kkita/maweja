@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: "MAWEJA Driver",
   webDir: "www",
   server: {
-    url: "https://maweja.net/driver/login",
     androidScheme: "https",
     cleartext: false,
   },

@@ -5,7 +5,6 @@ const config: CapacitorConfig = {
   appName: "MAWEJA",
   webDir: "www",
   server: {
-    url: "https://maweja.net",
     androidScheme: "https",
     cleartext: false,
   },

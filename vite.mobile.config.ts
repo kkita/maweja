@@ -6,6 +6,7 @@ const MOBILE_MODE = process.env.VITE_MOBILE_MODE || "client";
 
 export default defineConfig({
   plugins: [react()],
+  assetsInclude: ["**/*.mp4"],
   define: {
     "import.meta.env.VITE_MOBILE_MODE": JSON.stringify(MOBILE_MODE),
     "import.meta.env.VITE_API_BASE_URL": JSON.stringify(process.env.VITE_API_BASE_URL || ""),
@@ -21,5 +22,6 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, `mobile/${MOBILE_MODE}/www`),
     emptyOutDir: true,
+    assetsInlineLimit: 0,
   },
 });
