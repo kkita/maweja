@@ -192,3 +192,9 @@ id = "KSGxICnl20IXUy-iKD7Gw"
 uri = "file://MAWEJA_UPDATE_v21.zip"
 type = "unspecified"
 title = "MAWEJA v21 — styles.xml corrigé + workflow sans conflit de thème"
+
+[[outputs]]
+id = "QhlfOQhbCqRS5CEP-mnAm"
+uri = "file://MAWEJA_GITHUB_UPDATE.zip"
+type = "unspecified"
+title = "MAWEJA GitHub Update — Icônes + Splash + Workflow corrigés"
