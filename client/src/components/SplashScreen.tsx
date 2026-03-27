@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
-import splashIcon from "@assets/maweja-icon-512.png";
 import splashVideoSrc from "@assets/maweja-splash.mp4";
 
 interface SplashScreenProps {
@@ -13,7 +12,6 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
   const mounted = useRef(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasEnded = useRef(false);
@@ -35,17 +33,13 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   }, [hasChosenLanguage, onDone]);
 
   useEffect(() => {
+    if (phase !== "video") return;
     const v = videoRef.current;
     if (!v) return;
 
     const tryPlay = () => {
-      v.play().then(() => {
-        if (mounted.current) setVideoReady(true);
-      }).catch(() => {
-        if (mounted.current) {
-          setVideoReady(true);
-          goNext();
-        }
+      v.play().catch(() => {
+        if (mounted.current) goNext();
       });
     };
 
@@ -64,7 +58,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       clearTimeout(fallback);
       v.removeEventListener("canplay", tryPlay);
     };
-  }, [goNext]);
+  }, [phase, goNext]);
 
   const handleContinue = () => {
     setLang(selectedLang);
@@ -75,7 +69,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
 
   return (
     <div
-      className="fixed inset-0 flex flex-col items-center select-none overflow-hidden"
+      className="fixed inset-0 select-none overflow-hidden"
       style={{
         backgroundColor: "#EC0000",
         zIndex: 9999,
@@ -83,94 +77,29 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         transform: fadeOut ? "scale(1.03)" : "scale(1)",
         transition: "opacity 0.4s ease, transform 0.4s ease",
       }}
+      data-testid="splash-root"
     >
       {phase === "video" && (
-        <div className="absolute inset-0" style={{ backgroundColor: "#EC0000" }}>
-          <video
-            ref={videoRef}
-            src={splashVideoSrc}
-            muted
-            playsInline
-            preload="auto"
-            autoPlay
-            onEnded={goNext}
-            onError={goNext}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              backgroundColor: "#EC0000",
-              opacity: videoReady ? 1 : 0,
-              transition: "opacity 0.15s ease",
-              pointerEvents: "none",
-              WebkitAppearance: "none",
-            }}
-            controls={false}
-            disablePictureInPicture
-            controlsList="nodownload nofullscreen noremoteplayback"
-            data-testid="video-splash"
-          />
-          {!videoReady && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ backgroundColor: "#EC0000" }}>
-              <img
-                src={splashIcon}
-                alt="Maweja"
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 20,
-                  objectFit: "cover",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-                  animation: "mw-breathe 1.5s ease-in-out infinite",
-                }}
-              />
-              <h1
-                style={{
-                  fontFamily: "'Montserrat', system-ui, sans-serif",
-                  fontWeight: 900,
-                  fontSize: 28,
-                  color: "#fff",
-                  letterSpacing: "0.04em",
-                  marginTop: 16,
-                }}
-              >
-                MAWEJA
-              </h1>
-            </div>
-          )}
-        </div>
+        <video
+          ref={videoRef}
+          src={splashVideoSrc}
+          muted
+          playsInline
+          preload="auto"
+          autoPlay
+          onEnded={goNext}
+          onError={goNext}
+          className="splash-video"
+          controls={false}
+          disablePictureInPicture
+          controlsList="nodownload nofullscreen noremoteplayback"
+          data-testid="video-splash"
+        />
       )}
 
       {phase === "lang" && (
-        <div className="flex-1 flex flex-col w-full" style={{ backgroundColor: "#EC0000" }}>
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <img
-              src={splashIcon}
-              alt="Maweja"
-              style={{
-                width: 80,
-                height: 80,
-                borderRadius: 20,
-                objectFit: "cover",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-              }}
-            />
-            <h2
-              style={{
-                fontFamily: "'Montserrat', 'SF Pro Display', system-ui, sans-serif",
-                fontWeight: 800,
-                fontSize: 22,
-                color: "#fff",
-                marginTop: 12,
-                letterSpacing: "0.03em",
-              }}
-            >
-              MAWEJA
-            </h2>
-          </div>
+        <div className="flex flex-col w-full h-full" style={{ backgroundColor: "#EC0000" }}>
+          <div className="flex-1 flex flex-col items-center justify-center" />
 
           <div
             className="w-full max-w-sm mx-auto px-6 pb-10 pt-8"
@@ -249,32 +178,48 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
               {selectedLang === "fr" ? "Commencer →" : "Get Started →"}
             </button>
           </div>
+
+          <p
+            className="text-center px-4 w-full pb-4"
+            style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontFamily: "system-ui, sans-serif" }}
+            data-testid="text-splash-signature"
+          >
+            Made By Khevin Andrew Kita — Ed Corporation
+          </p>
         </div>
       )}
 
-      <p
-        className="absolute bottom-4 text-center px-4 w-full"
-        style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", zIndex: 11, fontFamily: "system-ui, sans-serif" }}
-        data-testid="text-splash-signature"
-      >
-        Made By Khevin Andrew Kita — Ed Corporation
-      </p>
-
       <style>{`
-        @keyframes mw-breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.06); }
+        .splash-video {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          background-color: #EC0000;
+          pointer-events: none;
+          -webkit-appearance: none;
+          appearance: none;
         }
-        video[data-testid="video-splash"]::-webkit-media-controls,
-        video[data-testid="video-splash"]::-webkit-media-controls-enclosure,
-        video[data-testid="video-splash"]::-webkit-media-controls-panel,
-        video[data-testid="video-splash"]::-webkit-media-controls-start-playback-button,
-        video[data-testid="video-splash"]::-webkit-media-controls-play-button,
-        video[data-testid="video-splash"]::-webkit-media-controls-overlay-play-button {
+        .splash-video::-webkit-media-controls,
+        .splash-video::-webkit-media-controls-enclosure,
+        .splash-video::-webkit-media-controls-panel,
+        .splash-video::-webkit-media-controls-start-playback-button,
+        .splash-video::-webkit-media-controls-play-button,
+        .splash-video::-webkit-media-controls-overlay-play-button,
+        .splash-video::-webkit-media-controls-current-time-display,
+        .splash-video::-webkit-media-controls-time-remaining-display,
+        .splash-video::-webkit-media-controls-timeline,
+        .splash-video::-webkit-media-controls-volume-slider,
+        .splash-video::-webkit-media-controls-mute-button,
+        .splash-video::-webkit-media-controls-fullscreen-button {
           display: none !important;
           -webkit-appearance: none !important;
           opacity: 0 !important;
           pointer-events: none !important;
+          width: 0 !important;
+          height: 0 !important;
         }
       `}</style>
     </div>
