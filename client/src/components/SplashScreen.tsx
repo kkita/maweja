@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import Lottie from "lottie-react";
 import { useI18n, type Lang } from "../lib/i18n";
-import splashVideoSrc from "@assets/maweja-splash.mp4";
+import splashAnimation from "@assets/maweja-splash.json";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -8,13 +9,11 @@ interface SplashScreenProps {
 
 export default function SplashScreen({ onDone }: SplashScreenProps) {
   const { setLang, setHasChosenLanguage, hasChosenLanguage } = useI18n();
-  const [phase, setPhase] = useState<"video" | "lang">("video");
+  const [phase, setPhase] = useState<"anim" | "lang">("anim");
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
-  const [videoPlaying, setVideoPlaying] = useState(false);
   const mounted = useRef(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const hasEnded = useRef(false);
 
   useEffect(() => {
@@ -32,46 +31,6 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       setTimeout(() => mounted.current && setLangVisible(true), 80);
     }
   }, [hasChosenLanguage, onDone]);
-
-  useEffect(() => {
-    if (phase !== "video") return;
-    const v = videoRef.current;
-    if (!v) return;
-
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    const tryPlay = () => {
-      if (hasEnded.current) return;
-      v.muted = true;
-      v.play().then(() => {
-        if (mounted.current) setVideoPlaying(true);
-      }).catch(() => {
-        attempts++;
-        if (attempts < maxAttempts && mounted.current && !hasEnded.current) {
-          setTimeout(tryPlay, 200);
-        } else if (mounted.current) {
-          goNext();
-        }
-      });
-    };
-
-    if (v.readyState >= 2) {
-      tryPlay();
-    } else {
-      v.addEventListener("loadeddata", tryPlay, { once: true });
-    }
-
-    const fallback = setTimeout(() => {
-      if (!mounted.current || hasEnded.current) return;
-      goNext();
-    }, 8000);
-
-    return () => {
-      clearTimeout(fallback);
-      v.removeEventListener("loadeddata", tryPlay);
-    };
-  }, [phase, goNext]);
 
   const handleContinue = () => {
     setLang(selectedLang);
@@ -92,38 +51,17 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       }}
       data-testid="splash-root"
     >
-      {phase === "video" && (
-        <>
-          <video
-            ref={videoRef}
-            src={splashVideoSrc}
-            muted
-            playsInline
-            preload="auto"
-            autoPlay
-            onEnded={goNext}
-            onError={goNext}
-            onPlay={() => setVideoPlaying(true)}
-            className="splash-video"
-            style={{ opacity: videoPlaying ? 1 : 0 }}
-            controls={false}
-            disablePictureInPicture
-            controlsList="nodownload nofullscreen noremoteplayback"
-            data-testid="video-splash"
+      {phase === "anim" && (
+        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "#EC0000" }}>
+          <Lottie
+            animationData={splashAnimation}
+            loop={false}
+            autoplay={true}
+            onComplete={goNext}
+            style={{ width: "80%", maxWidth: 360, height: "auto" }}
+            data-testid="lottie-splash"
           />
-          {!videoPlaying && (
-            <div
-              className="absolute inset-0 flex items-center justify-center"
-              style={{ backgroundColor: "#EC0000" }}
-              onClick={() => {
-                const v = videoRef.current;
-                if (v) { v.muted = true; v.play().then(() => setVideoPlaying(true)).catch(() => {}); }
-              }}
-            >
-              <div className="splash-loader" />
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {phase === "lang" && (
@@ -217,52 +155,6 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           </p>
         </div>
       )}
-
-      <style>{`
-        .splash-video {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          background-color: #EC0000;
-          pointer-events: none;
-          -webkit-appearance: none;
-          appearance: none;
-          transition: opacity 0.2s ease;
-        }
-        .splash-video::-webkit-media-controls,
-        .splash-video::-webkit-media-controls-enclosure,
-        .splash-video::-webkit-media-controls-panel,
-        .splash-video::-webkit-media-controls-start-playback-button,
-        .splash-video::-webkit-media-controls-play-button,
-        .splash-video::-webkit-media-controls-overlay-play-button,
-        .splash-video::-webkit-media-controls-current-time-display,
-        .splash-video::-webkit-media-controls-time-remaining-display,
-        .splash-video::-webkit-media-controls-timeline,
-        .splash-video::-webkit-media-controls-volume-slider,
-        .splash-video::-webkit-media-controls-mute-button,
-        .splash-video::-webkit-media-controls-fullscreen-button {
-          display: none !important;
-          -webkit-appearance: none !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-          width: 0 !important;
-          height: 0 !important;
-        }
-        .splash-loader {
-          width: 32px;
-          height: 32px;
-          border: 3px solid rgba(255,255,255,0.25);
-          border-top-color: #fff;
-          border-radius: 50%;
-          animation: splash-spin 0.7s linear infinite;
-        }
-        @keyframes splash-spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
