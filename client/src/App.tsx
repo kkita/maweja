@@ -82,7 +82,7 @@ function MobileModeGuard() {
 function AppRoutes() {
   const { user, loading } = useAuth();
   const { hasChosenLanguage, t } = useI18n();
-  const [showSplash, setShowSplash] = useState(() => !sessionStorage.getItem("maweja_splashed"));
+  const [showSplash, setShowSplash] = useState(true);
 
   useDynamicFavicon();
 
@@ -96,7 +96,6 @@ function AppRoutes() {
   }, [user?.id]);
 
   const dismissSplash = () => {
-    sessionStorage.setItem("maweja_splashed", "1");
     setShowSplash(false);
   };
 
