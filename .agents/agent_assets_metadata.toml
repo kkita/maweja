@@ -168,3 +168,9 @@ id = "fwgHe1LrzXw7txKJJdvJG"
 uri = "file://MAWEJA_COMPLET_v18.zip"
 type = "unspecified"
 title = "MAWEJA v18 - Projet complet pour GitHub"
+
+[[outputs]]
+id = "xoFx3l5Lx8I4qTwgeFgvS"
+uri = "file://MAWEJA_COMPLET_v19.zip"
+type = "unspecified"
+title = "MAWEJA COMPLET v19 — Code source complet pour GitHub"
