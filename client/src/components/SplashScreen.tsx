@@ -12,6 +12,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const mounted = useRef(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasEnded = useRef(false);
@@ -37,26 +38,38 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
     const v = videoRef.current;
     if (!v) return;
 
+    let attempts = 0;
+    const maxAttempts = 5;
+
     const tryPlay = () => {
-      v.play().catch(() => {
-        if (mounted.current) goNext();
+      if (hasEnded.current) return;
+      v.muted = true;
+      v.play().then(() => {
+        if (mounted.current) setVideoPlaying(true);
+      }).catch(() => {
+        attempts++;
+        if (attempts < maxAttempts && mounted.current && !hasEnded.current) {
+          setTimeout(tryPlay, 200);
+        } else if (mounted.current) {
+          goNext();
+        }
       });
     };
 
-    if (v.readyState >= 3) {
+    if (v.readyState >= 2) {
       tryPlay();
     } else {
-      v.addEventListener("canplay", tryPlay, { once: true });
+      v.addEventListener("loadeddata", tryPlay, { once: true });
     }
 
     const fallback = setTimeout(() => {
       if (!mounted.current || hasEnded.current) return;
       goNext();
-    }, 10000);
+    }, 8000);
 
     return () => {
       clearTimeout(fallback);
-      v.removeEventListener("canplay", tryPlay);
+      v.removeEventListener("loadeddata", tryPlay);
     };
   }, [phase, goNext]);
 
@@ -80,21 +93,37 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       data-testid="splash-root"
     >
       {phase === "video" && (
-        <video
-          ref={videoRef}
-          src={splashVideoSrc}
-          muted
-          playsInline
-          preload="auto"
-          autoPlay
-          onEnded={goNext}
-          onError={goNext}
-          className="splash-video"
-          controls={false}
-          disablePictureInPicture
-          controlsList="nodownload nofullscreen noremoteplayback"
-          data-testid="video-splash"
-        />
+        <>
+          <video
+            ref={videoRef}
+            src={splashVideoSrc}
+            muted
+            playsInline
+            preload="auto"
+            autoPlay
+            onEnded={goNext}
+            onError={goNext}
+            onPlay={() => setVideoPlaying(true)}
+            className="splash-video"
+            style={{ opacity: videoPlaying ? 1 : 0 }}
+            controls={false}
+            disablePictureInPicture
+            controlsList="nodownload nofullscreen noremoteplayback"
+            data-testid="video-splash"
+          />
+          {!videoPlaying && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ backgroundColor: "#EC0000" }}
+              onClick={() => {
+                const v = videoRef.current;
+                if (v) { v.muted = true; v.play().then(() => setVideoPlaying(true)).catch(() => {}); }
+              }}
+            >
+              <div className="splash-loader" />
+            </div>
+          )}
+        </>
       )}
 
       {phase === "lang" && (
@@ -201,6 +230,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           pointer-events: none;
           -webkit-appearance: none;
           appearance: none;
+          transition: opacity 0.2s ease;
         }
         .splash-video::-webkit-media-controls,
         .splash-video::-webkit-media-controls-enclosure,
@@ -220,6 +250,17 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           pointer-events: none !important;
           width: 0 !important;
           height: 0 !important;
+        }
+        .splash-loader {
+          width: 32px;
+          height: 32px;
+          border: 3px solid rgba(255,255,255,0.25);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: splash-spin 0.7s linear infinite;
+        }
+        @keyframes splash-spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
