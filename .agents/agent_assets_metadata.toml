@@ -180,3 +180,9 @@ id = "epBOJ77ovueFXKL3ePl8O"
 uri = "file://MAWEJA_UPDATE_v19.zip"
 type = "unspecified"
 title = "MAWEJA UPDATE v19 — Tous les fichiers modifiés pour GitHub"
+
+[[outputs]]
+id = "20QTl-Ebc9xVjNXrG-vaN"
+uri = "file://MAWEJA_UPDATE_v20.zip"
+type = "unspecified"
+title = "MAWEJA UPDATE v20 — Workflow GitHub Actions corrigé + tous les fichiers"
