@@ -10,23 +10,17 @@ const config: CapacitorConfig = {
     cleartext: false,
   },
   android: {
-    backgroundColor: "#dc2626",
+    backgroundColor: "#EC0000",
     allowMixedContent: true,
   },
   plugins: {
     SplashScreen: {
-      launchShowDuration: 2500,
+      launchShowDuration: 0,
       launchAutoHide: true,
-      backgroundColor: "#dc2626",
-      androidSplashResourceName: "splash",
-      showSpinner: false,
-      androidScaleType: "CENTER_CROP",
-      splashFullScreen: true,
-      splashImmersive: true,
     },
     StatusBar: {
       style: "Dark",
-      backgroundColor: "#dc2626",
+      backgroundColor: "#EC0000",
       overlaysWebView: false,
     },
     PushNotifications: {
@@ -38,12 +32,8 @@ const config: CapacitorConfig = {
       iconColor: "#EC0000",
       sound: "default",
     },
-    Geolocation: {
-      // Géolocalisation obligatoire pour le suivi livreur
-    },
-    Camera: {
-      // Pour photos de livraison
-    },
+    Geolocation: {},
+    Camera: {},
   },
 };
 

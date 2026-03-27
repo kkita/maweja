@@ -12,6 +12,7 @@ const config: CapacitorConfig = {
     allowMixedContent: false,
     captureInput: true,
     webContentsDebuggingEnabled: false,
+    backgroundColor: "#EC0000",
   },
   plugins: {
     LocalNotifications: {
@@ -25,6 +26,7 @@ const config: CapacitorConfig = {
     },
     SplashScreen: {
       launchShowDuration: 0,
+      launchAutoHide: true,
     },
   },
 };
