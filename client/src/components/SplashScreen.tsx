@@ -13,8 +13,10 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
+  const [animReady, setAnimReady] = useState(false);
   const mounted = useRef(true);
   const hasEnded = useRef(false);
+  const lottieRef = useRef<any>(null);
 
   useEffect(() => {
     return () => { mounted.current = false; };
@@ -31,6 +33,14 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       setTimeout(() => mounted.current && setLangVisible(true), 80);
     }
   }, [hasChosenLanguage, onDone]);
+
+  useEffect(() => {
+    if (phase !== "anim") return;
+    const fallback = setTimeout(() => {
+      if (mounted.current && !hasEnded.current) goNext();
+    }, 6000);
+    return () => clearTimeout(fallback);
+  }, [phase, goNext]);
 
   const handleContinue = () => {
     setLang(selectedLang);
@@ -52,15 +62,24 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
       data-testid="splash-root"
     >
       {phase === "anim" && (
-        <div className="absolute inset-0 flex items-center justify-center" style={{ backgroundColor: "#EC0000" }}>
-          <Lottie
-            animationData={splashAnimation}
-            loop={false}
-            autoplay={true}
-            onComplete={goNext}
-            style={{ width: "80%", maxWidth: 360, height: "auto" }}
-            data-testid="lottie-splash"
-          />
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ backgroundColor: "#EC0000" }}
+          onClick={() => { if (animReady) goNext(); }}
+        >
+          <div style={{ width: 280, height: 280 }}>
+            <Lottie
+              lottieRef={lottieRef}
+              animationData={splashAnimation}
+              loop={false}
+              autoplay={true}
+              renderer="svg"
+              onDOMLoaded={() => setAnimReady(true)}
+              onComplete={goNext}
+              style={{ width: "100%", height: "100%" }}
+              data-testid="lottie-splash"
+            />
+          </div>
         </div>
       )}
 
