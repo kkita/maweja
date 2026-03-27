@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import Lottie from "lottie-react";
+import lottie from "lottie-web";
 import { useI18n, type Lang } from "../lib/i18n";
 import splashAnimation from "@assets/maweja-splash.json";
 
@@ -13,10 +13,9 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const [langVisible, setLangVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState<Lang>("fr");
   const [fadeOut, setFadeOut] = useState(false);
-  const [animReady, setAnimReady] = useState(false);
   const mounted = useRef(true);
   const hasEnded = useRef(false);
-  const lottieRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => { mounted.current = false; };
@@ -35,11 +34,40 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   }, [hasChosenLanguage, onDone]);
 
   useEffect(() => {
-    if (phase !== "anim") return;
+    if (phase !== "anim" || !containerRef.current) return;
+
+    let anim: any = null;
+
+    try {
+      anim = lottie.loadAnimation({
+        container: containerRef.current,
+        renderer: "svg",
+        loop: false,
+        autoplay: true,
+        animationData: splashAnimation,
+      });
+
+      anim.addEventListener("complete", () => {
+        if (mounted.current) goNext();
+      });
+
+      anim.addEventListener("error", () => {
+        if (mounted.current) goNext();
+      });
+    } catch (e) {
+      goNext();
+    }
+
     const fallback = setTimeout(() => {
       if (mounted.current && !hasEnded.current) goNext();
-    }, 6000);
-    return () => clearTimeout(fallback);
+    }, 5000);
+
+    return () => {
+      clearTimeout(fallback);
+      if (anim) {
+        try { anim.destroy(); } catch (_) {}
+      }
+    };
   }, [phase, goNext]);
 
   const handleContinue = () => {
@@ -65,21 +93,13 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{ backgroundColor: "#EC0000" }}
-          onClick={() => { if (animReady) goNext(); }}
+          onClick={() => goNext()}
         >
-          <div style={{ width: 280, height: 280 }}>
-            <Lottie
-              lottieRef={lottieRef}
-              animationData={splashAnimation}
-              loop={false}
-              autoplay={true}
-              renderer="svg"
-              onDOMLoaded={() => setAnimReady(true)}
-              onComplete={goNext}
-              style={{ width: "100%", height: "100%" }}
-              data-testid="lottie-splash"
-            />
-          </div>
+          <div
+            ref={containerRef}
+            style={{ width: 280, height: 280 }}
+            data-testid="lottie-splash"
+          />
         </div>
       )}
 
