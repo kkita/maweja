@@ -6,6 +6,7 @@ const MOBILE_MODE = process.env.VITE_MOBILE_MODE || "client";
 
 export default defineConfig({
   plugins: [react()],
+  base: "./",
   assetsInclude: ["**/*.mp4"],
   define: {
     "import.meta.env.VITE_MOBILE_MODE": JSON.stringify(MOBILE_MODE),
