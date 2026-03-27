@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
 import splashIcon from "@assets/maweja-icon-512.png";
+import splashVideoSrc from "@assets/maweja-splash.mp4";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -87,10 +88,11 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         <div className="absolute inset-0" style={{ backgroundColor: "#EC0000" }}>
           <video
             ref={videoRef}
-            src="/maweja-splash.mp4"
+            src={splashVideoSrc}
             muted
             playsInline
             preload="auto"
+            autoPlay
             onEnded={goNext}
             onError={goNext}
             style={{
@@ -102,11 +104,13 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
               objectFit: "cover",
               backgroundColor: "#EC0000",
               opacity: videoReady ? 1 : 0,
-              transition: "opacity 0.3s ease",
+              transition: "opacity 0.15s ease",
               pointerEvents: "none",
+              WebkitAppearance: "none",
             }}
             controls={false}
             disablePictureInPicture
+            controlsList="nodownload nofullscreen noremoteplayback"
             data-testid="video-splash"
           />
           {!videoReady && (
@@ -260,6 +264,17 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         @keyframes mw-breathe {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.06); }
+        }
+        video[data-testid="video-splash"]::-webkit-media-controls,
+        video[data-testid="video-splash"]::-webkit-media-controls-enclosure,
+        video[data-testid="video-splash"]::-webkit-media-controls-panel,
+        video[data-testid="video-splash"]::-webkit-media-controls-start-playback-button,
+        video[data-testid="video-splash"]::-webkit-media-controls-play-button,
+        video[data-testid="video-splash"]::-webkit-media-controls-overlay-play-button {
+          display: none !important;
+          -webkit-appearance: none !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
         }
       `}</style>
     </div>
