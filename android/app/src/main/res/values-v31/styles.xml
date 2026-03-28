@@ -14,10 +14,12 @@
     <style name="AppTheme.NoActionBarLaunch" parent="AppTheme">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>
-        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowFullscreen">true</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowBackground">@color/splash_background</item>
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>
         <item name="android:statusBarColor">@color/maweja_red</item>
         <item name="android:navigationBarColor">@color/maweja_red</item>
     </style>
