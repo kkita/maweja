@@ -12,16 +12,16 @@ function ThemeToggle() {
     { value: "dark", icon: Moon, title: "Sombre" },
   ];
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+    <div className="flex items-center bg-gray-100 dark:bg-gray-800/60 rounded-lg p-0.5">
       {options.map(({ value, icon: Icon, title }) => (
         <button
           key={value}
           onClick={() => setTheme(value)}
           title={title}
           data-testid={`admin-theme-${value}`}
-          className={`p-2 rounded-lg transition-all ${theme === value ? "bg-white dark:bg-gray-700 shadow text-red-600" : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"}`}
+          className={`p-1.5 rounded-md transition-all duration-200 ${theme === value ? "bg-white dark:bg-gray-700 shadow-sm text-red-600" : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"}`}
         >
-          <Icon size={15} />
+          <Icon size={14} />
         </button>
       ))}
     </div>
@@ -42,50 +42,53 @@ export default function AdminLayout({ children, title, subtitle }: { children: R
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
+    <div className="min-h-screen bg-[#f8f8fa] dark:bg-[#0a0a0c] flex">
       <AdminSidebar />
       <main className="flex-1 ml-64">
-        <header className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-8 py-5 sticky top-0 z-30 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white">{title}</h1>
-            {subtitle && <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{subtitle}</p>}
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowLangMenu(!showLangMenu)}
-                data-testid="button-admin-lang"
-                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border border-gray-200 dark:border-gray-700"
-              >
-                <span className="text-lg">{lang === "fr" ? "🇫🇷" : "🇬🇧"}</span>
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{lang === "fr" ? "FR" : "EN"}</span>
-              </button>
-              {showLangMenu && (
-                <div className="absolute right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden z-50 min-w-[160px]">
-                  <button
-                    onClick={() => { setLang("fr"); setShowLangMenu(false); }}
-                    data-testid="button-admin-lang-fr"
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${lang === "fr" ? "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400 font-bold" : "text-gray-700 dark:text-gray-300"}`}
-                  >
-                    <span>🇫🇷</span> {t.common.french}
-                  </button>
-                  <button
-                    onClick={() => { setLang("en"); setShowLangMenu(false); }}
-                    data-testid="button-admin-lang-en"
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${lang === "en" ? "bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400 font-bold" : "text-gray-700 dark:text-gray-300"}`}
-                  >
-                    <span>🇬🇧</span> {t.common.english}
-                  </button>
-                </div>
-              )}
+        <header className="bg-white/80 dark:bg-[#0f0f12]/80 backdrop-blur-xl border-b border-gray-100/80 dark:border-gray-800/30 px-8 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-extrabold text-gray-900 dark:text-white tracking-tight">{title}</h1>
+              {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mt-0.5">{subtitle}</p>}
+            </div>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700/50 mx-1" />
+              <div className="relative" ref={menuRef}>
+                <button
+                  onClick={() => setShowLangMenu(!showLangMenu)}
+                  data-testid="button-admin-lang"
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors text-gray-600 dark:text-gray-400"
+                >
+                  <Globe size={14} />
+                  <span className="text-xs font-semibold">{lang === "fr" ? "FR" : "EN"}</span>
+                </button>
+                {showLangMenu && (
+                  <div className="absolute right-0 top-full mt-2 bg-white dark:bg-[#1a1a1e] border border-gray-100 dark:border-gray-800/50 rounded-xl shadow-xl shadow-black/5 dark:shadow-black/30 overflow-hidden z-50 min-w-[140px]">
+                    <button
+                      onClick={() => { setLang("fr"); setShowLangMenu(false); }}
+                      data-testid="button-admin-lang-fr"
+                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${lang === "fr" ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-bold" : "text-gray-600 dark:text-gray-400"}`}
+                    >
+                      <span>🇫🇷</span> {t.common.french}
+                    </button>
+                    <button
+                      onClick={() => { setLang("en"); setShowLangMenu(false); }}
+                      data-testid="button-admin-lang-en"
+                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${lang === "en" ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-bold" : "text-gray-600 dark:text-gray-400"}`}
+                    >
+                      <span>🇬🇧</span> {t.common.english}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
-        <div className="p-8">
+        <div className="p-6 lg:p-8">
           {children}
         </div>
-        <footer className="p-8 text-center text-xs text-gray-400 dark:text-gray-500">
+        <footer className="px-8 pb-6 text-center text-[10px] text-gray-300 dark:text-gray-700 font-medium">
           Made By Khevin Andrew Kita - Ed Corporation
         </footer>
       </main>
