@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
-import splashGif from "@assets/maweja-splash.gif";
+
+const SPLASH_GIF = "./maweja-splash.gif";
 
 interface SplashScreenProps {
   onDone?: () => void;
@@ -66,7 +67,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           onClick={() => goNext()}
         >
           <img
-            src={splashGif}
+            src={SPLASH_GIF}
             alt="MAWEJA"
             onLoad={() => setGifLoaded(true)}
             onError={() => goNext()}
