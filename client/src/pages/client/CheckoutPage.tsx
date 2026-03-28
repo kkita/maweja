@@ -99,7 +99,7 @@ export default function CheckoutPage() {
       const res = await authFetch("/api/promo/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: promoInput.trim(), subtotal }),
+        body: JSON.stringify({ code: promoInput.trim(), subtotal, restaurantId: items[0]?.restaurantId }),
       });
       if (!res.ok) {
         const err = await res.json();

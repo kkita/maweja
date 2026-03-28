@@ -703,12 +703,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Promo code validation (dynamic from DB)
   app.post("/api/promo/validate", requireAuth, async (req, res) => {
-    const { code, subtotal } = req.body;
+    const { code, subtotal, restaurantId } = req.body;
     if (!code) return res.status(400).json({ message: "Code promo requis" });
     const promo = await storage.getPromotionByCode(code.toUpperCase());
     if (!promo || !promo.isActive) return res.status(400).json({ message: "Code promo invalide" });
     if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) return res.status(400).json({ message: "Code promo expire" });
     if (promo.maxUses > 0 && promo.usedCount >= promo.maxUses) return res.status(400).json({ message: "Code promo epuise" });
+    if (promo.restaurantId && restaurantId && promo.restaurantId !== restaurantId) return res.status(400).json({ message: "Ce code promo n'est pas valide pour ce restaurant" });
     if (promo.minOrder > 0 && (subtotal || 0) < promo.minOrder) return res.status(400).json({ message: `Commande minimum: ${promo.minOrder}` });
     let discount = 0;
     if (promo.type === "percent") discount = Math.floor((subtotal || 0) * promo.value / 100);
@@ -717,12 +718,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ valid: true, code: promo.code, discount, description: promo.description, type: promo.type });
   });
 
+  // Promotions - public active endpoint (must be before :id routes)
+  app.get("/api/promotions/active", async (_req, res) => {
+    const allPromos = await storage.getPromotions();
+    const now = new Date();
+    const active = allPromos.filter(p => p.isActive && (!p.expiresAt || new Date(p.expiresAt) > now));
+    res.json(active);
+  });
+
   // Promotions CRUD (admin)
   app.get("/api/promotions", requireAdmin, async (_req, res) => {
     res.json(await storage.getPromotions());
   });
   app.post("/api/promotions", requireAdmin, async (req, res) => {
-    const { code, description, type, value, minOrder, maxUses, isActive, expiresAt } = req.body;
+    const { code, description, type, value, minOrder, maxUses, isActive, expiresAt, restaurantId } = req.body;
     if (!code || !description) return res.status(400).json({ message: "Code et description requis" });
     const promo = await storage.createPromotion({
       code: code.toUpperCase(),
@@ -733,6 +742,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       maxUses: maxUses || 0,
       isActive: isActive !== false,
       expiresAt: expiresAt ? new Date(expiresAt) : null,
+      restaurantId: restaurantId || null,
     });
     res.json(promo);
   });

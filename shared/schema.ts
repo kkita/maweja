@@ -62,6 +62,7 @@ export const restaurants = pgTable("restaurants", {
   sortOrder: integer("sort_order").notNull().default(0),
   discountLabel: text("discount_label"),
   isFeatured: boolean("is_featured").notNull().default(false),
+  categoryId: integer("category_id"),
 });
 
 export const restaurantPayouts = pgTable("restaurant_payouts", {
@@ -261,6 +262,7 @@ export const promotions = pgTable("promotions", {
   isActive: boolean("is_active").notNull().default(true),
   expiresAt: timestamp("expires_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  restaurantId: integer("restaurant_id"),
 });
 
 export const insertPromotionSchema = createInsertSchema(promotions).omit({ id: true, createdAt: true, usedCount: true });

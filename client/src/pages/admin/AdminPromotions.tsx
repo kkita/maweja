@@ -3,12 +3,13 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { Tag, Plus, Trash2, Edit2, X, Check, Loader2, Percent, DollarSign, Truck, Calendar, Hash, ToggleLeft, ToggleRight } from "lucide-react";
-import type { Promotion } from "@shared/schema";
+import { Tag, Plus, Trash2, Edit2, X, Check, Loader2, Percent, DollarSign, Truck, Calendar, Hash, ToggleLeft, ToggleRight, Store } from "lucide-react";
+import type { Promotion, Restaurant } from "@shared/schema";
 
 export default function AdminPromotions() {
   const { toast } = useToast();
   const { data: promotions = [], isLoading } = useQuery<Promotion[]>({ queryKey: ["/api/promotions"] });
+  const { data: restaurants = [] } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Promotion | null>(null);
 
@@ -20,11 +21,12 @@ export default function AdminPromotions() {
   const [maxUses, setMaxUses] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [expiresAt, setExpiresAt] = useState("");
+  const [restaurantId, setRestaurantId] = useState<number | null>(null);
 
   const resetForm = () => {
     setCode(""); setDescription(""); setType("percent"); setValue(10);
     setMinOrder(0); setMaxUses(0); setIsActive(true); setExpiresAt("");
-    setEditing(null);
+    setRestaurantId(null); setEditing(null);
   };
 
   const openCreate = () => { resetForm(); setShowModal(true); };
@@ -38,12 +40,18 @@ export default function AdminPromotions() {
     setMaxUses(p.maxUses);
     setIsActive(p.isActive);
     setExpiresAt(p.expiresAt ? new Date(p.expiresAt).toISOString().split("T")[0] : "");
+    setRestaurantId((p as any).restaurantId || null);
     setShowModal(true);
+  };
+
+  const getRestaurantName = (id: number | null) => {
+    if (!id) return null;
+    return restaurants.find(r => r.id === id)?.name || null;
   };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const body = { code, description, type, value, minOrder, maxUses, isActive, expiresAt: expiresAt || null };
+      const body = { code, description, type, value, minOrder, maxUses, isActive, expiresAt: expiresAt || null, restaurantId: restaurantId || null };
       if (editing) {
         await apiRequest(`/api/promotions/${editing.id}`, { method: "PATCH", body: JSON.stringify(body) });
       } else {
@@ -141,6 +149,11 @@ export default function AdminPromotions() {
                       <span className="text-xs text-gray-400 flex items-center gap-1">
                         {typeLabel(p.type)}: <span className="font-bold text-gray-700 dark:text-gray-300">{p.type === "percent" ? `${p.value}%` : p.type === "delivery" ? "Gratuit" : `$${p.value}`}</span>
                       </span>
+                      {(p as any).restaurantId && getRestaurantName((p as any).restaurantId) && (
+                        <span className="text-xs text-blue-500 flex items-center gap-1 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-full font-semibold">
+                          <Store size={10} /> {getRestaurantName((p as any).restaurantId)}
+                        </span>
+                      )}
                       {p.minOrder > 0 && <span className="text-xs text-gray-400">Min: ${p.minOrder}</span>}
                       {p.maxUses > 0 && <span className="text-xs text-gray-400 flex items-center gap-1"><Hash size={10} />{p.usedCount}/{p.maxUses} utilisations</span>}
                       {p.expiresAt && <span className="text-xs text-gray-400 flex items-center gap-1"><Calendar size={10} />Expire: {new Date(p.expiresAt).toLocaleDateString("fr-FR")}</span>}
@@ -204,6 +217,23 @@ export default function AdminPromotions() {
                     data-testid="input-promo-description"
                     className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 mb-1 block flex items-center gap-1.5">
+                    <Store size={12} className="text-blue-500" /> Restaurant (optionnel)
+                  </label>
+                  <select
+                    value={restaurantId || ""}
+                    onChange={e => setRestaurantId(e.target.value ? Number(e.target.value) : null)}
+                    data-testid="select-promo-restaurant"
+                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  >
+                    <option value="">Tous les restaurants (général)</option>
+                    {restaurants.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[10px] text-gray-400 mt-1">Laisser vide pour une promo générale, ou choisir un restaurant spécifique</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>

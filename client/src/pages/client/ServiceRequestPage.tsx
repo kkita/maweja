@@ -4,7 +4,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   ArrowLeft, Calendar, Clock, User, Phone, MapPin, Tag, DollarSign,
@@ -64,6 +64,7 @@ export default function ServiceRequestPage() {
 
   const categoryId = catalogData?.categoryId || null;
   const categoryName = catalogData?.categoryName || "";
+  const categoryImageUrl = catalogData?.categoryImageUrl || null;
   const catalogItemId = catalogData?.catalogItemId || null;
   const catalogItemName = catalogData?.catalogItemName || null;
   const catalogItemPrice = catalogData?.catalogItemPrice || null;
@@ -346,32 +347,21 @@ export default function ServiceRequestPage() {
           <div className="relative">
             {catalogItemImage ? (
               <div className="w-full" style={{ height: 240 }}>
-                <img src={catalogItemImage} alt={catalogItemName || ""} className="w-full h-full object-cover" data-testid="img-selected-model" />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+                <img src={resolveImg(catalogItemImage)} alt={catalogItemName || ""} className="w-full h-full object-cover" data-testid="img-selected-model" />
+              </div>
+            ) : categoryImageUrl ? (
+              <div className="w-full" style={{ height: 240 }}>
+                <img src={resolveImg(categoryImageUrl)} alt={categoryName} className="w-full h-full object-cover" />
               </div>
             ) : (
               <div className="w-full h-40 bg-gradient-to-br from-red-600 to-red-800" />
             )}
 
-            {/* Back button over image */}
             <button onClick={() => navigate("/services")}
               className="absolute top-4 left-4 w-11 h-11 bg-black/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20"
               data-testid="button-back">
               <ArrowLeft size={18} className="text-white" />
             </button>
-
-            {/* Category + model name overlay */}
-            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
-              <p className="text-white/60 text-[11px] font-semibold uppercase tracking-wider">{categoryName}</p>
-              <h1 className="text-white text-xl font-black leading-tight" style={{ fontFamily: "system-ui,-apple-system,sans-serif", letterSpacing: "-0.02em" }} data-testid="text-form-title">
-                {catalogItemName}
-              </h1>
-              {catalogItemPrice && (
-                <span className="inline-block mt-1 bg-red-600 text-white text-xs font-black px-3 py-1 rounded-full">
-                  {catalogItemPrice}
-                </span>
-              )}
-            </div>
           </div>
 
           {/* Form */}
@@ -527,21 +517,23 @@ export default function ServiceRequestPage() {
       <div className="max-w-lg mx-auto">
 
         {/* Hero band */}
-        <div className="bg-gradient-to-br from-red-600 via-red-700 to-rose-800 px-5 pt-5 pb-8 relative overflow-hidden">
-          {/* decorative circles */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" />
-          <div className="absolute top-6 -right-4 w-20 h-20 bg-white/5 rounded-full" />
+        <div className="relative overflow-hidden">
+          {categoryImageUrl ? (
+            <div className="w-full" style={{ height: 240 }}>
+              <img src={resolveImg(categoryImageUrl)} alt={categoryName} className="w-full h-full object-cover" data-testid="img-service-banner" />
+            </div>
+          ) : (
+            <div className="w-full h-40 bg-gradient-to-br from-red-600 via-red-700 to-rose-800">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full" />
+              <div className="absolute top-6 -right-4 w-20 h-20 bg-white/5 rounded-full" />
+            </div>
+          )}
 
           <button onClick={() => navigate("/services")}
-            className="w-11 h-11 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 mb-5"
+            className="absolute top-4 left-4 w-11 h-11 bg-black/30 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20"
             data-testid="button-back">
             <ArrowLeft size={18} className="text-white" />
           </button>
-
-          <p className="text-white/60 text-[11px] font-bold uppercase tracking-widest mb-1">{t.services.newRequest}</p>
-          <h1 className="text-white text-2xl font-black leading-tight" style={{ fontFamily: "system-ui,-apple-system,sans-serif", letterSpacing: "-0.02em" }} data-testid="text-form-title">
-            {categoryName}
-          </h1>
         </div>
 
         {/* Form */}

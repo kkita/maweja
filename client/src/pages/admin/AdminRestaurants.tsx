@@ -7,7 +7,7 @@ import { formatPrice } from "../../lib/utils";
 import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useState, useRef, useCallback } from "react";
-import type { Restaurant, MenuItem } from "@shared/schema";
+import type { Restaurant, MenuItem, RestaurantCategory } from "@shared/schema";
 import ImageCropper, { validateImageFile } from "../../components/ImageCropper";
 
 /* ── Allowed image types & restrictions ─────────────────────────── */
@@ -137,17 +137,23 @@ function MediaUploadButton({
 
 function AddRestaurantModal({ onClose }: { onClose: () => void }) {
   const { toast } = useToast();
+  const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
   const [form, setForm] = useState({
     name: "", description: "", cuisine: "", address: "",
     deliveryFee: 2500, deliveryTime: "30-45 min", minOrder: 5000,
     rating: 4.5, phone: "", openingHours: "08:00 - 22:00",
     email: "", managerName: "", brandName: "", prepTime: "20-30 min",
-    restaurantCommissionRate: 20,
+    restaurantCommissionRate: 20, categoryId: 0,
   });
   const [coverImage, setCoverImage] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [coverVideoUrl, setCoverVideoUrl] = useState("");
   const showError = (msg: string) => toast({ title: "Erreur", description: msg, variant: "destructive" });
+
+  const handleCategoryChange = (catId: number) => {
+    const cat = restCategories.find(c => c.id === catId);
+    setForm(f => ({ ...f, categoryId: catId, cuisine: cat?.name || "" }));
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -193,7 +199,20 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             {field("name", "Nom du restaurant *", "text", "ex: La Belle Cuisine")}
-            {field("cuisine", "Type de cuisine *", "text", "ex: Congolaise, Fast-food")}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Catégorie *</label>
+              <select
+                value={form.categoryId}
+                onChange={e => handleCategoryChange(Number(e.target.value))}
+                data-testid="select-restaurant-category"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value={0}>-- Choisir une catégorie --</option>
+                {restCategories.filter(c => c.isActive).map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           {field("description", "Description", "text", "Courte description du restaurant")}
           {field("address", "Adresse *", "text", "ex: Avenue du Commerce, Kinshasa")}
@@ -328,6 +347,7 @@ function DeleteRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant
 
 function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; onClose: () => void }) {
   const { toast } = useToast();
+  const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
   const [email, setEmail] = useState(restaurant.email || "");
   const [managerName, setManagerName] = useState(restaurant.managerName || "");
   const [brandName, setBrandName] = useState(restaurant.brandName || "");
@@ -335,6 +355,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
   const [prepTime, setPrepTime] = useState(restaurant.prepTime || "20-30 min");
   const [name, setName] = useState(restaurant.name);
   const [cuisine, setCuisine] = useState(restaurant.cuisine);
+  const [categoryId, setCategoryId] = useState<number>((restaurant as any).categoryId ?? 0);
   const [address, setAddress] = useState(restaurant.address);
   const [deliveryFee, setDeliveryFee] = useState(restaurant.deliveryFee);
   const [deliveryTime, setDeliveryTime] = useState(restaurant.deliveryTime);
@@ -344,11 +365,17 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
   const [discountLabel, setDiscountLabel] = useState<string>((restaurant as any).discountLabel ?? "");
   const [isFeatured, setIsFeatured] = useState<boolean>((restaurant as any).isFeatured ?? false);
 
+  const handleEditCategoryChange = (catId: number) => {
+    const cat = restCategories.find(c => c.id === catId);
+    setCategoryId(catId);
+    setCuisine(cat?.name || cuisine);
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
       await apiRequest(`/api/restaurants/${restaurant.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ name, cuisine, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate, discountPercent, discountLabel: discountLabel || null, isFeatured }),
+        body: JSON.stringify({ name, cuisine, categoryId: categoryId || null, address, deliveryFee, deliveryTime, phone, email: email || null, managerName: managerName || null, brandName: brandName || null, hqAddress: hqAddress || null, prepTime, restaurantCommissionRate: commissionRate, discountPercent, discountLabel: discountLabel || null, isFeatured }),
       });
     },
     onSuccess: () => {
@@ -380,7 +407,20 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             {inp(name, setName, "Nom *", "text", "Nom du restaurant")}
-            {inp(cuisine, setCuisine, "Cuisine *", "text", "Congolaise...")}
+            <div>
+              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Catégorie *</label>
+              <select
+                value={categoryId}
+                onChange={e => handleEditCategoryChange(Number(e.target.value))}
+                data-testid="select-edit-restaurant-category"
+                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              >
+                <option value={0}>-- Choisir une catégorie --</option>
+                {restCategories.filter(c => c.isActive).map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
           {inp(address, setAddress, "Adresse *", "text", "Avenue...")}
           <div className="grid grid-cols-2 gap-3">

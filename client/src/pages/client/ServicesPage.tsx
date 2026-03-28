@@ -85,6 +85,7 @@ export default function ServicesPage() {
     sessionStorage.setItem("maweja_service_request", JSON.stringify({
       categoryId: cat.id,
       categoryName: cat.name,
+      categoryImageUrl: cat.imageUrl || null,
       catalogItemId: null,
       catalogItemName: null,
       catalogItemPrice: null,
@@ -102,6 +103,7 @@ export default function ServicesPage() {
     const catalogData = {
       categoryId: selectedCatalogCategory.id,
       categoryName: selectedCatalogCategory.name,
+      categoryImageUrl: selectedCatalogCategory.imageUrl || null,
       catalogItemId: selectedItem?.id || null,
       catalogItemName: selectedItem?.name || null,
       catalogItemPrice: selectedItem?.price || null,

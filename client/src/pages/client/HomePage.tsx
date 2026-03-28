@@ -4,10 +4,10 @@ import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/AdBanner";
 import { useI18n } from "../../lib/i18n";
-import { Star, Clock, Heart, MapPin, ChevronRight, Search } from "lucide-react";
+import { Star, Clock, Heart, MapPin, ChevronRight, Search, Tag } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { resolveImg } from "../../lib/queryClient";
-import type { Restaurant, ServiceCategory, ServiceCatalogItem, RestaurantCategory } from "@shared/schema";
+import type { Restaurant, ServiceCategory, ServiceCatalogItem, RestaurantCategory, Promotion } from "@shared/schema";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CATEGORY ITEM — dynamic from API with image
@@ -220,7 +220,16 @@ export default function HomePage() {
   const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
   const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
   const { data: restaurantCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
+  const { data: activePromotions = [] } = useQuery<Promotion[]>({ queryKey: ["/api/promotions/active"] });
   const activeRestCats = restaurantCategories.filter(c => c.isActive);
+
+  const promoRestaurants = restaurants.filter(r => {
+    return activePromotions.some(p => (p as any).restaurantId === r.id) || (r as any).discountPercent > 0;
+  });
+
+  const getRestaurantPromos = (restaurantId: number) => {
+    return activePromotions.filter(p => (p as any).restaurantId === restaurantId);
+  };
 
   const [activeCatId, setActiveCatId] = useState<number | null>(null);
   const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
@@ -238,14 +247,18 @@ export default function HomePage() {
     return () => document.removeEventListener("maweja-search", handler);
   }, []);
 
-  /* filter restaurants — supports multi-category: cuisine match OR Promos (discountPercent > 0) */
+  /* filter restaurants — supports category by ID or name, and Promos */
   const filtered = restaurants.filter(r => {
     if (globalSearch) {
       const q = globalSearch.toLowerCase();
       return (r.name?.toLowerCase().includes(q) || r.cuisine?.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q));
     }
     if (activeCuisine) {
-      if (activeCuisine === "Promos") return (r as any).discountPercent > 0;
+      if (activeCuisine === "Promos") return (r as any).discountPercent > 0 || activePromotions.some(p => (p as any).restaurantId === r.id);
+      const matchCat = activeRestCats.find(c => c.name === activeCuisine);
+      if (matchCat) {
+        return (r as any).categoryId === matchCat.id || r.cuisine === activeCuisine;
+      }
       return r.cuisine === activeCuisine;
     }
     return true;
@@ -294,6 +307,7 @@ export default function HomePage() {
       sessionStorage.setItem("maweja_service_request", JSON.stringify({
         categoryId: cat.id,
         categoryName: cat.name,
+        categoryImageUrl: cat.imageUrl || null,
         catalogItemId: null,
         catalogItemName: null,
         catalogItemPrice: null,
@@ -394,6 +408,72 @@ export default function HomePage() {
                   />
                 ))}
               </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Promotions Section ── auto-display when restaurants have promotions ── */}
+        {promoRestaurants.length > 0 && !globalSearch && !activeCuisine && (
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <p
+                className="font-black text-gray-900 dark:text-white flex items-center gap-2"
+                style={{
+                  fontSize: 15,
+                  borderBottom: "2.5px solid #EC0000",
+                  display: "inline-block",
+                  paddingBottom: 3,
+                  letterSpacing: "-0.2px",
+                }}
+              >
+                <Tag size={15} className="text-red-600" />
+                Promotions
+              </p>
+              {promoRestaurants.length > 3 && (
+                <button
+                  onClick={() => { setActiveCuisine("Promos"); }}
+                  className="text-red-600 font-semibold flex items-center gap-1"
+                  style={{ fontSize: 12 }}
+                  data-testid="button-see-all-promos"
+                >
+                  Tout voir <ChevronRight size={13} />
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
+              {promoRestaurants.slice(0, 6).map(r => {
+                const promos = getRestaurantPromos(r.id);
+                const promoLabel = promos.length > 0
+                  ? promos[0].description
+                  : (r as any).discountPercent > 0
+                    ? `-${(r as any).discountPercent}% ${(r as any).discountLabel || ''}`
+                    : '';
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => navigate(`/restaurant/${r.id}`)}
+                    className="flex-shrink-0 bg-white dark:bg-gray-900 rounded-2xl overflow-hidden active:scale-95 transition-all"
+                    style={{ width: 160, boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
+                    data-testid={`promo-card-${r.id}`}
+                  >
+                    <div className="relative w-full" style={{ height: 100 }}>
+                      <img src={resolveImg(r.image)} alt={r.name} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      <div className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Tag size={8} />
+                        PROMO
+                      </div>
+                    </div>
+                    <div className="px-3 py-2.5">
+                      <p className="font-bold text-gray-900 dark:text-white text-xs truncate">{r.name}</p>
+                      {promoLabel && (
+                        <p className="text-[10px] text-red-600 font-semibold truncate mt-0.5">{promoLabel}</p>
+                      )}
+                      <p className="text-[10px] text-gray-400 truncate mt-0.5">{r.cuisine}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </section>
         )}

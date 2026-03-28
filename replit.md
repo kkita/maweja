@@ -13,7 +13,13 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 **Business Vision & Market Potential:**
 MAWEJA seeks to become the leading delivery service in Kinshasa, offering a reliable and feature-rich platform to connect customers with food establishments and essential services. The platform is designed for scalability and aims to capture a significant share of the burgeoning on-demand delivery market in the region.
 
-## Recent Changes (March 25, 2026)
+## Recent Changes (March 28, 2026)
+- **Service Request Banner Image**: When selecting a service, the banner now shows the service's image full-width instead of "Nouvelle Demande" text + category name. Falls back to red gradient when no image exists. Works for both catalog model and standard forms.
+- **Restaurant Categories Linked to Restaurants**: Added `categoryId` column to restaurants table. Admin create/edit forms now have a dropdown to select a restaurant category (replaces free-text cuisine field). Categories auto-populate the `cuisine` field. Client-side filtering supports both `categoryId` matching and legacy `cuisine` string matching.
+- **Restaurant-Specific Promotions**: Added `restaurantId` column to promotions table. Admin can assign promotions to specific restaurants. New public `/api/promotions/active` endpoint for the client. Client HomePage now auto-displays a "Promotions" section showing restaurants with active promotions or discount percentages. Promo code validation enforces restaurant scoping (restaurant-specific codes rejected for other restaurants).
+- **Promo Filter Consistency**: "Promos" filter pill now shows restaurants with linked active promotions OR discountPercent > 0.
+
+## Changes (March 25, 2026)
 - **Notification System Overhaul**:
   - **Server**: Client now receives `order_assigned` WS event + DB notification when driver is assigned (was driver-only). Broadcast notifications include `isRead: false`.
   - **notify.ts rewritten**: Browser notifications use `/maweja-logo-red.png` icon. Capacitor native uses `ic_stat_notify` smallIcon, `ic_launcher_foreground` largeIcon, `#EC0000` brand color, `maweja_default` channel.
