@@ -78,7 +78,7 @@ jobs:
           done
           echo "✓ Icônes launcher MAWEJA copiées (Client)"
 
-      - name: Copier les icônes de notification et splash (Client)
+      - name: Copier les icônes de notification (Client)
         run: |
           REPO_RES="android/app/src/main/res"
           CAP_RES="mobile/client/android/app/src/main/res"
@@ -87,26 +87,20 @@ jobs:
             mkdir -p "$CAP_RES/$density"
             cp "$REPO_RES/$density/ic_stat_notify.png" "$CAP_RES/$density/ic_stat_notify.png"
             cp "$REPO_RES/$density/ic_notif_large.png" "$CAP_RES/$density/ic_notif_large.png"
-            cp "$REPO_RES/$density/splash_logo.png" "$CAP_RES/$density/splash_logo.png"
           done
-          echo "✓ Icônes notification + splash copiées (Client)"
+          echo "✓ Icônes notification copiées (Client)"
 
-      - name: Copier la config splash screen Android (Client)
+      - name: Configurer thème Android rouge (Client)
         run: |
           REPO_RES="android/app/src/main/res"
           CAP_RES="mobile/client/android/app/src/main/res"
-
-          mkdir -p "$CAP_RES/drawable" "$CAP_RES/drawable-v31"
-          cp "$REPO_RES/drawable/splash_screen.xml" "$CAP_RES/drawable/splash_screen.xml"
-          cp "$REPO_RES/drawable/splash_logo.png" "$CAP_RES/drawable/splash_logo.png"
-          cp "$REPO_RES/drawable-v31/splash_logo.png" "$CAP_RES/drawable-v31/splash_logo.png"
 
           mkdir -p "$CAP_RES/values" "$CAP_RES/values-v31"
           cp "$REPO_RES/values/colors.xml" "$CAP_RES/values/colors.xml"
           cp "$REPO_RES/values/styles.xml" "$CAP_RES/values/styles.xml"
           cp "$REPO_RES/values-v31/styles.xml" "$CAP_RES/values-v31/styles.xml"
 
-          echo "✓ Config splash (styles, colors, drawable) copiée (Client)"
+          echo "✓ Thème Android rouge configuré (Client)"
 
       - name: Injecter les permissions Android (Client)
         working-directory: mobile/client/android/app/src/main
@@ -243,26 +237,20 @@ jobs:
             mkdir -p "$CAP_RES/$density"
             cp "$REPO_RES/$density/ic_stat_notify.png" "$CAP_RES/$density/ic_stat_notify.png"
             cp "$REPO_RES/$density/ic_notif_large.png" "$CAP_RES/$density/ic_notif_large.png"
-            cp "$REPO_RES/$density/splash_logo.png" "$CAP_RES/$density/splash_logo.png"
           done
-          echo "✓ Icônes notification + splash copiées (Driver)"
+          echo "✓ Icônes notification copiées (Driver)"
 
-      - name: Copier la config splash screen Android (Driver)
+      - name: Configurer thème Android rouge (Driver)
         run: |
           REPO_RES="android/app/src/main/res"
           CAP_RES="mobile/driver/android/app/src/main/res"
-
-          mkdir -p "$CAP_RES/drawable" "$CAP_RES/drawable-v31"
-          cp "$REPO_RES/drawable/splash_screen.xml" "$CAP_RES/drawable/splash_screen.xml"
-          cp "$REPO_RES/drawable/splash_logo.png" "$CAP_RES/drawable/splash_logo.png"
-          cp "$REPO_RES/drawable-v31/splash_logo.png" "$CAP_RES/drawable-v31/splash_logo.png"
 
           mkdir -p "$CAP_RES/values" "$CAP_RES/values-v31"
           cp "$REPO_RES/values/colors.xml" "$CAP_RES/values/colors.xml"
           cp "$REPO_RES/values/styles.xml" "$CAP_RES/values/styles.xml"
           cp "$REPO_RES/values-v31/styles.xml" "$CAP_RES/values-v31/styles.xml"
 
-          echo "✓ Config splash (styles, colors, drawable) copiée (Driver)"
+          echo "✓ Thème Android rouge configuré (Driver)"
 
       - name: Injecter les permissions Android (Driver)
         working-directory: mobile/driver/android/app/src/main

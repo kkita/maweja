@@ -13,10 +13,6 @@ const config: CapacitorConfig = {
     allowMixedContent: true,
   },
   plugins: {
-    SplashScreen: {
-      launchShowDuration: 0,
-      launchAutoHide: true,
-    },
     StatusBar: {
       style: "Dark",
       backgroundColor: "#EC0000",
