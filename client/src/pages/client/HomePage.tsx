@@ -581,13 +581,13 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              {boutiques.filter(b => b.isActive).slice(0, 4).map(b => (
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollSnapType: "x mandatory" }}>
+              {boutiques.filter(b => b.isActive).map(b => (
                 <div
                   key={b.id}
                   onClick={() => navigate(`/restaurant/${b.id}`)}
-                  className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all"
-                  style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
+                  className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all flex-shrink-0"
+                  style={{ width: 150, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", scrollSnapAlign: "start" }}
                   data-testid={`boutique-card-${b.id}`}
                 >
                   <div className="relative" style={{ height: 100 }}>
