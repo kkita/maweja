@@ -135,7 +135,7 @@ function MediaUploadButton({
   );
 }
 
-function AddRestaurantModal({ onClose }: { onClose: () => void }) {
+function AddRestaurantModal({ onClose, storeType = "restaurant" }: { onClose: () => void; storeType?: "restaurant" | "boutique" }) {
   const { toast } = useToast();
   const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
   const [form, setForm] = useState({
@@ -162,6 +162,7 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
         method: "POST",
         body: JSON.stringify({
           ...form,
+          type: storeType,
           image: coverImage || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400",
           logoUrl: logoUrl || null,
           coverVideoUrl: coverVideoUrl || null,
@@ -169,8 +170,8 @@ function AddRestaurantModal({ onClose }: { onClose: () => void }) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] });
-      toast({ title: "Restaurant ajoute", description: `${form.name} a ete cree avec succes` });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"], exact: false });
+      toast({ title: storeType === "boutique" ? "Boutique ajoutée" : "Restaurant ajouté", description: `${form.name} a été créé avec succès` });
       onClose();
     },
     onError: (e: any) => toast({ title: "Erreur", description: e.message || "Impossible de creer le restaurant", variant: "destructive" }),
@@ -316,7 +317,7 @@ function DeleteRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant
   const mutation = useMutation({
     mutationFn: () => apiRequest(`/api/restaurants/${restaurant.id}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"], exact: false });
       toast({ title: "Restaurant supprime", description: `${restaurant.name} a ete supprime` });
       onClose();
     },
@@ -379,7 +380,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"], exact: false });
       toast({ title: "Mis a jour", description: `${name} a ete modifie` });
       onClose();
     },
@@ -546,7 +547,7 @@ function EditMediaModal({ restaurant, onClose }: { restaurant: Restaurant; onClo
       await apiRequest(`/api/restaurants/${restaurant.id}`, { method: "PATCH", body: JSON.stringify({ logoUrl: logoUrl || null, coverVideoUrl: coverVideoUrl || null, image }) });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"], exact: false });
       toast({ title: "Medias mis a jour", description: `Medias de ${restaurant.name} modifies` });
       onClose();
     },
@@ -795,8 +796,9 @@ function MenuSection({ restaurant }: { restaurant: Restaurant }) {
   );
 }
 
-export default function AdminRestaurants() {
-  const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
+export default function AdminRestaurants({ storeType = "restaurant" }: { storeType?: "restaurant" | "boutique" } = {}) {
+  const apiUrl = storeType === "boutique" ? "/api/restaurants?type=boutique" : "/api/restaurants?type=restaurant";
+  const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: [apiUrl] });
   const { toast } = useToast();
   const [editingMedia, setEditingMedia] = useState<Restaurant | null>(null);
   const [editingInfo, setEditingInfo] = useState<Restaurant | null>(null);
@@ -840,7 +842,7 @@ export default function AdminRestaurants() {
         method: "PATCH",
         body: JSON.stringify({ order }),
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/restaurants"], exact: false });
       setHasOrderChanges(false);
       toast({ title: "Ordre des restaurants sauvegardé !" });
     } catch {
@@ -883,12 +885,12 @@ export default function AdminRestaurants() {
 
   const toggleActive = useMutation({
     mutationFn: (r: Restaurant) => apiRequest(`/api/restaurants/${r.id}`, { method: "PATCH", body: JSON.stringify({ isActive: !r.isActive }) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/restaurants"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/restaurants"], exact: false }),
     onError: () => toast({ title: "Erreur", variant: "destructive" }),
   });
 
   return (
-    <AdminLayout title="Gestion des restaurants">
+    <AdminLayout title={storeType === "boutique" ? "Gestion des boutiques" : "Gestion des restaurants"}>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         {[
           { icon: Store, color: "bg-red-50 text-red-600", value: restaurants.length, label: "Total restaurants" },
@@ -1104,7 +1106,7 @@ export default function AdminRestaurants() {
         )}
       </div>
 
-      {addingRestaurant && <AddRestaurantModal onClose={() => setAddingRestaurant(false)} />}
+      {addingRestaurant && <AddRestaurantModal onClose={() => setAddingRestaurant(false)} storeType={storeType} />}
       {editingMedia && <EditMediaModal restaurant={editingMedia} onClose={() => setEditingMedia(null)} />}
       {editingInfo && <EditRestaurantModal restaurant={editingInfo} onClose={() => setEditingInfo(null)} />}
       {deletingRestaurant && <DeleteRestaurantModal restaurant={deletingRestaurant} onClose={() => setDeletingRestaurant(null)} />}

@@ -63,6 +63,7 @@ export const restaurants = pgTable("restaurants", {
   discountLabel: text("discount_label"),
   isFeatured: boolean("is_featured").notNull().default(false),
   categoryId: integer("category_id"),
+  type: text("type").notNull().default("restaurant"),
 });
 
 export const restaurantPayouts = pgTable("restaurant_payouts", {
@@ -336,3 +337,15 @@ export const restaurantCategories = pgTable("restaurant_categories", {
 export const insertRestaurantCategorySchema = createInsertSchema(restaurantCategories).omit({ id: true });
 export type RestaurantCategory = typeof restaurantCategories.$inferSelect;
 export type InsertRestaurantCategory = z.infer<typeof insertRestaurantCategorySchema>;
+
+export const boutiqueCategories = pgTable("boutique_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  emoji: text("emoji").notNull().default("🛍️"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertBoutiqueCategorySchema = createInsertSchema(boutiqueCategories).omit({ id: true });
+export type BoutiqueCategory = typeof boutiqueCategories.$inferSelect;
+export type InsertBoutiqueCategory = z.infer<typeof insertBoutiqueCategorySchema>;

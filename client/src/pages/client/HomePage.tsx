@@ -7,7 +7,7 @@ import { useI18n } from "../../lib/i18n";
 import { Star, Clock, Heart, MapPin, ChevronRight, Search, Tag } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { resolveImg } from "../../lib/queryClient";
-import type { Restaurant, ServiceCategory, ServiceCatalogItem, RestaurantCategory, Promotion } from "@shared/schema";
+import type { Restaurant, ServiceCategory, ServiceCatalogItem, RestaurantCategory, Promotion, BoutiqueCategory } from "@shared/schema";
 
 /* ────────────────────────────────────────────────────────────────────────────
    CATEGORY ITEM — dynamic from API with image
@@ -216,11 +216,14 @@ export default function HomePage() {
   const [, navigate] = useLocation();
   const { t } = useI18n();
 
-  const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
+  const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants?type=restaurant"] });
   const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
   const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
   const { data: restaurantCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
   const { data: activePromotions = [] } = useQuery<Promotion[]>({ queryKey: ["/api/promotions/active"] });
+  const { data: boutiques = [] } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants?type=boutique"] });
+  const { data: boutiqueCategories = [] } = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"] });
+  const activeBoutiqueCats = boutiqueCategories.filter(c => c.isActive);
   const activeRestCats = restaurantCategories.filter(c => c.isActive);
 
   const promoRestaurants = restaurants.filter(r => {
@@ -545,6 +548,72 @@ export default function HomePage() {
                 </button>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* ── Boutiques Section ── shows when boutiques exist ── */}
+        {boutiques.length > 0 && !globalSearch && !activeCuisine && (
+          <section className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 16 }}>
+                🛍️ Boutiques & Commerces
+              </h2>
+              <button
+                onClick={() => navigate("/boutiques")}
+                className="text-red-600 font-semibold flex items-center gap-0.5"
+                style={{ fontSize: 12 }}
+                data-testid="button-view-all-boutiques"
+              >
+                Tout voir <ChevronRight size={13} />
+              </button>
+            </div>
+            {activeBoutiqueCats.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
+                {activeBoutiqueCats.sort((a, b) => a.sortOrder - b.sortOrder).map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => navigate("/boutiques")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:border-red-300 transition-colors"
+                    data-testid={`boutique-cat-chip-${cat.id}`}
+                  >
+                    <span>{cat.emoji}</span> {cat.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              {boutiques.filter(b => b.isActive).slice(0, 4).map(b => (
+                <div
+                  key={b.id}
+                  onClick={() => navigate(`/restaurant/${b.id}`)}
+                  className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all"
+                  style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
+                  data-testid={`boutique-card-${b.id}`}
+                >
+                  <div className="relative" style={{ height: 100 }}>
+                    <img
+                      src={resolveImg(b.image)}
+                      alt={b.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-2.5">
+                    <p className="font-bold text-gray-900 dark:text-white text-xs truncate">{b.name}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{b.cuisine}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Star size={10} className="text-yellow-500 fill-yellow-500" />
+                      <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300">{b.rating}</span>
+                      <span className="text-[10px] text-gray-400 ml-auto">{b.deliveryTime}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {boutiques.filter(b => b.isActive).length === 0 && (
+              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 text-center" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
+                <p className="text-gray-400 text-xs">Bientôt disponible dans votre zone</p>
+              </div>
+            )}
           </section>
         )}
 

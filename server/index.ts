@@ -152,6 +152,17 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS brand_name TEXT`);
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS hq_address TEXT`);
   await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS prep_time TEXT DEFAULT '20-30 min'`);
+  await db.execute(sql`ALTER TABLE restaurants ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'restaurant'`);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS boutique_categories (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      emoji TEXT NOT NULL DEFAULT '🛍️',
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS menu_items (

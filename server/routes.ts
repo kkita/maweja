@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
-import { restaurantCategories } from "@shared/schema";
+import { restaurantCategories, boutiqueCategories } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -325,9 +325,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Restaurants
-  app.get("/api/restaurants", async (_req, res) => {
+  app.get("/api/restaurants", async (req, res) => {
     const all = await storage.getRestaurants();
-    res.json(all);
+    const typeFilter = req.query.type as string | undefined;
+    if (typeFilter) {
+      res.json(all.filter((r: any) => r.type === typeFilter));
+    } else {
+      res.json(all);
+    }
   });
 
   app.get("/api/restaurants/:id", async (req, res) => {
@@ -778,6 +783,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/restaurant-categories/:id", requireAdmin, async (req, res) => {
     await db.delete(restaurantCategories).where(eq(restaurantCategories.id, Number(req.params.id)));
+    res.json({ ok: true });
+  });
+
+  // Boutique Categories CRUD
+  app.get("/api/boutique-categories", async (_req, res) => {
+    const rows = await db.select().from(boutiqueCategories).orderBy(boutiqueCategories.sortOrder, boutiqueCategories.name);
+    res.json(rows);
+  });
+
+  app.post("/api/boutique-categories", requireAdmin, async (req, res) => {
+    const { name, emoji, isActive, sortOrder } = req.body;
+    const [row] = await db.insert(boutiqueCategories).values({
+      name, emoji: emoji || "🛍️", isActive: isActive ?? true, sortOrder: sortOrder ?? 0,
+    }).returning();
+    res.json(row);
+  });
+
+  app.patch("/api/boutique-categories/:id", requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    const [row] = await db.update(boutiqueCategories).set(req.body).where(eq(boutiqueCategories.id, id)).returning();
+    res.json(row);
+  });
+
+  app.delete("/api/boutique-categories/:id", requireAdmin, async (req, res) => {
+    await db.delete(boutiqueCategories).where(eq(boutiqueCategories.id, Number(req.params.id)));
     res.json({ ok: true });
   });
 

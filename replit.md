@@ -50,6 +50,7 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 - **Admin Granular Permissions**: Checkbox-based per-menu permissions system replaces fixed role presets for sub-admin accounts.
 - **Media Management**: Admin "Galerie Médias" for managing uploaded files, integrating with ads, restaurants, and services.
 - **Restaurant Categorization**: Dynamic restaurant categories with emoji picker, replacing hardcoded food filters. Includes "Promos" category for restaurants with active discounts.
+- **Boutiques/Commerces System**: Restaurants table has a `type` field (`"restaurant"` | `"boutique"`) for distinguishing stores. Separate `boutique_categories` table and CRUD API at `/api/boutique-categories`. Admin pages for boutiques management (reuses AdminRestaurants with storeType prop) and boutique category management. Client-side BoutiquesPage at `/boutiques` with search and category filtering. API supports `?type=` query parameter for filtering.
 - **Fixed Service Fee**: A flat $0.76 service fee replaces percentage-based tax per order.
 - **Editable Recipient**: Checkout allows editing recipient name and phone for gifting or ordering for others.
 
