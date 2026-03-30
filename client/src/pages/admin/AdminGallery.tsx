@@ -14,6 +14,7 @@ interface GalleryFile {
   type: "image" | "video";
   size: number;
   createdAt: number;
+  source?: "local" | "cloud";
 }
 
 function formatBytes(bytes: number) {
@@ -37,6 +38,7 @@ export default function AdminGallery() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [fixing, setFixing] = useState(false);
+  const [migrating, setMigrating] = useState(false);
 
   const { data: files = [], isLoading, refetch } = useQuery<GalleryFile[]>({
     queryKey: ["/api/admin/gallery"],
@@ -57,6 +59,20 @@ export default function AdminGallery() {
     setCopiedUrl(url);
     toast({ title: "Lien copié !" });
     setTimeout(() => setCopiedUrl(null), 3000);
+  };
+
+  const handleMigrateToCloud = async () => {
+    setMigrating(true);
+    try {
+      const res = await apiRequest("/api/admin/gallery/migrate-to-cloud", { method: "POST" });
+      const data = await res.json();
+      toast({ title: "Migration terminée", description: data.message });
+      refetch();
+    } catch {
+      toast({ title: "Erreur lors de la migration", variant: "destructive" });
+    } finally {
+      setMigrating(false);
+    }
   };
 
   const handleFixUrls = async () => {
@@ -111,8 +127,19 @@ export default function AdminGallery() {
               className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
             >
               <Wrench size={14} />
-              {fixing ? "Restauration..." : "Restaurer les URLs cassées"}
+              {fixing ? "Restauration..." : "Restaurer URLs"}
             </button>
+            {files.some(f => f.source === "local") && (
+              <button
+                onClick={handleMigrateToCloud}
+                disabled={migrating}
+                data-testid="gallery-migrate-cloud"
+                className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors"
+              >
+                <RefreshCw size={14} className={migrating ? "animate-spin" : ""} />
+                {migrating ? "Migration..." : "Migrer vers Cloud"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -235,6 +262,9 @@ export default function AdminGallery() {
                   </div>
                 )}
 
+                {file.source === "cloud" && (
+                  <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-green-500/90 text-white text-[8px] font-bold rounded-full z-10">☁️</span>
+                )}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all">
                   <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity space-y-1">
                     <p className="text-white text-[9px] font-medium text-center">{formatBytes(file.size)} · {formatDate(file.createdAt)}</p>

@@ -16,7 +16,7 @@ export function resolveImg(url: string | null | undefined): string {
 function fixUploadsUrls(data: any): any {
   if (!API_BASE) return data;
   if (typeof data === "string") {
-    if (data.startsWith("/uploads/")) return `${API_BASE}${data}`;
+    if (data.startsWith("/uploads/") || data.startsWith("/cloud/")) return `${API_BASE}${data}`;
     return data;
   }
   if (Array.isArray(data)) return data.map(fixUploadsUrls);

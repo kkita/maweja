@@ -25,7 +25,7 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 - **Mapping**: Leaflet with react-leaflet v4 and OpenStreetMap tiles.
 - **State Management**: TanStack React Query and Context API.
 - **Client-side Routing**: Wouter.
-- **File Storage**: Multer for image uploads.
+- **File Storage**: Replit Object Storage (Google Cloud Storage) for persistent uploads. Multer receives files locally, then `uploadToCloudStorage()` copies them to the cloud bucket and returns `/cloud/public/uploads/filename` paths. The `/cloud/{*cloudPath}` Express route serves files from the bucket. Legacy `/uploads/` paths still served from local disk for backward compatibility. Admin Gallery has "Migrate to Cloud" button to batch-migrate existing local files.
 
 **UI/UX Decisions:**
 - **Branding**: App Name: MAWEJA. Primary color: Red (#dc2626) with white accents.

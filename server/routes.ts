@@ -9,16 +9,10 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import crypto from "crypto";
+import { objectStorageClient } from "./replit_integrations/object_storage";
 
 function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
-}
-
-/** Build a relative URL for an uploaded file.
- *  Always returns /uploads/filename — avoids domain-lock issues across environments.
- */
-function buildUploadUrl(_req: any, filename: string): string {
-  return `/uploads/${filename}`;
 }
 
 const uploadsDir = path.join(process.cwd(), "uploads");
@@ -31,11 +25,9 @@ const mediaStorage = multer.diskStorage({
 
 const upload = multer({
   storage: mediaStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB pour les photos de livreurs
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    // Accept any image MIME type (includes image/jpeg, image/png, image/webp, image/heic, etc.)
     if (file.mimetype.startsWith("image/")) return cb(null, true);
-    // Also accept by extension as fallback
     const allowed = /\.(jpeg|jpg|png|webp|heic|heif)$/i;
     cb(null, allowed.test(file.originalname));
   },
@@ -53,6 +45,27 @@ const uploadMedia = multer({
     cb(null, isImage || isVideo);
   },
 });
+
+async function uploadToCloudStorage(localFilePath: string, filename: string, contentType: string): Promise<string> {
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+  if (!bucketId) {
+    console.warn("⚠️ Object Storage non configuré, fallback vers /uploads/");
+    return `/uploads/${filename}`;
+  }
+  try {
+    const bucket = objectStorageClient.bucket(bucketId);
+    const destPath = `public/uploads/${filename}`;
+    await bucket.upload(localFilePath, {
+      destination: destPath,
+      metadata: { contentType },
+    });
+    try { fs.unlinkSync(localFilePath); } catch {}
+    return `/cloud/${destPath}`;
+  } catch (err) {
+    console.error("❌ Cloud upload failed, keeping local:", err);
+    return `/uploads/${filename}`;
+  }
+}
 
 const clients = new Map<number, WebSocket>();
 
@@ -111,14 +124,21 @@ async function normalizeUploadUrls() {
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const uploadsPattern = '%/uploads/%';
+    const cloudPattern = '%/cloud/%';
     const queries = [
-      `UPDATE service_categories SET image_url = '/uploads/' || substring(image_url from '.*/uploads/(.*)$') WHERE image_url LIKE '${uploadsPattern}' AND image_url NOT LIKE '/uploads/%'`,
-      `UPDATE service_catalog_items SET image_url = '/uploads/' || substring(image_url from '.*/uploads/(.*)$') WHERE image_url LIKE '${uploadsPattern}' AND image_url NOT LIKE '/uploads/%'`,
-      `UPDATE restaurants SET image = '/uploads/' || substring(image from '.*/uploads/(.*)$') WHERE image LIKE '${uploadsPattern}' AND image NOT LIKE '/uploads/%'`,
-      `UPDATE menu_items SET image = '/uploads/' || substring(image from '.*/uploads/(.*)$') WHERE image LIKE '${uploadsPattern}' AND image NOT LIKE '/uploads/%'`,
-      `UPDATE users SET profile_photo_url = '/uploads/' || substring(profile_photo_url from '.*/uploads/(.*)$') WHERE profile_photo_url LIKE '${uploadsPattern}' AND profile_photo_url NOT LIKE '/uploads/%'`,
-      `UPDATE users SET id_photo_url = '/uploads/' || substring(id_photo_url from '.*/uploads/(.*)$') WHERE id_photo_url LIKE '${uploadsPattern}' AND id_photo_url NOT LIKE '/uploads/%'`,
-      `UPDATE advertisements SET media_url = '/uploads/' || substring(media_url from '.*/uploads/(.*)$') WHERE media_url LIKE '${uploadsPattern}' AND media_url NOT LIKE '/uploads/%'`,
+      `UPDATE service_categories SET image_url = '/uploads/' || substring(image_url from '.*/uploads/(.*)$') WHERE image_url LIKE '${uploadsPattern}' AND image_url NOT LIKE '/uploads/%' AND image_url NOT LIKE '/cloud/%'`,
+      `UPDATE service_catalog_items SET image_url = '/uploads/' || substring(image_url from '.*/uploads/(.*)$') WHERE image_url LIKE '${uploadsPattern}' AND image_url NOT LIKE '/uploads/%' AND image_url NOT LIKE '/cloud/%'`,
+      `UPDATE restaurants SET image = '/uploads/' || substring(image from '.*/uploads/(.*)$') WHERE image LIKE '${uploadsPattern}' AND image NOT LIKE '/uploads/%' AND image NOT LIKE '/cloud/%'`,
+      `UPDATE menu_items SET image = '/uploads/' || substring(image from '.*/uploads/(.*)$') WHERE image LIKE '${uploadsPattern}' AND image NOT LIKE '/uploads/%' AND image NOT LIKE '/cloud/%'`,
+      `UPDATE users SET profile_photo_url = '/uploads/' || substring(profile_photo_url from '.*/uploads/(.*)$') WHERE profile_photo_url LIKE '${uploadsPattern}' AND profile_photo_url NOT LIKE '/uploads/%' AND profile_photo_url NOT LIKE '/cloud/%'`,
+      `UPDATE users SET id_photo_url = '/uploads/' || substring(id_photo_url from '.*/uploads/(.*)$') WHERE id_photo_url LIKE '${uploadsPattern}' AND id_photo_url NOT LIKE '/uploads/%' AND id_photo_url NOT LIKE '/cloud/%'`,
+      `UPDATE advertisements SET media_url = '/uploads/' || substring(media_url from '.*/uploads/(.*)$') WHERE media_url LIKE '${uploadsPattern}' AND media_url NOT LIKE '/uploads/%' AND media_url NOT LIKE '/cloud/%'`,
+      `UPDATE service_categories SET image_url = '/cloud/' || substring(image_url from '.*/cloud/(.*)$') WHERE image_url LIKE '${cloudPattern}' AND image_url NOT LIKE '/cloud/%'`,
+      `UPDATE restaurants SET image = '/cloud/' || substring(image from '.*/cloud/(.*)$') WHERE image LIKE '${cloudPattern}' AND image NOT LIKE '/cloud/%'`,
+      `UPDATE menu_items SET image = '/cloud/' || substring(image from '.*/cloud/(.*)$') WHERE image LIKE '${cloudPattern}' AND image NOT LIKE '/cloud/%'`,
+      `UPDATE users SET profile_photo_url = '/cloud/' || substring(profile_photo_url from '.*/cloud/(.*)$') WHERE profile_photo_url LIKE '${cloudPattern}' AND profile_photo_url NOT LIKE '/cloud/%'`,
+      `UPDATE users SET id_photo_url = '/cloud/' || substring(id_photo_url from '.*/cloud/(.*)$') WHERE id_photo_url LIKE '${cloudPattern}' AND id_photo_url NOT LIKE '/cloud/%'`,
+      `UPDATE advertisements SET media_url = '/cloud/' || substring(media_url from '.*/cloud/(.*)$') WHERE media_url LIKE '${cloudPattern}' AND media_url NOT LIKE '/cloud/%'`,
     ];
     let fixed = 0;
     for (const q of queries) {
@@ -229,8 +249,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.use("/uploads", (await import("express")).default.static(uploadsDir));
 
+  app.get("/cloud/{*cloudPath}", async (req: any, res) => {
+    const rawPath = req.params.cloudPath;
+    const objectPath = Array.isArray(rawPath) ? rawPath.join("/") : rawPath;
+    if (!objectPath) return res.status(400).json({ message: "Path requis" });
+    if (!objectPath.startsWith("public/uploads/")) return res.status(403).json({ message: "Accès interdit" });
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) return res.status(500).json({ message: "Object Storage non configuré" });
+    try {
+      const bucket = objectStorageClient.bucket(bucketId);
+      const file = bucket.file(objectPath);
+      const [exists] = await file.exists();
+      if (!exists) return res.status(404).json({ message: "Fichier introuvable" });
+      const [metadata] = await file.getMetadata();
+      res.set({
+        "Content-Type": metadata.contentType || "application/octet-stream",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      });
+      if (metadata.size) res.set("Content-Length", String(metadata.size));
+      file.createReadStream().pipe(res);
+    } catch (err: any) {
+      console.error("Cloud serve error:", err);
+      res.status(500).json({ message: "Erreur de lecture fichier" });
+    }
+  });
+
   app.post("/api/upload", requireAuth, (req: any, res: any, next: any) => {
-    upload.single("file")(req, res, (err: any) => {
+    upload.single("file")(req, res, async (err: any) => {
       if (err) {
         if (err.code === "LIMIT_FILE_SIZE") {
           return res.status(400).json({ message: "Fichier trop volumineux (max 10MB)" });
@@ -238,14 +283,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: err.message || "Erreur lors de l'upload" });
       }
       if (!req.file) return res.status(400).json({ message: "Format non supporté. Utilisez JPG, PNG ou WEBP." });
-      const url = buildUploadUrl(req, req.file.filename);
+      const url = await uploadToCloudStorage(req.file.path, req.file.filename, req.file.mimetype);
       res.json({ url });
     });
   });
 
-  app.post("/api/upload-media", requireAuth, uploadMedia.single("file"), (req: any, res) => {
+  app.post("/api/upload-media", requireAuth, uploadMedia.single("file"), async (req: any, res) => {
     if (!req.file) return res.status(400).json({ message: "Fichier requis (image ou video mp4/webm/mov, max 20MB)" });
-    const url = buildUploadUrl(req, req.file.filename);
+    const url = await uploadToCloudStorage(req.file.path, req.file.filename, req.file.mimetype);
     const isVideo = req.file.mimetype.startsWith("video/");
     res.json({ url, type: isVideo ? "video" : "image" });
   });
@@ -1801,15 +1846,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
      GALLERY — list / delete / fix-urls
   ════════════════════════════════════════════════════════════════ */
 
-  /** List every file in uploads/ with its public absolute URL */
-  app.get("/api/admin/gallery", requireAdmin, (req: any, res) => {
+  app.get("/api/admin/gallery", requireAdmin, async (req: any, res) => {
     const proto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
     const host  = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
     const baseUrl = `${proto}://${host}`;
 
-    let files: Array<{ filename: string; url: string; type: string; size: number; createdAt: number }> = [];
+    let files: Array<{ filename: string; url: string; type: string; size: number; createdAt: number; source: string }> = [];
+
     if (fs.existsSync(uploadsDir)) {
-      files = fs.readdirSync(uploadsDir)
+      const localFiles = fs.readdirSync(uploadsDir)
         .filter(f => !f.startsWith("."))
         .map(filename => {
           const filePath = path.join(uploadsDir, filename);
@@ -1817,14 +1862,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const ext = path.extname(filename).toLowerCase();
           const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
           const type = videoExts.includes(ext) ? "video" : "image";
-          return { filename, url: `${baseUrl}/uploads/${filename}`, type, size: stat.size, createdAt: stat.mtimeMs };
-        })
-        .sort((a, b) => b.createdAt - a.createdAt);
+          return { filename, url: `${baseUrl}/uploads/${filename}`, type, size: stat.size, createdAt: stat.mtimeMs, source: "local" };
+        });
+      files.push(...localFiles);
     }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId) {
+      try {
+        const bucket = objectStorageClient.bucket(bucketId);
+        const [cloudFiles] = await bucket.getFiles({ prefix: "public/uploads/" });
+        for (const cf of cloudFiles) {
+          const filename = cf.name.replace("public/uploads/", "");
+          if (!filename) continue;
+          const ext = path.extname(filename).toLowerCase();
+          const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+          const type = videoExts.includes(ext) ? "video" : "image";
+          const meta = cf.metadata || {};
+          files.push({
+            filename,
+            url: `${baseUrl}/cloud/public/uploads/${filename}`,
+            type,
+            size: Number(meta.size) || 0,
+            createdAt: meta.timeCreated ? new Date(meta.timeCreated as string).getTime() : 0,
+            source: "cloud",
+          });
+        }
+      } catch (err) {
+        console.error("Cloud gallery list error:", err);
+      }
+    }
+
+    files.sort((a, b) => b.createdAt - a.createdAt);
     res.json(files);
   });
 
-  /** Download an image/video from an external URL and save it to uploads/ */
   app.post("/api/admin/gallery/import-url", requireAdmin, async (req: any, res) => {
     const { url } = req.body as { url?: string };
     if (!url || typeof url !== "string") return res.status(400).json({ message: "URL requise" });
@@ -1834,7 +1906,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const baseUrl = `${proto}://${host}`;
 
     try {
-      // Detect extension from URL or default to .jpg
       let ext = path.extname(url.split("?")[0]).toLowerCase();
       const videoExts = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
       const imageExts = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
@@ -1843,7 +1914,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${ext}`;
       const filePath = path.join(uploadsDir, filename);
 
-      // Stream the remote file to disk
       const fetchModule = await import("node-fetch");
       const fetchFn = (fetchModule as any).default ?? fetchModule;
       const remote = await fetchFn(url, {
@@ -1863,38 +1933,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stat = fs.statSync(filePath);
       if (stat.size === 0) { fs.unlinkSync(filePath); return res.status(400).json({ message: "Fichier vide téléchargé" }); }
 
-      res.json({ url: `${baseUrl}/uploads/${filename}`, filename });
+      const mimeMap: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime" };
+      const cloudUrl = await uploadToCloudStorage(filePath, filename, mimeMap[ext] || "application/octet-stream");
+      const finalUrl = cloudUrl.startsWith("/cloud/") ? `${baseUrl}${cloudUrl}` : `${baseUrl}/uploads/${filename}`;
+
+      res.json({ url: finalUrl, filename });
     } catch (err: any) {
       res.status(500).json({ message: `Erreur: ${err.message}` });
     }
   });
 
-  /** Delete a file from uploads/ */
-  app.delete("/api/admin/gallery/:filename", requireAdmin, (req: any, res) => {
-    const filename = path.basename(req.params.filename); // sanitize
+  app.delete("/api/admin/gallery/:filename", requireAdmin, async (req: any, res) => {
+    const filename = path.basename(req.params.filename);
+    let deleted = false;
+
     const filePath = path.join(uploadsDir, filename);
-    if (!fs.existsSync(filePath)) return res.status(404).json({ message: "Fichier introuvable" });
-    fs.unlinkSync(filePath);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      deleted = true;
+    }
+
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (bucketId) {
+      try {
+        const bucket = objectStorageClient.bucket(bucketId);
+        const file = bucket.file(`public/uploads/${filename}`);
+        const [exists] = await file.exists();
+        if (exists) { await file.delete(); deleted = true; }
+      } catch (err) {
+        console.error("Cloud delete error:", err);
+      }
+    }
+
+    if (!deleted) return res.status(404).json({ message: "Fichier introuvable" });
     res.json({ ok: true });
   });
 
-  /** Scan all DB columns for relative /uploads/ paths and update to absolute URL */
   app.post("/api/admin/gallery/fix-urls", requireAdmin, async (req: any, res) => {
     const proto = (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0].trim() || req.protocol || "https";
     const host  = (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
     const baseUrl = `${proto}://${host}`;
 
-    // Use raw SQL with the baseUrl interpolated as a literal string (safe — server-controlled value)
     const { Pool } = await import("pg");
     const dbPool = new Pool({ connectionString: process.env.DATABASE_URL });
 
     const queries = [
       `UPDATE restaurants SET image = '${baseUrl}' || image WHERE image LIKE '/uploads/%'`,
+      `UPDATE restaurants SET image = '${baseUrl}' || image WHERE image LIKE '/cloud/%'`,
       `UPDATE restaurants SET logo_url = '${baseUrl}' || logo_url WHERE logo_url LIKE '/uploads/%'`,
+      `UPDATE restaurants SET logo_url = '${baseUrl}' || logo_url WHERE logo_url LIKE '/cloud/%'`,
       `UPDATE restaurants SET cover_video_url = '${baseUrl}' || cover_video_url WHERE cover_video_url LIKE '/uploads/%'`,
+      `UPDATE restaurants SET cover_video_url = '${baseUrl}' || cover_video_url WHERE cover_video_url LIKE '/cloud/%'`,
       `UPDATE menu_items SET image = '${baseUrl}' || image WHERE image LIKE '/uploads/%'`,
+      `UPDATE menu_items SET image = '${baseUrl}' || image WHERE image LIKE '/cloud/%'`,
       `UPDATE advertisements SET media_url = '${baseUrl}' || media_url WHERE media_url LIKE '/uploads/%'`,
+      `UPDATE advertisements SET media_url = '${baseUrl}' || media_url WHERE media_url LIKE '/cloud/%'`,
       `UPDATE service_catalog_items SET image_url = '${baseUrl}' || image_url WHERE image_url LIKE '/uploads/%'`,
+      `UPDATE service_catalog_items SET image_url = '${baseUrl}' || image_url WHERE image_url LIKE '/cloud/%'`,
     ];
 
     for (const q of queries) {
@@ -1903,6 +1998,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     await dbPool.end();
 
     res.json({ ok: true, message: "URLs relatives migrées vers URLs absolues" });
+  });
+
+  app.post("/api/admin/gallery/migrate-to-cloud", requireAdmin, async (req: any, res) => {
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+    if (!bucketId) return res.status(500).json({ message: "Object Storage non configuré" });
+
+    if (!fs.existsSync(uploadsDir)) return res.json({ migrated: 0, message: "Aucun fichier local" });
+
+    const localFiles = fs.readdirSync(uploadsDir).filter(f => !f.startsWith("."));
+    let migrated = 0;
+    const migratedFilenames: string[] = [];
+    const errors: string[] = [];
+
+    for (const filename of localFiles) {
+      const filePath = path.join(uploadsDir, filename);
+      try {
+        const ext = path.extname(filename).toLowerCase();
+        const mimeMap: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".mp4": "video/mp4", ".webm": "video/webm", ".mov": "video/quicktime" };
+        const contentType = mimeMap[ext] || "application/octet-stream";
+        const cloudUrl = await uploadToCloudStorage(filePath, filename, contentType);
+        if (cloudUrl.startsWith("/cloud/")) {
+          migrated++;
+          migratedFilenames.push(filename);
+        } else {
+          errors.push(filename);
+        }
+      } catch (err: any) {
+        errors.push(`${filename}: ${err.message}`);
+      }
+    }
+
+    let dbUpdated = 0;
+    if (migratedFilenames.length > 0) {
+      const { Pool } = await import("pg");
+      const dbPool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const tables = [
+        { table: "restaurants", col: "image" },
+        { table: "restaurants", col: "logo_url" },
+        { table: "restaurants", col: "cover_video_url" },
+        { table: "menu_items", col: "image" },
+        { table: "advertisements", col: "media_url" },
+        { table: "service_catalog_items", col: "image_url" },
+        { table: "users", col: "profile_photo_url" },
+        { table: "users", col: "id_photo_url" },
+      ];
+      for (const fn of migratedFilenames) {
+        const oldPath = `/uploads/${fn}`;
+        const newPath = `/cloud/public/uploads/${fn}`;
+        for (const { table, col } of tables) {
+          const r = await dbPool.query(`UPDATE ${table} SET ${col} = $1 WHERE ${col} = $2`, [newPath, oldPath]);
+          dbUpdated += r.rowCount || 0;
+        }
+      }
+      await dbPool.end();
+    }
+
+    res.json({ migrated, dbUpdated, errors: errors.length > 0 ? errors : undefined, message: `${migrated} fichiers migrés, ${dbUpdated} URLs DB mises à jour` });
   });
 
   return httpServer;
