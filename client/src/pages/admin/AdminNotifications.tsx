@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest } from "../../lib/queryClient";
+import { apiRequest, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   Bell, Send, Users, TrendingUp, ShoppingBag, Clock, Megaphone,
-  Target, CheckCircle, Loader2, Zap, UserCheck
+  Target, CheckCircle, Loader2, Zap, UserCheck, ImagePlus, X, Image as ImageIcon
 } from "lucide-react";
 
 type Segment = {
@@ -21,6 +21,10 @@ export default function AdminNotifications() {
   const [notifType, setNotifType] = useState("promo");
   const [sent, setSent] = useState(false);
   const [sentCount, setSentCount] = useState(0);
+  const [imageUrl, setImageUrl] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: segments = {} } = useQuery<Record<string, Segment>>({
     queryKey: ["/api/analytics/client-segments"],
@@ -33,19 +37,70 @@ export default function AdminNotifications() {
       const data = await res.json();
       setSent(true);
       setSentCount(data.sent || 0);
-      setTimeout(() => setSent(false), 5000);
+      setTimeout(() => {
+        setSent(false);
+        setTitle("");
+        setMessage("");
+        setImageUrl("");
+        setImagePreview("");
+      }, 5000);
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible d'envoyer les notifications", variant: "destructive" });
     },
   });
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Fichier invalide", description: "Seules les images sont acceptees (JPG, PNG, WebP)", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Fichier trop lourd", description: "La taille maximale est de 5 Mo", variant: "destructive" });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.url) {
+        setImageUrl(data.url);
+        toast({ title: "Image uploadee", description: "L'image sera jointe a la notification" });
+      }
+    } catch {
+      toast({ title: "Erreur", description: "Impossible d'uploader l'image", variant: "destructive" });
+      setImagePreview("");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const removeImage = () => {
+    setImageUrl("");
+    setImagePreview("");
+  };
+
   const handleSend = () => {
     if (!title.trim() || !message.trim()) {
       toast({ title: "Champs requis", description: "Titre et message sont obligatoires", variant: "destructive" });
       return;
     }
-    broadcastMutation.mutate({ title, message, type: notifType, targetSegment });
+    broadcastMutation.mutate({ title, message, type: notifType, targetSegment, imageUrl: imageUrl || undefined });
   };
 
   const segmentIcons: Record<string, any> = {
@@ -128,6 +183,57 @@ export default function AdminNotifications() {
                     data-testid="input-notif-message"
                     className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-28 resize-none focus:ring-2 focus:ring-red-500 focus:outline-none" />
                 </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase mb-2 block">Image (optionnel)</label>
+                  {imagePreview ? (
+                    <div className="relative inline-block" data-testid="notif-image-preview">
+                      <img
+                        src={imagePreview}
+                        alt="Apercu notification"
+                        className="w-full max-w-xs h-40 object-cover rounded-xl border-2 border-red-200 dark:border-red-800"
+                      />
+                      <button
+                        onClick={removeImage}
+                        data-testid="button-remove-notif-image"
+                        className="absolute -top-2 -right-2 w-7 h-7 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-700 transition-all"
+                      >
+                        <X size={14} />
+                      </button>
+                      {uploading && (
+                        <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
+                          <Loader2 size={24} className="text-white animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      disabled={uploading}
+                      data-testid="button-add-notif-image"
+                      className="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 flex flex-col items-center gap-2 text-gray-400 dark:text-gray-500 hover:border-red-400 hover:text-red-500 dark:hover:border-red-600 dark:hover:text-red-400 transition-all cursor-pointer"
+                    >
+                      {uploading ? (
+                        <Loader2 size={28} className="animate-spin" />
+                      ) : (
+                        <ImagePlus size={28} />
+                      )}
+                      <span className="text-xs font-semibold">
+                        {uploading ? "Upload en cours..." : "Ajouter une image a la notification"}
+                      </span>
+                      <span className="text-[10px] text-gray-400">JPG, PNG, WebP — Max 5 Mo</span>
+                    </button>
+                  )}
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    data-testid="input-notif-image"
+                  />
+                </div>
               </div>
 
               {sent ? (
@@ -139,14 +245,39 @@ export default function AdminNotifications() {
                   </div>
                 </div>
               ) : (
-                <button onClick={handleSend} disabled={broadcastMutation.isPending}
+                <button onClick={handleSend} disabled={broadcastMutation.isPending || uploading}
                   data-testid="button-send-broadcast"
                   className="mt-4 w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
                   {broadcastMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                  {broadcastMutation.isPending ? "Envoi en cours..." : "Envoyer la notification"}
+                  {broadcastMutation.isPending ? "Envoi en cours..." : imageUrl ? "Envoyer avec image" : "Envoyer la notification"}
                 </button>
               )}
             </div>
+
+            {(title || message || imagePreview) && (
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-5">
+                <h3 className="font-bold text-sm text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <ImageIcon size={16} className="text-red-500" />
+                  Apercu de la notification
+                </h3>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 max-w-sm mx-auto">
+                  {imagePreview && (
+                    <img src={imagePreview} alt="Preview" className="w-full h-44 object-cover" />
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center">
+                        <Bell size={12} className="text-white" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">MAWEJA</span>
+                      <span className="text-[10px] text-gray-400 ml-auto">maintenant</span>
+                    </div>
+                    <p className="font-bold text-sm text-gray-900 dark:text-white">{title || "Titre de la notification"}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-3">{message || "Contenu du message..."}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -186,6 +317,7 @@ export default function AdminNotifications() {
               <ul className="space-y-2 text-xs text-red-100">
                 <li>• Ciblez les clients inactifs pour les re-engager</li>
                 <li>• Envoyez des promos aux clients haute valeur</li>
+                <li>• Ajoutez une image pour plus d'impact visuel</li>
                 <li>• Personnalisez selon les habitudes d'achat</li>
                 <li>• Evitez d'envoyer trop de notifications</li>
               </ul>

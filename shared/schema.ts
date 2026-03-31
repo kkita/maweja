@@ -134,6 +134,7 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   type: text("type").notNull().default("info"),
   isRead: boolean("is_read").notNull().default(false),
+  imageUrl: text("image_url"),
   data: jsonb("data"),
   createdAt: timestamp("created_at").defaultNow(),
 });

@@ -1696,7 +1696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // ===== PUSH NOTIFICATIONS (Broadcast) =====
   app.post("/api/notifications/broadcast", requireAdmin, async (req, res) => {
-    const { title, message, type, targetSegment, targetUserIds } = req.body;
+    const { title, message, type, targetSegment, targetUserIds, imageUrl } = req.body;
     let targetUsers: any[] = [];
     if (targetUserIds && targetUserIds.length > 0) {
       const allUsers = await storage.getAllUsers();
@@ -1742,12 +1742,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: title || "Notification MAWEJA",
         message: message || "",
         type: type || "promo",
+        imageUrl: imageUrl || null,
         data: { broadcast: true },
         isRead: false,
       });
       const ws = clients.get(u.id);
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "notification", data: { title, message } }));
+        ws.send(JSON.stringify({ type: "notification", data: { title, message, imageUrl: imageUrl || null } }));
       }
       sent++;
     }
