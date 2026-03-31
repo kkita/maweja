@@ -598,8 +598,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    // Award loyalty points
-    const points = Math.floor(order.total / 1000);
+    // Award loyalty points: 10 points per $1 spent (1 point = $0.001, so 1% cashback)
+    const points = Math.floor(order.total * 10);
     if (points > 0) {
       const client = await storage.getUser(order.clientId);
       if (client) {

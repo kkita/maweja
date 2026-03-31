@@ -90,11 +90,11 @@ export default function CheckoutPage() {
   const deliveryFee = promoType === "delivery" ? 0 : baseDeliveryFee;
   const serviceFee = 0.76;
   const effectivePromoDiscount = promoType === "delivery" ? 0 : promoDiscount;
-  const totalBeforeDiscounts = Math.round(subtotal + deliveryFee + serviceFee);
+  const totalBeforeDiscounts = Math.round((subtotal + deliveryFee + serviceFee) * 100) / 100;
   const remainingAfterPromo = totalBeforeDiscounts - effectivePromoDiscount;
-  const pointsValue = user.loyaltyPoints * 100;
+  const pointsValue = user.loyaltyPoints * 0.001;
   const pointsDiscount = usePoints ? Math.min(pointsValue, Math.max(0, remainingAfterPromo)) : 0;
-  const netTotal = Math.max(0, totalBeforeDiscounts - effectivePromoDiscount - pointsDiscount);
+  const netTotal = Math.round(Math.max(0, totalBeforeDiscounts - effectivePromoDiscount - pointsDiscount) * 100) / 100;
   const walletInsufficient = (user.walletBalance || 0) < netTotal;
 
   const selectedPayment = paymentOptions.find(p => p.id === paymentMethod);
@@ -157,7 +157,7 @@ export default function CheckoutPage() {
           orderPhone: orderPhone || user.phone,
           promoCode: promoCode || null,
           promoDiscount: effectivePromoDiscount + pointsDiscount,
-          pointsUsed: usePoints ? Math.ceil(pointsDiscount / 100) : 0,
+          pointsUsed: usePoints ? Math.ceil(pointsDiscount / 0.001) : 0,
           status: "pending",
         }),
       });

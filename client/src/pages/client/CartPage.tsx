@@ -57,7 +57,7 @@ export default function CartPage() {
   const zoneResult = detectZone(resolvedAddress || "", defaultAddress?.lat, defaultAddress?.lng);
   const deliveryFee = zoneResult.allowed ? zoneResult.fee / 100 : 0;
   const serviceFee = 0.76;
-  const grandTotal = total + deliveryFee + serviceFee;
+  const grandTotal = Math.round((total + deliveryFee + serviceFee) * 100) / 100;
 
   const handleCheckout = () => {
     if (!resolvedAddress) {
