@@ -236,6 +236,7 @@ export default function HomePage() {
 
   const [activeCatId, setActiveCatId] = useState<number | null>(null);
   const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
+  const [activeBoutiqueCatId, setActiveBoutiqueCatId] = useState<number | null>(null);
   const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
   const [globalSearch, setGlobalSearch] = useState("");
 
@@ -273,6 +274,19 @@ export default function HomePage() {
   const matchedServices = globalSearch
     ? activeCategories.filter(c => c.name.toLowerCase().includes(globalSearch.toLowerCase()))
     : [];
+
+  /* filter boutiques by selected boutique category */
+  const filteredBoutiques = boutiques.filter(b => {
+    if (!b.isActive) return false;
+    if (globalSearch) {
+      const q = globalSearch.toLowerCase();
+      return (b.name?.toLowerCase().includes(q) || b.cuisine?.toLowerCase().includes(q));
+    }
+    if (activeBoutiqueCatId) {
+      return (b as any).categoryId === activeBoutiqueCatId || b.cuisine === activeBoutiqueCats.find(c => c.id === activeBoutiqueCatId)?.name;
+    }
+    return true;
+  });
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = displayCount < filtered.length;
@@ -370,7 +384,7 @@ export default function HomePage() {
                 letterSpacing: "-0.2px",
               }}
             >
-              Catégories
+              Services
             </p>
           </div>
         )}
@@ -481,52 +495,6 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* ── Title: Tous les établissements ──────────────────── */}
-        <p
-          className="font-black text-gray-900 dark:text-white mb-3"
-          style={{
-            fontSize: 15,
-            borderBottom: "2.5px solid #EC0000",
-            display: "inline-block",
-            paddingBottom: 3,
-            letterSpacing: "-0.2px",
-          }}
-        >
-          Tous les établissements
-        </p>
-
-        {/* ── Food type pills — dynamic from admin ─────────── */}
-        {activeRestCats.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 mb-5 pb-0.5" data-testid="food-pills">
-            {activeRestCats.map(cat => {
-              const isActive = activeCuisine === cat.name;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handlePill(cat.name)}
-                  data-testid={`pill-${cat.id}`}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-gray-900 active:scale-95 transition-all"
-                  style={{
-                    border: isActive ? "1.5px solid #dc2626" : "1.5px solid transparent",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>{cat.emoji}</span>
-                  <span
-                    className={isActive ? "text-red-600 font-bold" : "text-gray-600 dark:text-gray-300 font-medium"}
-                    style={{
-                      fontSize: 12,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {cat.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         {/* ── Search results: Services ────────────────────────────── */}
         {globalSearch && matchedServices.length > 0 && (
           <section className="mb-5">
@@ -552,7 +520,7 @@ export default function HomePage() {
         )}
 
         {/* ── Boutiques Section ── shows when boutiques exist ── */}
-        {boutiques.length > 0 && !globalSearch && !activeCuisine && (
+        {boutiques.length > 0 && !activeCuisine && (
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 16 }}>
@@ -568,21 +536,45 @@ export default function HomePage() {
               </button>
             </div>
             {activeBoutiqueCats.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
-                {activeBoutiqueCats.sort((a, b) => a.sortOrder - b.sortOrder).map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => navigate("/boutiques")}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap hover:border-red-300 transition-colors"
-                    data-testid={`boutique-cat-chip-${cat.id}`}
-                  >
-                    <span>{cat.emoji}</span> {cat.name}
-                  </button>
-                ))}
+              <div className="flex gap-2 overflow-x-auto pb-2 mb-3 no-scrollbar" data-testid="boutique-cat-pills">
+                <button
+                  onClick={() => setActiveBoutiqueCatId(null)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
+                    !activeBoutiqueCatId ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
+                  }`}
+                  style={{
+                    border: !activeBoutiqueCatId ? "1.5px solid #dc2626" : "1.5px solid transparent",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                    fontSize: 12,
+                  }}
+                  data-testid="boutique-pill-all"
+                >
+                  ✦ Tout
+                </button>
+                {activeBoutiqueCats.sort((a, b) => a.sortOrder - b.sortOrder).map(cat => {
+                  const isActive = activeBoutiqueCatId === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveBoutiqueCatId(isActive ? null : cat.id)}
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
+                        isActive ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
+                      }`}
+                      style={{
+                        border: isActive ? "1.5px solid #dc2626" : "1.5px solid transparent",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                        fontSize: 12,
+                      }}
+                      data-testid={`boutique-cat-chip-${cat.id}`}
+                    >
+                      <span style={{ fontSize: 14 }}>{cat.emoji}</span> {cat.name}
+                    </button>
+                  );
+                })}
               </div>
             )}
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollSnapType: "x mandatory" }}>
-              {boutiques.filter(b => b.isActive).map(b => (
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar" style={{ scrollSnapType: "x mandatory" }}>
+              {filteredBoutiques.map(b => (
                 <div
                   key={b.id}
                   onClick={() => navigate(`/restaurant/${b.id}`)}
@@ -609,12 +601,96 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-            {boutiques.filter(b => b.isActive).length === 0 && (
+            {filteredBoutiques.length === 0 && (
               <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 text-center" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-                <p className="text-gray-400 text-xs">Bientôt disponible dans votre zone</p>
+                <p className="text-gray-400 text-xs">
+                  {activeBoutiqueCatId ? "Aucune boutique dans cette catégorie" : "Bientôt disponible dans votre zone"}
+                </p>
+                {activeBoutiqueCatId && (
+                  <button onClick={() => setActiveBoutiqueCatId(null)} className="mt-2 text-red-600 text-xs font-bold" data-testid="button-reset-boutique-filter">
+                    Tout afficher
+                  </button>
+                )}
               </div>
             )}
           </section>
+        )}
+
+        {/* ── Title: Tous les établissements ──────────────────── */}
+        <p
+          className="font-black text-gray-900 dark:text-white mb-3"
+          style={{
+            fontSize: 15,
+            borderBottom: "2.5px solid #EC0000",
+            display: "inline-block",
+            paddingBottom: 3,
+            letterSpacing: "-0.2px",
+          }}
+        >
+          Tous les établissements
+        </p>
+
+        {/* ── Food type pills — dynamic from admin ─────────── */}
+        {activeRestCats.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 mb-5 pb-0.5" data-testid="food-pills">
+            <button
+              onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
+                !activeCuisine ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
+              }`}
+              style={{
+                border: !activeCuisine ? "1.5px solid #dc2626" : "1.5px solid transparent",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+              }}
+              data-testid="pill-all"
+            >
+              <span style={{ fontSize: 14 }}>✦</span>
+              <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>Tout</span>
+            </button>
+            {promoRestaurants.length > 0 && (
+              <button
+                onClick={() => handlePill("Promos")}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
+                  activeCuisine === "Promos" ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
+                }`}
+                style={{
+                  border: activeCuisine === "Promos" ? "1.5px solid #dc2626" : "1.5px solid transparent",
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                }}
+                data-testid="pill-promos"
+              >
+                <span style={{ fontSize: 14 }}>🏷️</span>
+                <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>Promos</span>
+              </button>
+            )}
+            {activeRestCats.map(cat => {
+              const isActive = activeCuisine === cat.name;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handlePill(cat.name)}
+                  data-testid={`pill-${cat.id}`}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
+                    isActive ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
+                  }`}
+                  style={{
+                    border: isActive ? "1.5px solid #dc2626" : "1.5px solid transparent",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>{cat.emoji}</span>
+                  <span
+                    style={{
+                      fontSize: 12,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {cat.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         )}
 
         {/* ── Section title ─────────────────────────────────────── */}
