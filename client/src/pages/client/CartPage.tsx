@@ -22,6 +22,7 @@ import {
 import { formatPrice } from "../../lib/utils";
 import { useToast } from "../../hooks/use-toast";
 import type { SavedAddress } from "@shared/schema";
+import { detectZone, DELIVERY_ZONES, formatZoneFee } from "@shared/deliveryZones";
 
 export default function CartPage() {
   const [, navigate] = useLocation();
@@ -52,11 +53,11 @@ export default function CartPage() {
   const defaultAddress =
     savedAddresses?.find((a) => a.isDefault) || savedAddresses?.[0] || null;
 
-  const deliveryFee = restaurant?.deliveryFee ?? 2;
+  const resolvedAddress = defaultAddress?.address || manualAddress;
+  const zoneResult = detectZone(resolvedAddress || "", defaultAddress?.lat, defaultAddress?.lng);
+  const deliveryFee = zoneResult.allowed ? zoneResult.fee / 100 : 0;
   const serviceFee = 0.76;
   const grandTotal = total + deliveryFee + serviceFee;
-
-  const resolvedAddress = defaultAddress?.address || manualAddress;
 
   const handleCheckout = () => {
     if (!resolvedAddress) {
@@ -302,10 +303,40 @@ export default function CartPage() {
             <span className="text-gray-400 dark:text-gray-500">Sous-total</span>
             <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-subtotal">{formatPrice(total)}</span>
           </div>
-          <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
-            <span className="text-gray-400 dark:text-gray-500">Frais de livraison</span>
-            <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
+          <div className="flex justify-between gap-2 items-center" style={{ fontSize: 13 }}>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400 dark:text-gray-500">Frais de livraison</span>
+              {zoneResult.zone && (
+                <span
+                  className="text-[8px] font-black px-1.5 py-0.5 rounded-full text-white"
+                  style={{ background: zoneResult.zone.color }}
+                  data-testid="badge-cart-zone"
+                >
+                  {zoneResult.zone.name}
+                </span>
+              )}
+            </div>
+            {!zoneResult.allowed && resolvedAddress ? (
+              <span className="text-red-500 font-bold text-xs" data-testid="text-delivery-fee">Hors zone</span>
+            ) : (
+              <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-delivery-fee">{formatPrice(deliveryFee)}</span>
+            )}
           </div>
+          {!zoneResult.allowed && resolvedAddress && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3" data-testid="cart-zone-warning">
+              <p className="text-red-600 dark:text-red-400 text-[11px] font-bold flex items-center gap-1">
+                <MapPin size={11} />
+                Adresse hors zone — livraison non disponible
+              </p>
+              <div className="flex gap-1.5 mt-2 flex-wrap">
+                {DELIVERY_ZONES.map(z => (
+                  <span key={z.id} className="text-[8px] px-1.5 py-0.5 rounded-full text-white font-bold" style={{ background: z.color }}>
+                    {z.name}: {formatZoneFee(z.fee)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="flex justify-between gap-2" style={{ fontSize: 13 }}>
             <span className="text-gray-400 dark:text-gray-500">Frais de service</span>
             <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-tax">{formatPrice(serviceFee)}</span>

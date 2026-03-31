@@ -467,7 +467,14 @@ export default function AdminOrders() {
                     <span>{formatPrice(selectedOrder.subtotal)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 gap-2">
-                    <span>Livraison</span>
+                    <div className="flex items-center gap-1">
+                      <span>Livraison</span>
+                      {(selectedOrder as any).deliveryZone && (
+                        <span className={`text-[7px] font-black px-1 py-0.5 rounded-full text-white ${
+                          (selectedOrder as any).deliveryZone === "A" ? "bg-green-500" : (selectedOrder as any).deliveryZone === "B" ? "bg-amber-500" : "bg-red-500"
+                        }`}>Zone {(selectedOrder as any).deliveryZone}</span>
+                      )}
+                    </div>
                     <span>{formatPrice(selectedOrder.deliveryFee)}</span>
                   </div>
                   {selectedOrder.taxAmount > 0 && (
@@ -623,7 +630,7 @@ export default function AdminOrders() {
             <hr style={{ margin: "16px 0" }} />
             <div style={{ textAlign: "right" }}>
               <p>Sous-total: {formatPrice(selectedOrder.subtotal)}</p>
-              <p>Livraison: {formatPrice(selectedOrder.deliveryFee)}</p>
+              <p>Livraison: {formatPrice(selectedOrder.deliveryFee)}{(selectedOrder as any).deliveryZone ? ` (Zone ${(selectedOrder as any).deliveryZone})` : ""}</p>
               {selectedOrder.taxAmount > 0 && <p>Taxes: {formatPrice(selectedOrder.taxAmount)}</p>}
               {selectedOrder.promoCode && <p>Promo ({selectedOrder.promoCode}): -{formatPrice(selectedOrder.promoDiscount)}</p>}
               <p style={{ fontSize: 18, fontWeight: "bold", marginTop: 8 }}>Total: {formatPrice(selectedOrder.total)}</p>

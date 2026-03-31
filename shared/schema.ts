@@ -120,6 +120,7 @@ export const orders = pgTable("orders", {
   taxAmount: integer("tax_amount").notNull().default(0),
   promoCode: text("promo_code"),
   promoDiscount: integer("promo_discount").notNull().default(0),
+  deliveryZone: text("delivery_zone"),
   deviceType: text("device_type").default("web"),
   auditLog: jsonb("audit_log"),
   createdAt: timestamp("created_at").defaultNow(),

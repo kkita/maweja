@@ -313,8 +313,15 @@ export default function TrackingPage() {
             ))}
           </div>
           <div className="border-t border-gray-100 dark:border-gray-800 mt-3 pt-3 space-y-2">
-            <div className="flex justify-between" style={{ fontSize: 13 }}>
-              <span className="text-gray-400 dark:text-gray-500">Livraison</span>
+            <div className="flex justify-between items-center" style={{ fontSize: 13 }}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-400 dark:text-gray-500">Livraison</span>
+                {(order as any).deliveryZone && (
+                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full text-white ${
+                    (order as any).deliveryZone === "A" ? "bg-green-500" : (order as any).deliveryZone === "B" ? "bg-amber-500" : "bg-red-500"
+                  }`}>Zone {(order as any).deliveryZone}</span>
+                )}
+              </div>
               <span className="text-gray-700 dark:text-gray-200 font-semibold">{formatPrice(order.deliveryFee)}</span>
             </div>
             <div className="flex justify-between items-center">

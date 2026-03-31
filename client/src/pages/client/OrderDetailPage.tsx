@@ -263,7 +263,14 @@ export default function OrderDetailPage() {
               <span className="dark:text-white">{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Livraison</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500 dark:text-gray-400">Livraison</span>
+                {(order as any).deliveryZone && (
+                  <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full text-white ${
+                    (order as any).deliveryZone === "A" ? "bg-green-500" : (order as any).deliveryZone === "B" ? "bg-amber-500" : "bg-red-500"
+                  }`}>Zone {(order as any).deliveryZone}</span>
+                )}
+              </div>
               <span className="dark:text-white">{formatPrice(order.deliveryFee)}</span>
             </div>
             {order.taxAmount > 0 && (

@@ -372,7 +372,14 @@ export default function DriverOrderDetail() {
                 <span className="font-semibold text-gray-700 dark:text-gray-200">{formatPrice(order.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Frais de livraison</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500">Frais de livraison</span>
+                  {(order as any).deliveryZone && (
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full text-white ${
+                      (order as any).deliveryZone === "A" ? "bg-green-500" : (order as any).deliveryZone === "B" ? "bg-amber-500" : "bg-red-500"
+                    }`}>Zone {(order as any).deliveryZone}</span>
+                  )}
+                </div>
                 <span className="font-semibold text-gray-700 dark:text-gray-200">{formatPrice(order.deliveryFee)}</span>
               </div>
               {order.promoDiscount > 0 && (

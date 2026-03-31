@@ -12,6 +12,8 @@ import {
   Clock, Shield, Sparkles, X, User
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
+import { detectZone, DELIVERY_ZONES, formatZoneFee } from "@shared/deliveryZones";
+import type { ZoneResult } from "@shared/deliveryZones";
 
 interface CheckoutData {
   deliveryAddress: string;
@@ -79,7 +81,12 @@ export default function CheckoutPage() {
   if (items.length === 0) { navigate("/cart"); return null; }
 
   const subtotal = total;
-  const baseDeliveryFee = settings?.delivery_fee ? parseInt(settings.delivery_fee, 10) : 2500;
+  const zoneResult: ZoneResult = detectZone(
+    checkoutData.deliveryAddress,
+    checkoutData.deliveryLat,
+    checkoutData.deliveryLng,
+  );
+  const baseDeliveryFee = zoneResult.allowed ? zoneResult.fee / 100 : 0;
   const deliveryFee = promoType === "delivery" ? 0 : baseDeliveryFee;
   const serviceFee = 0.76;
   const effectivePromoDiscount = promoType === "delivery" ? 0 : promoDiscount;
@@ -122,6 +129,9 @@ export default function CheckoutPage() {
 
   const orderMutation = useMutation({
     mutationFn: async () => {
+      if (!zoneResult.allowed) {
+        throw new Error("Livraison impossible — votre adresse est hors de notre zone de couverture.");
+      }
       const res = await apiRequest("/api/orders", {
         method: "POST",
         body: JSON.stringify({
@@ -137,6 +147,7 @@ export default function CheckoutPage() {
           deliveryAddress: checkoutData.deliveryAddress || "Adresse non specifiee",
           deliveryLat: checkoutData.deliveryLat,
           deliveryLng: checkoutData.deliveryLng,
+          deliveryZone: zoneResult.zone?.id || null,
           notes: [
             checkoutData.notes || "",
             orderName !== user.name ? `Destinataire: ${orderName}` : "",
@@ -283,16 +294,47 @@ export default function CheckoutPage() {
                 <span className="text-gray-900 dark:text-white font-medium">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
-                {deliveryFee === 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
+                  {zoneResult.zone && (
+                    <span
+                      className="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white"
+                      style={{ background: zoneResult.zone.color }}
+                      data-testid="badge-delivery-zone"
+                    >
+                      {zoneResult.zone.name}
+                    </span>
+                  )}
+                </div>
+                {deliveryFee === 0 && promoType === "delivery" ? (
                   <span className="text-green-600 font-medium flex items-center gap-1">
                     <Sparkles size={12} />
                     Gratuit
                   </span>
+                ) : !zoneResult.allowed ? (
+                  <span className="text-red-500 font-medium text-xs">Hors zone</span>
                 ) : (
                   <span className="text-gray-900 dark:text-white font-medium">{formatPrice(deliveryFee)}</span>
                 )}
               </div>
+              {!zoneResult.allowed && checkoutData.deliveryAddress && (
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-3 mt-1" data-testid="zone-warning">
+                  <p className="text-red-600 dark:text-red-400 text-xs font-bold flex items-center gap-1.5">
+                    <MapPin size={12} />
+                    Livraison non disponible dans cette zone
+                  </p>
+                  <p className="text-red-500/70 dark:text-red-400/60 text-[10px] mt-1">
+                    Nous livrons uniquement dans les zones couvertes de Kinshasa. Modifiez votre adresse pour commander.
+                  </p>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {DELIVERY_ZONES.map(z => (
+                      <span key={z.id} className="text-[9px] px-2 py-0.5 rounded-full text-white font-bold" style={{ background: z.color }}>
+                        {z.name}: {formatZoneFee(z.fee)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 dark:text-gray-400">Frais de service</span>
                 <span className="text-gray-900 dark:text-white font-medium">{formatPrice(serviceFee)}</span>
@@ -345,14 +387,23 @@ export default function CheckoutPage() {
           <div className="max-w-lg mx-auto space-y-2">
             <button
               onClick={() => orderMutation.mutate()}
-              disabled={orderMutation.isPending}
+              disabled={orderMutation.isPending || !zoneResult.allowed}
               data-testid="button-confirm-order"
-              className="w-full bg-gradient-to-r from-red-600 to-red-500 text-white py-4 rounded-2xl font-black text-sm shadow-xl shadow-red-200 dark:shadow-red-900/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98]"
+              className={`w-full py-4 rounded-2xl font-black text-sm shadow-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-[0.98] ${
+                !zoneResult.allowed
+                  ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 shadow-none cursor-not-allowed"
+                  : "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-red-200 dark:shadow-red-900/30"
+              }`}
             >
               {orderMutation.isPending ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
                   Traitement en cours...
+                </>
+              ) : !zoneResult.allowed ? (
+                <>
+                  <MapPin size={18} />
+                  Adresse hors zone de livraison
                 </>
               ) : (
                 <>
@@ -419,12 +470,19 @@ export default function CheckoutPage() {
               <span className="text-gray-900 dark:text-white">{formatPrice(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
-              <span className={deliveryFee === 0 ? "text-green-600 line-through" : "text-gray-900 dark:text-white"}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
+                {zoneResult.zone && (
+                  <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full text-white" style={{ background: zoneResult.zone.color }}>
+                    {zoneResult.zone.name}
+                  </span>
+                )}
+              </div>
+              <span className={deliveryFee === 0 && promoType === "delivery" ? "text-green-600 line-through" : "text-gray-900 dark:text-white"}>
                 {formatPrice(baseDeliveryFee)}
               </span>
             </div>
-            {deliveryFee === 0 && (
+            {deliveryFee === 0 && promoType === "delivery" && (
               <div className="flex justify-end">
                 <span className="text-xs text-green-600 font-medium">Livraison gratuite (promo)</span>
               </div>

@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
 import { restaurantCategories, boutiqueCategories } from "@shared/schema";
+import { detectZone } from "@shared/deliveryZones";
 import { eq } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -502,6 +503,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (sessionUser?.role === "admin" && req.body.clientId) {
       clientId = req.body.clientId;
     }
+    const zoneResult = detectZone(
+      req.body.deliveryAddress || "",
+      req.body.deliveryLat,
+      req.body.deliveryLng,
+    );
+    if (!zoneResult.allowed) {
+      return res.status(400).json({ message: "Livraison impossible — adresse hors de notre zone de couverture." });
+    }
+    req.body.deliveryZone = zoneResult.zone?.id || null;
+    req.body.deliveryFee = zoneResult.fee / 100;
+
     const lastOrder = await db.execute(
       `SELECT order_number FROM orders WHERE order_number LIKE 'M%' AND LENGTH(order_number) = 9 ORDER BY order_number DESC LIMIT 1`
     );
