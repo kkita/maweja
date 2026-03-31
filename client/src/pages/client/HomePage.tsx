@@ -627,7 +627,7 @@ export default function HomePage() {
             letterSpacing: "-0.2px",
           }}
         >
-          Tous les établissements
+          Restaurants
         </p>
 
         {/* ── Food type pills — dynamic from admin ─────────── */}
