@@ -68,6 +68,14 @@ export default function CartPage() {
       });
       return;
     }
+    if (!zoneResult.allowed) {
+      toast({
+        title: "Zone non desservie",
+        description: "La livraison n'est pas disponible à cette adresse. Veuillez choisir une adresse dans nos zones couvertes.",
+        variant: "destructive",
+      });
+      return;
+    }
     setShowConfirmModal(true);
   };
 
@@ -354,11 +362,25 @@ export default function CartPage() {
         <div className="max-w-lg mx-auto">
           <button
             onClick={handleCheckout}
+            disabled={!!(resolvedAddress && !zoneResult.allowed)}
             data-testid="button-checkout"
-            className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-red-200 hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+            className={`w-full py-4 rounded-2xl font-bold text-sm shadow-xl transition-all flex items-center justify-center gap-2 ${
+              resolvedAddress && !zoneResult.allowed
+                ? "bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 shadow-none cursor-not-allowed"
+                : "bg-red-600 text-white shadow-red-200 hover:bg-red-700"
+            }`}
           >
-            Proceder au paiement - {formatPrice(grandTotal)}
-            <ArrowRight size={16} />
+            {resolvedAddress && !zoneResult.allowed ? (
+              <>
+                <MapPin size={16} />
+                Zone non desservie
+              </>
+            ) : (
+              <>
+                Proceder au paiement - {formatPrice(grandTotal)}
+                <ArrowRight size={16} />
+              </>
+            )}
           </button>
         </div>
       </div>
