@@ -6,11 +6,20 @@ import { useToast } from "../../hooks/use-toast";
 import { useI18n } from "../../lib/i18n";
 import {
   Briefcase, Plus, Search, Clock, CheckCircle, AlertCircle, Loader2,
-  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown, Save, Upload
+  Eye, MessageSquare, Trash2, Edit2, X, ChevronDown, Image, Copy, Check, ImageIcon, GalleryHorizontal, GripVertical, ArrowUp, ArrowDown, Save, Upload, FileText
 } from "lucide-react";
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 import GalleryPicker from "../../components/GalleryPicker";
 import ImportUrlToGallery from "../../components/ImportUrlToGallery";
+
+type CustomField = {
+  id: string;
+  label: string;
+  type: "text" | "number" | "select" | "textarea" | "photo" | "date";
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
+};
 
 /* ── Static media assets ───────────────────────────────────────────────── */
 const SERVICE_ICONS: { name: string; url: string }[] = [
@@ -421,6 +430,8 @@ export default function AdminServices() {
   const [catDesc, setCatDesc] = useState("");
   const [catServiceTypes, setCatServiceTypes] = useState<string[]>([]);
   const [newTypeInput, setNewTypeInput] = useState("");
+  const [catCustomFields, setCatCustomFields] = useState<CustomField[]>([]);
+  const [dragFieldIdx, setDragFieldIdx] = useState<number | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [galleryOpenCat, setGalleryOpenCat] = useState(false);
   const [galleryOpenItem, setGalleryOpenItem] = useState(false);
@@ -519,7 +530,7 @@ export default function AdminServices() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/service-categories"] });
       setShowCatModal(false);
-      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput("");
+      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); setCatCustomFields([]);
       toast({ title: t.common.success, description: t.admin.newCategory });
     },
     onError: (err: any) => errToast(err, "Impossible de créer la catégorie"),
@@ -708,8 +719,8 @@ export default function AdminServices() {
         <CategoriesTab
           categories={categories}
           t={t}
-          onAdd={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); }}
-          onEdit={(cat) => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); setCatServiceTypes(cat.serviceTypes || []); setNewTypeInput(""); }}
+          onAdd={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); setCatCustomFields([]); }}
+          onEdit={(cat) => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); setCatServiceTypes(cat.serviceTypes || []); setNewTypeInput(""); setCatCustomFields((cat as any).customFields || []); }}
           onDelete={(id) => { if (confirm(t.common.confirm + "?")) deleteCatMutation.mutate(id); }}
         />
       )}
@@ -790,15 +801,77 @@ export default function AdminServices() {
               <h3 className="font-bold text-lg">{t.services.request} #{selectedRequest.id}</h3>
               <button onClick={() => setSelectedRequest(null)} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
             </div>
-            <div className="space-y-3 mb-4 bg-gray-50 rounded-xl p-4 text-sm">
+            <div className="space-y-3 mb-4 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-sm">
               <p><strong>{t.services.service}:</strong> {selectedRequest.categoryName}</p>
               <p><strong>{t.common.name}:</strong> {selectedRequest.fullName}</p>
-              <p><strong>{t.common.phone}:</strong> {selectedRequest.phone}</p>
+              <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  selectedRequest.contactMethod === "whatsapp" ? "bg-green-100 text-green-600" :
+                  selectedRequest.contactMethod === "email" ? "bg-blue-100 text-blue-600" :
+                  "bg-red-100 text-red-600"
+                }`}>
+                  {selectedRequest.contactMethod === "whatsapp" ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.49l4.624-1.215A11.932 11.932 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-2.17 0-4.18-.682-5.832-1.843l-.418-.248-2.745.72.734-2.682-.274-.435A9.78 9.78 0 012.182 12c0-5.413 4.405-9.818 9.818-9.818S21.818 6.587 21.818 12 17.413 21.818 12 21.818z"/></svg>
+                  ) : selectedRequest.contactMethod === "email" ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-500 uppercase">
+                    {selectedRequest.contactMethod === "whatsapp" ? "WhatsApp" : selectedRequest.contactMethod === "email" ? "Email" : "Téléphone"}
+                  </p>
+                  <p className="font-bold text-gray-900 dark:text-white text-base">{selectedRequest.phone}</p>
+                </div>
+              </div>
               <p><strong>{t.common.address}:</strong> {selectedRequest.address}</p>
               {selectedRequest.serviceType && <p><strong>{t.services.type}:</strong> {selectedRequest.serviceType}</p>}
               {selectedRequest.budget && <p><strong>{t.admin.budget}:</strong> {selectedRequest.budget}</p>}
               <p><strong>{t.admin.schedule}:</strong> {selectedRequest.scheduledType === "asap" ? t.services.asap : `${selectedRequest.scheduledDate} ${selectedRequest.scheduledTime}`}</p>
-              {selectedRequest.additionalInfo && <p><strong>{t.admin.info}:</strong> {selectedRequest.additionalInfo}</p>}
+              {(() => {
+                const info = selectedRequest.additionalInfo || "";
+                const imageMatch = info.match(/\[Image:\s*([^\]]+)\]/);
+                const customFieldsMatch = info.match(/\[CustomFields:(.*)\]/s);
+                let parsedCustomFields: { label: string; value: string }[] = [];
+                try { if (customFieldsMatch) parsedCustomFields = JSON.parse(customFieldsMatch[1]); } catch {}
+                const cleanedInfo = info.replace(/\[Image:\s*[^\]]+\]/g, "").replace(/\[CustomFields:.*\]/s, "").trim();
+                return (
+                  <>
+                    {imageMatch && imageMatch[1] && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-1.5">Photo du catalogue</p>
+                        <a href={imageMatch[1]} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={imageMatch[1]}
+                            alt="Modèle sélectionné"
+                            className="w-full max-h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700 hover:opacity-90 transition-opacity cursor-pointer"
+                            data-testid="img-request-catalog"
+                          />
+                        </a>
+                      </div>
+                    )}
+                    {parsedCustomFields.length > 0 && (
+                      <div className="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Champs personnalisés</p>
+                        {parsedCustomFields.map((cf, i) => (
+                          <div key={i} className="flex justify-between items-start gap-2">
+                            <span className="text-xs text-gray-500 font-medium">{cf.label}</span>
+                            {cf.value.startsWith("/uploads/") || cf.value.startsWith("/cloud/") || cf.value.startsWith("http") ? (
+                              <a href={cf.value} target="_blank" rel="noopener noreferrer">
+                                <img src={cf.value} alt={cf.label} className="w-16 h-16 object-cover rounded-lg border" />
+                              </a>
+                            ) : (
+                              <span className="text-xs text-gray-900 dark:text-white font-bold text-right">{cf.value}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {cleanedInfo && <p><strong>{t.admin.info}:</strong> {cleanedInfo}</p>}
+                  </>
+                );
+              })()}
             </div>
             <div className="mb-3">
               <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.statusLabel}</label>
@@ -1054,15 +1127,130 @@ export default function AdminServices() {
                 )}
               </div>
 
+              <div>
+                <label className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2 block flex items-center gap-2">
+                  <FileText size={14} />
+                  Champs personnalisés du formulaire
+                </label>
+                <p className="text-[10px] text-gray-400 mb-3">Ces champs apparaîtront dans le formulaire de demande côté client</p>
+
+                {catCustomFields.map((field, idx) => (
+                  <div key={field.id} className="flex items-start gap-2 mb-2 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+                    draggable
+                    onDragStart={() => setDragFieldIdx(idx)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (dragFieldIdx === null || dragFieldIdx === idx) return;
+                      const copy = [...catCustomFields];
+                      const [moved] = copy.splice(dragFieldIdx, 1);
+                      copy.splice(idx, 0, moved);
+                      setCatCustomFields(copy);
+                      setDragFieldIdx(null);
+                    }}
+                  >
+                    <div className="cursor-grab text-gray-300 mt-1"><GripVertical size={14} /></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          value={field.label}
+                          onChange={e => {
+                            const copy = [...catCustomFields];
+                            copy[idx] = { ...copy[idx], label: e.target.value };
+                            setCatCustomFields(copy);
+                          }}
+                          placeholder="Nom du champ"
+                          className="flex-1 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs"
+                          data-testid={`field-label-${idx}`}
+                        />
+                        <select
+                          value={field.type}
+                          onChange={e => {
+                            const copy = [...catCustomFields];
+                            copy[idx] = { ...copy[idx], type: e.target.value as CustomField["type"] };
+                            setCatCustomFields(copy);
+                          }}
+                          className="px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs"
+                          data-testid={`field-type-${idx}`}
+                        >
+                          <option value="text">Texte</option>
+                          <option value="number">Nombre</option>
+                          <option value="textarea">Zone de texte</option>
+                          <option value="select">Liste déroulante</option>
+                          <option value="date">Date</option>
+                          <option value="photo">Photo</option>
+                        </select>
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          value={field.placeholder || ""}
+                          onChange={e => {
+                            const copy = [...catCustomFields];
+                            copy[idx] = { ...copy[idx], placeholder: e.target.value };
+                            setCatCustomFields(copy);
+                          }}
+                          placeholder="Placeholder (optionnel)"
+                          className="flex-1 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-[11px]"
+                        />
+                        <label className="flex items-center gap-1 text-[11px] text-gray-500 cursor-pointer whitespace-nowrap">
+                          <input
+                            type="checkbox"
+                            checked={field.required}
+                            onChange={e => {
+                              const copy = [...catCustomFields];
+                              copy[idx] = { ...copy[idx], required: e.target.checked };
+                              setCatCustomFields(copy);
+                            }}
+                            className="accent-red-600 w-3.5 h-3.5"
+                          />
+                          Requis
+                        </label>
+                      </div>
+                      {field.type === "select" && (
+                        <div>
+                          <p className="text-[10px] text-gray-400 mb-1">Options (séparées par virgule)</p>
+                          <input
+                            value={(field.options || []).join(", ")}
+                            onChange={e => {
+                              const copy = [...catCustomFields];
+                              copy[idx] = { ...copy[idx], options: e.target.value.split(",").map(s => s.trim()).filter(Boolean) };
+                              setCatCustomFields(copy);
+                            }}
+                            placeholder="Option 1, Option 2, Option 3"
+                            className="w-full px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-[11px]"
+                            data-testid={`field-options-${idx}`}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setCatCustomFields(catCustomFields.filter((_, i) => i !== idx))}
+                      className="w-6 h-6 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-800/40 mt-1"
+                      data-testid={`remove-field-${idx}`}
+                    >
+                      <X size={12} className="text-red-500" />
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => setCatCustomFields([...catCustomFields, { id: `f_${Date.now()}`, label: "", type: "text", required: false }])}
+                  className="w-full py-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-400 hover:border-red-300 hover:text-red-500 transition-colors flex items-center justify-center gap-1.5"
+                  data-testid="button-add-custom-field"
+                >
+                  <Plus size={14} /> Ajouter un champ
+                </button>
+              </div>
+
               <button onClick={() => {
                 if (!catName.trim()) {
                   toast({ title: "Champ requis", description: "Le nom de la catégorie est obligatoire", variant: "destructive" });
                   return;
                 }
                 if (editingCat) {
-                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes } });
+                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes, customFields: catCustomFields } });
                 } else {
-                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes });
+                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes, customFields: catCustomFields });
                 }
               }} data-testid="button-save-category"
                 className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700">

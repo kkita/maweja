@@ -598,6 +598,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(order);
   });
 
+  const ORDER_STATUS_SEQUENCE = ["pending", "confirmed", "preparing", "ready", "picked_up", "delivered"];
+  const TERMINAL_STATUSES = ["delivered", "cancelled", "returned"];
+
+  function isGeneralAdmin(user: any): boolean {
+    const perms = user.adminPermissions as string[] | null;
+    return user.adminRole === "superadmin" || (!user.adminRole && (!perms || perms.length === 0));
+  }
+
+  function canTransitionStatus(currentStatus: string, newStatus: string, user: any): { allowed: boolean; message?: string } {
+    if (isGeneralAdmin(user)) return { allowed: true };
+    if (newStatus === "cancelled" || newStatus === "returned") return { allowed: true };
+    if (TERMINAL_STATUSES.includes(currentStatus)) {
+      return { allowed: false, message: `Commande ${currentStatus === "delivered" ? "livrée" : currentStatus === "cancelled" ? "annulée" : "retournée"} — statut final, modification impossible` };
+    }
+    const currentIdx = ORDER_STATUS_SEQUENCE.indexOf(currentStatus);
+    const newIdx = ORDER_STATUS_SEQUENCE.indexOf(newStatus);
+    if (currentIdx === -1 || newIdx === -1) return { allowed: true };
+    if (newIdx <= currentIdx) {
+      return { allowed: false, message: "Impossible de revenir en arrière dans le processus de commande" };
+    }
+    return { allowed: true };
+  }
+
   app.patch("/api/orders/:id", requireAuth, async (req, res) => {
     const userId = (req.session as any).userId;
     const user = await storage.getUser(userId);
@@ -606,6 +629,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     const existingOrder = await storage.getOrder(Number(req.params.id));
     if (!existingOrder) return res.status(404).json({ message: "Commande non trouvee" });
+
+    if (req.body.status && req.body.status !== existingOrder.status) {
+      const transition = canTransitionStatus(existingOrder.status, req.body.status, user);
+      if (!transition.allowed) {
+        return res.status(400).json({ message: transition.message });
+      }
+    }
 
     const auditEntry = {
       action: req.body.status ? `status_${req.body.status}` : req.body.driverId ? "driver_assigned" : "modified",

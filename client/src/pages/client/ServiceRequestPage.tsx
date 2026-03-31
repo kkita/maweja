@@ -89,6 +89,7 @@ export default function ServiceRequestPage() {
   const [budget, setBudget] = useState("");
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [contactMethod, setContactMethod] = useState("phone");
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [priceError, setPriceError] = useState("");
 
@@ -108,6 +109,8 @@ export default function ServiceRequestPage() {
   const dynamicTypes = currentCategory?.serviceTypes?.length
     ? [...currentCategory.serviceTypes, "Autre"]
     : null;
+  const customFields: { id: string; label: string; type: string; required: boolean; placeholder?: string; options?: string[] }[] =
+    (currentCategory as any)?.customFields || [];
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("/api/service-requests", { method: "POST", body: JSON.stringify(data) }),
@@ -181,6 +184,24 @@ export default function ServiceRequestPage() {
       return;
     }
 
+    const missingRequired = customFields.filter(f => f.required && !customFieldValues[f.id]?.trim());
+    if (missingRequired.length > 0) {
+      toast({ title: "Champs requis", description: `Veuillez remplir: ${missingRequired.map(f => f.label).join(", ")}`, variant: "destructive" });
+      return;
+    }
+
+    let finalAdditionalInfo = hasCatalogModel
+      ? `[${t.services.selectedModel}: ${catalogItemName}${catalogItemPrice ? ` (${catalogItemPrice})` : ""}]${catalogItemImage ? `\n[Image: ${catalogItemImage}]` : ""}${additionalInfo ? `\n${additionalInfo}` : ""}`
+      : additionalInfo;
+
+    const filledCustomFields = customFields
+      .filter(f => customFieldValues[f.id]?.trim())
+      .map(f => ({ label: f.label, value: customFieldValues[f.id] }));
+    if (filledCustomFields.length > 0) {
+      finalAdditionalInfo = (finalAdditionalInfo ? finalAdditionalInfo + "\n" : "") +
+        "[CustomFields:" + JSON.stringify(filledCustomFields) + "]";
+    }
+
     createMutation.mutate({
       categoryId: Number(categoryId) || 1,
       categoryName: categoryName || "Service",
@@ -192,9 +213,7 @@ export default function ServiceRequestPage() {
       address: address || user?.address || "Non précisé",
       serviceType: catalogItemName ? `${catalogItemName}${serviceType ? ` - ${serviceType}` : ""}` : serviceType || "Non précisé",
       budget: budget || catalogItemPrice || "",
-      additionalInfo: hasCatalogModel
-        ? `[${t.services.selectedModel}: ${catalogItemName}${catalogItemPrice ? ` (${catalogItemPrice})` : ""}]${catalogItemImage ? `\n[Image: ${catalogItemImage}]` : ""}${additionalInfo ? `\n${additionalInfo}` : ""}`
-        : additionalInfo,
+      additionalInfo: finalAdditionalInfo,
       contactMethod,
     });
   };
@@ -641,6 +660,85 @@ export default function ServiceRequestPage() {
                     className={inputIcon} />
                 </div>
               </div>
+              {customFields.length > 0 && (
+                <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800/60">
+                  <p className="text-[11px] font-bold text-red-500 uppercase tracking-wider">Informations spécifiques</p>
+                  {customFields.map(cf => (
+                    <div key={cf.id}>
+                      <label className={label}>
+                        {cf.label}
+                        {cf.required && <span className="text-red-500 ml-0.5">*</span>}
+                      </label>
+                      {cf.type === "text" && (
+                        <input type="text" value={customFieldValues[cf.id] || ""}
+                          onChange={e => setCustomFieldValues(v => ({ ...v, [cf.id]: e.target.value }))}
+                          placeholder={cf.placeholder || cf.label}
+                          data-testid={`custom-field-${cf.id}`}
+                          className={input} />
+                      )}
+                      {cf.type === "number" && (
+                        <input type="number" value={customFieldValues[cf.id] || ""}
+                          onChange={e => setCustomFieldValues(v => ({ ...v, [cf.id]: e.target.value }))}
+                          placeholder={cf.placeholder || cf.label}
+                          data-testid={`custom-field-${cf.id}`}
+                          className={input} />
+                      )}
+                      {cf.type === "textarea" && (
+                        <textarea value={customFieldValues[cf.id] || ""}
+                          onChange={e => setCustomFieldValues(v => ({ ...v, [cf.id]: e.target.value }))}
+                          placeholder={cf.placeholder || cf.label}
+                          data-testid={`custom-field-${cf.id}`}
+                          className="w-full px-4 py-3.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-2xl text-[15px] font-medium resize-none h-24 focus:ring-2 focus:ring-red-500 focus:border-transparent focus:outline-none transition-all" />
+                      )}
+                      {cf.type === "select" && (
+                        <select value={customFieldValues[cf.id] || ""}
+                          onChange={e => setCustomFieldValues(v => ({ ...v, [cf.id]: e.target.value }))}
+                          data-testid={`custom-field-${cf.id}`}
+                          className={input + " appearance-none"}>
+                          <option value="">{cf.placeholder || "Sélectionner..."}</option>
+                          {(cf.options || []).map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      )}
+                      {cf.type === "date" && (
+                        <input type="date" value={customFieldValues[cf.id] || ""}
+                          onChange={e => setCustomFieldValues(v => ({ ...v, [cf.id]: e.target.value }))}
+                          data-testid={`custom-field-${cf.id}`}
+                          className={input} />
+                      )}
+                      {cf.type === "photo" && (
+                        <div>
+                          {customFieldValues[cf.id] ? (
+                            <div className="relative">
+                              <img src={customFieldValues[cf.id]} alt={cf.label} className="w-full h-32 object-cover rounded-2xl border border-gray-200 dark:border-gray-700" />
+                              <button type="button" onClick={() => setCustomFieldValues(v => ({ ...v, [cf.id]: "" }))}
+                                className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center text-white">
+                                <span className="text-xs font-bold">×</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center justify-center gap-2 py-6 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl text-gray-400 text-sm cursor-pointer hover:border-red-300 hover:text-red-500 transition-colors"
+                              data-testid={`custom-field-${cf.id}`}>
+                              <input type="file" accept="image/*" className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const fd = new FormData();
+                                  fd.append("file", file);
+                                  try {
+                                    const res = await fetch("/api/upload", { method: "POST", body: fd });
+                                    const data = await res.json();
+                                    if (data.url) setCustomFieldValues(v => ({ ...v, [cf.id]: data.url }));
+                                  } catch {}
+                                }} />
+                              📷 {cf.placeholder || "Ajouter une photo"}
+                            </label>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
               <div>
                 <label className={label}>{t.services.additionalInfo}</label>
                 <textarea value={additionalInfo} onChange={e => setAdditionalInfo(e.target.value)}

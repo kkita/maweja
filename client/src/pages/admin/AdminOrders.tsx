@@ -10,6 +10,19 @@ import {
 } from "lucide-react";
 import { formatPrice, formatDate, statusLabels, statusColors, paymentLabels } from "../../lib/utils";
 import type { Order, User, Restaurant, MenuItem } from "@shared/schema";
+import { useAuth } from "../../lib/auth";
+
+const ORDER_STATUS_SEQUENCE = ["pending", "confirmed", "preparing", "ready", "picked_up", "delivered"];
+
+function getAvailableStatuses(currentStatus: string, isSuperAdmin: boolean): string[] {
+  if (isSuperAdmin) return Object.keys(statusLabels);
+  const currentIdx = ORDER_STATUS_SEQUENCE.indexOf(currentStatus);
+  if (currentIdx === -1 || ["delivered", "cancelled", "returned"].includes(currentStatus)) {
+    return [currentStatus];
+  }
+  const forward = ORDER_STATUS_SEQUENCE.slice(currentIdx);
+  return [...forward, "cancelled", "returned"];
+}
 
 function playNotificationSound() {
   try {
@@ -39,6 +52,10 @@ function DeviceIcon({ type }: { type?: string | null }) {
 
 export default function AdminOrders() {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
+  const adminRole = (currentUser as any)?.adminRole as string | null;
+  const adminPerms: string[] = (currentUser as any)?.adminPermissions || [];
+  const isSuperAdmin = adminRole === "superadmin" || (!adminRole && adminPerms.length === 0);
   const [filter, setFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -519,16 +536,31 @@ export default function AdminOrders() {
 
               <div className="border-t border-gray-100 dark:border-gray-800 pt-4 space-y-2">
                 <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Actions</p>
-                <select
-                  onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value)}
-                  value={selectedOrder.status}
-                  data-testid="select-status"
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
-                >
-                  {Object.entries(statusLabels).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
-                  ))}
-                </select>
+                {(() => {
+                  const available = getAvailableStatuses(selectedOrder.status, isSuperAdmin);
+                  const isTerminal = ["delivered", "cancelled", "returned"].includes(selectedOrder.status) && !isSuperAdmin;
+                  return (
+                    <>
+                      <select
+                        onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value)}
+                        value={selectedOrder.status}
+                        disabled={isTerminal}
+                        data-testid="select-status"
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white disabled:opacity-50"
+                      >
+                        {available.map(k => (
+                          <option key={k} value={k}>{(statusLabels as any)[k] || k}</option>
+                        ))}
+                      </select>
+                      {!isSuperAdmin && (
+                        <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                          <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.5 4a.5.5 0 011 0v3a.5.5 0 01-1 0V5zm.5 6.5a.75.75 0 110-1.5.75.75 0 010 1.5z"/></svg>
+                          Progression irréversible — annulation possible à tout moment
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
 
                 {!selectedOrder.driverId && (
                   <select

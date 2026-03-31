@@ -190,6 +190,7 @@ export const serviceCategories = pgTable("service_categories", {
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   serviceTypes: text("service_types").array().default([]),
+  customFields: jsonb("custom_fields").default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
