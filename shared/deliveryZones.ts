@@ -24,11 +24,13 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
     color: "#f59e0b",
     neighborhoods: [
       "bandalungwa",
-      "kinshasa",
+      "commune de kinshasa",
+      "c/kinshasa",
       "kintambo",
       "barumbu",
       "ngiri-ngiri",
       "ngiri ngiri",
+      "ngiri",
       "limete 1",
       "limete 2",
       "limete 3",
@@ -36,20 +38,20 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
       "limete 5",
       "limete 6",
       "limete 7",
-      "1ere rue",
-      "2eme rue",
-      "3eme rue",
-      "4eme rue",
-      "5eme rue",
-      "6eme rue",
-      "7eme rue",
-      "1ère rue",
-      "2ème rue",
-      "3ème rue",
-      "4ème rue",
-      "5ème rue",
-      "6ème rue",
-      "7ème rue",
+      "1ere rue limete",
+      "2eme rue limete",
+      "3eme rue limete",
+      "4eme rue limete",
+      "5eme rue limete",
+      "6eme rue limete",
+      "7eme rue limete",
+      "1ère rue limete",
+      "2ème rue limete",
+      "3ème rue limete",
+      "4ème rue limete",
+      "5ème rue limete",
+      "6ème rue limete",
+      "7ème rue limete",
       "saint luc",
       "macampagne",
       "sakombi",
@@ -74,30 +76,31 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
       "limete 14",
       "limete 15",
       "limete 16",
-      "8eme rue",
-      "9eme rue",
-      "10eme rue",
-      "11eme rue",
-      "12eme rue",
-      "13eme rue",
-      "14eme rue",
-      "15eme rue",
-      "16eme rue",
-      "8ème rue",
-      "9ème rue",
-      "10ème rue",
-      "11ème rue",
-      "12ème rue",
-      "13ème rue",
-      "14ème rue",
-      "15ème rue",
-      "16ème rue",
+      "8eme rue limete",
+      "9eme rue limete",
+      "10eme rue limete",
+      "11eme rue limete",
+      "12eme rue limete",
+      "13eme rue limete",
+      "14eme rue limete",
+      "15eme rue limete",
+      "16eme rue limete",
+      "8ème rue limete",
+      "9ème rue limete",
+      "10ème rue limete",
+      "11ème rue limete",
+      "12ème rue limete",
+      "13ème rue limete",
+      "14ème rue limete",
+      "15ème rue limete",
+      "16ème rue limete",
       "poids lourds",
       "kingabwa",
       "lemba foire",
       "lemba super",
       "lemba terminus",
       "lemba salongo",
+      "lemba",
       "ngaliema",
       "brikin",
       "ozone",
@@ -113,6 +116,8 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   },
 ];
 
+const AMBIGUOUS_CITY_NAMES = ["kinshasa", "kin", "rdc", "congo"];
+
 export interface ZoneResult {
   zone: DeliveryZone | null;
   fee: number;
@@ -120,28 +125,49 @@ export interface ZoneResult {
   label: string;
 }
 
+function normalizeText(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+}
+
+function wordBoundaryMatch(haystack: string, needle: string): boolean {
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(`(?:^|[\\s,./;:\\-–—'"()\\[\\]])${escaped}(?:$|[\\s,./;:\\-–—'"()\\[\\]])`, "i");
+  return regex.test(` ${haystack} `);
+}
+
 export function detectZoneFromAddress(address: string): ZoneResult {
   if (!address || !address.trim()) {
     return { zone: null, fee: 0, allowed: false, label: "Adresse non renseignée" };
   }
 
-  const lower = address.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const lower = normalizeText(address);
+
+  const allMatches: { zone: DeliveryZone; hood: string; length: number }[] = [];
 
   for (const zone of DELIVERY_ZONES) {
     for (const hood of zone.neighborhoods) {
-      const normalized = hood.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (lower.includes(normalized)) {
-        return {
-          zone,
-          fee: zone.fee,
-          allowed: true,
-          label: `${zone.name} — $${(zone.fee / 100).toFixed(2)}`,
-        };
+      const normalized = normalizeText(hood);
+      if (AMBIGUOUS_CITY_NAMES.includes(normalized)) continue;
+
+      if (wordBoundaryMatch(lower, normalized)) {
+        allMatches.push({ zone, hood: normalized, length: normalized.length });
       }
     }
   }
 
-  return { zone: null, fee: 0, allowed: false, label: "Hors zone de livraison" };
+  if (allMatches.length === 0) {
+    return { zone: null, fee: 0, allowed: false, label: "Hors zone de livraison" };
+  }
+
+  allMatches.sort((a, b) => b.length - a.length);
+  const best = allMatches[0];
+
+  return {
+    zone: best.zone,
+    fee: best.zone.fee,
+    allowed: true,
+    label: `${best.zone.name} — $${(best.zone.fee / 100).toFixed(2)}`,
+  };
 }
 
 export function detectZoneFromCoords(lat: number, lng: number): ZoneResult {
