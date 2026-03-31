@@ -53,6 +53,9 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 - **Boutiques/Commerces System**: Restaurants table has a `type` field (`"restaurant"` | `"boutique"`) for distinguishing stores. Separate `boutique_categories` table and CRUD API at `/api/boutique-categories`. Admin pages for boutiques management (reuses AdminRestaurants with storeType prop) and boutique category management. Client-side BoutiquesPage at `/boutiques` with search and category filtering. API supports `?type=` query parameter for filtering.
 - **Fixed Service Fee**: A flat $0.76 service fee replaces percentage-based tax per order.
 - **Editable Recipient**: Checkout allows editing recipient name and phone for gifting or ordering for others.
+- **Progressive Order Status**: Order statuses follow an irreversible sequence `pending→confirmed→preparing→ready→picked_up→delivered`. Non-general admins can only advance forward; cancellation/return always allowed. General admins (superadmin or no permissions set) bypass restrictions. Backend validates via `canTransitionStatus()` in server/routes.ts.
+- **Custom Form Fields per Service Category**: `service_categories.custom_fields` (jsonb) stores an array of field definitions (text, number, select, textarea, photo, date) with labels, placeholders, required flag, and options. Admin builds fields via drag-and-drop form builder in category modal. Client `ServiceRequestPage` renders fields dynamically and submits values in `additionalInfo` as `[CustomFields:JSON]` pattern. Admin detail modal parses and displays them.
+- **Service Request Admin View**: Detail modal shows contactMethod with colored icon (WhatsApp green, email blue, phone red), phone number prominently, and extracts/displays catalog photos from `[Image: URL]` in additionalInfo.
 
 ## External Dependencies
 - **Mapping Service**: OpenStreetMap (via Leaflet and react-leaflet).
