@@ -362,7 +362,9 @@ app.use((req: any, res, next) => {
     `);
   }
 
-  process.env.FORCE_SEED = "1";
+  if (!IS_PROD) {
+    process.env.FORCE_SEED = "1";
+  }
   await seedDatabase();
 
   const server = await registerRoutes(app);

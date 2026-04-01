@@ -7,7 +7,7 @@ import { formatPrice } from "../../lib/utils";
 import { authFetch, apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useState, useRef, useCallback } from "react";
-import type { Restaurant, MenuItem, RestaurantCategory } from "@shared/schema";
+import type { Restaurant, MenuItem, RestaurantCategory, BoutiqueCategory } from "@shared/schema";
 import ImageCropper, { validateImageFile } from "../../components/ImageCropper";
 
 /* ── Allowed image types & restrictions ─────────────────────────── */
@@ -137,7 +137,10 @@ function MediaUploadButton({
 
 function AddRestaurantModal({ onClose, storeType = "restaurant" }: { onClose: () => void; storeType?: "restaurant" | "boutique" }) {
   const { toast } = useToast();
-  const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
+  const isBoutique = storeType === "boutique";
+  const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"], enabled: !isBoutique });
+  const { data: boutCategories = [] } = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"], enabled: isBoutique });
+  const categories = isBoutique ? boutCategories : restCategories;
   const [form, setForm] = useState({
     name: "", description: "", cuisine: "", address: "",
     deliveryFee: 2500, deliveryTime: "30-45 min", minOrder: 5000,
@@ -151,7 +154,7 @@ function AddRestaurantModal({ onClose, storeType = "restaurant" }: { onClose: ()
   const showError = (msg: string) => toast({ title: "Erreur", description: msg, variant: "destructive" });
 
   const handleCategoryChange = (catId: number) => {
-    const cat = restCategories.find(c => c.id === catId);
+    const cat = categories.find(c => c.id === catId);
     setForm(f => ({ ...f, categoryId: catId, cuisine: cat?.name || "" }));
   };
 
@@ -191,15 +194,15 @@ function AddRestaurantModal({ onClose, storeType = "restaurant" }: { onClose: ()
       <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2"><Plus size={18} className="text-red-600" /> Ajouter un restaurant</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Remplissez les informations du nouveau restaurant</p>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2"><Plus size={18} className="text-red-600" /> {isBoutique ? "Ajouter une boutique" : "Ajouter un restaurant"}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">{isBoutique ? "Remplissez les informations de la nouvelle boutique" : "Remplissez les informations du nouveau restaurant"}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center" data-testid="close-add-restaurant"><X size={18} /></button>
         </div>
 
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            {field("name", "Nom du restaurant *", "text", "ex: La Belle Cuisine")}
+            {field("name", isBoutique ? "Nom de la boutique *" : "Nom du restaurant *", "text", isBoutique ? "ex: Ma Boutique" : "ex: La Belle Cuisine")}
             <div>
               <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1 block">Catégorie *</label>
               <select
@@ -209,7 +212,7 @@ function AddRestaurantModal({ onClose, storeType = "restaurant" }: { onClose: ()
                 className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
                 <option value={0}>-- Choisir une catégorie --</option>
-                {restCategories.filter(c => c.isActive).map(cat => (
+                {categories.filter(c => c.isActive).map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>
                 ))}
               </select>
@@ -346,9 +349,12 @@ function DeleteRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant
   );
 }
 
-function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; onClose: () => void }) {
+function EditRestaurantModal({ restaurant, onClose, storeType = "restaurant" }: { restaurant: Restaurant; onClose: () => void; storeType?: "restaurant" | "boutique" }) {
   const { toast } = useToast();
-  const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
+  const isBoutique = storeType === "boutique";
+  const { data: restCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"], enabled: !isBoutique });
+  const { data: boutCategories = [] } = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"], enabled: isBoutique });
+  const categories = isBoutique ? boutCategories : restCategories;
   const [email, setEmail] = useState(restaurant.email || "");
   const [managerName, setManagerName] = useState(restaurant.managerName || "");
   const [brandName, setBrandName] = useState(restaurant.brandName || "");
@@ -367,7 +373,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
   const [isFeatured, setIsFeatured] = useState<boolean>((restaurant as any).isFeatured ?? false);
 
   const handleEditCategoryChange = (catId: number) => {
-    const cat = restCategories.find(c => c.id === catId);
+    const cat = categories.find(c => c.id === catId);
     setCategoryId(catId);
     setCuisine(cat?.name || cuisine);
   };
@@ -417,7 +423,7 @@ function EditRestaurantModal({ restaurant, onClose }: { restaurant: Restaurant; 
                 className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
                 <option value={0}>-- Choisir une catégorie --</option>
-                {restCategories.filter(c => c.isActive).map(cat => (
+                {categories.filter(c => c.isActive).map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.emoji} {cat.name}</option>
                 ))}
               </select>
@@ -1108,7 +1114,7 @@ export default function AdminRestaurants({ storeType = "restaurant" }: { storeTy
 
       {addingRestaurant && <AddRestaurantModal onClose={() => setAddingRestaurant(false)} storeType={storeType} />}
       {editingMedia && <EditMediaModal restaurant={editingMedia} onClose={() => setEditingMedia(null)} />}
-      {editingInfo && <EditRestaurantModal restaurant={editingInfo} onClose={() => setEditingInfo(null)} />}
+      {editingInfo && <EditRestaurantModal restaurant={editingInfo} onClose={() => setEditingInfo(null)} storeType={storeType} />}
       {deletingRestaurant && <DeleteRestaurantModal restaurant={deletingRestaurant} onClose={() => setDeletingRestaurant(null)} />}
     </AdminLayout>
   );
