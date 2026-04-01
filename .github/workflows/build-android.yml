@@ -59,7 +59,9 @@ jobs:
 
       - name: Initialiser la plateforme Android (Client)
         working-directory: mobile/client
-        run: npx cap add android || true
+        run: |
+          rm -rf android
+          npx cap add android
 
       - name: Synchroniser Capacitor Android (Client)
         working-directory: mobile/client
@@ -106,11 +108,9 @@ jobs:
         run: |
           MANIFEST="mobile/client/android/app/src/main/AndroidManifest.xml"
           if [ ! -f "$MANIFEST" ]; then
-            echo "⚠ AndroidManifest.xml introuvable, tentative de re-sync..."
-            cd mobile/client && npx cap sync android && cd ../..
-          fi
-          if [ ! -f "$MANIFEST" ]; then
-            echo "❌ AndroidManifest.xml toujours introuvable"
+            echo "❌ AndroidManifest.xml introuvable à $MANIFEST"
+            echo "Contenu de mobile/client/android/:"
+            find mobile/client/android/ -name "*.xml" 2>/dev/null || echo "(aucun xml trouvé)"
             exit 1
           fi
           if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
@@ -198,7 +198,9 @@ jobs:
 
       - name: Initialiser la plateforme Android (Driver)
         working-directory: mobile/driver
-        run: npx cap add android || true
+        run: |
+          rm -rf android
+          npx cap add android
 
       - name: Synchroniser Capacitor Android (Driver)
         working-directory: mobile/driver
@@ -245,11 +247,9 @@ jobs:
         run: |
           MANIFEST="mobile/driver/android/app/src/main/AndroidManifest.xml"
           if [ ! -f "$MANIFEST" ]; then
-            echo "⚠ AndroidManifest.xml introuvable, tentative de re-sync..."
-            cd mobile/driver && npx cap sync android && cd ../..
-          fi
-          if [ ! -f "$MANIFEST" ]; then
-            echo "❌ AndroidManifest.xml toujours introuvable"
+            echo "❌ AndroidManifest.xml introuvable à $MANIFEST"
+            echo "Contenu de mobile/driver/android/:"
+            find mobile/driver/android/ -name "*.xml" 2>/dev/null || echo "(aucun xml trouvé)"
             exit 1
           fi
           if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
