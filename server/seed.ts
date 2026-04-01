@@ -206,9 +206,10 @@ export async function seedDatabase() {
   await db.insert(menuItems).values(menuInsertValues);
 
   async function upsertCategory(name: string, icon: string, description: string, imageUrl?: string): Promise<number> {
-    const [existing] = await db.select({ id: serviceCategories.id }).from(serviceCategories).where(eq(serviceCategories.name, name));
+    const [existing] = await db.select({ id: serviceCategories.id, imageUrl: serviceCategories.imageUrl }).from(serviceCategories).where(eq(serviceCategories.name, name));
     if (existing) {
-      await db.update(serviceCategories).set({ icon, description, isActive: true, ...(imageUrl ? { imageUrl } : {}) }).where(eq(serviceCategories.id, existing.id));
+      const keepExistingImage = existing.imageUrl && existing.imageUrl.startsWith('/cloud/');
+      await db.update(serviceCategories).set({ icon, description, isActive: true, ...(!keepExistingImage && imageUrl ? { imageUrl } : {}) }).where(eq(serviceCategories.id, existing.id));
       return existing.id;
     }
     const [inserted] = await db.insert(serviceCategories).values({ name, icon, description, isActive: true, ...(imageUrl ? { imageUrl } : {}) }).returning({ id: serviceCategories.id });

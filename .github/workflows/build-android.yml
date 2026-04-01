@@ -69,16 +69,16 @@ jobs:
 
       - name: Copier les icônes launcher MAWEJA (Client)
         run: |
-          REPO_RES="android/app/src/main/res"
+          ICON_SRC="android/client-icons"
           CAP_RES="mobile/client/android/app/src/main/res"
 
           for density in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
             mkdir -p "$CAP_RES/$density"
-            cp "$REPO_RES/$density/ic_launcher.png" "$CAP_RES/$density/ic_launcher.png"
-            cp "$REPO_RES/$density/ic_launcher_round.png" "$CAP_RES/$density/ic_launcher_round.png"
-            cp "$REPO_RES/$density/ic_launcher_foreground.png" "$CAP_RES/$density/ic_launcher_foreground.png"
+            cp "$ICON_SRC/$density/ic_launcher.png" "$CAP_RES/$density/ic_launcher.png"
+            cp "$ICON_SRC/$density/ic_launcher_round.png" "$CAP_RES/$density/ic_launcher_round.png"
+            cp "$ICON_SRC/$density/ic_launcher_foreground.png" "$CAP_RES/$density/ic_launcher_foreground.png"
           done
-          echo "✓ Icônes launcher MAWEJA copiées (Client)"
+          echo "✓ Icônes launcher MAWEJA Client copiées"
 
       - name: Copier les icônes de notification et splash (Client)
         run: |
@@ -215,16 +215,16 @@ jobs:
 
       - name: Copier les icônes launcher MAWEJA (Driver)
         run: |
-          REPO_RES="android/app/src/main/res"
+          ICON_SRC="android/driver-icons"
           CAP_RES="mobile/driver/android/app/src/main/res"
 
           for density in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
             mkdir -p "$CAP_RES/$density"
-            cp "$REPO_RES/$density/ic_launcher.png" "$CAP_RES/$density/ic_launcher.png"
-            cp "$REPO_RES/$density/ic_launcher_round.png" "$CAP_RES/$density/ic_launcher_round.png"
-            cp "$REPO_RES/$density/ic_launcher_foreground.png" "$CAP_RES/$density/ic_launcher_foreground.png"
+            cp "$ICON_SRC/$density/ic_launcher.png" "$CAP_RES/$density/ic_launcher.png"
+            cp "$ICON_SRC/$density/ic_launcher_round.png" "$CAP_RES/$density/ic_launcher_round.png"
+            cp "$ICON_SRC/$density/ic_launcher_foreground.png" "$CAP_RES/$density/ic_launcher_foreground.png"
           done
-          echo "✓ Icônes launcher MAWEJA copiées (Driver)"
+          echo "✓ Icônes launcher MAWEJA Driver copiées"
 
       - name: Copier les icônes de notification et splash (Driver)
         run: |

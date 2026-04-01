@@ -153,8 +153,79 @@ async function normalizeUploadUrls() {
   }
 }
 
+async function syncLocalUploadsToCloud() {
+  const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
+  if (!bucketId) {
+    console.log("⚠️ Object Storage non configuré, images locales uniquement");
+    return;
+  }
+  try {
+    if (!fs.existsSync(uploadsDir)) return;
+    const files = fs.readdirSync(uploadsDir).filter(f => /\.(png|jpg|jpeg|webp|mp4|webm|mov)$/i.test(f));
+    if (files.length === 0) return;
+
+    const bucket = objectStorageClient.bucket(bucketId);
+    let uploaded = 0;
+
+    for (const filename of files) {
+      const destPath = `public/uploads/${filename}`;
+      try {
+        const [exists] = await bucket.file(destPath).exists();
+        if (exists) continue;
+        const filePath = path.join(uploadsDir, filename);
+        const ext = path.extname(filename).toLowerCase();
+        const mimeMap: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime' };
+        await bucket.upload(filePath, { destination: destPath, metadata: { contentType: mimeMap[ext] || 'application/octet-stream' } });
+        uploaded++;
+      } catch (err) {
+        console.error(`❌ Sync failed for ${filename}:`, err);
+      }
+    }
+
+    if (uploaded > 0) {
+      console.log(`☁️ ${uploaded} images synchronisées vers le cloud`);
+    }
+
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const [cloudFiles] = await bucket.getFiles({ prefix: 'public/uploads/' });
+    const cloudFileNames = new Set(cloudFiles.map((f: any) => f.name.replace('public/uploads/', '')));
+
+    const tables = [
+      { table: 'service_categories', col: 'image_url' },
+      { table: 'service_catalog_items', col: 'image_url' },
+      { table: 'restaurants', col: 'image' },
+      { table: 'menu_items', col: 'image' },
+      { table: 'advertisements', col: 'media_url' },
+      { table: 'users', col: 'profile_photo_url' },
+      { table: 'users', col: 'id_photo_url' },
+    ];
+    let updated = 0;
+    for (const { table, col } of tables) {
+      const rows = await pool.query(
+        `SELECT id, ${col} as url FROM ${table} WHERE ${col} LIKE '/uploads/%'`
+      );
+      for (const row of rows.rows) {
+        const filename = row.url.replace('/uploads/', '');
+        if (cloudFileNames.has(filename)) {
+          await pool.query(
+            `UPDATE ${table} SET ${col} = $1 WHERE id = $2`,
+            [`/cloud/public/uploads/${filename}`, row.id]
+          );
+          updated++;
+        }
+      }
+    }
+    await pool.end();
+    if (updated > 0) console.log(`🔗 ${updated} URLs mises à jour vers le cloud`);
+  } catch (err) {
+    console.error("❌ Cloud sync error:", err);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   await normalizeUploadUrls();
+  await syncLocalUploadsToCloud();
 
   // Auth
   app.post("/api/auth/login", async (req, res) => {

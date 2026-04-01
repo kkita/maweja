@@ -198,3 +198,9 @@ id = "QhlfOQhbCqRS5CEP-mnAm"
 uri = "file://MAWEJA_GITHUB_UPDATE.zip"
 type = "unspecified"
 title = "MAWEJA GitHub Update — Splash vidéo seule + Icônes corrigées"
+
+[[outputs]]
+id = "cpF7tmzUL0B8FpWf3hm7Z"
+uri = "file://MAWEJA_PROJECT.zip"
+type = "unspecified"
+title = "MAWEJA - Correction splash_logo Android"
