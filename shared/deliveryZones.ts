@@ -10,7 +10,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     id: "A",
     name: "Zone A",
-    fee: 261,
+    fee: 150,
     color: "#22c55e",
     neighborhoods: [
       "gombe",
@@ -20,7 +20,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     id: "B",
     name: "Zone B",
-    fee: 370,
+    fee: 250,
     color: "#f59e0b",
     neighborhoods: [
       "bandalungwa",
@@ -67,7 +67,7 @@ export const DELIVERY_ZONES: DeliveryZone[] = [
   {
     id: "C",
     name: "Zone C",
-    fee: 609,
+    fee: 400,
     color: "#ef4444",
     neighborhoods: [
       "haute-tension",

@@ -1808,8 +1808,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const defaults: Record<string, string> = {
         whatsapp_number: "+243802540138",
         app_name: "MAWEJA",
-        delivery_fee: "2500",
-        min_order: "3000",
+        delivery_fee: "200",
+        min_order: "5",
         max_radius: "15",
         notifications: "true",
         auto_assign: "true",
