@@ -80,7 +80,7 @@ jobs:
           done
           echo "✓ Icônes launcher MAWEJA copiées (Client)"
 
-      - name: Copier les icônes de notification (Client)
+      - name: Copier les icônes de notification et splash (Client)
         run: |
           REPO_RES="android/app/src/main/res"
           CAP_RES="mobile/client/android/app/src/main/res"
@@ -89,8 +89,15 @@ jobs:
             mkdir -p "$CAP_RES/$density"
             cp "$REPO_RES/$density/ic_stat_notify.png" "$CAP_RES/$density/ic_stat_notify.png"
             cp "$REPO_RES/$density/ic_notif_large.png" "$CAP_RES/$density/ic_notif_large.png"
+            [ -f "$REPO_RES/$density/splash_logo.png" ] && cp "$REPO_RES/$density/splash_logo.png" "$CAP_RES/$density/splash_logo.png"
           done
-          echo "✓ Icônes notification copiées (Client)"
+
+          mkdir -p "$CAP_RES/drawable" "$CAP_RES/drawable-v31"
+          [ -f "$REPO_RES/drawable/splash_logo.png" ] && cp "$REPO_RES/drawable/splash_logo.png" "$CAP_RES/drawable/splash_logo.png"
+          [ -f "$REPO_RES/drawable/splash_screen.xml" ] && cp "$REPO_RES/drawable/splash_screen.xml" "$CAP_RES/drawable/splash_screen.xml"
+          [ -f "$REPO_RES/drawable-v31/splash_logo.png" ] && cp "$REPO_RES/drawable-v31/splash_logo.png" "$CAP_RES/drawable-v31/splash_logo.png"
+
+          echo "✓ Icônes notification + splash copiées (Client)"
 
       - name: Configurer thème Android rouge (Client)
         run: |
@@ -228,8 +235,15 @@ jobs:
             mkdir -p "$CAP_RES/$density"
             cp "$REPO_RES/$density/ic_stat_notify.png" "$CAP_RES/$density/ic_stat_notify.png"
             cp "$REPO_RES/$density/ic_notif_large.png" "$CAP_RES/$density/ic_notif_large.png"
+            [ -f "$REPO_RES/$density/splash_logo.png" ] && cp "$REPO_RES/$density/splash_logo.png" "$CAP_RES/$density/splash_logo.png"
           done
-          echo "✓ Icônes notification copiées (Driver)"
+
+          mkdir -p "$CAP_RES/drawable" "$CAP_RES/drawable-v31"
+          [ -f "$REPO_RES/drawable/splash_logo.png" ] && cp "$REPO_RES/drawable/splash_logo.png" "$CAP_RES/drawable/splash_logo.png"
+          [ -f "$REPO_RES/drawable/splash_screen.xml" ] && cp "$REPO_RES/drawable/splash_screen.xml" "$CAP_RES/drawable/splash_screen.xml"
+          [ -f "$REPO_RES/drawable-v31/splash_logo.png" ] && cp "$REPO_RES/drawable-v31/splash_logo.png" "$CAP_RES/drawable-v31/splash_logo.png"
+
+          echo "✓ Icônes notification + splash copiées (Driver)"
 
       - name: Configurer thème Android rouge (Driver)
         run: |
