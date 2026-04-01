@@ -103,33 +103,22 @@ jobs:
           echo "✓ Thème Android rouge configuré (Client)"
 
       - name: Injecter les permissions Android (Client)
-        working-directory: mobile/client/android/app/src/main
         run: |
-          python3 << 'EOF'
-          content = open('AndroidManifest.xml').read()
-          permissions = """
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-              <uses-permission android:name="android.permission.VIBRATE" />
-              <uses-permission android:name="android.permission.WAKE_LOCK" />
-              <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-          """
-          if 'ACCESS_FINE_LOCATION' not in content:
-              content = content.replace('</manifest>', permissions + '\n</manifest>')
-              open('AndroidManifest.xml', 'w').write(content)
-              print('✓ Permissions injectées (Client)')
-          else:
-              print('ℹ Permissions déjà présentes')
-          EOF
+          MANIFEST="mobile/client/android/app/src/main/AndroidManifest.xml"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "⚠ AndroidManifest.xml introuvable, tentative de re-sync..."
+            cd mobile/client && npx cap sync android && cd ../..
+          fi
+          if [ ! -f "$MANIFEST" ]; then
+            echo "❌ AndroidManifest.xml toujours introuvable"
+            exit 1
+          fi
+          if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
+            sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />\n</manifest>|' "$MANIFEST"
+            echo "✓ Permissions injectées (Client)"
+          else
+            echo "ℹ Permissions déjà présentes (Client)"
+          fi
 
       - name: Build APK Debug (Client)
         if: ${{ github.event.inputs.build_type != 'release' }}
@@ -253,33 +242,22 @@ jobs:
           echo "✓ Thème Android rouge configuré (Driver)"
 
       - name: Injecter les permissions Android (Driver)
-        working-directory: mobile/driver/android/app/src/main
         run: |
-          python3 << 'EOF'
-          content = open('AndroidManifest.xml').read()
-          permissions = """
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-              <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-              <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-              <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-              <uses-permission android:name="android.permission.VIBRATE" />
-              <uses-permission android:name="android.permission.WAKE_LOCK" />
-              <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-              <uses-permission android:name="android.permission.CAMERA" />
-              <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-              <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-          """
-          if 'ACCESS_FINE_LOCATION' not in content:
-              content = content.replace('</manifest>', permissions + '\n</manifest>')
-              open('AndroidManifest.xml', 'w').write(content)
-              print('✓ Permissions injectées (Driver)')
-          else:
-              print('ℹ Permissions déjà présentes')
-          EOF
+          MANIFEST="mobile/driver/android/app/src/main/AndroidManifest.xml"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "⚠ AndroidManifest.xml introuvable, tentative de re-sync..."
+            cd mobile/driver && npx cap sync android && cd ../..
+          fi
+          if [ ! -f "$MANIFEST" ]; then
+            echo "❌ AndroidManifest.xml toujours introuvable"
+            exit 1
+          fi
+          if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
+            sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />\n    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />\n</manifest>|' "$MANIFEST"
+            echo "✓ Permissions injectées (Driver)"
+          else
+            echo "ℹ Permissions déjà présentes (Driver)"
+          fi
 
       - name: Build APK Debug (Driver)
         if: ${{ github.event.inputs.build_type != 'release' }}
