@@ -11,7 +11,7 @@ import {
   Timer, Zap, Send, Star, Power, ChevronLeft, Menu, AlertTriangle,
   User, Settings, ChevronDown, ChevronUp
 } from "lucide-react";
-import { formatPrice, formatDate, statusLabels, statusColors } from "../../lib/utils";
+import { formatPrice, formatDate, statusLabels, statusColors, formatPaymentMethod } from "../../lib/utils";
 import type { Order } from "@shared/schema";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -546,6 +546,7 @@ export default function AdminDrivers() {
                               <span className="text-[10px] font-bold text-red-600">{formatPrice(order.total)}</span>
                               {order.estimatedDelivery && <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />}
                             </div>
+                            <p className="text-[9px] text-gray-500 mt-0.5">{formatPaymentMethod(order.paymentMethod)}</p>
                           </div>
                         ))}
                       </div>
@@ -596,6 +597,7 @@ export default function AdminDrivers() {
                         <span className="text-xs font-bold text-red-600">{formatPrice(order.total)}</span>
                         {driver && <span className="text-[10px] text-gray-500 dark:text-gray-400"><Truck size={9} className="inline mr-0.5" />{driver.name}</span>}
                       </div>
+                      <p className="text-[9px] text-gray-500 mt-1" data-testid={`payment-method-${order.id}`}>{formatPaymentMethod(order.paymentMethod)}</p>
                       {order.updatedAt && <p className="text-[9px] text-gray-400 mt-1.5">{formatDate(order.updatedAt)}</p>}
                     </div>
                   );
@@ -1013,6 +1015,7 @@ export default function AdminDrivers() {
                               <span className="text-[10px] font-bold text-red-600">{formatPrice(order.total)}</span>
                               <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
                             </div>
+                            <p className="text-[9px] text-gray-500 mt-0.5">{formatPaymentMethod(order.paymentMethod)}</p>
                           </div>
                         ))}
                       </div>

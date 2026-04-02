@@ -222,12 +222,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="mt-4 text-center">
-          <a href="/driver/login" className="text-white/40 text-xs hover:text-white/60 transition-colors" data-testid="link-driver-login">
-            Espace livreur →
-          </a>
-        </div>
-
         <p
           className="text-center text-white/30 text-[10px] mt-8"
           style={{ fontFamily: "system-ui, sans-serif" }}

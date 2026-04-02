@@ -8,9 +8,10 @@ import { apiRequest, queryClient } from "../../lib/queryClient";
 
 const DEFAULTS = {
   app_name: "MAWEJA",
-  delivery_fee: "2500",
-  min_order: "3000",
+  delivery_fee: "2",
+  min_order: "5",
   max_radius: "15",
+  service_fee: "0.76",
   notifications: "true",
   auto_assign: "true",
   loyalty_enabled: "true",
@@ -89,6 +90,7 @@ export default function AdminSettings() {
             {textField("currency", "Devise", "text", "USD ($)")}
             {textField("delivery_fee", "Frais de livraison par defaut ($)", "number", "2")}
             {textField("min_order", "Commande minimum ($)", "number", "5")}
+            {textField("service_fee", "Frais de service par commande ($)", "number", "0.76")}
             {textField("max_radius", "Rayon de livraison max (km)", "number", "15")}
             {textField("points_per_order", "Points de fidelite par commande", "number", "10")}
           </div>

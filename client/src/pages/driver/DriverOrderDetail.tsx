@@ -9,7 +9,7 @@ import {
   Store, Copy, ChevronDown, ChevronUp,
   Receipt, Wallet
 } from "lucide-react";
-import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/utils";
+import { formatPrice, statusLabels, statusColors, formatDate, formatPaymentMethod } from "../../lib/utils";
 import { useToast } from "../../hooks/use-toast";
 import type { Order, Restaurant, User as UserType } from "@shared/schema";
 import "leaflet/dist/leaflet.css";
@@ -375,9 +375,7 @@ export default function DriverOrderDetail() {
                 <div className="flex items-center gap-1.5">
                   <span className="text-gray-500">Frais de livraison</span>
                   {(order as any).deliveryZone && (
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full text-white ${
-                      (order as any).deliveryZone === "A" ? "bg-green-500" : (order as any).deliveryZone === "B" ? "bg-amber-500" : "bg-red-500"
-                    }`}>Zone {(order as any).deliveryZone}</span>
+                    <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full text-white bg-blue-500">{(order as any).deliveryZone}</span>
                   )}
                 </div>
                 <span className="font-semibold text-gray-700 dark:text-gray-200">{formatPrice(order.deliveryFee)}</span>
@@ -400,12 +398,7 @@ export default function DriverOrderDetail() {
           <CreditCard size={15} className="text-gray-400 mt-0.5 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mode de paiement</p>
-            <p className="text-sm font-bold text-gray-800 dark:text-gray-200" data-testid="text-payment-method">
-              {order.paymentMethod === "cash" ? "💵 Cash à la livraison" :
-               order.paymentMethod === "wallet" ? "💳 Portefeuille Maweja" :
-               order.paymentMethod === "mobile_money" ? "📱 Mobile Money" :
-               order.paymentMethod}
-            </p>
+            <p className="text-sm font-bold text-gray-800 dark:text-gray-200" data-testid="text-payment-method">{formatPaymentMethod(order.paymentMethod)}</p>
           </div>
         </div>
 

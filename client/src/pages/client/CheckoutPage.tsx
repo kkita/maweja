@@ -12,8 +12,7 @@ import {
   Clock, Shield, Sparkles, X, User
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
-import { detectZone, DELIVERY_ZONES, formatZoneFee } from "@shared/deliveryZones";
-import type { ZoneResult } from "@shared/deliveryZones";
+import { detectZone, formatZoneFee, type DeliveryZoneData, type ZoneResult } from "@shared/deliveryZones";
 
 interface CheckoutData {
   deliveryAddress: string;
@@ -60,6 +59,10 @@ export default function CheckoutPage() {
     queryKey: ["/api/settings"],
   });
 
+  const { data: dbZones = [] } = useQuery<DeliveryZoneData[]>({
+    queryKey: ["/api/delivery-zones"],
+  });
+
   useEffect(() => {
     const raw = sessionStorage.getItem("maweja_checkout");
     if (raw) {
@@ -81,20 +84,17 @@ export default function CheckoutPage() {
   if (items.length === 0) { navigate("/cart"); return null; }
 
   const subtotal = total;
-  const zoneResult: ZoneResult = detectZone(
-    checkoutData.deliveryAddress,
-    checkoutData.deliveryLat,
-    checkoutData.deliveryLng,
-  );
-  const baseDeliveryFee = zoneResult.allowed ? zoneResult.fee / 100 : 0;
+  const activeZones = dbZones.filter(z => z.isActive);
+  const zoneResult: ZoneResult = detectZone(checkoutData.deliveryAddress, activeZones);
+  const baseDeliveryFee = zoneResult.allowed ? zoneResult.fee : 0;
   const deliveryFee = promoType === "delivery" ? 0 : baseDeliveryFee;
-  const serviceFee = 0.76;
+  const serviceFee = parseFloat(settings?.service_fee || "0.76");
   const effectivePromoDiscount = promoType === "delivery" ? 0 : promoDiscount;
-  const totalBeforeDiscounts = Math.round((subtotal + deliveryFee + serviceFee) * 100) / 100;
+  const totalBeforeDiscounts = parseFloat((subtotal + deliveryFee + serviceFee).toFixed(2));
   const remainingAfterPromo = totalBeforeDiscounts - effectivePromoDiscount;
   const pointsValue = user.loyaltyPoints * 0.001;
   const pointsDiscount = usePoints ? Math.min(pointsValue, Math.max(0, remainingAfterPromo)) : 0;
-  const netTotal = Math.round(Math.max(0, totalBeforeDiscounts - effectivePromoDiscount - pointsDiscount) * 100) / 100;
+  const netTotal = parseFloat(Math.max(0, totalBeforeDiscounts - effectivePromoDiscount - pointsDiscount).toFixed(2));
   const walletInsufficient = (user.walletBalance || 0) < netTotal;
 
   const selectedPayment = paymentOptions.find(p => p.id === paymentMethod);
@@ -140,14 +140,14 @@ export default function CheckoutPage() {
           items: JSON.stringify(items.map((i) => ({ name: i.name, qty: i.quantity, price: i.price }))),
           subtotal,
           deliveryFee,
-          taxAmount: Math.round(serviceFee * 100),
+          taxAmount: serviceFee,
           total: netTotal,
           paymentMethod,
           paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
           deliveryAddress: checkoutData.deliveryAddress || "Adresse non specifiee",
           deliveryLat: checkoutData.deliveryLat,
           deliveryLng: checkoutData.deliveryLng,
-          deliveryZone: zoneResult.zone?.id || null,
+          deliveryZone: zoneResult.zone?.name || null,
           notes: [
             checkoutData.notes || "",
             orderName !== user.name ? `Destinataire: ${orderName}` : "",
@@ -327,7 +327,7 @@ export default function CheckoutPage() {
                     Nous livrons uniquement dans les zones couvertes de Kinshasa. Modifiez votre adresse pour commander.
                   </p>
                   <div className="flex gap-2 mt-2 flex-wrap">
-                    {DELIVERY_ZONES.map(z => (
+                    {activeZones.map(z => (
                       <span key={z.id} className="text-[9px] px-2 py-0.5 rounded-full text-white font-bold" style={{ background: z.color }}>
                         {z.name}: {formatZoneFee(z.fee)}
                       </span>

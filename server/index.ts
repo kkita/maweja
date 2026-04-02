@@ -87,7 +87,7 @@ app.use((req: any, res, next) => {
   if (role === "client") return clientSession(req, res, next);
 
   const path = req.path;
-  if (path.startsWith("/api/admin") || path === "/api/dashboard/stats") return adminSession(req, res, next);
+  if (path.startsWith("/api/admin") || path === "/api/dashboard/stats" || path === "/api/orders/export" || path === "/api/finance/export" || path.startsWith("/api/restaurant-payouts") || path.startsWith("/api/analytics")) return adminSession(req, res, next);
   if (path.startsWith("/api/driver")) return driverSession(req, res, next);
 
   return clientSession(req, res, next);
@@ -134,8 +134,8 @@ app.use((req: any, res, next) => {
       address TEXT NOT NULL,
       rating DOUBLE PRECISION NOT NULL DEFAULT 4.5,
       delivery_time TEXT NOT NULL DEFAULT '30-45 min',
-      delivery_fee INTEGER NOT NULL DEFAULT 2500,
-      min_order INTEGER NOT NULL DEFAULT 5000,
+      delivery_fee DOUBLE PRECISION NOT NULL DEFAULT 2,
+      min_order DOUBLE PRECISION NOT NULL DEFAULT 5,
       is_active BOOLEAN NOT NULL DEFAULT true,
       lat DOUBLE PRECISION,
       lng DOUBLE PRECISION,
@@ -159,6 +159,18 @@ app.use((req: any, res, next) => {
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       emoji TEXT NOT NULL DEFAULT '🛍️',
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS delivery_zones (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      fee DOUBLE PRECISION NOT NULL DEFAULT 2,
+      color TEXT NOT NULL DEFAULT '#22c55e',
+      neighborhoods JSONB NOT NULL DEFAULT '[]',
       is_active BOOLEAN NOT NULL DEFAULT true,
       sort_order INTEGER NOT NULL DEFAULT 0
     )
@@ -213,6 +225,7 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS promo_discount INTEGER NOT NULL DEFAULT 0`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS device_type TEXT DEFAULT 'web'`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS audit_log JSONB`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_zone TEXT`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS notifications (
@@ -338,6 +351,27 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS rejected_fields JSONB`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_token TEXT`);
 
+  // Migrate monetary columns from INTEGER to DOUBLE PRECISION
+  await db.execute(sql`ALTER TABLE users ALTER COLUMN wallet_balance TYPE DOUBLE PRECISION USING wallet_balance::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE restaurants ALTER COLUMN delivery_fee TYPE DOUBLE PRECISION USING delivery_fee::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE restaurants ALTER COLUMN min_order TYPE DOUBLE PRECISION USING min_order::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE menu_items ALTER COLUMN price TYPE DOUBLE PRECISION USING price::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE orders ALTER COLUMN subtotal TYPE DOUBLE PRECISION USING subtotal::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE orders ALTER COLUMN delivery_fee TYPE DOUBLE PRECISION USING delivery_fee::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE orders ALTER COLUMN commission TYPE DOUBLE PRECISION USING commission::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE orders ALTER COLUMN total TYPE DOUBLE PRECISION USING total::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE orders ALTER COLUMN tax_amount TYPE DOUBLE PRECISION USING tax_amount::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE orders ALTER COLUMN promo_discount TYPE DOUBLE PRECISION USING promo_discount::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE wallet_transactions ALTER COLUMN amount TYPE DOUBLE PRECISION USING amount::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE finances ALTER COLUMN amount TYPE DOUBLE PRECISION USING amount::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE restaurant_payouts ALTER COLUMN gross_amount TYPE DOUBLE PRECISION USING gross_amount::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE restaurant_payouts ALTER COLUMN maweja_commission TYPE DOUBLE PRECISION USING maweja_commission::DOUBLE PRECISION`);
+  await db.execute(sql`ALTER TABLE restaurant_payouts ALTER COLUMN net_amount TYPE DOUBLE PRECISION USING net_amount::DOUBLE PRECISION`);
+
+  await db.execute(sql`UPDATE restaurants SET delivery_fee = 2 WHERE delivery_fee > 100`);
+  await db.execute(sql`UPDATE restaurants SET min_order = 5 WHERE min_order > 100`);
+  await db.execute(sql`UPDATE menu_items SET price = ROUND((price / 2500.0)::numeric, 2)::double precision WHERE price > 500`);
+
   // Seed admin par défaut — crée les comptes s'ils n'existent pas encore
   await db.execute(sql`
     INSERT INTO users (email, password, name, phone, role, is_online, verification_status)
@@ -359,6 +393,15 @@ app.use((req: any, res, next) => {
       ('Reparation', 'Wrench', 'Services de réparation et maintenance'),
       ('Coursier', 'Bike', 'Services de coursier et livraison express'),
       ('Autre', 'HelpCircle', 'Autres services sur demande')
+    `);
+  }
+
+  const existingZones = await db.execute(sql`SELECT COUNT(*) as count FROM delivery_zones`);
+  if (Number((existingZones.rows[0] as any).count) === 0) {
+    await db.execute(sql`INSERT INTO delivery_zones (name, fee, color, neighborhoods, is_active, sort_order) VALUES
+      ('Zone A', 1.50, '#22c55e', ${JSON.stringify(["gombe","lingwala"])}::jsonb, true, 0),
+      ('Zone B', 2.50, '#f59e0b', ${JSON.stringify(["bandalungwa","commune de kinshasa","c/kinshasa","kintambo","barumbu","ngiri-ngiri","ngiri ngiri","ngiri","kalamu","makala","bumbu","kasavubu","kasa-vubu","kasa vubu","limete 1","limete 2","limete 3","limete 4","limete 5","limete 6","limete 7","1ere rue limete","2eme rue limete","3eme rue limete","4eme rue limete","5eme rue limete","6eme rue limete","7eme rue limete","1ère rue limete","2ème rue limete","3ème rue limete","4ème rue limete","5ème rue limete","6ème rue limete","7ème rue limete","saint luc","macampagne","sakombi","station macampagne"])}::jsonb, true, 1),
+      ('Zone C', 4.00, '#ef4444', ${JSON.stringify(["haute-tension","haute tension","dgc","limete 8","limete 9","limete 10","limete 11","limete 12","limete 13","limete 14","limete 15","limete 16","8eme rue limete","9eme rue limete","10eme rue limete","11eme rue limete","12eme rue limete","13eme rue limete","14eme rue limete","15eme rue limete","16eme rue limete","8ème rue limete","9ème rue limete","10ème rue limete","11ème rue limete","12ème rue limete","13ème rue limete","14ème rue limete","15ème rue limete","16ème rue limete","selembao","poids lourds","kingabwa","lemba foire","lemba super","lemba terminus","lemba salongo","lemba","ngaliema","brikin","ozone","pigeon","mimosas","delvaux","meteo","météo","gramalic","grammalic","yolo"])}::jsonb, true, 2)
     `);
   }
 

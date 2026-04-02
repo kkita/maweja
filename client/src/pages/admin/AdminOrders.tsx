@@ -149,22 +149,37 @@ export default function AdminOrders() {
     window.print();
   };
 
-  const handleExport = () => {
-    const params = new URLSearchParams();
-    if (restaurantFilter) params.set("restaurantId", restaurantFilter);
-    if (dateFrom) params.set("dateFrom", dateFrom);
-    if (dateTo) params.set("dateTo", dateTo);
-    const url = `/api/orders/export${params.toString() ? "?" + params.toString() : ""}`;
-    window.open(url, "_blank");
+  const handleExport = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (restaurantFilter) params.set("restaurantId", restaurantFilter);
+      if (dateFrom) params.set("dateFrom", dateFrom);
+      if (dateTo) params.set("dateTo", dateTo);
+      const url = `/api/orders/export${params.toString() ? "?" + params.toString() : ""}`;
+      const res = await authFetch(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Erreur export" }));
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+        return;
+      }
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de telecharger", variant: "destructive" });
+    }
   };
 
   const newOrderSubtotal = Object.entries(newOrderItems).reduce((sum, [id, qty]) => {
     const item = menuItems.find((m) => m.id === Number(id));
     return sum + (item ? item.price * qty : 0);
   }, 0);
-  const newOrderDeliveryFee = 2500;
-  const newOrderTax = Math.round(newOrderSubtotal * 0.05);
-  const newOrderTotal = newOrderSubtotal + newOrderDeliveryFee + newOrderTax;
+  const newOrderDeliveryFee = 2.50;
+  const newOrderTax = parseFloat((newOrderSubtotal * 0.05).toFixed(2));
+  const newOrderTotal = parseFloat((newOrderSubtotal + newOrderDeliveryFee + newOrderTax).toFixed(2));
 
   const submitNewOrder = async () => {
     if (!newOrderRestaurant || !newOrderClientName || !newOrderClientPhone || !newOrderAddress) {
@@ -470,9 +485,7 @@ export default function AdminOrders() {
                     <div className="flex items-center gap-1">
                       <span>Livraison</span>
                       {(selectedOrder as any).deliveryZone && (
-                        <span className={`text-[7px] font-black px-1 py-0.5 rounded-full text-white ${
-                          (selectedOrder as any).deliveryZone === "A" ? "bg-green-500" : (selectedOrder as any).deliveryZone === "B" ? "bg-amber-500" : "bg-red-500"
-                        }`}>Zone {(selectedOrder as any).deliveryZone}</span>
+                        <span className="text-[7px] font-black px-1 py-0.5 rounded-full text-white bg-blue-500">{(selectedOrder as any).deliveryZone}</span>
                       )}
                     </div>
                     <span>{formatPrice(selectedOrder.deliveryFee)}</span>
@@ -630,7 +643,7 @@ export default function AdminOrders() {
             <hr style={{ margin: "16px 0" }} />
             <div style={{ textAlign: "right" }}>
               <p>Sous-total: {formatPrice(selectedOrder.subtotal)}</p>
-              <p>Livraison: {formatPrice(selectedOrder.deliveryFee)}{(selectedOrder as any).deliveryZone ? ` (Zone ${(selectedOrder as any).deliveryZone})` : ""}</p>
+              <p>Livraison: {formatPrice(selectedOrder.deliveryFee)}{(selectedOrder as any).deliveryZone ? ` (${(selectedOrder as any).deliveryZone})` : ""}</p>
               {selectedOrder.taxAmount > 0 && <p>Taxes: {formatPrice(selectedOrder.taxAmount)}</p>}
               {selectedOrder.promoCode && <p>Promo ({selectedOrder.promoCode}): -{formatPrice(selectedOrder.promoDiscount)}</p>}
               <p style={{ fontSize: 18, fontWeight: "bold", marginTop: 8 }}>Total: {formatPrice(selectedOrder.total)}</p>

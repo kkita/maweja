@@ -7,7 +7,7 @@ import type { Notification as Notif } from "@shared/schema";
 const logoImg = "/maweja-icon.png";
 import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign, Settings, LogOut, Shield, BarChart3,
-  Briefcase, Image, Megaphone, UserCog, GalleryHorizontal, Tag, UtensilsCrossed, ShoppingBag
+  Briefcase, Image, Megaphone, UserCog, GalleryHorizontal, Tag, UtensilsCrossed, ShoppingBag, MapPin
 } from "lucide-react";
 
 function canAccess(user: any, badgeKey: string): boolean {
@@ -78,6 +78,7 @@ export default function AdminSidebar() {
         { path: "/admin/restaurant-categories", icon: UtensilsCrossed, label: "Catégories Resto", badgeKey: "restaurant_categories" },
         { path: "/admin/boutiques", icon: ShoppingBag, label: "Boutiques", badgeKey: "boutiques" },
         { path: "/admin/boutique-categories", icon: Tag, label: "Catégories Boutiques", badgeKey: "boutique_categories" },
+        { path: "/admin/delivery-zones", icon: MapPin, label: "Zones de livraison", badgeKey: "delivery_zones" },
         { path: "/admin/services", icon: Briefcase, label: t.admin.services, badgeKey: "services" },
       ],
     },

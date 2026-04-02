@@ -101,19 +101,38 @@ export default function AdminFinance() {
     }
   };
 
+  const downloadWithAuth = async (url: string, filename: string) => {
+    try {
+      const res = await authFetch(url);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Erreur export" }));
+        toast({ title: "Erreur", description: err.message, variant: "destructive" });
+        return;
+      }
+      const blob = await res.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      toast({ title: "Erreur", description: "Impossible de telecharger le fichier", variant: "destructive" });
+    }
+  };
+
   const exportCSV = () => {
     const exportParams = new URLSearchParams();
     if (filter !== "all") exportParams.set("type", filter);
     if (dateFrom) exportParams.set("dateFrom", dateFrom);
     if (dateTo) exportParams.set("dateTo", dateTo);
-    window.open(`/api/finance/export?${exportParams}`, "_blank");
+    downloadWithAuth(`/api/finance/export?${exportParams}`, `finances_maweja_${new Date().toISOString().split("T")[0]}.csv`);
   };
 
   const exportOrders = () => {
     const exportParams = new URLSearchParams();
     if (dateFrom) exportParams.set("dateFrom", dateFrom);
     if (dateTo) exportParams.set("dateTo", dateTo);
-    window.open(`/api/orders/export?${exportParams}`, "_blank");
+    downloadWithAuth(`/api/orders/export?${exportParams}`, `commandes_maweja_${new Date().toISOString().split("T")[0]}.csv`);
   };
 
   const categoryLabels: Record<string, string> = {

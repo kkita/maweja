@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
 import { restaurantCategories, boutiqueCategories } from "@shared/schema";
-import { detectZone } from "@shared/deliveryZones";
+import { detectZone, type DeliveryZoneData } from "@shared/deliveryZones";
 import { eq } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
@@ -574,16 +574,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (sessionUser?.role === "admin" && req.body.clientId) {
       clientId = req.body.clientId;
     }
-    const zoneResult = detectZone(
-      req.body.deliveryAddress || "",
-      req.body.deliveryLat,
-      req.body.deliveryLng,
-    );
+    const dbZones = await storage.getDeliveryZones();
+    const zonesData: DeliveryZoneData[] = dbZones.map(z => ({
+      id: z.id, name: z.name, fee: z.fee, color: z.color,
+      neighborhoods: (z.neighborhoods as string[]) || [], isActive: z.isActive, sortOrder: z.sortOrder,
+    }));
+    const zoneResult = detectZone(req.body.deliveryAddress || "", zonesData);
     if (!zoneResult.allowed) {
       return res.status(400).json({ message: "Livraison impossible — adresse hors de notre zone de couverture." });
     }
-    req.body.deliveryZone = zoneResult.zone?.id || null;
-    req.body.deliveryFee = zoneResult.fee / 100;
+    req.body.deliveryZone = zoneResult.zone?.name || null;
+    req.body.deliveryFee = parseFloat(zoneResult.fee.toFixed(2));
+
+    req.body.subtotal = parseFloat(Number(req.body.subtotal).toFixed(2));
+    req.body.total = parseFloat(Number(req.body.total).toFixed(2));
+    req.body.taxAmount = parseFloat(Number(req.body.taxAmount || 0).toFixed(2));
+    req.body.promoDiscount = parseFloat(Number(req.body.promoDiscount || 0).toFixed(2));
 
     const lastOrder = await db.execute(
       `SELECT order_number FROM orders WHERE order_number LIKE 'M%' AND LENGTH(order_number) = 9 ORDER BY order_number DESC LIMIT 1`
@@ -594,7 +600,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isNaN(lastNum)) nextNum = lastNum + 1;
     }
     const orderNumber = `M${nextNum.toString().padStart(8, "0")}`;
-    const commission = Math.round(req.body.subtotal * 0.15);
+    const commission = parseFloat((req.body.subtotal * 0.15).toFixed(2));
     const restaurant = await storage.getRestaurant(req.body.restaurantId);
     const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
     const estimatedDelivery = new Date(Date.now() + deliveryMinutes * 60 * 1000).toISOString();
@@ -966,6 +972,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/boutique-categories/:id", requireAdmin, async (req, res) => {
     await db.delete(boutiqueCategories).where(eq(boutiqueCategories.id, Number(req.params.id)));
+    res.json({ ok: true });
+  });
+
+  app.get("/api/delivery-zones", async (_req, res) => {
+    const zones = await storage.getDeliveryZones();
+    res.json(zones);
+  });
+
+  app.post("/api/delivery-zones", requireAdmin, async (req, res) => {
+    const { name, fee, color, neighborhoods, isActive, sortOrder } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) return res.status(400).json({ error: "Nom requis" });
+    const feeNum = parseFloat(fee);
+    if (!isFinite(feeNum) || feeNum < 0) return res.status(400).json({ error: "Frais invalides" });
+    const zone = await storage.createDeliveryZone({
+      name: name.trim(), fee: feeNum, color: color || "#22c55e",
+      neighborhoods: Array.isArray(neighborhoods) ? neighborhoods : [], isActive: isActive !== false,
+      sortOrder: sortOrder || 0,
+    });
+    res.json(zone);
+  });
+
+  app.patch("/api/delivery-zones/:id", requireAdmin, async (req, res) => {
+    const id = Number(req.params.id);
+    const updates: any = {};
+    if (req.body.name !== undefined) updates.name = String(req.body.name).trim();
+    if (req.body.fee !== undefined) {
+      const feeNum = parseFloat(req.body.fee);
+      if (!isFinite(feeNum) || feeNum < 0) return res.status(400).json({ error: "Frais invalides" });
+      updates.fee = feeNum;
+    }
+    if (req.body.color !== undefined) updates.color = req.body.color;
+    if (req.body.neighborhoods !== undefined) updates.neighborhoods = req.body.neighborhoods;
+    if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+    if (req.body.sortOrder !== undefined) updates.sortOrder = req.body.sortOrder;
+    const zone = await storage.updateDeliveryZone(id, updates);
+    res.json(zone);
+  });
+
+  app.delete("/api/delivery-zones/:id", requireAdmin, async (req, res) => {
+    await storage.deleteDeliveryZone(Number(req.params.id));
     res.json({ ok: true });
   });
 
@@ -1425,9 +1471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const avgRating = ratedOrders.length > 0
       ? ratedOrders.reduce((s, o) => s + (o.rating || 0), 0) / ratedOrders.length : 0;
     const totalRevenue = periodOrders.reduce((s, o) => s + o.total, 0);
-    const avgOrderAmount = periodOrders.length > 0 ? Math.round(totalRevenue / periodOrders.length) : 0;
+    const avgOrderAmount = periodOrders.length > 0 ? parseFloat((totalRevenue / periodOrders.length).toFixed(2)) : 0;
     const avgDeliveryCost = periodOrders.length > 0
-      ? Math.round(periodOrders.reduce((s, o) => s + o.deliveryFee, 0) / periodOrders.length) : 0;
+      ? parseFloat((periodOrders.reduce((s, o) => s + o.deliveryFee, 0) / periodOrders.length).toFixed(2)) : 0;
 
     const productCounts: Record<string, { name: string; count: number; revenue: number }> = {};
     periodOrders.forEach(o => {
@@ -1463,7 +1509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: c.id, name: c.name, email: c.email, phone: c.phone,
         orderCount: userOrders.length,
         totalSpent: userOrders.reduce((s, o) => s + o.total, 0),
-        avgOrder: userOrders.length > 0 ? Math.round(userOrders.reduce((s, o) => s + o.total, 0) / userOrders.length) : 0,
+        avgOrder: userOrders.length > 0 ? parseFloat((userOrders.reduce((s, o) => s + o.total, 0) / userOrders.length).toFixed(2)) : 0,
       };
     }).sort((a, b) => b.totalSpent - a.totalSpent).slice(0, 20);
 
@@ -1530,7 +1576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id: c.id, name: c.name, email: c.email, phone: c.phone,
         orderCount: userOrders.length,
         totalSpent,
-        avgOrder: userOrders.length > 0 ? Math.round(totalSpent / userOrders.length) : 0,
+        avgOrder: userOrders.length > 0 ? parseFloat((totalSpent / userOrders.length).toFixed(2)) : 0,
         favoriteRestaurant: favRest?.name || null,
         favoriteRestaurantId: favRest?.id || null,
         topCuisines,

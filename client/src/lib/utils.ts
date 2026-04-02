@@ -53,3 +53,22 @@ export const paymentLabels: Record<string, string> = {
   pos: "POS",
   credit_card: "Carte de Credit",
 };
+
+const paymentIcons: Record<string, string> = {
+  cash: "💵",
+  mobile_money: "📱",
+  illico_cash: "📱",
+  wallet: "💳",
+  loyalty: "🎁",
+  card: "💳",
+  credit_card: "💳",
+  google_pay: "📱",
+  pos: "💳",
+};
+
+export function formatPaymentMethod(method: string | null | undefined): string {
+  if (!method) return "--";
+  const icon = paymentIcons[method] || "💰";
+  const label = paymentLabels[method] || method;
+  return `${icon} ${label}`;
+}

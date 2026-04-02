@@ -22,7 +22,7 @@ import {
 import { formatPrice } from "../../lib/utils";
 import { useToast } from "../../hooks/use-toast";
 import type { SavedAddress } from "@shared/schema";
-import { detectZone, DELIVERY_ZONES, formatZoneFee } from "@shared/deliveryZones";
+import { detectZone, formatZoneFee, type DeliveryZoneData } from "@shared/deliveryZones";
 
 export default function CartPage() {
   const [, navigate] = useLocation();
@@ -50,14 +50,23 @@ export default function CartPage() {
     enabled: !!restaurantId,
   });
 
+  const { data: dbZones = [] } = useQuery<DeliveryZoneData[]>({
+    queryKey: ["/api/delivery-zones"],
+  });
+
+  const { data: appSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/settings"],
+  });
+
   const defaultAddress =
     savedAddresses?.find((a) => a.isDefault) || savedAddresses?.[0] || null;
 
   const resolvedAddress = defaultAddress?.address || manualAddress;
-  const zoneResult = detectZone(resolvedAddress || "", defaultAddress?.lat, defaultAddress?.lng);
-  const deliveryFee = zoneResult.allowed ? zoneResult.fee / 100 : 0;
-  const serviceFee = 0.76;
-  const grandTotal = Math.round((total + deliveryFee + serviceFee) * 100) / 100;
+  const activeZones = dbZones.filter(z => z.isActive);
+  const zoneResult = detectZone(resolvedAddress || "", activeZones);
+  const deliveryFee = zoneResult.allowed ? zoneResult.fee : 0;
+  const serviceFee = parseFloat(appSettings?.service_fee || "0.76");
+  const grandTotal = parseFloat((total + deliveryFee + serviceFee).toFixed(2));
 
   const handleCheckout = () => {
     if (!resolvedAddress) {
@@ -337,7 +346,7 @@ export default function CartPage() {
                 Adresse hors zone — livraison non disponible
               </p>
               <div className="flex gap-1.5 mt-2 flex-wrap">
-                {DELIVERY_ZONES.map(z => (
+                {activeZones.map(z => (
                   <span key={z.id} className="text-[8px] px-1.5 py-0.5 rounded-full text-white font-bold" style={{ background: z.color }}>
                     {z.name}: {formatZoneFee(z.fee)}
                   </span>

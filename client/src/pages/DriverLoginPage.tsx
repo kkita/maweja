@@ -148,12 +148,6 @@ export default function DriverLoginPage() {
               </button>
             </form>
 
-            <p className="text-center text-gray-400 text-xs mt-5">
-              Vous etes un client ?{" "}
-              <button onClick={() => navigate("/login")} className="text-red-600 font-semibold hover:underline">
-                Connexion client
-              </button>
-            </p>
           </div>
 
           <p className="text-center text-white/40 text-xs mt-6">

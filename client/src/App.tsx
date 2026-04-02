@@ -56,6 +56,7 @@ import AdminPromotions from "./pages/admin/AdminPromotions";
 import AdminRestaurantCategories from "./pages/admin/AdminRestaurantCategories";
 import AdminBoutiques from "./pages/admin/AdminBoutiques";
 import AdminBoutiqueCategories from "./pages/admin/AdminBoutiqueCategories";
+import AdminDeliveryZones from "./pages/admin/AdminDeliveryZones";
 import ServicesPage from "./pages/client/ServicesPage";
 import BoutiquesPage from "./pages/client/BoutiquesPage";
 import ServiceRequestPage from "./pages/client/ServiceRequestPage";
@@ -134,6 +135,7 @@ function AppRoutes() {
         <Route path="/admin/notifications" component={AdminNotifications} />
         <Route path="/admin/accounts" component={AdminAccounts} />
         <Route path="/admin/gallery" component={AdminGallery} />
+        <Route path="/admin/delivery-zones" component={AdminDeliveryZones} />
         <Route component={AdminDashboard} />
       </Switch>
     );

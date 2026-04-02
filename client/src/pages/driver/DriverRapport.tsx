@@ -4,7 +4,7 @@ import { useAuth } from "../../lib/auth";
 import { authFetchJson } from "../../lib/queryClient";
 import DriverNav from "../../components/DriverNav";
 import { FileText, Calendar, Package, DollarSign, TrendingUp, ChevronDown } from "lucide-react";
-import { formatPrice } from "../../lib/utils";
+import { formatPrice, formatPaymentMethod } from "../../lib/utils";
 import type { Order } from "@shared/schema";
 
 type Period = "today" | "week" | "month" | "custom";
@@ -45,7 +45,7 @@ export default function DriverRapport() {
 
   const totalDeliveryFees = filteredOrders.reduce((s, o) => s + o.deliveryFee, 0);
   const totalOrders = filteredOrders.length;
-  const avgPerOrder = totalOrders > 0 ? Math.round(totalDeliveryFees / totalOrders) : 0;
+  const avgPerOrder = totalOrders > 0 ? parseFloat((totalDeliveryFees / totalOrders).toFixed(2)) : 0;
 
   const ordersByDay = useMemo(() => {
     const map: Record<string, { count: number; fees: number; orders: Order[] }> = {};
@@ -163,6 +163,7 @@ export default function DriverRapport() {
                       <div>
                         <p className="text-sm font-bold text-gray-900 dark:text-white">{o.orderNumber}</p>
                         <p className="text-[10px] text-gray-400 mt-0.5">{o.deliveryAddress?.split(",")[0]}</p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 font-medium" data-testid={`rapport-payment-${o.id}`}>{formatPaymentMethod(o.paymentMethod)}</p>
                       </div>
                       <span className="font-black text-sm text-emerald-600">+{formatPrice(o.deliveryFee)}</span>
                     </div>

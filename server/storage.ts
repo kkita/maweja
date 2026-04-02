@@ -3,7 +3,7 @@ import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
   serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings, restaurantPayouts,
-  promotions,
+  promotions, deliveryZones,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -17,6 +17,7 @@ import {
   type PromoBanner, type InsertPromoBanner,
   type RestaurantPayout, type InsertRestaurantPayout,
   type Promotion, type InsertPromotion,
+  type DeliveryZone, type InsertDeliveryZone,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -111,6 +112,12 @@ export interface IStorage {
   createPromotion(data: InsertPromotion): Promise<Promotion>;
   updatePromotion(id: number, data: Partial<Promotion>): Promise<Promotion | undefined>;
   deletePromotion(id: number): Promise<void>;
+
+  getDeliveryZones(): Promise<DeliveryZone[]>;
+  getDeliveryZone(id: number): Promise<DeliveryZone | undefined>;
+  createDeliveryZone(data: InsertDeliveryZone): Promise<DeliveryZone>;
+  updateDeliveryZone(id: number, data: Partial<DeliveryZone>): Promise<DeliveryZone | undefined>;
+  deleteDeliveryZone(id: number): Promise<void>;
 
   getDashboardStats(): Promise<any>;
 }
@@ -582,6 +589,25 @@ export class DatabaseStorage implements IStorage {
   }
   async deletePromotion(id: number): Promise<void> {
     await db.delete(promotions).where(eq(promotions.id, id));
+  }
+
+  async getDeliveryZones(): Promise<DeliveryZone[]> {
+    return db.select().from(deliveryZones).orderBy(deliveryZones.sortOrder);
+  }
+  async getDeliveryZone(id: number): Promise<DeliveryZone | undefined> {
+    const [z] = await db.select().from(deliveryZones).where(eq(deliveryZones.id, id));
+    return z;
+  }
+  async createDeliveryZone(data: InsertDeliveryZone): Promise<DeliveryZone> {
+    const [z] = await db.insert(deliveryZones).values(data).returning();
+    return z;
+  }
+  async updateDeliveryZone(id: number, data: Partial<DeliveryZone>): Promise<DeliveryZone | undefined> {
+    const [z] = await db.update(deliveryZones).set(data).where(eq(deliveryZones.id, id)).returning();
+    return z;
+  }
+  async deleteDeliveryZone(id: number): Promise<void> {
+    await db.delete(deliveryZones).where(eq(deliveryZones.id, id));
   }
 }
 
