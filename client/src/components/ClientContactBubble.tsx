@@ -291,7 +291,7 @@ export default function ClientContactBubble() {
                       <option value="Commande incorrecte">Commande incorrecte</option>
                       <option value="Qualite de nourriture">Qualite de nourriture</option>
                       <option value="Probleme de paiement">Probleme de paiement</option>
-                      <option value="Comportement du livreur">Comportement du livreur</option>
+                      <option value="Comportement de l'agent">Comportement de l'agent</option>
                       <option value="Probleme technique">Probleme technique</option>
                       <option value="Autre">Autre</option>
                     </select>

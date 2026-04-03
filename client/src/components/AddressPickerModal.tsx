@@ -206,7 +206,7 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
               data-testid="input-address-text-modal"
             />
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-              Soyez précis pour que le livreur vous trouve facilement.
+              Soyez précis pour que l'agent vous trouve facilement.
             </p>
           </div>
         )}

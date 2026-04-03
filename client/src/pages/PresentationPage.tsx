@@ -174,7 +174,7 @@ export default function PresentationPage() {
           <div
             className="flex items-center gap-4 mt-4 flex-wrap justify-center"
           >
-            {["App Client", "App Driver", "Admin Dashboard"].map((app, i) => (
+            {["App Client", "App Agent", "Admin Dashboard"].map((app, i) => (
               <div
                 key={i}
                 className="px-5 py-2 rounded-full text-sm font-semibold tracking-wide"
@@ -194,7 +194,7 @@ export default function PresentationPage() {
             style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)" }}
           >
             Une plateforme production-grade complète — commandes de repas, services à domicile,
-            gestion de livreurs et tableau de bord analytique en temps réel.
+            gestion d'agents et tableau de bord analytique en temps réel.
           </p>
 
           <div
@@ -243,10 +243,10 @@ export default function PresentationPage() {
             },
             {
               icon: "🛵",
-              title: "App Driver",
+              title: "App Agent",
               color: "#1a1a1a",
               border: "#555",
-              desc: "Interface optimisée pour les livreurs — accepter, naviguer, livrer.",
+              desc: "Interface optimisée pour les agents — accepter, naviguer, livrer.",
               features: ["Tableau de bord online/offline", "Gestion des livraisons", "Revenus & historique", "Chat intégré"],
             },
             {
@@ -254,7 +254,7 @@ export default function PresentationPage() {
               title: "Admin Dashboard",
               color: "#7f1d1d",
               desc: "Contrôle total sur la plateforme — commandes, drivers, analytics.",
-              features: ["Gestion des commandes", "Gestion des livreurs", "Analytics & rapports", "Marketing & promos"],
+              features: ["Gestion des commandes", "Gestion des agents", "Analytics & rapports", "Marketing & promos"],
             },
           ].map(({ icon, title, color, border, desc, features }) => (
             <div
@@ -325,13 +325,13 @@ export default function PresentationPage() {
       </section>
 
       {/* ─── APP DRIVER ───────────────────────────────────────────────────── */}
-      <SectionDivider number="02" label="Application Driver" />
+      <SectionDivider number="02" label="Application Agent" />
 
       <section className="py-16 px-8" style={{ background: "#0d0d0d" }}>
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse gap-16 items-center">
           <div className="flex-1 flex flex-col gap-8">
             <div>
-              <span className="text-gray-400 dark:text-gray-500 text-xs font-bold tracking-widest uppercase">App Driver</span>
+              <span className="text-gray-400 dark:text-gray-500 text-xs font-bold tracking-widest uppercase">App Agent</span>
               <h2
                 className="font-black mt-2 tracking-tight leading-none"
                 style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}
@@ -341,7 +341,7 @@ export default function PresentationPage() {
                 <span style={{ color: "#888" }}>revenus</span>
               </h2>
               <p className="text-gray-400 dark:text-gray-500 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
-                Interface conçue pour les livreurs professionnels. Simple, rapide et efficace.
+                Interface conçue pour les agents Maweja. Simple, rapide et efficace.
               </p>
             </div>
 
@@ -358,7 +358,7 @@ export default function PresentationPage() {
           </div>
 
           <div className="flex gap-6 flex-wrap justify-center">
-            <PhoneMockup src={`${APP_URL}/driver/login`} title="Login Driver" />
+            <PhoneMockup src={`${APP_URL}/driver/login`} title="Login Agent" />
             <PhoneMockup src={`${APP_URL}/driver/dashboard`} title="Dashboard" />
           </div>
         </div>
@@ -391,7 +391,7 @@ export default function PresentationPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 w-full max-w-4xl">
             <FeatureBadge icon="📊" text="Analytics en temps réel" />
             <FeatureBadge icon="🍔" text="Gestion restaurants" />
-            <FeatureBadge icon="🛵" text="Gestion des livreurs" />
+            <FeatureBadge icon="🛵" text="Gestion des agents" />
             <FeatureBadge icon="✅" text="Vérification documents" />
             <FeatureBadge icon="📋" text="Gestion commandes" />
             <FeatureBadge icon="💅" text="Gestion services" />

@@ -43,7 +43,7 @@ export default function AdminVerifications() {
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/verifications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-      toast({ title: "Livreur approuve!", description: "Le livreur peut maintenant utiliser l'application" });
+      toast({ title: "Agent approuve!", description: "L'agent peut maintenant utiliser l'application" });
       setSelected(null);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -63,7 +63,7 @@ export default function AdminVerifications() {
         body: JSON.stringify({ action: "reject", rejectedFields }),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/verifications"] });
-      toast({ title: "Corrections demandees", description: "Le livreur a ete notifie" });
+      toast({ title: "Corrections demandees", description: "L'agent a ete notifie" });
       setSelected(null);
       setRejectedFields([]);
     } catch (err: any) {
@@ -81,7 +81,7 @@ export default function AdminVerifications() {
   };
 
   return (
-    <AdminLayout title="Verifications livreurs">
+    <AdminLayout title="Verifications agents">
       {previewImage && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
           <img src={previewImage} alt="Preview" className="max-w-full max-h-full rounded-2xl object-contain" />
@@ -228,7 +228,7 @@ export default function AdminVerifications() {
                   <button onClick={() => handleApprove(selected.id)} disabled={submitting} data-testid="button-approve-driver"
                     className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-700 shadow-lg shadow-green-200 flex items-center justify-center gap-2 disabled:opacity-50">
                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                    Approuver le livreur
+                    Approuver l'agent
                   </button>
                   <button onClick={() => handleReject(selected.id)} disabled={submitting || rejectedFields.length === 0} data-testid="button-reject-driver"
                     className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2 disabled:opacity-50">
@@ -243,7 +243,7 @@ export default function AdminVerifications() {
               <div className="text-center text-gray-400">
                 <Eye size={48} className="mx-auto mb-3 opacity-20" />
                 <p className="font-bold text-gray-500 dark:text-gray-400">Selectionnez une demande</p>
-                <p className="text-xs mt-1">pour examiner les informations du livreur</p>
+                <p className="text-xs mt-1">pour examiner les informations de l'agent</p>
               </div>
             </div>
           )}

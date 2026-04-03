@@ -22,7 +22,7 @@ interface ClientInsight {
 }
 
 interface MarketShareItem {
-  id: number; name: string; revenue: number; orderCount: number;
+  id: number; name: string; revenue: number; subtotal: number; commissionRate: number; mawejaCommission: number; restaurantNet: number; orderCount: number;
   avgRating: number; sharePercent: number;
 }
 
@@ -184,7 +184,7 @@ export default function AdminMarketing() {
     { key: "overview", label: "Vue d'ensemble" },
     { key: "restaurants", label: "Part de marché" },
     { key: "clients", label: "Comportement clients" },
-    { key: "drivers", label: "Livreurs" },
+    { key: "drivers", label: "Agents" },
     { key: "retention", label: "Rétention & Alertes" },
   ];
 
@@ -378,6 +378,9 @@ export default function AdminMarketing() {
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Restaurant</th>
                           <th className="text-right py-3 px-4 text-gray-500 font-medium">Commandes</th>
                           <th className="text-right py-3 px-4 text-gray-500 font-medium">Revenus</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Taux %</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Commission Maweja</th>
+                          <th className="text-right py-3 px-4 text-gray-500 font-medium">Net Restaurant</th>
                           <th className="text-right py-3 px-4 text-gray-500 font-medium">Part %</th>
                           <th className="text-left py-3 px-4 text-gray-500 font-medium">Note</th>
                         </tr>
@@ -391,6 +394,9 @@ export default function AdminMarketing() {
                             <td className="py-3 px-4 font-medium text-gray-900 dark:text-white">{r.name}</td>
                             <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{r.orderCount}</td>
                             <td className="py-3 px-4 text-right font-semibold text-gray-900 dark:text-white">{formatPrice(r.revenue)}</td>
+                            <td className="py-3 px-4 text-right text-gray-900 dark:text-white">{r.commissionRate}%</td>
+                            <td className="py-3 px-4 text-right font-semibold text-red-600">{formatPrice(r.mawejaCommission)}</td>
+                            <td className="py-3 px-4 text-right font-semibold text-green-600">{formatPrice(r.restaurantNet)}</td>
                             <td className="py-3 px-4 text-right">
                               <div className="flex items-center gap-2 justify-end">
                                 <div className="w-16 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -547,7 +553,7 @@ export default function AdminMarketing() {
             {/* ── DRIVERS ── */}
             {tab === "drivers" && (
               <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Performance des Livreurs</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Performance des Agents</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm" data-testid="table-driver-performance">
                     <thead>

@@ -122,7 +122,7 @@ export default function AdminChat() {
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-0.5">
               <button onClick={() => { setTab("drivers"); setSelectedContact(null); }} data-testid="chat-tab-drivers"
                 className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${tab === "drivers" ? "bg-red-600 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-700"}`}>
-                <Truck size={12} /> Livreurs
+                <Truck size={12} /> Agents
                 {driverUnread > 0 && <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${tab === "drivers" ? "bg-white/30" : "bg-red-600 text-white"}`}>{driverUnread}</span>}
               </button>
               <button onClick={() => { setTab("clients"); setSelectedContact(null); }} data-testid="chat-tab-clients"
@@ -156,7 +156,7 @@ export default function AdminChat() {
             {filteredList.length === 0 && !(tab === "clients" && clientContacts.length === 0) && (
               <div className="text-center py-12 text-gray-400">
                 {tab === "drivers" ? <Truck size={24} className="mx-auto mb-2 opacity-20" /> : <User size={24} className="mx-auto mb-2 opacity-20" />}
-                <p className="text-xs">{search ? "Aucun resultat" : tab === "clients" ? "Aucun client n'a encore ecrit" : "Aucun livreur trouve"}</p>
+                <p className="text-xs">{search ? "Aucun resultat" : tab === "clients" ? "Aucun client n'a encore ecrit" : "Aucun agent trouve"}</p>
               </div>
             )}
             {filteredList.map((c: any) => {
@@ -201,7 +201,7 @@ export default function AdminChat() {
                   <p className="font-bold text-sm text-gray-900 dark:text-white">{selectedContact.name}</p>
                   <p className="text-[10px] text-gray-400 flex items-center gap-1">
                     {selectedContact.role === "driver" ? <Truck size={9} /> : <User size={9} />}
-                    {selectedContact.role === "driver" ? "Livreur" : "Client"}
+                    {selectedContact.role === "driver" ? "Agent" : "Client"}
                     {selectedContact.isOnline ? <><Circle size={6} className="text-green-500 fill-green-500 ml-1" /> En ligne</> : <><Clock size={9} className="ml-1" /> Hors ligne</>}
                   </p>
                 </div>
@@ -271,11 +271,11 @@ export default function AdminChat() {
                   <MessageCircle size={36} className="text-red-300 dark:text-red-700" />
                 </div>
                 <p className="font-bold text-base text-gray-700 dark:text-gray-300">Selectionnez un contact</p>
-                <p className="text-xs mt-2 text-gray-400">Choisissez un livreur ou un client pour commencer</p>
+                <p className="text-xs mt-2 text-gray-400">Choisissez un agent ou un client pour commencer</p>
                 <div className="mt-5 flex items-center justify-center gap-4 text-xs text-gray-400">
                   <div className="flex items-center gap-1.5">
                     <Truck size={12} className="text-red-400" />
-                    <span>{drivers.length} livreur{drivers.length !== 1 ? "s" : ""}</span>
+                    <span>{drivers.length} agent{drivers.length !== 1 ? "s" : ""}</span>
                   </div>
                   <div className="w-1 h-1 rounded-full bg-gray-300" />
                   <div className="flex items-center gap-1.5">

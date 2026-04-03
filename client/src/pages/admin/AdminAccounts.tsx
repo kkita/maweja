@@ -13,7 +13,7 @@ import {
 
 const ALL_PERMISSIONS = [
   { key: "orders", label: "Commandes", icon: Package },
-  { key: "drivers", label: "Livreurs", icon: Truck },
+  {key: "drivers", label: "Agents", icon: Truck },
   { key: "verifications", label: "Vérifications", icon: Shield },
   { key: "restaurants", label: "Restaurants", icon: Store },
   { key: "customers", label: "Clients", icon: Users },

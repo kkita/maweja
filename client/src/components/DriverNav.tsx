@@ -151,7 +151,7 @@ export default function DriverNav() {
                 MAWEJA
               </span>
               <span className="bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
-                Livreur
+                Agent
               </span>
             </div>
             <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-medium tracking-wide mt-0.5">

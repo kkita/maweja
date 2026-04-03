@@ -721,7 +721,7 @@ function MenuSection({ restaurant }: { restaurant: Restaurant }) {
 
   const { data: items = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/restaurants", restaurant.id, "menu"],
-    queryFn: () => fetch(`/api/restaurants/${restaurant.id}/menu`).then(r => r.json()),
+    queryFn: () => fetch(`/api/restaurants/${restaurant.id}/menu?adminView=true`).then(r => r.json()),
   });
 
   const deleteMutation = useMutation({

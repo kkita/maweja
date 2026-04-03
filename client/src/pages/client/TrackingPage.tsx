@@ -34,14 +34,14 @@ const steps = [
     key: "ready",
     icon: Package,
     label: "Prête",
-    desc: "Commande prête, en attente du livreur",
+    desc: "Commande prête, en attente de l'agent",
     color: "#8B5CF6",
   },
   {
     key: "picked_up",
     icon: Truck,
     label: "En livraison",
-    desc: "Votre livreur est en route",
+    desc: "Votre agent est en route",
     color: "#3B82F6",
   },
   {
@@ -256,7 +256,7 @@ export default function TrackingPage() {
             style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.07)" }}
           >
             <p className="font-bold text-gray-900 dark:text-white mb-3" style={{ fontSize: 14 }}>
-              Votre livreur
+              Votre agent
             </p>
             <div className="flex items-center gap-3">
               <div

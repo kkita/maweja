@@ -94,7 +94,7 @@ export default function AdminOrders() {
     queryKey: ["/api/restaurants", newOrderRestaurant, "menu"],
     queryFn: () =>
       newOrderRestaurant
-        ? authFetchJson(`/api/restaurants/${newOrderRestaurant}/menu`)
+        ? authFetchJson(`/api/restaurants/${newOrderRestaurant}/menu?adminView=true`)
         : Promise.resolve([]),
     enabled: !!newOrderRestaurant,
   });
@@ -139,9 +139,9 @@ export default function AdminOrders() {
     try {
       await apiRequest(`/api/orders/${orderId}`, { method: "PATCH", body: JSON.stringify({ driverId, status: "confirmed" }) });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      toast({ title: "Livreur assigne!" });
+      toast({ title: "Agent assigne!" });
     } catch (err: any) {
-      toast({ title: "Erreur", description: err?.message || "Impossible d'assigner le livreur", variant: "destructive" });
+      toast({ title: "Erreur", description: err?.message || "Impossible d'assigner l'agent", variant: "destructive" });
     }
   };
 
@@ -589,7 +589,7 @@ export default function AdminOrders() {
                     data-testid="select-driver"
                     className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
                   >
-                    <option value="" disabled>Assigner un livreur</option>
+                    <option value="" disabled>Assigner un agent</option>
                     {drivers.map((d: any) => (
                       <option key={d.id} value={d.id}>
                         {d.name} {d.isOnline ? "(En ligne)" : "(Hors ligne)"}

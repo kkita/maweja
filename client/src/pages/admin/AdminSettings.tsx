@@ -109,7 +109,7 @@ export default function AdminSettings() {
           <div className="space-y-4">
             {[
               { key: "notifications" as const, label: "Notifications push", desc: "Recevoir des alertes pour les nouvelles commandes" },
-              { key: "auto_assign" as const, label: "Attribution automatique", desc: "Attribuer automatiquement les commandes aux livreurs disponibles" },
+              { key: "auto_assign" as const, label: "Attribution automatique", desc: "Attribuer automatiquement les commandes aux agents disponibles" },
               { key: "loyalty_enabled" as const, label: "Programme de fidelite", desc: "Activer le systeme de points de fidelite" },
             ].map(item => (
               <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-50 dark:border-gray-800 last:border-0">

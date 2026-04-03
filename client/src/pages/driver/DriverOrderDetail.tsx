@@ -315,7 +315,7 @@ export default function DriverOrderDetail() {
                     className="flex items-center justify-center gap-2 bg-red-600 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition-all shadow-md shadow-red-200 dark:shadow-none">
                     <Phone size={14} /> Appeler
                   </button>
-                  <button onClick={() => openWhatsApp(clientPhone, `Bonjour, je suis votre livreur Maweja pour la commande ${order.orderNumber}`)}
+                  <button onClick={() => openWhatsApp(clientPhone, `Bonjour, je suis votre agent Maweja pour la commande ${order.orderNumber}`)}
                     data-testid="button-whatsapp-client"
                     className="flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl text-xs font-bold active:scale-95 transition-all shadow-md shadow-green-200 dark:shadow-none">
                     <MessageCircle size={14} /> WhatsApp

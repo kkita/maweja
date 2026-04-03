@@ -51,7 +51,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
   const requestPermission = async () => {
     const granted = await requestNotifPermission();
     setPermission(granted ? "granted" : "denied");
-    if (granted) showNotif("MAWEJA Driver", "Notifications activées ! 🎉");
+    if (granted) showNotif("MAWEJA Agent", "Notifications activées ! 🎉");
   };
 
   const toggle = (key: string, value: boolean, setter: (v: boolean) => void) => {
@@ -208,7 +208,7 @@ function ContactSupportModal({ onClose, userId }: { onClose: () => void; userId?
         ) : (
           <>
             <div className="bg-blue-50 rounded-2xl p-4 mb-5">
-              <p className="text-sm font-semibold text-blue-700 mb-1">Support Livreur — Disponible 24h/24</p>
+              <p className="text-sm font-semibold text-blue-700 mb-1">Support Agent — Disponible 24h/24</p>
               <p className="text-xs text-blue-600">Tél : <a href="tel:+243802540138" className="font-bold">0802540138</a></p>
             </div>
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Votre message :</p>
@@ -255,7 +255,7 @@ function AboutModal({ onClose }: { onClose: () => void }) {
           <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-200">
             <span className="text-white text-3xl font-black">M</span>
           </div>
-          <h2 className="text-2xl font-black text-gray-900 dark:text-white">MAWEJA Driver</h2>
+          <h2 className="text-2xl font-black text-gray-900 dark:text-white">MAWEJA Agent</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Version 1.0.0</p>
         </div>
         <div className="space-y-3">

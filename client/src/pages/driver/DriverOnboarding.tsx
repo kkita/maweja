@@ -297,7 +297,7 @@ export default function DriverOnboarding() {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {isRejected
               ? "Certaines informations doivent etre corrigees avant la validation"
-              : "Remplissez vos informations pour activer votre compte livreur"}
+              : "Remplissez vos informations pour activer votre compte agent"}
           </p>
         </div>
 

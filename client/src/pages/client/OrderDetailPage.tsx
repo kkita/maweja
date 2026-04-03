@@ -314,7 +314,7 @@ export default function OrderDetailPage() {
 
         {driver && (
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
-            <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Votre livreur</h3>
+            <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Votre agent</h3>
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
                 <Truck size={20} className="text-red-600" />

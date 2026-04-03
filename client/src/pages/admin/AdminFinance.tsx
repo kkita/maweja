@@ -137,7 +137,7 @@ export default function AdminFinance() {
 
   const categoryLabels: Record<string, string> = {
     order: "Commande", delivery_fee: "Frais livraison", commission: "Commission",
-    driver_payment: "Paiement livreur", refund: "Remboursement",
+    driver_payment: "Paiement agent", refund: "Remboursement",
     wallet_topup: "Recharge wallet", salary: "Salaire", marketing: "Marketing",
     equipment: "Equipement", other: "Autre",
   };
@@ -353,7 +353,7 @@ export default function AdminFinance() {
                 <option value="order">Commande</option>
                 <option value="commission">Commission</option>
                 <option value="delivery_fee">Frais livraison</option>
-                <option value="driver_payment">Paiement livreur</option>
+                <option value="driver_payment">Paiement agent</option>
                 <option value="salary">Salaire</option>
                 <option value="marketing">Marketing</option>
                 <option value="equipment">Equipement</option>

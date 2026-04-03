@@ -70,7 +70,7 @@ function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
 
       <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
         <div>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Commission livreur</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Commission agent</p>
           <p className="text-sm font-black text-gray-900 dark:text-white">
             {formatPrice(Math.round(order.total * 0.15))}
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal ml-1">/ {formatPrice(order.total)} total</span>

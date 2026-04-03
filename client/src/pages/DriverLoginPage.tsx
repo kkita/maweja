@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Truck, Navigation, DollarSign, Clock } from "lucide-react";
-const logoImg = "/maweja-icon.png";
+const logoImg = "/maweja-agent-icon-512.png";
 
 export default function DriverLoginPage() {
   const { login } = useAuth();
@@ -46,7 +46,7 @@ export default function DriverLoginPage() {
               <Truck size={24} className="text-white" />
             </div>
             <h2 className="text-4xl font-black text-white leading-tight" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif" }}>
-              Espace Livreur
+              Espace Agent
             </h2>
           </div>
           <p className="text-white/70 text-lg leading-relaxed mb-10">
@@ -83,7 +83,7 @@ export default function DriverLoginPage() {
             <h1 className="text-3xl text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>MAWEJA</h1>
             <div className="flex items-center justify-center gap-2 mt-2">
               <Truck size={16} className="text-white/80" />
-              <p className="text-white/80 text-sm font-semibold tracking-wide uppercase">Espace Livreur</p>
+              <p className="text-white/80 text-sm font-semibold tracking-wide uppercase">Espace Agent</p>
             </div>
           </div>
 
@@ -95,8 +95,8 @@ export default function DriverLoginPage() {
                   <Truck size={22} className="text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl text-gray-900 dark:text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Connexion Livreur</h1>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">MAWEJA Driver</p>
+                  <h1 className="text-xl text-gray-900 dark:text-white" style={{ fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif", fontWeight: 800 }}>Connexion Agent</h1>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">MAWEJA Agent</p>
                 </div>
               </div>
             </div>
@@ -104,7 +104,7 @@ export default function DriverLoginPage() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-6">
               <div className="flex items-start gap-2">
                 <Shield size={14} className="text-amber-600 mt-0.5 flex-shrink-0" />
-                <p className="text-amber-700 text-xs font-medium leading-relaxed">Les comptes livreurs sont crees par l'administration. Contactez votre responsable si vous n'avez pas encore de compte.</p>
+                <p className="text-amber-700 text-xs font-medium leading-relaxed">Les comptes agents sont crees par l'administration. Contactez votre responsable si vous n'avez pas encore de compte.</p>
               </div>
             </div>
 
@@ -141,7 +141,7 @@ export default function DriverLoginPage() {
                 ) : (
                   <>
                     <Truck size={16} />
-                    Se connecter comme livreur
+                    Se connecter comme agent
                     <ArrowRight size={16} />
                   </>
                 )}

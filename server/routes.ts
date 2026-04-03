@@ -485,6 +485,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Menu items
   app.get("/api/restaurants/:id/menu", async (req, res) => {
     const items = await storage.getMenuItems(Number(req.params.id));
+    const adminView = req.query.adminView === "true";
+    if (!adminView) {
+      const restaurant = await storage.getRestaurant(Number(req.params.id));
+      const rate = restaurant?.restaurantCommissionRate ?? 0;
+      if (rate > 0) {
+        const adjusted = items.map(item => ({
+          ...item,
+          basePrice: item.price,
+          price: parseFloat((item.price * (1 + rate / 100)).toFixed(2)),
+        }));
+        return res.json(adjusted);
+      }
+    }
     res.json(items);
   });
 
@@ -547,9 +560,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const getUserName = (id: number) => allUsers.find(u => u.id === id)?.name || "";
     const getRestName = (id: number) => allRestaurants.find(r => r.id === id)?.name || "";
 
+    const getRestCommission = (restaurantId: number) => {
+      const r = allRestaurants.find(r => r.id === restaurantId);
+      return r?.restaurantCommissionRate ?? 20;
+    };
+
     const csv = [
-      "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Commission,Methode Paiement,Statut Paiement,Adresse,Date",
-      ...data.map(o => `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${o.commission},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`),
+      "Numero,Statut,Client,Restaurant,Livreur,Total ($),Sous-total,Frais Livraison,Taxes,Code Promo,Reduction Promo,Taux Commission (%),Commission Maweja ($),Revenu Restaurant ($),Methode Paiement,Statut Paiement,Adresse,Date",
+      ...data.map(o => {
+        const rate = getRestCommission(o.restaurantId);
+        const mawejaCommission = parseFloat((o.subtotal * rate / 100).toFixed(2));
+        const restaurantRevenue = parseFloat((o.subtotal - mawejaCommission).toFixed(2));
+        return `${o.orderNumber},${o.status},"${getUserName(o.clientId)}","${getRestName(o.restaurantId)}","${o.driverId ? getUserName(o.driverId) : ""}",${o.total},${o.subtotal},${o.deliveryFee},${o.taxAmount},${o.promoCode || ""},${o.promoDiscount},${rate},${mawejaCommission},${restaurantRevenue},"${o.paymentMethod}",${o.paymentStatus},"${o.deliveryAddress}",${o.createdAt}`;
+      }),
     ].join("\n");
 
     res.setHeader("Content-Type", "text/csv");
@@ -600,8 +623,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isNaN(lastNum)) nextNum = lastNum + 1;
     }
     const orderNumber = `M${nextNum.toString().padStart(8, "0")}`;
-    const commission = parseFloat((req.body.subtotal * 0.15).toFixed(2));
     const restaurant = await storage.getRestaurant(req.body.restaurantId);
+    const commissionRate = restaurant?.restaurantCommissionRate ?? 20;
+    const commission = parseFloat((req.body.subtotal * commissionRate / 100).toFixed(2));
     const deliveryMinutes = restaurant?.deliveryTime ? parseInt(restaurant.deliveryTime) || 45 : 45;
     const estimatedDelivery = new Date(Date.now() + deliveryMinutes * 60 * 1000).toISOString();
     const order = await storage.createOrder({ ...req.body, clientId, orderNumber, commission, estimatedDelivery });
@@ -617,7 +641,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
     await storage.createFinance({
       type: "revenue", category: "commission", amount: commission,
-      description: `Commission ${orderNumber} (15%)`, orderId: order.id,
+      description: `Commission ${orderNumber} (${commissionRate}%)`, orderId: order.id,
     });
 
     // Notify admin
@@ -1542,19 +1566,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const returnedOrders = periodOrders.filter(o => o.status === "returned");
 
     // Restaurant market share
-    const restaurantRevenue: Record<number, { id: number; name: string; revenue: number; orderCount: number; avgRating: number; ratingCount: number }> = {};
+    const restaurantRevenue: Record<number, { id: number; name: string; revenue: number; subtotal: number; commissionRate: number; mawejaCommission: number; restaurantNet: number; orderCount: number; avgRating: number; ratingCount: number }> = {};
     periodOrders.forEach(o => {
       const r = allRestaurants.find(r => r.id === o.restaurantId);
       if (!r) return;
-      if (!restaurantRevenue[r.id]) restaurantRevenue[r.id] = { id: r.id, name: r.name, revenue: 0, orderCount: 0, avgRating: 0, ratingCount: 0 };
+      if (!restaurantRevenue[r.id]) restaurantRevenue[r.id] = { id: r.id, name: r.name, revenue: 0, subtotal: 0, commissionRate: r.restaurantCommissionRate ?? 20, mawejaCommission: 0, restaurantNet: 0, orderCount: 0, avgRating: 0, ratingCount: 0 };
       restaurantRevenue[r.id].revenue += o.total;
+      restaurantRevenue[r.id].subtotal += o.subtotal;
       restaurantRevenue[r.id].orderCount++;
       if (o.rating) { restaurantRevenue[r.id].avgRating += o.rating; restaurantRevenue[r.id].ratingCount++; }
     });
-    const marketShare = Object.values(restaurantRevenue).map(r => ({
-      ...r, avgRating: r.ratingCount > 0 ? +(r.avgRating / r.ratingCount).toFixed(1) : 0,
-      sharePercent: totalRevenue > 0 ? +(r.revenue / totalRevenue * 100).toFixed(1) : 0,
-    })).sort((a, b) => b.revenue - a.revenue);
+    const marketShare = Object.values(restaurantRevenue).map(r => {
+      const commission = parseFloat((r.subtotal * r.commissionRate / 100).toFixed(2));
+      return {
+        ...r,
+        mawejaCommission: commission,
+        restaurantNet: parseFloat((r.subtotal - commission).toFixed(2)),
+        avgRating: r.ratingCount > 0 ? +(r.avgRating / r.ratingCount).toFixed(1) : 0,
+        sharePercent: totalRevenue > 0 ? +(r.revenue / totalRevenue * 100).toFixed(1) : 0,
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
 
     // Client insights: preferences, frequency, revenue contribution
     const clientInsights = clients.map(c => {

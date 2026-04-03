@@ -2,8 +2,8 @@ const STATUS_FR: Record<string, string> = {
   pending: "En attente",
   confirmed: "Confirmée ✅",
   preparing: "En préparation 👨‍🍳",
-  ready: "Prête - Livreur en route 🛵",
-  picked_up: "Récupérée par le livreur 🛵",
+  ready: "Prête - Agent en route 🛵",
+  picked_up: "Récupérée par l'agent 🛵",
   delivered: "Livrée ! 🎉",
   cancelled: "Annulée ❌",
 };
@@ -136,7 +136,7 @@ export function handleWSEvent(data: any) {
     }
     case "order_assigned": {
       if (!notifOrders) return;
-      showNotif("🛵 MAWEJA – Livreur", "Un livreur a été assigné à votre commande !");
+      showNotif("🛵 MAWEJA – Agent", "Un agent a été assigné à votre commande !");
       break;
     }
     case "new_order": {
@@ -174,7 +174,7 @@ export function handleWSEvent(data: any) {
       showNotif("⚠️ MAWEJA – Vérification", "Des corrections sont requises sur votre profil.");
       break;
     case "driver_verification":
-      showNotif("📋 MAWEJA – Admin", "Un livreur a soumis ses documents pour vérification");
+      showNotif("📋 MAWEJA – Admin", "Un agent a soumis ses documents pour vérification");
       break;
     case "new_user":
       showNotif("👤 MAWEJA – Admin", "Un nouvel utilisateur s'est inscrit");

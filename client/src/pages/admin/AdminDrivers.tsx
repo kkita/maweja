@@ -142,7 +142,7 @@ export default function AdminDrivers() {
     const newVal = hideFeesFromDrivers ? "false" : "true";
     await apiRequest("/api/settings/hideDeliveryFees", { method: "PUT", body: JSON.stringify({ value: newVal }) });
     queryClient.invalidateQueries({ queryKey: ["/api/settings", "hideDeliveryFees"] });
-    toast({ title: newVal === "true" ? "Frais masqués pour les livreurs" : "Frais visibles pour les livreurs" });
+    toast({ title: newVal === "true" ? "Frais masqués pour les agents" : "Frais visibles pour les agents" });
   };
 
   const { data: drivers = [] } = useQuery<any[]>({
@@ -264,7 +264,7 @@ export default function AdminDrivers() {
         body: JSON.stringify({ driverId, status: "confirmed" }),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      toast({ title: "Livreur attribue" });
+      toast({ title: "Agent attribue" });
       setAssigningOrderId(null);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -277,11 +277,11 @@ export default function AdminDrivers() {
         const { password, ...updateData } = form;
         const payload = password ? { ...updateData, password } : updateData;
         await apiRequest(`/api/drivers/${editingDriver.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-        toast({ title: "Livreur mis a jour" });
+        toast({ title: "Agent mis a jour" });
       } else {
         if (!form.password) { toast({ title: "Mot de passe requis", variant: "destructive" }); return; }
         await apiRequest("/api/drivers", { method: "POST", body: JSON.stringify(form) });
-        toast({ title: "Livreur ajoute!" });
+        toast({ title: "Agent ajoute!" });
       }
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
       setShowForm(false);
@@ -293,14 +293,14 @@ export default function AdminDrivers() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Supprimer ce livreur definitivement ?")) return;
+    if (!confirm("Supprimer cet agent definitivement ?")) return;
     try {
       await apiRequest(`/api/drivers/${id}`, { method: "DELETE" });
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
       if (selectedDriver?.id === id) setSelectedDriver(null);
-      toast({ title: "Livreur supprime" });
+      toast({ title: "Agent supprime" });
     } catch (err: any) {
-      toast({ title: "Erreur", description: err?.message || "Impossible de supprimer le livreur", variant: "destructive" });
+      toast({ title: "Erreur", description: err?.message || "Impossible de supprimer l'agent", variant: "destructive" });
     }
   };
 
@@ -308,9 +308,9 @@ export default function AdminDrivers() {
     try {
       await apiRequest(`/api/drivers/${id}/block`, { method: "PATCH", body: JSON.stringify({ isBlocked: !isBlocked }) });
       queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-      toast({ title: isBlocked ? "Livreur debloque" : "Livreur bloque" });
+      toast({ title: isBlocked ? "Agent debloque" : "Agent bloque" });
     } catch (err: any) {
-      toast({ title: "Erreur", description: err?.message || "Impossible de modifier le statut du livreur", variant: "destructive" });
+      toast({ title: "Erreur", description: err?.message || "Impossible de modifier le statut de l'agent", variant: "destructive" });
     }
   };
 
@@ -326,7 +326,7 @@ export default function AdminDrivers() {
         method: "POST",
         body: JSON.stringify({ reason: alarmReason || "Urgence - Contactez l'administration immediatement" }),
       });
-      toast({ title: "Alarme envoyee", description: "Le livreur a ete alerte" });
+      toast({ title: "Alarme envoyee", description: "L'agent a ete alerte" });
       setShowAlarmModal(null);
       setAlarmReason("");
     } catch (err: any) {
@@ -468,7 +468,7 @@ export default function AdminDrivers() {
                     </button>
                   ))}
                   {availableDriversForAssign.length === 0 && (
-                    <p className="text-[10px] text-gray-400 text-center py-2">Aucun livreur disponible</p>
+                    <p className="text-[10px] text-gray-400 text-center py-2">Aucun agent disponible</p>
                   )}
                 </div>
                 <button onClick={() => setAssigningOrderId(null)} className="text-[10px] text-gray-500 hover:text-gray-700">Annuler</button>
@@ -476,7 +476,7 @@ export default function AdminDrivers() {
             ) : (
               <button onClick={() => setAssigningOrderId(order.id)} data-testid={`button-assign-order-${order.id}`}
                 className="w-full py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5">
-                <User size={12} /> Attribuer un livreur
+                <User size={12} /> Attribuer un agent
               </button>
             )}
           </div>
@@ -528,7 +528,7 @@ export default function AdminDrivers() {
                           <Truck size={14} className="text-orange-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-gray-900 truncate">{driver?.name || `Livreur #${driverId}`}</p>
+                          <p className="font-bold text-sm text-gray-900 truncate">{driver?.name || `Agent #${driverId}`}</p>
                           <p className="text-[10px] text-gray-500 dark:text-gray-400">{driver?.phone} - {driver?.vehicleType || "Moto"}</p>
                         </div>
                         <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-lg">{driverOrders.length} commande(s)</span>
@@ -611,12 +611,12 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-free">Livreurs disponibles ({freeDrivers.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-free">Agents disponibles ({freeDrivers.length})</h2>
             </div>
             {freeDrivers.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <Truck size={36} className="mx-auto mb-3 opacity-20" />
-                <p className="text-sm font-medium">Aucun livreur disponible</p>
+                <p className="text-sm font-medium">Aucun agent disponible</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -630,12 +630,12 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-busy">Livreurs occupes ({busyDrivers.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-busy">Agents occupes ({busyDrivers.length})</h2>
             </div>
             {busyDrivers.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <Truck size={36} className="mx-auto mb-3 opacity-20" />
-                <p className="text-sm font-medium">Aucun livreur occupe</p>
+                <p className="text-sm font-medium">Aucun agent occupe</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -695,12 +695,12 @@ export default function AdminDrivers() {
         return (
           <div>
             <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-offline">Livreurs hors ligne ({offlineDrivers.length})</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white" data-testid="tab-title-offline">Agents hors ligne ({offlineDrivers.length})</h2>
             </div>
             {offlineDrivers.length === 0 ? (
               <div className="text-center py-16 text-gray-400">
                 <Truck size={36} className="mx-auto mb-3 opacity-20" />
-                <p className="text-sm font-medium">Tous les livreurs sont en ligne</p>
+                <p className="text-sm font-medium">Tous les agents sont en ligne</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -716,7 +716,7 @@ export default function AdminDrivers() {
   };
 
   return (
-    <AdminLayout title="Gestion des livreurs">
+    <AdminLayout title="Gestion des agents">
       <div className="mb-4 overflow-x-auto -mx-2 px-2">
         <div className="flex gap-1.5 min-w-max">
           {dispatchTabs.map(tab => (
@@ -742,7 +742,7 @@ export default function AdminDrivers() {
       <div className="flex items-center justify-between bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 px-4 py-3 mb-4">
         <div>
           <p className="text-sm font-bold text-gray-900 dark:text-white">Masquer frais de livraison</p>
-          <p className="text-[10px] text-gray-500">Les livreurs ne verront pas leurs gains</p>
+          <p className="text-[10px] text-gray-500">Les agents ne verront pas leurs gains</p>
         </div>
         <button
           onClick={toggleHideFees}
@@ -794,7 +794,7 @@ export default function AdminDrivers() {
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={() => { setShowForm(false); setEditingDriver(null); }}>
               <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 10000 }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-base">{editingDriver ? "Modifier le livreur" : "Nouveau livreur"}</h3>
+                  <h3 className="font-bold text-base">{editingDriver ? "Modifier l'agent" : "Nouvel agent"}</h3>
                   <button onClick={() => { setShowForm(false); setEditingDriver(null); }} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -828,7 +828,7 @@ export default function AdminDrivers() {
                 <div className="flex gap-2 mt-5">
                   <button onClick={handleSave} data-testid="button-save-driver"
                     className="flex-1 bg-red-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200">
-                    {editingDriver ? "Mettre a jour" : "Creer le livreur"}
+                    {editingDriver ? "Mettre a jour" : "Creer l'agent"}
                   </button>
                   <button onClick={() => { setShowForm(false); setEditingDriver(null); }} className="px-5 py-2.5 bg-gray-100 rounded-xl text-sm font-semibold text-gray-600">Annuler</button>
                 </div>
@@ -1034,7 +1034,7 @@ export default function AdminDrivers() {
                 <div className="flex-1 flex items-center justify-center p-6">
                   <div className="text-center text-gray-400">
                     <Truck size={32} className="mx-auto mb-2 opacity-20" />
-                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Selectionnez un livreur</p>
+                    <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Selectionnez un agent</p>
                     <p className="text-[10px] mt-1">dans la liste pour voir ses details</p>
                   </div>
                 </div>
@@ -1089,7 +1089,7 @@ export default function AdminDrivers() {
             <div className={`${mobilePanel === "list" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden`}>
               <div className="p-3 border-b border-gray-100 dark:border-gray-800 space-y-2 shrink-0">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-gray-900 dark:text-white">Livreurs ({filteredDrivers.length})</h3>
+                  <h3 className="font-bold text-sm text-gray-900 dark:text-white">Agents ({filteredDrivers.length})</h3>
                   <button onClick={() => { setShowForm(true); setEditingDriver(null); setForm({ name: "", email: "", phone: "", password: "", vehicleType: "moto", vehiclePlate: "", driverLicense: "", commissionRate: 15 }); }}
                     data-testid="button-add-driver" className="bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-700 shadow-lg shadow-red-200">
                     <Plus size={14} />
@@ -1167,7 +1167,7 @@ export default function AdminDrivers() {
                 {filteredDrivers.length === 0 && (
                   <div className="text-center py-12 text-gray-400">
                     <Truck size={28} className="mx-auto mb-2 opacity-20" />
-                    <p className="text-xs font-medium">Aucun livreur trouve</p>
+                    <p className="text-xs font-medium">Aucun agent trouve</p>
                   </div>
                 )}
               </div>

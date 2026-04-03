@@ -57,7 +57,7 @@ function ProgressBar({ value, max, color = "bg-red-500", delay = 0 }: { value: n
 const QUICK_ACTIONS = [
   { label: "Commandes", icon: ShoppingBag, gradient: "from-red-500 to-red-600", href: "/admin/orders" },
   { label: "Restaurants", icon: Store, gradient: "from-orange-500 to-red-500", href: "/admin/restaurants" },
-  { label: "Livreurs", icon: Truck, gradient: "from-red-600 to-red-800", href: "/admin/drivers" },
+  { label: "Agents", icon: Truck, gradient: "from-red-600 to-red-800", href: "/admin/drivers" },
   { label: "Services", icon: Layers, gradient: "from-red-400 to-red-600", href: "/admin/services" },
   { label: "Finance", icon: Wallet, gradient: "from-red-700 to-red-900", href: "/admin/finance" },
   { label: "Promotions", icon: Tag, gradient: "from-orange-400 to-red-500", href: "/admin/promotions" },
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
           {[
             { label: "Commandes du jour", value: todayOrders, icon: ShoppingBag, accent: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20", sub: `${totalOrders} au total` },
             { label: "Revenu du jour", value: formatPrice(todayRevenue), icon: DollarSign, accent: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/20", isStr: true, sub: formatPrice(Number(stats?.orders?.revenue) || 0) + " total" },
-            { label: "Livreurs en ligne", value: `${driversOnline}/${driversTotal}`, icon: Truck, accent: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20", isStr: true, sub: `${driversTotal} inscrits` },
+            { label: "Agents en ligne", value: `${driversOnline}/${driversTotal}`, icon: Truck, accent: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20", isStr: true, sub: `${driversTotal} inscrits` },
             { label: "Clients actifs", value: Number(stats?.clients?.total) || 0, icon: Users, accent: "text-red-600", bg: "bg-red-50 dark:bg-red-950/20", sub: `${restaurantsActive} restaurants` },
           ].map((card, i) => (
             <div
