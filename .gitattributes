@@ -6,3 +6,12 @@ attached_assets/maweja_1774429260825.rar filter=lfs diff=lfs merge=lfs -text
 MAWEJA_COMPLET_v18.zip filter=lfs diff=lfs merge=lfs -text
 MAWEJA_PROJECT.zip filter=lfs diff=lfs merge=lfs -text
 ziujPVZy filter=lfs diff=lfs merge=lfs -text
+ziPJUCbD filter=lfs diff=lfs merge=lfs -text
+maweja-project.zip filter=lfs diff=lfs merge=lfs -text
+maweja-complet.zip filter=lfs diff=lfs merge=lfs -text
+
+# Force binary tracking for all PNG icons — ensures GitHub detects changes
+*.png binary
+*.PNG binary
+*.jpg binary
+*.jpeg binary
