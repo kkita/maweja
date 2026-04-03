@@ -2,7 +2,7 @@ import { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.edcorp.maweja.driver",
-  appName: "MAWEJA Driver",
+  appName: "MAWEJA Agent",
   webDir: "www",
   server: {
     androidScheme: "https",

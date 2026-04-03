@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# MAWEJA DRIVER APP — Build Capacitor
+# MAWEJA AGENT APP — Build Capacitor
 # Package ID : com.edcorp.maweja.driver
 # Plateformes : Android UNIQUEMENT (pas d'iOS)
 # ============================================================
@@ -10,7 +10,7 @@
 set -e
 
 echo "================================================"
-echo "   MAWEJA DRIVER — com.edcorp.maweja.driver"
+echo "   MAWEJA AGENT — com.edcorp.maweja.driver"
 echo "   Plateforme : Android uniquement"
 echo "================================================"
 
@@ -59,7 +59,7 @@ fi
 # ---- 4. Instructions ----
 echo ""
 echo "================================================"
-echo "   BUILD DRIVER TERMINÉ"
+echo "   BUILD AGENT TERMINÉ"
 echo "================================================"
 echo ""
 echo "Android APK :"
@@ -70,6 +70,6 @@ echo "APK output : mobile/driver/android/app/build/outputs/apk/"
 echo "Package ID : com.edcorp.maweja.driver"
 echo "================================================"
 echo ""
-echo "NOTE: L'app Driver est Android uniquement."
+echo "NOTE: L'app Agent est Android uniquement."
 echo "      Aucune publication iOS prévue."
 echo "================================================"
