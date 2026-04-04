@@ -3,7 +3,7 @@ import { useRoute, useLocation } from "wouter";
 import { useCart } from "../../lib/cart";
 import { authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { ArrowLeft, Star, Clock, MapPin, Plus, ShoppingBag, Minus, Play, ChefHat } from "lucide-react";
+import { ArrowLeft, Star, Clock, Plus, ShoppingBag, Minus, Play, ChefHat } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import { useState, useRef } from "react";
 import type { Restaurant, MenuItem } from "@shared/schema";
@@ -80,7 +80,6 @@ export default function RestaurantPage() {
             <span className="flex items-center gap-1 text-sm"><Star size={14} className="fill-yellow-400 text-yellow-400" /> {restaurant?.rating}</span>
             <span className="flex items-center gap-1 text-sm" data-testid="restaurant-prep-time"><ChefHat size={14} /> {restaurant?.prepTime || restaurant?.deliveryTime}</span>
             <span className="flex items-center gap-1 text-sm"><Clock size={14} /> {restaurant?.deliveryTime}</span>
-            <span className="flex items-center gap-1 text-sm"><MapPin size={14} /> {restaurant?.address?.split(",")[0]}</span>
           </div>
         </div>
       </div>

@@ -47,6 +47,12 @@ const uploadMedia = multer({
   },
 });
 
+function buildUploadUrl(req: any, filename: string): string {
+  const proto = (req.headers["x-forwarded-proto"] as string)?.split(",")[0].trim() || req.protocol || "https";
+  const host = (req.headers["x-forwarded-host"] as string)?.split(",")[0].trim() || req.get("host") || "localhost:5000";
+  return `${proto}://${host}/uploads/${filename}`;
+}
+
 async function uploadToCloudStorage(localFilePath: string, filename: string, contentType: string): Promise<string> {
   const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
   if (!bucketId) {
@@ -230,8 +236,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth
   app.post("/api/auth/login", async (req, res) => {
     const { email, password, expectedRole } = req.body;
-    if (!email || !password) return res.status(400).json({ message: "Email et mot de passe requis" });
-    const user = await storage.getUserByEmail(email);
+    if (!email || !password) return res.status(400).json({ message: "Email ou telephone et mot de passe requis" });
+    const isEmail = email.includes("@");
+    const user = isEmail
+      ? await storage.getUserByEmail(email)
+      : await storage.getUserByPhone(email);
     if (!user || user.password !== password) {
       return res.status(401).json({ message: "Email ou mot de passe incorrect" });
     }
@@ -1797,14 +1806,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/advertisements", requireAdmin, uploadMedia.single("media"), async (req, res) => {
-    const existingAds = await storage.getAdvertisements(true);
-    if (existingAds.length >= 5) {
-      return res.status(400).json({ message: "Maximum 5 publicites actives autorisees" });
+    try {
+      const existingAds = await storage.getAdvertisements(true);
+      if (existingAds.length >= 5) {
+        return res.status(400).json({ message: "Maximum 5 publicites actives autorisees" });
+      }
+      let mediaUrl = req.body.mediaUrl || "";
+      if (req.file) mediaUrl = buildUploadUrl(req, req.file.filename);
+      if (!mediaUrl) return res.status(400).json({ message: "Une image ou video est requise" });
+      const ad = await storage.createAdvertisement({
+        title: req.body.title || "Publicite",
+        mediaUrl,
+        mediaType: req.body.mediaType || "image",
+        linkUrl: req.body.linkUrl || null,
+        isActive: req.body.isActive !== "false",
+        sortOrder: Number(req.body.sortOrder) || 0,
+      });
+      res.json(ad);
+    } catch (err: any) {
+      console.error("Erreur creation publicite:", err);
+      res.status(500).json({ message: err?.message || "Erreur lors de la creation de la publicite" });
     }
-    let mediaUrl = req.body.mediaUrl || "";
-    if (req.file) mediaUrl = buildUploadUrl(req, req.file.filename);
-    const ad = await storage.createAdvertisement({ ...req.body, mediaUrl });
-    res.json(ad);
   });
 
   app.patch("/api/advertisements/:id", requireAdmin, uploadMedia.single("media"), async (req, res) => {

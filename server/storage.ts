@@ -128,6 +128,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByPhone(phone: string) {
+    const [user] = await db.select().from(users).where(eq(users.phone, phone));
+    return user;
+  }
   async getUserByEmail(email: string) {
     const [user] = await db.select().from(users).where(eq(users.email, email));
     return user;

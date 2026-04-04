@@ -1,18 +1,56 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import AdminLayout from "../../components/AdminLayout";
 import { onWSMessage } from "../../lib/websocket";
 import { queryClient, authFetchJson } from "../../lib/queryClient";
-import { useToast } from "../../hooks/use-toast";
 import { useI18n } from "../../lib/i18n";
 import {
-  Package, Truck, Users, DollarSign, TrendingUp, Store, UtensilsCrossed,
+  Package, Truck, Users, DollarSign, Store, TrendingUp, UtensilsCrossed,
   Activity, ChevronRight, ShoppingBag, Layers, AlertCircle, ArrowRight,
-  CircleDot, Wallet, Tag,
+  CircleDot, Wallet, Tag, Bell, BellRing, X, CheckCheck, ShoppingCart, Wrench,
 } from "lucide-react";
 import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/utils";
 import type { Order } from "@shared/schema";
+
+interface Notif {
+  id: string;
+  title: string;
+  description: string;
+  type: "order" | "service";
+  time: Date;
+  read: boolean;
+  href: string;
+}
+
+function playNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const notes = [880, 1100, 1320];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.13;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.4, t + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      osc.start(t);
+      osc.stop(t + 0.22);
+    });
+  } catch (_) {}
+}
+
+function timeAgo(date: Date): string {
+  const sec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (sec < 60) return "À l'instant";
+  if (sec < 3600) return `il y a ${Math.floor(sec / 60)} min`;
+  if (sec < 86400) return `il y a ${Math.floor(sec / 3600)} h`;
+  return `il y a ${Math.floor(sec / 86400)} j`;
+}
 
 function AnimatedNumber({ value }: { value: number }) {
   const [display, setDisplay] = useState(0);
@@ -64,10 +102,16 @@ const QUICK_ACTIONS = [
 ];
 
 export default function AdminDashboard() {
-  const { toast } = useToast();
   const { t } = useI18n();
   const [, navigate] = useLocation();
   const [loaded, setLoaded] = useState(false);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [notifRinging, setNotifRinging] = useState(false);
+  const ringTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const unreadCount = notifs.filter(n => !n.read).length;
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("fr-CD", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -78,6 +122,16 @@ export default function AdminDashboard() {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        setPanelOpen(false);
+      }
+    }
+    if (panelOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [panelOpen]);
+
   const { data: stats } = useQuery<any>({ queryKey: ["/api/dashboard/stats"] });
   const { data: recentOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
@@ -87,8 +141,37 @@ export default function AdminDashboard() {
   useEffect(() => {
     return onWSMessage((data) => {
       if (data.type === "new_order") {
-        toast({ title: "Nouvelle commande !", description: `Commande ${data.order?.orderNumber}` });
+        playNotifSound();
+        setNotifRinging(true);
+        if (ringTimerRef.current) clearTimeout(ringTimerRef.current);
+        ringTimerRef.current = setTimeout(() => setNotifRinging(false), 3000);
+        const num = data.order?.orderNumber ? `#${data.order.orderNumber}` : "";
+        setNotifs(prev => [{
+          id: crypto.randomUUID(),
+          title: "Nouvelle commande",
+          description: `Commande ${num} reçue`,
+          type: "order",
+          time: new Date(),
+          read: false,
+          href: "/admin/orders",
+        }, ...prev].slice(0, 50));
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      }
+      if (data.type === "new_service_request") {
+        playNotifSound();
+        setNotifRinging(true);
+        if (ringTimerRef.current) clearTimeout(ringTimerRef.current);
+        ringTimerRef.current = setTimeout(() => setNotifRinging(false), 3000);
+        setNotifs(prev => [{
+          id: crypto.randomUUID(),
+          title: "Nouvelle demande de service",
+          description: data.request?.serviceType || "Un client a fait une demande",
+          type: "service",
+          time: new Date(),
+          read: false,
+          href: "/admin/services",
+        }, ...prev].slice(0, 50));
         queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       }
       if (data.type === "order_updated") {
@@ -96,7 +179,18 @@ export default function AdminDashboard() {
         queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       }
     });
-  }, [toast]);
+  }, []);
+
+  function dismissOne(id: string) {
+    setNotifs(prev => prev.filter(n => n.id !== id));
+  }
+  function markAllRead() {
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+  }
+  function clearAll() {
+    setNotifs([]);
+    setPanelOpen(false);
+  }
 
   const todayOrders = Number(stats?.orders?.todayOrders) || 0;
   const todayRevenue = Number(stats?.orders?.todayRevenue) || 0;
@@ -124,6 +218,121 @@ export default function AdminDashboard() {
             </div>
             <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">Vue d'ensemble</h2>
             <p className="text-xs text-gray-400 dark:text-gray-600 mt-0.5">Plateforme MAWEJA • Kinshasa, RDC</p>
+          </div>
+          <div className="relative" ref={panelRef}>
+            <button
+              onClick={() => {
+                setPanelOpen(o => !o);
+                if (!panelOpen) setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+              }}
+              data-testid="button-notifications-bell"
+              className="relative flex items-center justify-center w-11 h-11 rounded-2xl bg-white dark:bg-[#141417] border border-gray-100 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-800 transition-all shadow-sm"
+              title="Notifications"
+            >
+              {notifRinging
+                ? <BellRing size={20} className="text-red-600 animate-bounce" />
+                : <Bell size={20} className={unreadCount > 0 ? "text-red-600" : "text-gray-400"} />
+              }
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-600 text-white text-[10px] font-black rounded-full flex items-center justify-center" data-testid="notif-badge-count">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {panelOpen && (
+              <div
+                className="absolute right-0 top-13 mt-2 w-80 bg-white dark:bg-[#1a1a1f] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden"
+                data-testid="notif-panel"
+              >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-2">
+                    <Bell size={15} className="text-red-600" />
+                    <span className="font-bold text-sm text-gray-900 dark:text-white">Notifications</span>
+                    {notifs.length > 0 && (
+                      <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">{notifs.length}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {notifs.length > 0 && (
+                      <>
+                        <button
+                          onClick={markAllRead}
+                          title="Tout marquer comme lu"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors"
+                          data-testid="notif-mark-all-read"
+                        >
+                          <CheckCheck size={14} />
+                        </button>
+                        <button
+                          onClick={clearAll}
+                          title="Tout effacer"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                          data-testid="notif-clear-all"
+                        >
+                          <X size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="max-h-96 overflow-y-auto">
+                  {notifs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-10 gap-2">
+                      <Bell size={28} className="text-gray-200 dark:text-gray-700" />
+                      <p className="text-xs text-gray-400 font-medium">Aucune notification</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-50 dark:divide-gray-800/50">
+                      {notifs.map(n => (
+                        <div
+                          key={n.id}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors group cursor-pointer ${!n.read ? "bg-red-50/40 dark:bg-red-950/10" : ""}`}
+                          onClick={() => { navigate(n.href); setPanelOpen(false); }}
+                          data-testid={`notif-item-${n.id}`}
+                        >
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${n.type === "order" ? "bg-red-50 dark:bg-red-950/30" : "bg-orange-50 dark:bg-orange-950/30"}`}>
+                            {n.type === "order"
+                              ? <ShoppingCart size={14} className="text-red-600" />
+                              : <Wrench size={14} className="text-orange-600" />
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className={`text-xs font-bold truncate ${!n.read ? "text-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>{n.title}</p>
+                              {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />}
+                            </div>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate mt-0.5">{n.description}</p>
+                            <p className="text-[10px] text-gray-300 dark:text-gray-600 mt-1">{timeAgo(n.time)}</p>
+                          </div>
+                          <button
+                            onClick={e => { e.stopPropagation(); dismissOne(n.id); }}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all flex-shrink-0"
+                            data-testid={`notif-dismiss-${n.id}`}
+                            title="Supprimer"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {notifs.length > 0 && (
+                  <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800">
+                    <button
+                      onClick={() => { navigate("/admin/orders"); setPanelOpen(false); }}
+                      className="w-full text-xs font-semibold text-red-600 hover:text-red-700 flex items-center justify-center gap-1.5 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                      data-testid="notif-see-orders"
+                    >
+                      Voir toutes les commandes <ChevronRight size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

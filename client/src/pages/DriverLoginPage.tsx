@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Truck, Navigation, DollarSign, Clock } from "lucide-react";
+import { Eye, EyeOff, Phone, Lock, ArrowRight, Shield, Truck, Navigation, DollarSign, Clock } from "lucide-react";
 const logoImg = "/maweja-agent-icon-512.png";
 
 export default function DriverLoginPage() {
   const { login } = useAuth();
   const [, navigate] = useLocation();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function DriverLoginPage() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password, "driver");
+      await login(identifier, password, "driver");
       navigate("/");
     } catch (err: any) {
       setError(err.message || "Une erreur est survenue");
@@ -110,8 +110,8 @@ export default function DriverLoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="relative">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input type="email" placeholder="Adresse email" value={email} onChange={e => setEmail(e.target.value)}
+                <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input type="text" placeholder="Email ou numéro de téléphone" value={identifier} onChange={e => setIdentifier(e.target.value)}
                   data-testid="driver-input-email" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500" required />
               </div>
 

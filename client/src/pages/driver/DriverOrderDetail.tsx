@@ -380,6 +380,12 @@ export default function DriverOrderDetail() {
                 </div>
                 <span className="font-semibold text-gray-700 dark:text-gray-200">{formatPrice(order.deliveryFee)}</span>
               </div>
+              {Number(order.taxAmount) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Frais de service</span>
+                  <span className="font-semibold text-gray-700 dark:text-gray-200">{formatPrice(order.taxAmount)}</span>
+                </div>
+              )}
               {order.promoDiscount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-green-600">Réduction promo</span>

@@ -143,7 +143,7 @@ export default function BoutiquesPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{b.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{b.cuisine} • {b.address}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{b.cuisine}</p>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="flex items-center gap-0.5 text-xs text-gray-600 dark:text-gray-300">
                         <Star size={11} className="text-yellow-500 fill-yellow-500" /> {b.rating}
