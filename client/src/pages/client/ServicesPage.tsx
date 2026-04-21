@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import { useAuth } from "../../lib/auth";
 import { useI18n } from "../../lib/i18n";
-import { authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
+import { authFetch, authFetchJson, resolveImg, STALE } from "../../lib/queryClient";
 import {
   Hotel, Car, Sparkles, Package, PartyPopper, Wrench, Bike, HelpCircle,
   Briefcase, ChevronRight, Clock, CheckCircle, AlertCircle, Loader2, ArrowLeft, Image, Scissors, X
@@ -36,16 +36,19 @@ export default function ServicesPage() {
 
   const { data: categories = [], isLoading: catsLoading } = useQuery<ServiceCategory[]>({
     queryKey: ["/api/service-categories"],
+    staleTime: STALE.static,
   });
 
   const { data: myRequests = [], isLoading: reqsLoading } = useQuery<ServiceRequest[]>({
     queryKey: ["/api/service-requests"],
     queryFn: () => authFetchJson("/api/service-requests"),
     enabled: !!user,
+    refetchInterval: 20000,
   });
 
   const { data: allCatalogItems = [] } = useQuery<ServiceCatalogItem[]>({
     queryKey: ["/api/service-catalog"],
+    staleTime: STALE.static,
   });
 
   const activeCategories = categories.filter(c => c.isActive);

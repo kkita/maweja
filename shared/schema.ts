@@ -123,6 +123,13 @@ export const orders = pgTable("orders", {
   deliveryZone: text("delivery_zone"),
   deviceType: text("device_type").default("web"),
   auditLog: jsonb("audit_log"),
+  driverAccepted: boolean("driver_accepted").notNull().default(false),
+  refusalReason: text("refusal_reason"),
+  loyaltyPointsAwarded: boolean("loyalty_points_awarded").notNull().default(false),
+  loyaltyCreditId: integer("loyalty_credit_id"),
+  loyaltyCreditDiscount: doublePrecision("loyalty_credit_discount").notNull().default(0),
+  adminRemarks: jsonb("admin_remarks"),
+  orderModifications: jsonb("order_modifications"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -144,7 +151,9 @@ export const chatMessages = pgTable("chat_messages", {
   senderId: integer("sender_id").notNull(),
   receiverId: integer("receiver_id").notNull(),
   orderId: integer("order_id"),
-  message: text("message").notNull(),
+  message: text("message").notNull().default(""),
+  fileUrl: text("file_url"),
+  fileType: text("file_type"),
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -193,6 +202,7 @@ export const serviceCategories = pgTable("service_categories", {
   sortOrder: integer("sort_order").notNull().default(0),
   serviceTypes: text("service_types").array().default([]),
   customFields: jsonb("custom_fields").default([]),
+  showBudget: boolean("show_budget").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -366,3 +376,52 @@ export const deliveryZones = pgTable("delivery_zones", {
 export const insertDeliveryZoneSchema = createInsertSchema(deliveryZones).omit({ id: true });
 export type DeliveryZone = typeof deliveryZones.$inferSelect;
 export type InsertDeliveryZone = z.infer<typeof insertDeliveryZoneSchema>;
+
+export const menuItemCategories = pgTable("menu_item_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  storeType: text("store_type").notNull().default("restaurant"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertMenuItemCategorySchema = createInsertSchema(menuItemCategories).omit({ id: true });
+export type MenuItemCategory = typeof menuItemCategories.$inferSelect;
+export type InsertMenuItemCategory = z.infer<typeof insertMenuItemCategorySchema>;
+
+export const loyaltyCredits = pgTable("loyalty_credits", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  amount: doublePrecision("amount").notNull().default(10),
+  pointsConverted: integer("points_converted").notNull().default(1000),
+  sourceOrderId: integer("source_order_id"),
+  isUsed: boolean("is_used").notNull().default(false),
+  usedOnOrderId: integer("used_on_order_id"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertLoyaltyCreditSchema = createInsertSchema(loyaltyCredits).omit({ id: true, createdAt: true });
+export type LoyaltyCredit = typeof loyaltyCredits.$inferSelect;
+export type InsertLoyaltyCredit = z.infer<typeof insertLoyaltyCreditSchema>;
+
+export const passwordResetRequests = pgTable("password_reset_requests", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  userName: text("user_name").notNull(),
+  userRole: text("user_role").notNull(),
+  userEmail: text("user_email"),
+  userPhone: text("user_phone"),
+  status: text("status").notNull().default("pending"),
+  requestType: text("request_type").notNull().default("chat"),
+  token: text("token"),
+  tokenExpiry: timestamp("token_expiry"),
+  message: text("message"),
+  adminNote: text("admin_note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertPasswordResetRequestSchema = createInsertSchema(passwordResetRequests).omit({ id: true, createdAt: true, resolvedAt: true });
+export type PasswordResetRequest = typeof passwordResetRequests.$inferSelect;
+export type InsertPasswordResetRequest = z.infer<typeof insertPasswordResetRequestSchema>;

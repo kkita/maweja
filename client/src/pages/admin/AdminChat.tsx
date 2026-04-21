@@ -2,13 +2,66 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, queryClient, authFetchJson } from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetchJson, authFetch, resolveImg } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
-import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare, Phone, Info, Clock } from "lucide-react";
+import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare, Phone, Info, Clock, Paperclip, Download, FileText, Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import type { ChatMessage, User as UserType } from "@shared/schema";
 
 type SafeUser = Omit<UserType, "password">;
+
+function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
+  const fileUrl = (msg as any).fileUrl;
+  const fileType = (msg as any).fileType;
+  if (!fileUrl) return null;
+
+  const resolvedUrl = resolveImg(fileUrl);
+  const fileName = fileUrl.split("/").pop() || "fichier";
+
+  if (fileType === "image") {
+    return (
+      <div className="mt-1.5">
+        <img
+          src={resolvedUrl}
+          alt="Image partagée"
+          className="rounded-xl max-w-[220px] max-h-[200px] object-cover cursor-pointer"
+          onClick={() => window.open(resolvedUrl, "_blank")}
+        />
+        <a
+          href={resolvedUrl}
+          download
+          target="_blank"
+          rel="noreferrer"
+          className={`flex items-center gap-1 mt-1 text-[10px] font-semibold underline ${isMe ? "text-red-200" : "text-blue-500"}`}
+        >
+          <Download size={10} /> Télécharger
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`mt-1.5 flex items-center gap-2 px-3 py-2 rounded-xl ${isMe ? "bg-red-700" : "bg-gray-100 dark:bg-gray-700"}`}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800" : "bg-blue-100 dark:bg-blue-900/40"}`}>
+        <FileText size={16} className={isMe ? "text-red-200" : "text-blue-600"} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[11px] font-bold truncate ${isMe ? "text-white" : "text-gray-800 dark:text-white"}`}>Document PDF</p>
+        <p className={`text-[9px] truncate ${isMe ? "text-red-200" : "text-gray-400"}`}>{fileName}</p>
+      </div>
+      <a
+        href={resolvedUrl}
+        download
+        target="_blank"
+        rel="noreferrer"
+        className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800 text-red-100 hover:bg-red-900" : "bg-blue-50 dark:bg-blue-900/40 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/60"} transition-colors`}
+        title="Télécharger"
+      >
+        <Download size={13} />
+      </a>
+    </div>
+  );
+}
 
 export default function AdminChat() {
   const { user } = useAuth();
@@ -17,8 +70,10 @@ export default function AdminChat() {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"drivers" | "clients">("drivers");
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: drivers = [] } = useQuery<SafeUser[]>({
     queryKey: ["/api/chat/users-by-role", "driver"],
@@ -89,6 +144,33 @@ export default function AdminChat() {
         description: err?.message || "Impossible d'envoyer le message. Vérifiez votre connexion.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedContact || !user) return;
+    e.target.value = "";
+
+    setIsUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await authFetch("/api/chat/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Échec de l'envoi du fichier");
+      }
+      const { fileUrl, fileType } = await res.json();
+      await apiRequest("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({ senderId: user.id, receiverId: selectedContact.id, message: "", fileUrl, fileType, isRead: false }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat", user?.id, selectedContact?.id] });
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err?.message || "Échec de l'envoi", variant: "destructive" });
+    } finally {
+      setIsUploadingFile(false);
     }
   };
 
@@ -225,13 +307,15 @@ export default function AdminChat() {
                 {messages.map((msg, idx) => {
                   const isMe = msg.senderId === user?.id;
                   const prevMsg = messages[idx - 1];
-                  const showDay = !prevMsg || formatDay(prevMsg.createdAt) !== formatDay(msg.createdAt);
+                  const showDay = !prevMsg || formatDay(prevMsg.createdAt ?? new Date()) !== formatDay(msg.createdAt ?? new Date());
+                  const hasFile = !!(msg as any).fileUrl;
+                  const hasText = !!(msg as any).message;
                   return (
                     <div key={msg.id} data-testid={`chat-msg-${msg.id}`}>
                       {showDay && (
                         <div className="flex items-center gap-2 my-3">
                           <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                          <span className="text-[10px] font-semibold text-gray-400 px-2">{formatDay(msg.createdAt)}</span>
+                          <span className="text-[10px] font-semibold text-gray-400 px-2">{formatDay(msg.createdAt ?? new Date())}</span>
                           <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
                         </div>
                       )}
@@ -239,8 +323,9 @@ export default function AdminChat() {
                         <div className={`max-w-[72%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
                           isMe ? "bg-red-600 text-white rounded-br-sm" : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-bl-sm border border-gray-100 dark:border-gray-700"
                         }`}>
-                          <p className="leading-relaxed">{msg.message}</p>
-                          <p className={`text-[9px] mt-1.5 ${isMe ? "text-red-200" : "text-gray-400"}`}>{formatTime(msg.createdAt)}</p>
+                          {hasText && <p className="leading-relaxed">{msg.message}</p>}
+                          <FileAttachment msg={msg} isMe={isMe} />
+                          <p className={`text-[9px] mt-1.5 ${isMe ? "text-red-200" : "text-gray-400"}`}>{formatTime(msg.createdAt ?? new Date())}</p>
                         </div>
                       </div>
                     </div>
@@ -250,7 +335,25 @@ export default function AdminChat() {
               </div>
 
               <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.bmp,.svg"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  data-testid="input-chat-file"
+                />
                 <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingFile || !selectedContact}
+                    data-testid="button-chat-attach"
+                    title="Joindre un fichier (PDF ou image)"
+                    className="w-12 h-12 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:hover:bg-blue-950/40 dark:hover:text-blue-400 transition-colors disabled:opacity-40"
+                  >
+                    {isUploadingFile ? <Loader2 size={17} className="animate-spin" /> : <Paperclip size={17} />}
+                  </button>
                   <input ref={inputRef} type="text" value={message}
                     onChange={e => setMessage(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage()}
@@ -262,6 +365,7 @@ export default function AdminChat() {
                     <Send size={17} />
                   </button>
                 </div>
+                <p className="text-[10px] text-gray-400 dark:text-gray-600 mt-1.5 text-center">PDF ou image · max 20 Mo · disponible 5 jours</p>
               </div>
             </>
           ) : (

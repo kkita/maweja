@@ -6,6 +6,9 @@ interface SplashScreenProps {
 }
 
 function removeHtmlSplash() {
+  // Cancel the HTML safety timer if React took over cleanly
+  const w = window as any;
+  if (w.__MAWEJA_SPLASH_TIMER__) { clearTimeout(w.__MAWEJA_SPLASH_TIMER__); w.__MAWEJA_SPLASH_TIMER__ = null; }
   const el = document.getElementById("maweja-native-splash");
   if (el) {
     el.style.transition = "opacity 0.3s ease";
@@ -24,6 +27,8 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
   const hasEnded = useRef(false);
 
   useEffect(() => {
+    // Take over from the HTML splash immediately — React's red overlay covers the same area
+    removeHtmlSplash();
     return () => { mounted.current = false; };
   }, []);
 
@@ -33,7 +38,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
     if (hasChosenLanguage) {
       removeHtmlSplash();
       setFadeOut(true);
-      setTimeout(() => mounted.current && onDone?.(), 400);
+      setTimeout(() => mounted.current && onDone?.(), 350);
     } else {
       removeHtmlSplash();
       setPhase("lang");
@@ -43,17 +48,20 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
 
   useEffect(() => {
     if (phase !== "anim") return;
+    // Returning users: 350ms (just enough to mount cleanly)
+    // New users: 1500ms (show brand animation briefly before language picker)
+    const delay = hasChosenLanguage ? 350 : 1500;
     const timer = setTimeout(() => {
       if (mounted.current && !hasEnded.current) goNext();
-    }, 4000);
+    }, delay);
     return () => clearTimeout(timer);
-  }, [phase, goNext]);
+  }, [phase, goNext, hasChosenLanguage]);
 
   const handleContinue = () => {
     setLang(selectedLang);
     setHasChosenLanguage(true);
     setFadeOut(true);
-    setTimeout(() => onDone?.(), 400);
+    setTimeout(() => onDone?.(), 350);
   };
 
   if (phase === "anim") {
@@ -75,7 +83,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         zIndex: 9999,
         opacity: fadeOut ? 0 : 1,
         transform: fadeOut ? "scale(1.03)" : "scale(1)",
-        transition: "opacity 0.4s ease, transform 0.4s ease",
+        transition: "opacity 0.35s ease, transform 0.35s ease",
       }}
       data-testid="splash-root"
     >

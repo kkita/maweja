@@ -56,9 +56,126 @@ MAWEJA is a production-grade food and service delivery platform designed for Kin
 - **Fixed Service Fee**: A flat $0.76 service fee replaces percentage-based tax per order.
 - **Monetary Values**: All monetary columns use DOUBLE PRECISION (not integer). All prices stored in USD. `formatPrice()` displays 2 decimal places. `formatPaymentMethod()` in `client/src/lib/utils.ts` provides consistent icon+label display for all payment methods across all views (admin, driver, client).
 - **Editable Recipient**: Checkout allows editing recipient name and phone for gifting or ordering for others.
-- **Progressive Order Status**: Order statuses follow an irreversible sequence `pending→confirmed→preparing→ready→picked_up→delivered`. Non-general admins can only advance forward; cancellation/return always allowed. General admins (superadmin or no permissions set) bypass restrictions. Backend validates via `canTransitionStatus()` in server/routes.ts.
+- **Progressive Order Status**: Order statuses follow an irreversible sequence `pending→confirmed→preparing→ready→picked_up→delivered`. Non-general admins can only advance forward; cancellation/return always allowed. General admins (superadmin or no permissions set) bypass restrictions. Backend validates via `canTransitionStatus()` in server/routes/orders.routes.ts.
 - **Custom Form Fields per Service Category**: `service_categories.custom_fields` (jsonb) stores an array of field definitions (text, number, select, textarea, photo, date) with labels, placeholders, required flag, and options. Admin builds fields via drag-and-drop form builder in category modal. Client `ServiceRequestPage` renders fields dynamically and submits values in `additionalInfo` as `[CustomFields:JSON]` pattern. Admin detail modal parses and displays them.
 - **Service Request Admin View**: Detail modal shows contactMethod with colored icon (WhatsApp green, email blue, phone red), phone number prominently, and extracts/displays catalog photos from `[Image: URL]` in additionalInfo.
+
+## Client Mobile Design System (Premium Refonte)
+A complete mobile-first design system was built for all client-facing pages:
+
+**New file `client/src/components/client/ClientUI.tsx`** — reusable mobile components:
+- `MBtn` — mobile button (primary/secondary/ghost/danger/outline), 3 sizes, loading state
+- `MCard` — mobile card wrapper (rounded-[20px], subtle shadow, dark mode)
+- `MSectionHeader` — section title with optional action link
+- `MBadge` — status badge with animated dot (red/green/amber/blue/cyan/gray variants)
+- `MPill` — filter pill (active/inactive, red accent when active)
+- `MEmptyState` — full empty state with icon, title, description, action button
+- `MPageHeader` — sticky page header with back button, title, subtitle, action slot
+- `MTabBar` — segmented tab control
+- `SkeletonPulse` — animated skeleton placeholder
+- `RestaurantCardSkeleton`, `SmallCardSkeleton` — skeleton loaders for card grids
+- `RestaurantCard` — unified card with cover image, logo, rating, delivery time, promo badge
+- `BoutiqueCard` — compact card for horizontal scroll (148px wide)
+- `PromoCard` — promotion card with PROMO badge overlay (162px wide)
+- `ServiceCategoryItem` — service category chip with image/emoji, active ring
+- `BottomSheet` — premium bottom sheet with handle, backdrop blur, slide-up animation
+- `ORDER_STATUS` — centralized order status config (label + badge variant)
+
+**Design tokens:** `bg-[#f4f4f4]` / `bg-[#0a0a0a]` backgrounds, `bg-white` / `bg-[#141414]` surfaces, `#E10000` red accent, `rounded-[20px]` cards, `rounded-[16px]` inputs.
+
+**Refactored pages:**
+- **`ClientNav.tsx`** — 4-tab bottom nav (Accueil, Commandes, Wallet, Profil), premium indicator bar at top of active item, improved address pill, scroll-mode compact search bar
+- **`HomePage.tsx`** — inline search bar, services grid (2-row scroll), promo section, boutiques with category pills, restaurants with food-type pills, skeleton loaders, empty state
+- **`OrdersPage.tsx`** — active orders banner, MTabBar for active/history, OrderCard with progress bar and status badge, empty states per tab
+- **`WalletPage.tsx`** — hero gradient wallet card with balance, loyalty progress bar, credits list, quick stats grid, transaction history with skeleton
+- **`CartPage.tsx`** — MCard sections, qty stepper, delivery zone warning, sticky checkout CTA with gradient, slide-up confirm modal
+- **`TrackingPage.tsx`** — delivery ETA hero, vertical tracking steps with line connector, driver card with call/chat, order summary, delivered state
+- **`ClientSettings.tsx`** — background updated to match new design tokens
+
+**CSS animation added:** `slideInUp` (for bottom sheets and modals)
+
+## Driver/Agent App Design System (Premium Refonte)
+A complete field-optimized dark design system was built for all driver-facing pages:
+
+**New file `client/src/components/driver/DriverUI.tsx`** — reusable agent components:
+- `dt` — Design tokens: `bg:#0e0e0e`, `surface:#191919`, `surface2:#222222`, `surface3:#2c2c2c`, `accent:#E10000`, semantic colors (green=accept/delivered/online, orange=transit, amber=pending, blue=new order, red=refuse/urgent)
+- `DBtn` — field action button with variants: `accept` (green), `refuse` (red outline), `amber`, `blue`, `deliver` (green gradient), `secondary` (ghost), `accent` (red). Sizes: sm/md/lg/xl (56px+ for primary actions)
+- `DCard` — dark surface card with subtle border, optional tap handler
+- `DStatCard` — compact metric card with icon + color accent
+- `DSectionHeader` — section title with badge count and optional action
+- `DStatusBadge` — status badge with color/bg per status (dark-optimized)
+- `DEmptyState` — dark empty state component
+- `DSkeletonCard` — dark skeleton loader
+- `DInfoRow` — icon + label + value row with optional tap-to-call
+- `DPaymentBadge` — payment method indicator (cash vs mobile, prominent for field use)
+- `DRIVER_STATUS` — centralized status config map
+
+**Design philosophy:** Dark-first (AMOLED-friendly), high contrast for outdoor readability, 56px+ touch targets, color-coded actions, payment method ultra-visible, address readable without truncation.
+
+**Refactored pages:**
+- **`DriverNav.tsx`** — 5-tab dark bottom nav (Accueil/Livraisons/Chat/Gains/Profil), glass header with MAWEJA AGENT badge, status pill with pulse animation, red accent top bar indicator
+- **`DriverDashboard.tsx`** — Scenario-based layout (offline/waiting/active), alarm overlay with sound+vibration, countdown timer, GPS live map toggle, ActiveMissionCard with next-action button, PendingOrderCard queue
+- **`DriverOrders.tsx`** — 3-tab dark order list (En cours/Livrés/Tous), dark stats bar, OrderCard with status icons, DetailSheet bottom sheet for delivered orders
+- **`DriverEarnings.tsx`** — Period filter pills (Today/Week/Month/Custom), hero gains card, 4-stat grid, earnings history list with payment icons
+- **`DriverRapport.tsx`** — Period filter, 4 KPI cards, daily breakdown grouped by day with order list
+- **`DriverSettings.tsx`** — Profile card with role badge, dark ThemePicker, language toggle, menu items with icons, all modals updated to dark BottomSheet pattern, logout button
+- **`DriverOrderDetail.tsx`** — Full dark theme, StatusTimeline (dark), large action buttons (DBtn xl), prominent payment badge, agent earnings card, refuse modal (dark)
+
+## Admin Design System (Premium Refonte)
+A complete premium SaaS-grade design system was built for all 20+ admin pages:
+
+**New components in `client/src/components/admin/`:**
+- **`AdminUI.tsx`** — Full design system: `KPICard` (animated stats), `SectionCard` (card wrapper), `AdminBadge` (status chips), `DrawerPanel` (slide-in side drawer), `EmptyState`, `FilterChip`, `AdminSearchInput`, `AdminBtn` (primary/secondary/ghost/danger variants), `AdminProgressBar`, `SortableCol`, `SkeletonRows`, `LiveDot`, `AnimatedNumber`, `AdminPageHeader`
+- **`index.ts`** — Re-exports all design tokens and components
+
+**Design tokens (Zinc palette):**
+- Background: `bg-zinc-50 dark:bg-zinc-950`
+- Cards: `bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800`
+- Accent: `rose-600` (#E11D48) used sparingly for active states, CTAs, and alerts
+- Typography: `font-black` for headlines, `font-semibold` for labels, `text-zinc-500` for muted
+
+**Rewritten components:**
+- **`AdminSidebar.tsx`** — Compacted to 240px. Cleaner section labels, zinc-based palette, rose accent on active items, user card at bottom with gradient avatar
+- **`AdminLayout.tsx`** — New premium TopBar with: global search (expands on focus, Enter navigates), ThemeToggle, Language selector dropdown, Profile dropdown (navigate to profile/settings/guide, logout)
+- **`AdminDashboard.tsx`** — Full redesign: new KPI cards grid, premium notifications panel (slide-in drawer), dark revenue hero card, quick actions grid, recent orders table with EmptyState
+- **`AdminOrderDetailPopup.tsx`** — Converted from centered modal to slide-in `DrawerPanel`. Uses `AdminBadge`, `InfoBlock` pattern
+
+**Partially updated (design system imports):**
+- **`AdminOrders.tsx`** — Filter chips → `FilterChip`, action buttons → `AdminBtn`, empty state → `EmptyState`
+
+**Animations added to `index.css`:** `slideInRight`, `slideInDown`, `fadeUp` — used for drawers, dropdowns, and notification toasts.
+
+## Backend Modular Architecture
+The monolithic `server/routes.ts` (2888 lines) has been fully replaced by a modular structure:
+
+- **`server/routes.ts`** — thin re-export wrapper (`export { registerRoutes } from "./routes/index"`)
+- **`server/routes/index.ts`** — orchestrator: runs cloud sync, registers all routers, creates HTTP server, sets up WebSocket
+- **`server/websocket.ts`** — WS server setup, `wsClients` Map, `broadcast()`, `sendToUser()`
+- **`server/middleware/auth.middleware.ts`** — `requireAuth`, `requireAdmin`, `resolveUserFromRequest`
+- **`server/middleware/upload.middleware.ts`** — multer instances, `uploadToCloudStorage()`, `cleanupChatFiles()`
+- **`server/lib/cloudSync.ts`** — `normalizeUploadUrls()`, `syncLocalUploadsToCloud()` startup routines
+- **Route modules** (all in `server/routes/`):
+  - `auth.routes.ts` — login, register, logout, forgot-password, reset, upload, /cloud/* proxy, /uploads static
+  - `drivers.routes.ts` — onboarding, verification, CRUD, block, location, status, alarm, driver-register
+  - `restaurants.routes.ts` — restaurants, menu items, categories (restaurant/boutique/menu-item), saved addresses, promos
+  - `delivery-zones.routes.ts` — GET /api/delivery-zones (public), POST/PATCH/DELETE (admin-only) — full dynamic zone CRUD
+  - `orders.routes.ts` — full order lifecycle: create (zone detect, finance entries, loyalty), update (driver payout, loyalty credit, audit log), accept/refuse, status-override, cancel, modify, remarks, rate, export CSV
+  - `chat.routes.ts` — messages, contacts, unread counts, file upload
+  - `wallet.routes.ts` — loyalty credits, wallet history, top-up
+  - `notifications.routes.ts` — per-user, mark-read, broadcast with segmentation
+  - `services.routes.ts` — service categories, catalog items, service requests CRUD
+  - `marketing.routes.ts` — analytics, client segments, advertisements, promo banner, finance, restaurant payouts
+  - `admin.routes.ts` — password reset requests, settings, users, admin accounts, media gallery, cloud migration
+
+## Security Architecture
+- **Password Hashing**: All passwords hashed with bcrypt (12 rounds) via `bcryptjs`. Login uses `verifyPassword()` with transparent migration: plaintext passwords auto-rehashed on first login. `server/auth.ts` centralizes all auth utilities.
+- **On-startup migration**: At boot, any remaining plaintext passwords (stored before the refactor) are detected (`NOT LIKE '$2%'`) and bulk-rehashed automatically.
+- **SESSION_SECRET**: Required in production (`NODE_ENV=production`); process exits with FATAL error if missing. Dev uses a non-secret fallback.
+- **WebSocket Auth**: All WS connections require `?token=BEARER_TOKEN` validated against DB `authToken`. Connections without a valid token are closed with code 1008. Client sends token from `getAuthToken()` stored in `queryClient.ts`.
+- **Logout token revocation**: `/api/auth/logout` nulls `authToken` in DB for both session-based and Bearer-token-based sessions.
+- **Rate limiting** (`express-rate-limit`): Login (10/15 min), Register (10/15 min), Forgot-password (5/15 min), Upload endpoints (30/10 min), Wallet topup (20/10 min).
+- **Route ownership checks**: `PATCH /api/users/:id` enforces self-only or admin access and always hashes password changes. `GET /api/chat/contacts/:userId` enforces self-only or admin. `GET /api/wallet/:userId` enforces self-only or admin.
+- **Zod Validation (COMPLETE)**: All mutating routes (POST/PATCH/PUT) are guarded by Zod middleware from `server/validators.ts`. Three middlewares: `validate(schema)` for body (replaces `req.body` with coerced data, returns HTTP 422 `{errors:[{field,message}]}`), `validateParams(schema)` for URL params, `validateQuery(schema)` for query strings. All domain schemas centralized in `server/validators.ts` under `schemas.*` namespace. Raw `req.body` is never passed directly to DB — every write route parses through a named schema first. POST `/api/drivers` now also hashes the password via bcrypt (was plaintext before). POST `/api/auth/driver-register` also has `registerLimiter` rate limit applied.
 
 ## External Dependencies
 - **Mapping Service**: OpenStreetMap (via Leaflet and react-leaflet).

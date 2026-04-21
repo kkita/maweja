@@ -118,6 +118,17 @@ export async function apiRequest(url: string, options?: RequestInit) {
   return res;
 }
 
+// ─── Stale time constants ─────────────────────────────────────────────────────
+// Use these in individual useQuery calls to override the default for static data.
+export const STALE = {
+  /** Data that changes frequently (orders, notifications, wallet). Default. */
+  dynamic: 60_000,
+  /** Semi-static data: restaurants list, menus, zones, categories. */
+  semi: 3 * 60_000,
+  /** Truly static data: settings, service categories (rarely changes). */
+  static: 10 * 60_000,
+} as const;
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -132,7 +143,11 @@ export const queryClient = new QueryClient({
       },
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 30000,
+      // 1 min default — data stays "fresh" for 1 min after fetching.
+      // Navigating back to a page within 1 min shows cached data instantly.
+      staleTime: STALE.dynamic,
+      // Keep unused data in memory for 10 min (helps fast back-navigation).
+      gcTime: 10 * 60_000,
       retry: false,
     },
   },

@@ -37,7 +37,7 @@ export default function SearchOverlay({ onClose }: Props) {
     ? restaurants.filter(r =>
         r.name?.toLowerCase().includes(q) ||
         r.cuisine?.toLowerCase().includes(q) ||
-        r.address?.toLowerCase().includes(q)
+        false
       ).slice(0, 8)
     : [];
 
@@ -147,8 +147,8 @@ export default function SearchOverlay({ onClose }: Props) {
                   style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}
                   data-testid={`suggestion-restaurant-${r.id}`}
                 >
-                  {r.imageUrl ? (
-                    <img src={resolveImg(r.imageUrl)} alt={r.name || ""} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
+                  {(r.image || r.logoUrl) ? (
+                    <img src={resolveImg(r.image || r.logoUrl || "")} alt={r.name || ""} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-xl">🍽️</div>
                   )}
@@ -222,8 +222,8 @@ export default function SearchOverlay({ onClose }: Props) {
                   className="w-full flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-2xl active:scale-[0.98] transition-all text-left"
                   style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}
                 >
-                  {r.imageUrl ? (
-                    <img src={resolveImg(r.imageUrl)} alt={r.name || ""} className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
+                  {(r.image || r.logoUrl) ? (
+                    <img src={resolveImg(r.image || r.logoUrl || "")} alt={r.name || ""} className="w-16 h-14 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-16 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-2xl">🍽️</div>
                   )}

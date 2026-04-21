@@ -11,6 +11,7 @@ import {
 import type { ServiceCategory, ServiceRequest, ServiceCatalogItem } from "@shared/schema";
 import GalleryPicker from "../../components/GalleryPicker";
 import ImportUrlToGallery from "../../components/ImportUrlToGallery";
+import { KPICard, KPIGrid, TabContent, FilterChip, AdminSearchInput, EmptyState, AdminBtn } from "../../components/admin/AdminUI";
 
 type CustomField = {
   id: string;
@@ -50,10 +51,10 @@ function MediaCard({ name, url, testKey, copiedUrl, onCopy }: {
 }) {
   return (
     <div
-      className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all group"
+      className="bg-white rounded-2xl border border-zinc-100 overflow-hidden shadow-sm hover:shadow-md transition-all group"
       data-testid={`media-card-${testKey}`}
     >
-      <div className="relative w-full bg-gray-50" style={{ paddingBottom: "100%" }}>
+      <div className="relative w-full bg-zinc-50" style={{ paddingBottom: "100%" }}>
         <img
           src={url}
           alt={name}
@@ -63,24 +64,24 @@ function MediaCard({ name, url, testKey, copiedUrl, onCopy }: {
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center">
           <button
             onClick={() => onCopy(url)}
-            className="opacity-0 group-hover:opacity-100 transition-all bg-white shadow-lg rounded-xl px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-gray-700"
+            className="opacity-0 group-hover:opacity-100 transition-all bg-white shadow-lg rounded-xl px-3 py-2 flex items-center gap-1.5 text-xs font-bold text-zinc-700"
           >
             {copiedUrl === url ? <><Check size={12} className="text-green-600" /> Copié</> : <><Copy size={12} /> Copier URL</>}
           </button>
         </div>
       </div>
       <div className="p-2.5">
-        <p className="font-bold text-[11px] text-gray-800 line-clamp-1 mb-1">{name}</p>
-        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-          <code className="text-[8px] text-gray-400 flex-1 truncate font-mono">{url}</code>
+        <p className="font-bold text-[11px] text-zinc-800 line-clamp-1 mb-1">{name}</p>
+        <div className="flex items-center gap-1 bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1">
+          <code className="text-[8px] text-zinc-400 flex-1 truncate font-mono">{url}</code>
           <button
             onClick={() => onCopy(url + "_inline")}
-            className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-all hover:bg-gray-200 active:scale-90"
+            className="flex-shrink-0 w-5 h-5 flex items-center justify-center rounded transition-all hover:bg-zinc-200 active:scale-90"
           >
             {copiedUrl === url + "_inline" ? (
               <Check size={10} className="text-green-600" />
             ) : (
-              <Copy size={10} className="text-gray-400" />
+              <Copy size={10} className="text-zinc-400" />
             )}
           </button>
         </div>
@@ -115,12 +116,12 @@ function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-base font-bold text-gray-900">Médiathèque</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="text-base font-bold text-zinc-900">Médiathèque</h3>
+          <p className="text-xs text-zinc-500 mt-0.5">
             Survolez une image et cliquez pour copier son URL. Utilisez-la lors de la création de services ou catégories.
           </p>
         </div>
-        <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+        <span className="text-xs font-bold text-zinc-400 bg-zinc-100 px-3 py-1 rounded-full">
           {totalImages} images
         </span>
       </div>
@@ -129,7 +130,7 @@ function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1 h-5 bg-red-600 rounded-full" />
-          <h4 className="font-bold text-sm text-gray-800">Icônes de services</h4>
+          <h4 className="font-bold text-sm text-zinc-800">Icônes de services</h4>
           <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">{SERVICE_ICONS.length} images</span>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -150,7 +151,7 @@ function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-1 h-5 bg-blue-600 rounded-full" />
-          <h4 className="font-bold text-sm text-gray-800">Logos MAWEJA</h4>
+          <h4 className="font-bold text-sm text-zinc-800">Logos MAWEJA</h4>
           <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{LOGOS.length} images</span>
         </div>
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -172,7 +173,7 @@ function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-1 h-5 bg-amber-500 rounded-full" />
-            <h4 className="font-bold text-sm text-gray-800">Images de catégories (personnalisées)</h4>
+            <h4 className="font-bold text-sm text-zinc-800">Images de catégories (personnalisées)</h4>
             <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">{catImages.length} images</span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -191,9 +192,9 @@ function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
       )}
 
       {/* Quick URL reference */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
-          <h4 className="font-bold text-sm text-gray-900">Référence rapide — toutes les URLs</h4>
+          <h4 className="font-bold text-sm text-zinc-900">Référence rapide — toutes les URLs</h4>
           <button
             onClick={() => {
               const all = allItems.map(i => `${i.name}: ${i.url}`).join("\n");
@@ -213,13 +214,13 @@ function MediaLibrary({ categories, copiedUrl, setCopiedUrl }: {
             {copiedUrl === "__all__" ? <><Check size={10} /> Copié</> : <><Copy size={10} /> Tout copier</>}
           </button>
         </div>
-        <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+        <div className="divide-y divide-zinc-50 max-h-96 overflow-y-auto">
           {allItems.map((item, idx) => (
             <div key={idx} className="flex items-center gap-3 px-5 py-3">
-              <img src={item.url} alt={item.name} className="w-10 h-10 object-contain rounded-lg bg-gray-50 border border-gray-100 flex-shrink-0" />
+              <img src={item.url} alt={item.name} className="w-10 h-10 object-contain rounded-lg bg-zinc-50 border border-zinc-100 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-800 truncate">{item.name}</p>
-                <p className="text-[10px] text-gray-400 truncate font-mono">{item.url}</p>
+                <p className="text-xs font-semibold text-zinc-800 truncate">{item.name}</p>
+                <p className="text-[10px] text-zinc-400 truncate font-mono">{item.url}</p>
               </div>
               <button
                 onClick={() => copy(item.url + "_ref")}
@@ -344,7 +345,7 @@ function CategoriesTab({ categories, t, onAdd, onEdit, onDelete }: {
           </button>
         )}
       </div>
-      <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-3 flex items-center gap-1">
+      <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mb-3 flex items-center gap-1">
         <GripVertical size={12} /> Glissez-déposez pour réordonner les catégories. L'ordre sera appliqué sur l'application client.
       </p>
       <div className="space-y-2">
@@ -359,25 +360,25 @@ function CategoriesTab({ categories, t, onAdd, onEdit, onDelete }: {
             onTouchStart={handleTouchStart(idx)}
             onTouchEnd={handleTouchEnd}
             data-testid={`admin-cat-${cat.id}`}
-            className={`bg-white dark:bg-gray-900 rounded-xl border p-3 flex items-center gap-3 transition-all cursor-grab active:cursor-grabbing select-none ${
+            className={`bg-white dark:bg-zinc-900 rounded-xl border p-3 flex items-center gap-3 transition-all cursor-grab active:cursor-grabbing select-none ${
               dragIdx === idx ? "opacity-40 scale-95" : ""
-            } ${overIdx === idx && dragIdx !== idx ? "border-red-400 dark:border-red-600 shadow-lg shadow-red-100 dark:shadow-red-900/30" : "border-gray-100 dark:border-gray-800"}`}
+            } ${overIdx === idx && dragIdx !== idx ? "border-red-400 dark:border-red-600 shadow-lg shadow-red-100 dark:shadow-red-900/30" : "border-zinc-100 dark:border-zinc-800"}`}
           >
-            <div className="flex flex-col items-center gap-0.5 text-gray-300 dark:text-gray-600 flex-shrink-0">
+            <div className="flex flex-col items-center gap-0.5 text-zinc-300 dark:text-zinc-600 flex-shrink-0">
               <GripVertical size={18} />
-              <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 tabular-nums">{idx + 1}</span>
+              <span className="text-[9px] font-black text-zinc-400 dark:text-zinc-500 tabular-nums">{idx + 1}</span>
             </div>
 
             {cat.imageUrl ? (
-              <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 rounded-lg object-cover border border-gray-200 dark:border-gray-700 flex-shrink-0" />
+              <img src={cat.imageUrl} alt={cat.name} className="w-10 h-10 rounded-lg object-cover border border-zinc-200 dark:border-zinc-700 flex-shrink-0" />
             ) : (
               <div className="w-10 h-10 rounded-lg bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-900 flex items-center justify-center text-lg flex-shrink-0">{cat.icon}</div>
             )}
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-sm text-gray-900 dark:text-white truncate">{cat.name}</h3>
-              <p className="text-[11px] text-gray-500 truncate">{cat.description}</p>
-              <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${cat.isActive ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>
+              <h3 className="font-bold text-sm text-zinc-900 dark:text-white truncate">{cat.name}</h3>
+              <p className="text-[11px] text-zinc-500 truncate">{cat.description}</p>
+              <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold ${cat.isActive ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400" : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"}`}>
                 {cat.isActive ? t.common.active : t.common.inactive}
               </span>
             </div>
@@ -385,23 +386,23 @@ function CategoriesTab({ categories, t, onAdd, onEdit, onDelete }: {
             <div className="flex items-center gap-1 flex-shrink-0">
               <button onClick={(e) => { e.stopPropagation(); if (idx > 0) moveCat(idx, idx - 1); }}
                 disabled={idx === 0}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-20 transition-colors"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-20 transition-colors"
                 data-testid={`button-moveup-cat-${cat.id}`}>
-                <ArrowUp size={13} className="text-gray-500" />
+                <ArrowUp size={13} className="text-zinc-500" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); if (idx < displayCats.length - 1) moveCat(idx, idx + 1); }}
                 disabled={idx === displayCats.length - 1}
-                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-20 transition-colors"
+                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-20 transition-colors"
                 data-testid={`button-movedown-cat-${cat.id}`}>
-                <ArrowDown size={13} className="text-gray-500" />
+                <ArrowDown size={13} className="text-zinc-500" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); onEdit(cat); }}
-                className="w-7 h-7 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="w-7 h-7 bg-zinc-50 dark:bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-zinc-100 dark:hover:bg-zinc-700"
                 data-testid={`button-edit-cat-${cat.id}`}>
-                <Edit2 size={13} className="text-gray-500 dark:text-gray-400" />
+                <Edit2 size={13} className="text-zinc-500 dark:text-zinc-400" />
               </button>
               <button onClick={(e) => { e.stopPropagation(); onDelete(cat.id); }}
-                className="w-7 h-7 bg-gray-50 dark:bg-gray-800 rounded-lg flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-950"
+                className="w-7 h-7 bg-zinc-50 dark:bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-950"
                 data-testid={`button-delete-cat-${cat.id}`}>
                 <Trash2 size={13} className="text-red-500" />
               </button>
@@ -431,6 +432,7 @@ export default function AdminServices() {
   const [catServiceTypes, setCatServiceTypes] = useState<string[]>([]);
   const [newTypeInput, setNewTypeInput] = useState("");
   const [catCustomFields, setCatCustomFields] = useState<CustomField[]>([]);
+  const [catShowBudget, setCatShowBudget] = useState(false);
   const [dragFieldIdx, setDragFieldIdx] = useState<number | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [galleryOpenCat, setGalleryOpenCat] = useState(false);
@@ -454,7 +456,7 @@ export default function AdminServices() {
     reviewing: { label: t.status.reviewing, color: "text-blue-700", bg: "bg-blue-50 border-blue-200" },
     accepted: { label: t.status.accepted, color: "text-green-700", bg: "bg-green-50 border-green-200" },
     rejected: { label: t.status.rejected, color: "text-red-700", bg: "bg-red-50 border-red-200" },
-    completed: { label: t.status.completed, color: "text-gray-700", bg: "bg-gray-50 border-gray-200" },
+    completed: { label: t.status.completed, color: "text-zinc-700", bg: "bg-zinc-50 border-zinc-200" },
   };
 
   const { data: categories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
@@ -530,7 +532,7 @@ export default function AdminServices() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/service-categories"] });
       setShowCatModal(false);
-      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); setCatCustomFields([]);
+      setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); setCatCustomFields([]); setCatShowBudget(false);
       toast({ title: t.common.success, description: t.admin.newCategory });
     },
     onError: (err: any) => errToast(err, "Impossible de créer la catégorie"),
@@ -610,59 +612,33 @@ export default function AdminServices() {
 
   return (
     <AdminLayout title={t.admin.services}>
-      <div className="mb-6">
-        <p className="text-sm text-gray-500 dark:text-gray-400" data-testid="text-admin-services-title">{t.admin.manageServiceRequests}</p>
+      <KPIGrid cols={4} className="mb-6">
+        <KPICard label={t.admin.totalRequests} value={stats.total} icon={Briefcase} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.08)" testId="stat-card-0" />
+        <KPICard label={t.admin.pending} value={stats.pending} icon={Clock} iconColor="#f59e0b" iconBg="rgba(245,158,11,0.08)" testId="stat-card-1" />
+        <KPICard label={t.admin.reviewing} value={stats.reviewing} icon={AlertCircle} iconColor="#a855f7" iconBg="rgba(168,85,247,0.08)" testId="stat-card-2" />
+        <KPICard label={t.admin.accepted} value={stats.accepted} icon={CheckCircle} iconColor="#10b981" iconBg="rgba(16,185,129,0.08)" testId="stat-card-3" />
+      </KPIGrid>
+
+      <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-none">
+        <FilterChip label={`${t.admin.requests} (${requests.length})`} active={tab === "requests"} onClick={() => setTab("requests")} />
+        <FilterChip label={`${t.admin.categories} (${categories.length})`} active={tab === "categories"} onClick={() => setTab("categories")} />
+        <FilterChip label={`${t.admin.catalog} (${catalogItems.length})`} active={tab === "catalog"} onClick={() => setTab("catalog")} />
+        <FilterChip label="Médiathèque" active={tab === "media"} onClick={() => setTab("media")} />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: t.admin.totalRequests, value: stats.total, color: "bg-blue-50 text-blue-700" },
-          { label: t.admin.pending, value: stats.pending, color: "bg-amber-50 text-amber-700" },
-          { label: t.admin.reviewing, value: stats.reviewing, color: "bg-purple-50 text-purple-700" },
-          { label: t.admin.accepted, value: stats.accepted, color: "bg-green-50 text-green-700" },
-        ].map((s, i) => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4" data-testid={`stat-card-${i}`}>
-            <p className="text-xs text-gray-500 font-medium">{s.label}</p>
-            <p className={`text-2xl font-black mt-1 ${s.color.split(" ")[1]}`}>{s.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex gap-2 mb-6 flex-wrap">
-        <button onClick={() => setTab("requests")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "requests" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
-          data-testid="tab-requests">
-          {t.admin.requests} ({requests.length})
-        </button>
-        <button onClick={() => setTab("categories")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "categories" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
-          data-testid="tab-categories">
-          {t.admin.categories} ({categories.length})
-        </button>
-        <button onClick={() => setTab("catalog")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${tab === "catalog" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
-          data-testid="tab-catalog">
-          {t.admin.catalog} ({catalogItems.length})
-        </button>
-        <button onClick={() => setTab("media")}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${tab === "media" ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
-          data-testid="tab-media">
-          <ImageIcon size={14} /> Médiathèque
-        </button>
-      </div>
-
+      <TabContent tabKey={tab}>
       {tab === "requests" && (
         <>
           <div className="flex gap-3 mb-4">
-            <div className="relative flex-1">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder={t.admin.searchPlaceholder}
-                data-testid="input-search-requests"
-                className="w-full pl-9 pr-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
-            </div>
+            <AdminSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder={t.admin.searchPlaceholder}
+              className="flex-1"
+            />
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
               data-testid="select-status-filter"
-              className="px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-red-500 focus:outline-none">
+              className="px-3 py-2 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
               <option value="all">{t.admin.allStatuses}</option>
               <option value="pending">{t.admin.pending}</option>
               <option value="reviewing">{t.admin.reviewing}</option>
@@ -673,33 +649,32 @@ export default function AdminServices() {
           </div>
 
           {filteredRequests.length === 0 ? (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
-              <Briefcase size={32} className="text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t.admin.noRequests}</p>
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
+              <EmptyState icon={Briefcase} title={t.admin.noRequests} description="Aucune demande ne correspond à votre filtre." />
             </div>
           ) : (
             <div className="space-y-3">
               {filteredRequests.map(req => {
                 const status = statusConfig[req.status] || statusConfig.pending;
                 return (
-                  <div key={req.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-4 hover:shadow-md transition-shadow"
+                  <div key={req.id} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 p-4 hover:shadow-md transition-shadow"
                     data-testid={`admin-request-${req.id}`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-sm text-gray-900 dark:text-white">#{req.id} - {req.categoryName}</h3>
+                          <h3 className="font-bold text-sm text-zinc-900 dark:text-white">#{req.id} - {req.categoryName}</h3>
                           <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${status.bg} ${status.color}`}>
                             {status.label}
                           </span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{req.fullName} • {req.phone}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{req.address}</p>
-                        <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{req.fullName} • {req.phone}</p>
+                        <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">{req.address}</p>
+                        <div className="flex items-center gap-3 mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
                           {req.serviceType && <span>{t.services.type}: {req.serviceType}</span>}
                           {req.budget && <span>{t.admin.budget}: {req.budget}</span>}
                           <span>{req.scheduledType === "asap" ? t.services.asap : `${req.scheduledDate} ${req.scheduledTime}`}</span>
                         </div>
-                        {req.additionalInfo && <p className="text-xs text-gray-500 mt-1 italic">"{req.additionalInfo}"</p>}
+                        {req.additionalInfo && <p className="text-xs text-zinc-500 mt-1 italic">"{req.additionalInfo}"</p>}
                       </div>
                       <button onClick={() => { setSelectedRequest(req); setNewStatus(req.status); setAdminNotes(req.adminNotes || ""); }}
                         data-testid={`button-manage-${req.id}`}
@@ -719,8 +694,8 @@ export default function AdminServices() {
         <CategoriesTab
           categories={categories}
           t={t}
-          onAdd={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); setCatCustomFields([]); }}
-          onEdit={(cat) => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); setCatServiceTypes(cat.serviceTypes || []); setNewTypeInput(""); setCatCustomFields((cat as any).customFields || []); }}
+          onAdd={() => { setShowCatModal(true); setCatName(""); setCatIcon("Briefcase"); setCatImageUrl(""); setCatDesc(""); setCatServiceTypes([]); setNewTypeInput(""); setCatCustomFields([]); setCatShowBudget(false); }}
+          onEdit={(cat) => { setEditingCat(cat); setCatName(cat.name); setCatIcon(cat.icon); setCatImageUrl(cat.imageUrl || ""); setCatDesc(cat.description); setCatServiceTypes(cat.serviceTypes || []); setNewTypeInput(""); setCatCustomFields((cat as any).customFields || []); setCatShowBudget(!!(cat as any).showBudget); }}
           onDelete={(id) => { if (confirm(t.common.confirm + "?")) deleteCatMutation.mutate(id); }}
         />
       )}
@@ -728,45 +703,47 @@ export default function AdminServices() {
       {tab === "catalog" && (
         <>
           <div className="flex flex-wrap gap-3 mb-4">
-            <button onClick={() => {
-              setShowItemModal(true); setEditingItem(null); resetItemForm();
-              if (categories.length > 0) setItemCategoryId(categories[0].id);
-            }}
-              data-testid="button-add-catalog-item"
-              className="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2 hover:bg-red-700">
-              <Plus size={16} /> {t.admin.addCatalogItem}
-            </button>
+            <AdminBtn
+              variant="primary"
+              icon={Plus}
+              onClick={() => {
+                setShowItemModal(true); setEditingItem(null); resetItemForm();
+                if (categories.length > 0) setItemCategoryId(categories[0].id);
+              }}
+              testId="button-add-catalog-item"
+            >
+              {t.admin.addCatalogItem}
+            </AdminBtn>
             <select value={String(catalogCatFilter)} onChange={e => setCatalogCatFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
               data-testid="select-catalog-category"
-              className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm">
+              className="px-3 py-2 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-lg text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
               <option value="all">{t.common.all} {t.admin.categories}</option>
               {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
           </div>
 
           {filteredCatalog.length === 0 ? (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 p-12 text-center">
-              <Image size={32} className="text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t.admin.noCatalogItems}</p>
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800">
+              <EmptyState icon={Image} title={t.admin.noCatalogItems} description="Ajoutez votre premier article au catalogue." />
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredCatalog.map(item => {
                 const cat = categories.find(c => c.id === item.categoryId);
                 return (
-                  <div key={item.id} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden hover:shadow-md transition-shadow" data-testid={`catalog-item-${item.id}`}>
+                  <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-100 dark:border-zinc-800 overflow-hidden hover:shadow-md transition-shadow" data-testid={`catalog-item-${item.id}`}>
                     <div className="relative h-40">
                       <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                       <span className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-lg">
                         {cat?.name || "—"}
                       </span>
                       {!item.isActive && (
-                        <span className="absolute top-2 right-2 bg-gray-800/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg">{t.common.inactive}</span>
+                        <span className="absolute top-2 right-2 bg-zinc-800/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg">{t.common.inactive}</span>
                       )}
                     </div>
                     <div className="p-3">
-                      <h4 className="font-bold text-sm text-gray-900 dark:text-white">{item.name}</h4>
-                      {item.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.description}</p>}
+                      <h4 className="font-bold text-sm text-zinc-900 dark:text-white">{item.name}</h4>
+                      {item.description && <p className="text-xs text-zinc-500 mt-0.5 line-clamp-2">{item.description}</p>}
                       {item.price && <p className="text-xs font-semibold text-red-600 mt-1">{item.price}</p>}
                       <div className="flex gap-1 mt-2">
                         <button onClick={() => {
@@ -777,7 +754,7 @@ export default function AdminServices() {
                           setItemPrice(item.price || "");
                           setItemCategoryId(item.categoryId);
                           setShowItemModal(true);
-                        }} className="flex-1 px-2 py-1.5 bg-gray-50 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-100" data-testid={`button-edit-item-${item.id}`}>
+                        }} className="flex-1 px-2 py-1.5 bg-zinc-50 rounded-lg text-xs font-semibold text-zinc-600 hover:bg-zinc-100" data-testid={`button-edit-item-${item.id}`}>
                           <Edit2 size={12} className="inline mr-1" />{t.common.edit}
                         </button>
                         <button onClick={() => { if (confirm(t.common.confirm + "?")) deleteItemMutation.mutate(item.id); }}
@@ -796,15 +773,15 @@ export default function AdminServices() {
 
       {selectedRequest && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" data-testid="modal-manage-request">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" data-testid="modal-manage-request">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{t.services.request} #{selectedRequest.id}</h3>
-              <button onClick={() => setSelectedRequest(null)} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
+              <button onClick={() => setSelectedRequest(null)} className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
             </div>
-            <div className="space-y-3 mb-4 bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-sm">
+            <div className="space-y-3 mb-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 text-sm">
               <p><strong>{t.services.service}:</strong> {selectedRequest.categoryName}</p>
               <p><strong>{t.common.name}:</strong> {selectedRequest.fullName}</p>
-              <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 p-2.5 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                   selectedRequest.contactMethod === "whatsapp" ? "bg-green-100 text-green-600" :
                   selectedRequest.contactMethod === "email" ? "bg-blue-100 text-blue-600" :
@@ -819,10 +796,10 @@ export default function AdminServices() {
                   )}
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase">
+                  <p className="text-xs font-bold text-zinc-500 uppercase">
                     {selectedRequest.contactMethod === "whatsapp" ? "WhatsApp" : selectedRequest.contactMethod === "email" ? "Email" : "Téléphone"}
                   </p>
-                  <p className="font-bold text-gray-900 dark:text-white text-base">{selectedRequest.phone}</p>
+                  <p className="font-bold text-zinc-900 dark:text-white text-base">{selectedRequest.phone}</p>
                 </div>
               </div>
               <p><strong>{t.common.address}:</strong> {selectedRequest.address}</p>
@@ -840,29 +817,29 @@ export default function AdminServices() {
                   <>
                     {imageMatch && imageMatch[1] && (
                       <div>
-                        <p className="text-xs font-bold text-gray-500 uppercase mb-1.5">Photo du catalogue</p>
+                        <p className="text-xs font-bold text-zinc-500 uppercase mb-1.5">Photo du catalogue</p>
                         <a href={imageMatch[1]} target="_blank" rel="noopener noreferrer">
                           <img
                             src={imageMatch[1]}
                             alt="Modèle sélectionné"
-                            className="w-full max-h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-700 hover:opacity-90 transition-opacity cursor-pointer"
+                            className="w-full max-h-48 object-cover rounded-xl border border-zinc-200 dark:border-zinc-700 hover:opacity-90 transition-opacity cursor-pointer"
                             data-testid="img-request-catalog"
                           />
                         </a>
                       </div>
                     )}
                     {parsedCustomFields.length > 0 && (
-                      <div className="space-y-1.5 pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="space-y-1.5 pt-2 border-t border-zinc-200 dark:border-zinc-700">
                         <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Champs personnalisés</p>
                         {parsedCustomFields.map((cf, i) => (
                           <div key={i} className="flex justify-between items-start gap-2">
-                            <span className="text-xs text-gray-500 font-medium">{cf.label}</span>
+                            <span className="text-xs text-zinc-500 font-medium">{cf.label}</span>
                             {cf.value.startsWith("/uploads/") || cf.value.startsWith("/cloud/") || cf.value.startsWith("http") ? (
                               <a href={cf.value} target="_blank" rel="noopener noreferrer">
                                 <img src={cf.value} alt={cf.label} className="w-16 h-16 object-cover rounded-lg border" />
                               </a>
                             ) : (
-                              <span className="text-xs text-gray-900 dark:text-white font-bold text-right">{cf.value}</span>
+                              <span className="text-xs text-zinc-900 dark:text-white font-bold text-right">{cf.value}</span>
                             )}
                           </div>
                         ))}
@@ -874,10 +851,10 @@ export default function AdminServices() {
               })()}
             </div>
             <div className="mb-3">
-              <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.statusLabel}</label>
+              <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.statusLabel}</label>
               <select value={newStatus} onChange={e => setNewStatus(e.target.value)}
                 data-testid="select-new-status"
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
+                className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white">
                 <option value="pending">{t.status.pending}</option>
                 <option value="reviewing">{t.status.reviewing}</option>
                 <option value="accepted">{t.status.accepted}</option>
@@ -886,10 +863,10 @@ export default function AdminServices() {
               </select>
             </div>
             <div className="mb-4">
-              <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.adminNotes}</label>
+              <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.adminNotes}</label>
               <textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} placeholder={t.admin.adminNotesPlaceholder}
                 data-testid="input-admin-notes"
-                className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-24 resize-none" />
+                className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white h-24 resize-none" />
             </div>
             <button onClick={() => updateRequestMutation.mutate({ id: selectedRequest.id, data: { status: newStatus, adminNotes } })}
               disabled={updateRequestMutation.isPending}
@@ -903,45 +880,45 @@ export default function AdminServices() {
 
       {(showCatModal || editingCat) && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]" data-testid="modal-category">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]" data-testid="modal-category">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{editingCat ? t.admin.editCategory : t.admin.newCategory}</h3>
-              <button onClick={() => { setShowCatModal(false); setEditingCat(null); setShowImagePicker(false); }} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
+              <button onClick={() => { setShowCatModal(false); setEditingCat(null); setShowImagePicker(false); }} className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryName}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.categoryName}</label>
                 <input type="text" value={catName} onChange={e => setCatName(e.target.value)}
                   data-testid="input-cat-name"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Image de la catégorie</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">Image de la catégorie</label>
 
                 {/* Selected image preview + picker trigger */}
                 <button
                   type="button"
                   onClick={() => setShowImagePicker(v => !v)}
                   data-testid="button-pick-image"
-                  className="w-full flex items-center gap-3 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-left transition-all hover:border-red-300 hover:bg-red-50 dark:hover:bg-gray-700 active:scale-[0.98]"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-left transition-all hover:border-red-300 hover:bg-red-50 dark:hover:bg-zinc-700 active:scale-[0.98]"
                 >
                   {catImageUrl ? (
                     <img
                       src={catImageUrl}
                       alt="aperçu"
-                      className="w-10 h-10 object-contain rounded-lg bg-white border border-gray-100 flex-shrink-0"
+                      className="w-10 h-10 object-contain rounded-lg bg-white border border-zinc-100 flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
-                      <ImageIcon size={18} className="text-gray-400" />
+                    <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-700 border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center flex-shrink-0">
+                      <ImageIcon size={18} className="text-zinc-400" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                       {catImageUrl ? "Image sélectionnée" : "Choisir une image"}
                     </p>
                     {catImageUrl && (
-                      <p className="text-[10px] text-gray-400 truncate font-mono">{catImageUrl}</p>
+                      <p className="text-[10px] text-zinc-400 truncate font-mono">{catImageUrl}</p>
                     )}
                   </div>
                   <span className="text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full flex-shrink-0">
@@ -951,8 +928,8 @@ export default function AdminServices() {
 
                 {/* Image picker grid */}
                 {showImagePicker && (
-                  <div className="mt-2 p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">Icônes de services</p>
+                  <div className="mt-2 p-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl shadow-lg">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase mb-2">Icônes de services</p>
                     <div className="grid grid-cols-5 gap-1.5 mb-3">
                       {SERVICE_ICONS.map(item => (
                         <button
@@ -961,7 +938,7 @@ export default function AdminServices() {
                           onClick={() => { setCatImageUrl(item.url); setShowImagePicker(false); }}
                           data-testid={`pick-img-${item.name.toLowerCase()}`}
                           title={item.name}
-                          className="relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 flex items-center justify-center bg-gray-50 dark:bg-gray-700"
+                          className="relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 flex items-center justify-center bg-zinc-50 dark:bg-zinc-700"
                           style={{
                             borderColor: catImageUrl === item.url ? "#dc2626" : "transparent",
                             boxShadow: catImageUrl === item.url ? "0 0 0 1px #dc2626" : "none",
@@ -976,7 +953,7 @@ export default function AdminServices() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase mb-2">Logos MAWEJA</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase mb-2">Logos MAWEJA</p>
                     <div className="grid grid-cols-5 gap-1.5 mb-3">
                       {LOGOS.map(item => (
                         <button
@@ -985,7 +962,7 @@ export default function AdminServices() {
                           onClick={() => { setCatImageUrl(item.url); setShowImagePicker(false); }}
                           data-testid={`pick-img-${item.name.replace(/\s+/g, "-").toLowerCase()}`}
                           title={item.name}
-                          className="relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 flex items-center justify-center bg-gray-50 dark:bg-gray-700"
+                          className="relative aspect-square rounded-xl overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 flex items-center justify-center bg-zinc-50 dark:bg-zinc-700"
                           style={{
                             borderColor: catImageUrl === item.url ? "#dc2626" : "transparent",
                             boxShadow: catImageUrl === item.url ? "0 0 0 1px #dc2626" : "none",
@@ -1000,7 +977,7 @@ export default function AdminServices() {
                         </button>
                       ))}
                     </div>
-                    <div className="border-t border-gray-100 dark:border-gray-700 pt-2 mt-1 space-y-2">
+                    <div className="border-t border-zinc-100 dark:border-zinc-700 pt-2 mt-1 space-y-2">
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -1015,7 +992,7 @@ export default function AdminServices() {
                           onClick={() => catFileRef.current?.click()}
                           disabled={catUploading}
                           data-testid="button-cat-upload-file"
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-colors disabled:opacity-50"
                         >
                           {catUploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                           {catUploading ? "Upload..." : "Depuis l'appareil"}
@@ -1036,7 +1013,7 @@ export default function AdminServices() {
                         <button
                           type="button"
                           onClick={() => { setCatImageUrl(""); setShowImagePicker(false); }}
-                          className="w-full py-1.5 text-[11px] font-bold text-gray-500 hover:text-red-600 transition-colors border border-gray-200 dark:border-gray-700 rounded-xl"
+                          className="w-full py-1.5 text-[11px] font-bold text-zinc-500 hover:text-red-600 transition-colors border border-zinc-200 dark:border-zinc-700 rounded-xl"
                         >
                           Supprimer l'image
                         </button>
@@ -1057,30 +1034,30 @@ export default function AdminServices() {
                   </div>
                 )}
 
-                <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                <p className="text-[10px] text-zinc-400 mt-1 flex items-center gap-1">
                   <ImageIcon size={10} /> Laissez sans image pour utiliser l'emoji ci-dessous
                 </p>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryIcon} (emoji si pas d'image)</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.categoryIcon} (emoji si pas d'image)</label>
                 <select value={catIcon} onChange={e => setCatIcon(e.target.value)}
                   data-testid="select-cat-icon"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white">
                   {["💼","🏨","🚗","✨","📦","🎉","🔧","🚴","❓","✂️","💅","💆","🧹","🍽️","🛒","🏠","🌟","💡"].map(i => (
                     <option key={i} value={i}>{i}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.categoryDesc}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.categoryDesc}</label>
                 <textarea value={catDesc} onChange={e => setCatDesc(e.target.value)}
                   data-testid="input-cat-desc"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-20 resize-none" />
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white h-20 resize-none" />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">Types de service</label>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-2">
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">Types de service</label>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mb-2">
                   Ces types s'afficheront dans le formulaire client pour cette catégorie (ex: "Suite VIP", "Chambre double"...)
                 </p>
                 <div className="flex gap-2 mb-2">
@@ -1091,7 +1068,7 @@ export default function AdminServices() {
                     onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addServiceType(); } }}
                     placeholder="Ajouter un type..."
                     data-testid="input-new-type"
-                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white"
+                    className="flex-1 px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white"
                   />
                   <button
                     type="button"
@@ -1123,19 +1100,37 @@ export default function AdminServices() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-gray-400 italic">Aucun type ajouté — le client verra un champ texte libre</p>
+                  <p className="text-[11px] text-zinc-400 italic">Aucun type ajouté — le client verra un champ texte libre</p>
                 )}
               </div>
 
+              {/* ── Budget estimatif toggle ── */}
+              <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700 rounded-xl">
+                <div>
+                  <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200">Afficher le champ "Budget estimatif"</p>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">Le client pourra indiquer son budget lors de la demande</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={catShowBudget}
+                    onChange={e => setCatShowBudget(e.target.checked)}
+                    data-testid="toggle-show-budget"
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-600"></div>
+                </label>
+              </div>
+
               <div>
-                <label className="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2 block flex items-center gap-2">
+                <label className="text-xs font-bold text-zinc-600 dark:text-zinc-300 mb-2 block flex items-center gap-2">
                   <FileText size={14} />
                   Champs personnalisés du formulaire
                 </label>
-                <p className="text-[10px] text-gray-400 mb-3">Ces champs apparaîtront dans le formulaire de demande côté client</p>
+                <p className="text-[10px] text-zinc-400 mb-3">Ces champs apparaîtront dans le formulaire de demande côté client</p>
 
                 {catCustomFields.map((field, idx) => (
-                  <div key={field.id} className="flex items-start gap-2 mb-2 p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700"
+                  <div key={field.id} className="flex items-start gap-2 mb-2 p-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700"
                     draggable
                     onDragStart={() => setDragFieldIdx(idx)}
                     onDragOver={(e) => e.preventDefault()}
@@ -1148,7 +1143,7 @@ export default function AdminServices() {
                       setDragFieldIdx(null);
                     }}
                   >
-                    <div className="cursor-grab text-gray-300 mt-1"><GripVertical size={14} /></div>
+                    <div className="cursor-grab text-zinc-300 mt-1"><GripVertical size={14} /></div>
                     <div className="flex-1 space-y-2">
                       <div className="flex gap-2">
                         <input
@@ -1159,7 +1154,7 @@ export default function AdminServices() {
                             setCatCustomFields(copy);
                           }}
                           placeholder="Nom du champ"
-                          className="flex-1 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs"
+                          className="flex-1 px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs"
                           data-testid={`field-label-${idx}`}
                         />
                         <select
@@ -1169,7 +1164,7 @@ export default function AdminServices() {
                             copy[idx] = { ...copy[idx], type: e.target.value as CustomField["type"] };
                             setCatCustomFields(copy);
                           }}
-                          className="px-2 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs"
+                          className="px-2 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs"
                           data-testid={`field-type-${idx}`}
                         >
                           <option value="text">Texte</option>
@@ -1189,9 +1184,9 @@ export default function AdminServices() {
                             setCatCustomFields(copy);
                           }}
                           placeholder="Placeholder (optionnel)"
-                          className="flex-1 px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-[11px]"
+                          className="flex-1 px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[11px]"
                         />
-                        <label className="flex items-center gap-1 text-[11px] text-gray-500 cursor-pointer whitespace-nowrap">
+                        <label className="flex items-center gap-1 text-[11px] text-zinc-500 cursor-pointer whitespace-nowrap">
                           <input
                             type="checkbox"
                             checked={field.required}
@@ -1207,7 +1202,7 @@ export default function AdminServices() {
                       </div>
                       {field.type === "select" && (
                         <div>
-                          <p className="text-[10px] text-gray-400 mb-1">Options (séparées par virgule)</p>
+                          <p className="text-[10px] text-zinc-400 mb-1">Options (séparées par virgule)</p>
                           <input
                             value={(field.options || []).join(", ")}
                             onChange={e => {
@@ -1216,7 +1211,7 @@ export default function AdminServices() {
                               setCatCustomFields(copy);
                             }}
                             placeholder="Option 1, Option 2, Option 3"
-                            className="w-full px-2.5 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-[11px]"
+                            className="w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-[11px]"
                             data-testid={`field-options-${idx}`}
                           />
                         </div>
@@ -1235,7 +1230,7 @@ export default function AdminServices() {
                 <button
                   type="button"
                   onClick={() => setCatCustomFields([...catCustomFields, { id: `f_${Date.now()}`, label: "", type: "text", required: false }])}
-                  className="w-full py-2 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-400 hover:border-red-300 hover:text-red-500 transition-colors flex items-center justify-center gap-1.5"
+                  className="w-full py-2 border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl text-xs text-zinc-400 hover:border-red-300 hover:text-red-500 transition-colors flex items-center justify-center gap-1.5"
                   data-testid="button-add-custom-field"
                 >
                   <Plus size={14} /> Ajouter un champ
@@ -1248,9 +1243,9 @@ export default function AdminServices() {
                   return;
                 }
                 if (editingCat) {
-                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes, customFields: catCustomFields } });
+                  updateCatMutation.mutate({ id: editingCat.id, data: { name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes, customFields: catCustomFields, showBudget: catShowBudget } });
                 } else {
-                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes, customFields: catCustomFields });
+                  createCatMutation.mutate({ name: catName, icon: catIcon, imageUrl: catImageUrl || null, description: catDesc, serviceTypes: catServiceTypes, customFields: catCustomFields, showBudget: catShowBudget });
                 }
               }} data-testid="button-save-category"
                 className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700">
@@ -1263,38 +1258,38 @@ export default function AdminServices() {
 
       {showItemModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6" data-testid="modal-catalog-item">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md p-6" data-testid="modal-catalog-item">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">{editingItem ? t.admin.editCatalogItem : t.admin.addCatalogItem}</h3>
-              <button onClick={() => { setShowItemModal(false); setEditingItem(null); resetItemForm(); }} className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
+              <button onClick={() => { setShowItemModal(false); setEditingItem(null); resetItemForm(); }} className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center"><X size={16} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogCategory}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.catalogCategory}</label>
                 <select value={itemCategoryId} onChange={e => setItemCategoryId(Number(e.target.value))}
                   data-testid="select-item-category"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white">
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white">
                   {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemName}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.catalogItemName}</label>
                 <input type="text" value={itemName} onChange={e => setItemName(e.target.value)}
                   data-testid="input-item-name"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemDesc}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.catalogItemDesc}</label>
                 <textarea value={itemDesc} onChange={e => setItemDesc(e.target.value)}
                   data-testid="input-item-desc"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white h-16 resize-none" />
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white h-16 resize-none" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemImage}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.catalogItemImage}</label>
                 <div className="flex gap-2">
                   <input type="url" value={itemImage} onChange={e => setItemImage(e.target.value)}
                     data-testid="input-item-image" placeholder="https://..."
-                    className="flex-1 px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                    className="flex-1 px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white" />
                   <button
                     type="button"
                     onClick={() => setGalleryOpenItem(true)}
@@ -1308,7 +1303,7 @@ export default function AdminServices() {
                     onClick={() => itemFileRef.current?.click()}
                     disabled={itemUploading}
                     data-testid="button-item-upload-file"
-                    className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 transition-colors whitespace-nowrap disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-xs font-semibold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 transition-colors whitespace-nowrap disabled:opacity-50"
                   >
                     {itemUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                     {itemUploading ? "..." : "Upload"}
@@ -1328,7 +1323,7 @@ export default function AdminServices() {
                 {itemImage && (
                   <div className="mt-2 space-y-1.5">
                     <ImportUrlToGallery url={itemImage} onImported={url => setItemImage(url)} size="md" />
-                    <img src={itemImage} alt="preview" className="w-full h-32 object-cover rounded-xl border border-gray-200 dark:border-gray-700" />
+                    <img src={itemImage} alt="preview" className="w-full h-32 object-cover rounded-xl border border-zinc-200 dark:border-zinc-700" />
                   </div>
                 )}
                 <GalleryPicker
@@ -1339,10 +1334,10 @@ export default function AdminServices() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase mb-1 block">{t.admin.catalogItemPrice}</label>
+                <label className="text-xs font-semibold text-zinc-500 uppercase mb-1 block">{t.admin.catalogItemPrice}</label>
                 <input type="text" value={itemPrice} onChange={e => setItemPrice(e.target.value)}
                   data-testid="input-item-price" placeholder="$25 - $50"
-                  className="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white" />
+                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white" />
               </div>
               <button onClick={() => {
                 if (!itemName.trim()) {
@@ -1376,6 +1371,7 @@ export default function AdminServices() {
           setCopiedUrl={setCopiedUrl}
         />
       )}
+      </TabContent>
     </AdminLayout>
   );
 }

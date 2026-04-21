@@ -56,8 +56,8 @@ const paymentLabels: Record<string, string> = {
 };
 
 const statusLabelsLocal: Record<string, string> = {
-  pending: "En attente", confirmed: "Confirmée", preparing: "En préparation",
-  ready: "Prête", picked_up: "En livraison", delivered: "Livrée",
+  pending: "En attente", confirmed: "Confirmée",
+  picked_up: "En Cours de Livraison", delivered: "Livrée",
   returned: "Retournée", cancelled: "Annulée",
 };
 
@@ -495,7 +495,7 @@ export default function AdminMarketing() {
                               <td className="py-3 px-3 text-gray-700 dark:text-gray-300">{client.favoriteRestaurant || "—"}</td>
                               <td className="py-3 px-3">
                                 <div className="flex gap-1 flex-wrap">
-                                  {client.topCuisines.map(c => (
+                                  {(client.topCuisines || []).map(c => (
                                     <span key={c} className="bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">{c}</span>
                                   ))}
                                 </div>
@@ -617,7 +617,7 @@ export default function AdminMarketing() {
                         {(data?.topClients || []).filter(c => c.isInactive && c.orderCount > 0).map(c => (
                           <div key={c.id} className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800" data-testid={`inactive-client-${c.id}`}>
                             <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center flex-shrink-0">
-                              <span className="text-amber-700 font-bold text-sm">{c.name[0]}</span>
+                              <span className="text-amber-700 font-bold text-sm">{c.name?.[0] || "?"}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-sm text-gray-900 dark:text-white">{c.name}</p>

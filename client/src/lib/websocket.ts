@@ -2,6 +2,7 @@ const WS_BASE = (import.meta.env.VITE_API_BASE_URL as string) || "";
 
 let ws: WebSocket | null = null;
 let wsUserId: number | null = null;
+let wsToken: string | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 const listeners: ((data: any) => void)[] = [];
@@ -20,23 +21,27 @@ function startHeartbeat() {
   }, 25000);
 }
 
-export function connectWS(userId: number) {
+export function connectWS(userId: number, token?: string) {
   // Prevent duplicate connections for the same user
   if (ws && ws.readyState === WebSocket.OPEN && wsUserId === userId) return;
 
   wsUserId = userId;
+  if (token) wsToken = token;
   clearTimers();
   if (ws) {
     ws.onclose = null; // Prevent old close handler from firing
     ws.close();
   }
 
+  // Require a valid token — the server rejects connections without one
+  if (!wsToken) return;
+
   let wsUrl: string;
   if (WS_BASE) {
-    wsUrl = WS_BASE.replace(/^https/, "wss").replace(/^http/, "ws") + `/ws?userId=${userId}`;
+    wsUrl = WS_BASE.replace(/^https/, "wss").replace(/^http/, "ws") + `/ws?token=${encodeURIComponent(wsToken)}`;
   } else {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    wsUrl = `${protocol}//${window.location.host}/ws?userId=${userId}`;
+    wsUrl = `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(wsToken)}`;
   }
 
   const socket = new WebSocket(wsUrl);
@@ -69,6 +74,7 @@ export function connectWS(userId: number) {
 
 export function disconnectWS() {
   wsUserId = null;
+  wsToken = null;
   clearTimers();
   if (ws) {
     ws.onclose = null;

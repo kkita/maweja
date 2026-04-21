@@ -3,16 +3,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import ClientNav from "../../components/ClientNav";
 import { useI18n } from "../../lib/i18n";
-import { Star, Clock, MapPin, ChevronLeft, ShoppingBag } from "lucide-react";
+import { Star, Clock, ChevronLeft, ShoppingBag } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
-import { resolveImg } from "../../lib/queryClient";
+import { resolveImg, STALE } from "../../lib/queryClient";
 import type { Restaurant, BoutiqueCategory } from "@shared/schema";
 
 export default function BoutiquesPage() {
   const [, navigate] = useLocation();
   const { t } = useI18n();
-  const { data: boutiques = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants?type=boutique"] });
-  const { data: categories = [] } = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"] });
+  const { data: boutiques = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants?type=boutique"], staleTime: STALE.semi });
+  const { data: categories = [] } = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"], staleTime: STALE.static });
   const activeCats = categories.filter(c => c.isActive);
 
   const [activeCatId, setActiveCatId] = useState<number | null>(null);
@@ -22,7 +22,7 @@ export default function BoutiquesPage() {
     if (!b.isActive) return false;
     if (search) {
       const q = search.toLowerCase();
-      return b.name.toLowerCase().includes(q) || b.cuisine.toLowerCase().includes(q) || b.address.toLowerCase().includes(q);
+      return b.name.toLowerCase().includes(q) || b.cuisine.toLowerCase().includes(q);
     }
     if (activeCatId) {
       return (b as any).categoryId === activeCatId;

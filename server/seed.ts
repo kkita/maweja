@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, restaurants, menuItems, serviceCategories, serviceCatalogItems } from "@shared/schema";
+import { users, restaurants, menuItems, serviceCategories, serviceCatalogItems, deliveryZones } from "@shared/schema";
 import { sql, eq } from "drizzle-orm";
 
 export async function seedDatabase() {
@@ -251,5 +251,51 @@ export async function seedDatabase() {
     }
   }
 
-  console.log(`✅ Migration MAWEJA terminée — 7 restaurants, ${allMenuItems.length} menus, 4 catégories services, ${allCatalogItems.length} items catalogue.`);
+  const defaultZones = [
+    {
+      name: "Zone A",
+      fee: 2,
+      color: "#22c55e",
+      neighborhoods: [
+        "gombe", "lingwala", "barumbu", "kinshasa", "kintambo",
+        "ngaliema", "bandalungwa", "lemba", "kalamu", "makala",
+        "bumbu", "selembao", "mont ngafula", "ngiri ngiri",
+      ],
+      isActive: true,
+      sortOrder: 1,
+    },
+    {
+      name: "Zone B",
+      fee: 3,
+      color: "#f59e0b",
+      neighborhoods: [
+        "ndjili", "masina", "kimbanseke", "kingasani", "kisenso",
+        "matete", "limete", "maluku", "nsele", "mont ngafula",
+        "kimwenza", "mbanza-lemba",
+      ],
+      isActive: true,
+      sortOrder: 2,
+    },
+    {
+      name: "Zone C",
+      fee: 5,
+      color: "#ef4444",
+      neighborhoods: [
+        "kinsuka", "binza ozone", "binza météo", "djelo binza",
+        "righini", "mont fleury", "mbudi", "lutendele",
+        "kisantu", "inkisi",
+      ],
+      isActive: true,
+      sortOrder: 3,
+    },
+  ];
+
+  for (const zone of defaultZones) {
+    const [existing] = await db.select({ id: deliveryZones.id }).from(deliveryZones).where(eq(deliveryZones.name, zone.name));
+    if (!existing) {
+      await db.insert(deliveryZones).values(zone);
+    }
+  }
+
+  console.log(`✅ Migration MAWEJA terminée — 7 restaurants, ${allMenuItems.length} menus, 4 catégories services, ${allCatalogItems.length} items catalogue, ${defaultZones.length} zones.`);
 }

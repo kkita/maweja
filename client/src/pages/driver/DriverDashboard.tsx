@@ -1,334 +1,93 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
-import { useToast } from "../../hooks/use-toast";
-import { apiRequest, queryClient, authFetch, authFetchJson } from "../../lib/queryClient";
-import { onWSMessage } from "../../lib/websocket";
+import { authFetchJson } from "../../lib/queryClient";
 import DriverNav from "../../components/DriverNav";
+import { DSkeletonCard, DBtn } from "../../components/driver/DriverUI";
 import {
-  Package, Clock, CheckCircle2, Truck, MapPin, Power, Navigation,
-  DollarSign, AlertCircle, Phone, Timer, Bell, X, Map as MapIcon,
-  ChevronUp, ChevronDown, TrendingUp, Zap, Star,
+  Power, MapPin, Navigation, AlertCircle, ChevronRight,
+  Package, CheckCircle2, DollarSign, Clock, Zap, Wifi, WifiOff, TrendingUp,
 } from "lucide-react";
-import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/utils";
+import { formatPrice } from "../../lib/utils";
 import type { Order } from "@shared/schema";
-import "leaflet/dist/leaflet.css";
-import * as L from "leaflet";
+import AlarmOverlay from "../../components/driver/dashboard/AlarmOverlay";
+import ActiveMissionCard from "../../components/driver/dashboard/ActiveMissionCard";
+import PendingOrderCard from "../../components/driver/dashboard/PendingOrderCard";
+import DriverLiveMap from "../../components/driver/dashboard/DriverLiveMap";
+import { useDriverStatus } from "../../hooks/use-driver-status";
 
-function CountdownBadge({ estimatedDelivery }: { estimatedDelivery: string | null }) {
-  const [remaining, setRemaining] = useState("");
-  const [isLate, setIsLate] = useState(false);
-  const [isUrgent, setIsUrgent] = useState(false);
-
-  useEffect(() => {
-    if (!estimatedDelivery) { setRemaining("--:--"); return; }
-    const update = () => {
-      const diff = new Date(estimatedDelivery).getTime() - Date.now();
-      if (diff <= 0) {
-        setRemaining(`-${Math.abs(Math.floor(diff / 60000))}min`);
-        setIsLate(true); setIsUrgent(true);
-      } else {
-        const min = Math.floor(diff / 60000);
-        const sec = Math.floor((diff % 60000) / 1000);
-        setRemaining(`${min}:${sec.toString().padStart(2, "0")}`);
-        setIsLate(false); setIsUrgent(min < 5);
-      }
-    };
-    update();
-    const i = setInterval(update, 1000);
-    return () => clearInterval(i);
-  }, [estimatedDelivery]);
-
-  return (
-    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold ${
-      isLate ? "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 animate-pulse" :
-      isUrgent ? "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400" :
-      "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
-    }`}>
-      <Timer size={11} />
-      <span className="font-mono font-black" data-testid="driver-countdown">{remaining}</span>
-      <span className="text-[9px] font-semibold opacity-80">
-        {isLate ? "RETARD!" : isUrgent ? "URGENT" : "restant"}
-      </span>
-    </div>
-  );
-}
-
-function AlarmOverlay({ reason, onDismiss }: { reason: string; onDismiss: () => void }) {
-  useEffect(() => {
-    const audio = new AudioContext();
-    let oscillator: OscillatorNode | null = null;
-    try {
-      oscillator = audio.createOscillator();
-      const gain = audio.createGain();
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
-      oscillator.frequency.value = 880;
-      oscillator.type = "sawtooth";
-      gain.gain.value = 0.3;
-      oscillator.start();
-      setTimeout(() => { oscillator?.stop(); }, 3000);
-    } catch {}
-    if ("vibrate" in navigator) navigator.vibrate([500, 200, 500, 200, 500]);
-    return () => { try { oscillator?.stop(); audio.close(); } catch {} };
-  }, []);
-
-  return (
-    <div className="fixed inset-0 z-[100] bg-red-600/95 flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-bounce">
-        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Bell size={36} className="text-red-600" />
-        </div>
-        <h2 className="text-xl font-black text-red-600 mb-2">ALERTE URGENTE</h2>
-        <p className="text-gray-700 dark:text-gray-200 text-sm mb-6 leading-relaxed">{reason}</p>
-        <button onClick={onDismiss} data-testid="dismiss-alarm"
-          className="w-full bg-red-600 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-red-200">
-          J'ai compris
-        </button>
-      </div>
-    </div>
-  );
-}
-
-interface DriverMapProps {
-  driverLat: number | null;
-  driverLng: number | null;
-  activeOrders: Order[];
-}
-
-function DriverLiveMap({ driverLat, driverLng, activeOrders }: DriverMapProps) {
-  const mapRef = useRef<any>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const driverMarkerRef = useRef<any>(null);
-  const orderMarkersRef = useRef<any[]>([]);
-
-  const defaultLat = driverLat ?? -4.3222;
-  const defaultLng = driverLng ?? 15.3222;
-
-  useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
-    const map = L.map(mapContainerRef.current, {
-      center: [defaultLat, defaultLng], zoom: 14, zoomControl: true, attributionControl: false,
-    });
-    mapRef.current = map;
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
-    return () => { map.remove(); mapRef.current = null; };
-  }, []);
-
-  useEffect(() => {
-    if (!mapRef.current || !driverLat || !driverLng) return;
-    const driverIcon = L.divIcon({
-      html: `<div style="width:40px;height:40px;background:#dc2626;border-radius:50%;border:4px solid white;box-shadow:0 4px 12px rgba(220,38,38,0.5);display:flex;align-items:center;justify-content:center;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
-      </div>`,
-      className: "", iconSize: [40, 40], iconAnchor: [20, 20],
-    });
-    if (driverMarkerRef.current) {
-      driverMarkerRef.current.setLatLng([driverLat, driverLng]);
-    } else {
-      driverMarkerRef.current = L.marker([driverLat, driverLng], { icon: driverIcon })
-        .addTo(mapRef.current).bindPopup("📍 Vous êtes ici");
-    }
-    mapRef.current.setView([driverLat, driverLng], mapRef.current.getZoom());
-  }, [driverLat, driverLng]);
-
-  useEffect(() => {
-    if (!mapRef.current) return;
-    orderMarkersRef.current.forEach(m => m.remove());
-    orderMarkersRef.current = [];
-    activeOrders.forEach((order, i) => {
-      if (!order.deliveryLat || !order.deliveryLng) return;
-      const orderIcon = L.divIcon({
-        html: `<div style="width:32px;height:32px;background:#2563eb;border-radius:50%;border:3px solid white;box-shadow:0 3px 8px rgba(37,99,235,0.5);display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px;">${i + 1}</div>`,
-        className: "", iconSize: [32, 32], iconAnchor: [16, 16],
-      });
-      const m = L.marker([order.deliveryLat, order.deliveryLng], { icon: orderIcon })
-        .addTo(mapRef.current).bindPopup(`🚚 Livraison #${order.orderNumber}`);
-      orderMarkersRef.current.push(m);
-    });
-  }, [activeOrders]);
-
-  return <div ref={mapContainerRef} className="w-full h-48 rounded-2xl overflow-hidden" data-testid="driver-map" />;
-}
+const stats = [
+  { icon: Package,      label: "En cours",  key: "en-cours",  iconBg: "bg-driver-blue/10",  tc: "text-driver-blue"  },
+  { icon: CheckCircle2, label: "Livrées",   key: "livrees",   iconBg: "bg-driver-green/10", tc: "text-driver-green" },
+  { icon: DollarSign,   label: "Gains",     key: "gains",     iconBg: "bg-driver-amber/10", tc: "text-driver-amber" },
+];
 
 export default function DriverDashboard() {
-  const { user, setUser } = useAuth();
-  const { toast } = useToast();
+  const { user } = useAuth();
   const [, navigate] = useLocation();
-  const [isOnline, setIsOnline] = useState(user?.isOnline || false);
-  const [gpsActive, setGpsActive] = useState(false);
-  const [alarm, setAlarm] = useState<string | null>(null);
-  const [showMap, setShowMap] = useState(false);
-  const [driverPos, setDriverPos] = useState<{ lat: number; lng: number } | null>(null);
+
+  const {
+    isOnline, gpsActive, showMap, setShowMap,
+    driverPos, alarm, setAlarm,
+    toggleOnline, updateStatus,
+  } = useDriverStatus();
 
   const now = new Date();
-  const greeting = now.getHours() < 12 ? "Bonjour" : now.getHours() < 18 ? "Bon après-midi" : "Bonsoir";
+  const hour = now.getHours();
+  const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
 
-  const { data: pendingOrders = [] } = useQuery<Order[]>({
+  const { data: pendingOrders = [], isLoading: loadingPending } = useQuery<Order[]>({
     queryKey: ["/api/orders", "ready"],
     queryFn: () => authFetchJson("/api/orders?status=ready"),
     refetchInterval: 5000,
   });
 
-  const { data: myOrders = [] } = useQuery<Order[]>({
+  const { data: myOrders = [], isLoading: loadingMine } = useQuery<Order[]>({
     queryKey: ["/api/orders", "driver", user?.id],
     queryFn: () => authFetchJson(`/api/orders?driverId=${user?.id}`),
     enabled: !!user,
     refetchInterval: 5000,
   });
 
-  const activeOrders = myOrders.filter(o => !["delivered", "cancelled"].includes(o.status));
-  const deliveredToday = myOrders.filter(o => o.status === "delivered");
-  const totalEarnings = deliveredToday.reduce((s, o) => s + o.deliveryFee, 0);
+  const activeOrders      = myOrders.filter(o => !["delivered", "cancelled"].includes(o.status));
+  const deliveredToday    = myOrders.filter(o => o.status === "delivered");
+  const todayEarnings     = deliveredToday.reduce((s, o) => s + o.deliveryFee, 0);
+  const lateOrders        = activeOrders.filter(o => o.estimatedDelivery && new Date(o.estimatedDelivery).getTime() < Date.now());
+  const availablePending  = pendingOrders.filter(o => !o.driverId);
+  const primaryActive     = activeOrders[0] ?? null;
+  const isLoading         = loadingPending || loadingMine;
 
-  const lateOrders = activeOrders.filter(o => {
-    if (!o.estimatedDelivery) return false;
-    return new Date(o.estimatedDelivery).getTime() < Date.now();
-  });
-
-  const sendLocation = useCallback(() => {
-    if (!user?.id || !isOnline) return;
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        setGpsActive(true);
-        setDriverPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        apiRequest(`/api/drivers/${user.id}/location`, {
-          method: "PATCH",
-          body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        }).catch(() => {});
-      },
-      () => setGpsActive(false),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  }, [user?.id, isOnline]);
-
-  useEffect(() => {
-    if (!isOnline) return;
-    sendLocation();
-    const interval = setInterval(sendLocation, 15000);
-    return () => clearInterval(interval);
-  }, [isOnline, sendLocation]);
-
-  const playOrderSound = useCallback(() => {
-    try {
-      const ctx = new AudioContext();
-      const playNote = (freq: number, startTime: number, duration: number) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = freq;
-        osc.type = "sine";
-        gain.gain.setValueAtTime(0.4, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-        osc.start(startTime);
-        osc.stop(startTime + duration);
-      };
-      const now = ctx.currentTime;
-      playNote(880, now, 0.15);
-      playNote(1100, now + 0.15, 0.15);
-      playNote(1320, now + 0.3, 0.15);
-      playNote(1100, now + 0.5, 0.15);
-      playNote(1320, now + 0.65, 0.15);
-      playNote(1760, now + 0.8, 0.3);
-      setTimeout(() => ctx.close(), 2000);
-    } catch {}
-    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200, 100, 400]);
-  }, []);
-
-  useEffect(() => {
-    return onWSMessage(data => {
-      if (data.type === "order_assigned" || data.type === "new_order") {
-        playOrderSound();
-        toast({ title: "🔔 Nouvelle commande!", description: "Une commande est disponible" });
-        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      }
-      if (data.type === "alarm") setAlarm(data.reason || "Alerte de l'administration");
-    });
-  }, [toast, playOrderSound]);
-
-  useEffect(() => {
-    if (lateOrders.length > 0 && isOnline) {
-      const checkInterval = setInterval(() => {
-        const lateNow = activeOrders.filter(o => {
-          if (!o.estimatedDelivery) return false;
-          const diff = new Date(o.estimatedDelivery).getTime() - Date.now();
-          return diff < 0 && diff > -60000;
-        });
-        if (lateNow.length > 0) {
-          toast({ title: "Retard détecté!", description: `${lateNow.length} livraison(s) en retard.`, variant: "destructive" });
-          if ("vibrate" in navigator) navigator.vibrate([300, 100, 300]);
-        }
-      }, 30000);
-      return () => clearInterval(checkInterval);
-    }
-  }, [lateOrders.length, isOnline, activeOrders, toast]);
-
-  const toggleOnline = async () => {
-    const newStatus = !isOnline;
-    setIsOnline(newStatus);
-    await apiRequest(`/api/drivers/${user?.id}/status`, {
-      method: "PATCH",
-      body: JSON.stringify({ isOnline: newStatus }),
-    });
-    setUser({ ...user!, isOnline: newStatus });
-    toast({ title: newStatus ? "Vous êtes en ligne" : "Vous êtes hors ligne" });
-    if (newStatus) sendLocation();
-  };
-
-  const acceptOrder = async (orderId: number) => {
-    try {
-      await apiRequest(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ driverId: user?.id, status: "picked_up" }),
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      toast({ title: "Commande acceptée!", description: "Rendez-vous au restaurant" });
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
-    }
-  };
-
-  const updateStatus = async (orderId: number, status: string) => {
-    await apiRequest(`/api/orders/${orderId}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status }),
-    });
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    toast({ title: status === "delivered" ? "Livraison terminée! 🎉" : "Statut mis à jour" });
-  };
-
-  const availablePending = pendingOrders.filter(o => !o.driverId);
+  const statValues = [activeOrders.length, deliveredToday.length, formatPrice(todayEarnings)];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-28">
+    <div className="min-h-screen pb-28 bg-driver-bg">
       {alarm && <AlarmOverlay reason={alarm} onDismiss={() => setAlarm(null)} />}
       <DriverNav />
 
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-6 space-y-4">
+      <div className="max-w-lg mx-auto px-4 pt-5 pb-6 space-y-4">
 
-        {/* Hero Header */}
-        <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-3xl p-5 text-white overflow-hidden shadow-xl shadow-red-200/50">
-          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-y-16 translate-x-16" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-white/5 translate-y-12 -translate-x-12" />
-          <div className="relative flex items-center justify-between">
+        {/* ── Hero / Greeting ─────────────────────────────────────── */}
+        <div className="rounded-3xl p-5 relative overflow-hidden bg-[linear-gradient(135deg,#1a0000_0%,#220000_60%,#1a1a1a_100%)] border border-driver-accent/20 shadow-[0_8px_32px_rgba(225,0,0,0.1)]">
+          <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full opacity-10 bg-driver-accent" />
+          <div className="relative flex items-start justify-between">
             <div>
-              <p className="text-red-200 text-xs font-semibold mb-0.5">{greeting},</p>
-              <h2 className="text-2xl font-black">{user?.name?.split(" ")[0]} 👋</h2>
-              <p className="text-red-200 text-xs mt-1">
+              <p className="text-xs font-semibold mb-0.5 text-driver-subtle">{greeting},</p>
+              <h2 className="text-2xl font-black text-white">{user?.name?.split(" ")[0]} 👋</h2>
+              <p className="text-xs mt-1.5 text-driver-muted">
                 {isOnline
-                  ? `${activeOrders.length} livraison${activeOrders.length !== 1 ? "s" : ""} en cours`
+                  ? activeOrders.length > 0
+                    ? `${activeOrders.length} mission${activeOrders.length > 1 ? "s" : ""} en cours`
+                    : availablePending.length > 0
+                    ? `${availablePending.length} commande${availablePending.length > 1 ? "s" : ""} disponible${availablePending.length > 1 ? "s" : ""}`
+                    : "En attente de commandes..."
                   : "Activez votre service pour commencer"}
               </p>
             </div>
             <button
               onClick={toggleOnline}
               data-testid="toggle-online"
-              className={`flex flex-col items-center gap-1 px-4 py-3 rounded-2xl text-xs font-black transition-all active:scale-95 border-2 ${
-                isOnline
-                  ? "bg-white/15 border-white/30 text-white backdrop-blur-sm"
-                  : "bg-white text-red-600 border-white/80 shadow-lg"
+              className={`flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl text-xs font-black transition-all active:scale-95 ${
+                isOnline ? "bg-driver-green text-black shadow-glow-green" : "bg-driver-s2 text-driver-muted"
               }`}
             >
               <Power size={20} className={isOnline ? "animate-pulse" : ""} />
@@ -337,227 +96,178 @@ export default function DriverDashboard() {
           </div>
 
           {isOnline && (
-            <div className="relative mt-4 flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-ping absolute" />
-              <div className="w-2 h-2 bg-green-400 rounded-full" />
-              <span className="text-green-200 text-xs font-semibold ml-4">Service actif — en attente de commandes</span>
+            <div className="relative mt-4 flex items-center gap-2.5">
+              <div className="relative">
+                <div className="w-2 h-2 rounded-full absolute bg-driver-green animate-ping" />
+                <div className="w-2 h-2 rounded-full bg-driver-green" />
+              </div>
+              <span className="text-xs font-semibold text-driver-green">Service actif</span>
+              {gpsActive && (
+                <span className="flex items-center gap-1 text-[10px] text-driver-subtle">
+                  <Navigation size={11} /> GPS actif
+                </span>
+              )}
             </div>
           )}
         </div>
 
-        {/* Late orders alert */}
+        {/* ── Late alert ──────────────────────────────────────────── */}
         {lateOrders.length > 0 && (
-          <div className="bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-2xl p-4 animate-pulse flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertCircle size={18} className="text-red-600" />
+          <div className="flex items-center gap-3 rounded-2xl p-4 bg-driver-red/10 border border-driver-red/25 animate-pulse">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-driver-red/15">
+              <AlertCircle size={18} className="text-driver-red" />
             </div>
             <div>
-              <p className="font-black text-sm text-red-700">Retard détecté !</p>
-              <p className="text-xs text-red-500 mt-0.5">
+              <p className="font-black text-sm text-driver-red">Retard détecté !</p>
+              <p className="text-xs mt-0.5 text-driver-muted">
                 {lateOrders.length} livraison{lateOrders.length > 1 ? "s" : ""} en retard. Accélérez svp.
               </p>
             </div>
           </div>
         )}
 
-        {/* Stats Row */}
+        {/* ── Today Stats ─────────────────────────────────────────── */}
         <div className="grid grid-cols-3 gap-3">
-          {[
-            { icon: Package, label: "En cours", value: activeOrders.length, bg: "bg-blue-50 dark:bg-blue-950/30", iconBg: "bg-blue-100 dark:bg-blue-900/40", iconColor: "text-blue-600", valColor: "text-blue-700 dark:text-blue-400" },
-            { icon: CheckCircle2, label: "Livrées", value: deliveredToday.length, bg: "bg-emerald-50 dark:bg-emerald-950/30", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", iconColor: "text-emerald-600", valColor: "text-emerald-700 dark:text-emerald-400" },
-            { icon: DollarSign, label: "Gains", value: formatPrice(totalEarnings), bg: "bg-red-50 dark:bg-red-950/30", iconBg: "bg-red-100 dark:bg-red-900/40", iconColor: "text-red-600", valColor: "text-red-700 dark:text-red-400" },
-          ].map((stat, i) => (
-            <div key={stat.label} className={`${stat.bg} rounded-2xl p-4 text-center`} data-testid={`driver-stat-${stat.label.toLowerCase()}`}>
-              <div className={`w-9 h-9 ${stat.iconBg} rounded-xl flex items-center justify-center mx-auto mb-2`}>
-                <stat.icon size={16} className={stat.iconColor} />
+          {stats.map((s, i) => (
+            <div
+              key={s.key}
+              className="rounded-2xl p-4 flex flex-col items-center text-center bg-driver-surface border border-driver-border"
+              data-testid={`driver-stat-${s.label.toLowerCase()}`}
+            >
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${s.iconBg}`}>
+                <s.icon size={16} className={s.tc} />
               </div>
-              <p className={`text-lg font-black ${stat.valColor}`}>{stat.value}</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">{stat.label}</p>
+              <p className="text-base font-black text-white">{statValues[i]}</p>
+              <p className="text-[10px] font-semibold mt-0.5 text-driver-subtle">{s.label}</p>
             </div>
           ))}
         </div>
 
-        {/* GPS / Map toggle */}
+        {/* ── GPS / Map ───────────────────────────────────────────── */}
         {isOnline && (
           <div>
             <button
               onClick={() => setShowMap(m => !m)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold border-2 transition-all ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all active:opacity-80 border ${
                 gpsActive
-                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                  : "bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800"
+                  ? "bg-driver-green/8 border-driver-green/20"
+                  : "bg-driver-amber/8 border-driver-amber/20"
               }`}
               data-testid="toggle-map"
             >
-              <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 ${gpsActive ? "bg-emerald-100 dark:bg-emerald-900/40" : "bg-orange-100 dark:bg-orange-900/40"}`}>
-                <Navigation size={13} className={gpsActive ? "text-emerald-600" : "text-orange-600"} />
-              </div>
-              <span className="flex-1 text-left">
+              {gpsActive
+                ? <Wifi size={16} className="text-driver-green" />
+                : <WifiOff size={16} className="text-driver-amber" />}
+              <span className={`text-xs font-semibold flex-1 text-left ${gpsActive ? "text-driver-green" : "text-driver-amber"}`}>
                 {gpsActive ? "GPS actif — Position partagée toutes les 15s" : "GPS inactif — Activez la localisation"}
               </span>
-              <MapIcon size={13} />
-              {showMap ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+              <Navigation size={13} className="text-driver-subtle" />
             </button>
             {showMap && (
-              <div className="mt-2 rounded-2xl overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800">
-                <DriverLiveMap driverLat={driverPos?.lat ?? null} driverLng={driverPos?.lng ?? null} activeOrders={activeOrders} />
-                <div className="bg-white dark:bg-gray-900 px-4 py-2.5 flex items-center gap-4 text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-800">
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-red-600" /> Vous</span>
-                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-blue-600" /> Livraisons</span>
-                  <span className="ml-auto font-bold">{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length} point{activeOrders.filter(o => o.deliveryLat && o.deliveryLng).length !== 1 ? "s" : ""}</span>
+              <div className="mt-2 rounded-2xl overflow-hidden border border-driver-border">
+                <DriverLiveMap lat={driverPos?.lat ?? null} lng={driverPos?.lng ?? null} orders={activeOrders} />
+                <div className="px-4 py-2.5 flex items-center gap-4 text-[10px] bg-driver-surface text-driver-subtle">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-driver-accent" /> Vous</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-driver-blue" /> Livraisons</span>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Offline empty state */}
+        {/* ── OFFLINE state ───────────────────────────────────────── */}
         {!isOnline && (
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Power size={32} className="text-gray-400 dark:text-gray-500" />
+          <div className="rounded-3xl p-10 flex flex-col items-center text-center bg-driver-surface border border-driver-border">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5 bg-driver-s2">
+              <Power size={32} className="text-driver-subtle" />
             </div>
-            <p className="font-black text-xl text-gray-900 dark:text-white mb-2">Vous êtes hors ligne</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
+            <p className="font-black text-xl text-white mb-2">Vous êtes hors ligne</p>
+            <p className="text-sm mb-8 max-w-xs leading-relaxed text-driver-muted">
               Passez en ligne pour recevoir des commandes et commencer à livrer
             </p>
-            <button onClick={toggleOnline}
-              className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-3.5 rounded-2xl text-sm font-black shadow-lg shadow-red-200 hover:shadow-xl transition-all active:scale-95"
-              data-testid="go-online">
-              <Power size={14} className="inline mr-2" />
-              Passer en ligne
-            </button>
+            <DBtn label="Passer en ligne" icon={Zap} variant="accept" size="lg" onClick={toggleOnline} testId="go-online" />
           </div>
         )}
 
-        {/* Active orders */}
-        {activeOrders.length > 0 && (
+        {/* ── Active Mission ──────────────────────────────────────── */}
+        {isOnline && isLoading && <DSkeletonCard />}
+
+        {isOnline && !isLoading && primaryActive && (
           <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="relative">
-                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-ping absolute" />
-                <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
-              </div>
-              <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Livraisons en cours</h3>
-              <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-2 py-0.5 rounded-full ml-auto">{activeOrders.length}</span>
-            </div>
-            <div className="space-y-3">
-              {activeOrders.map(order => (
-                <div key={order.id}
-                  className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden cursor-pointer active:scale-[0.98] transition-transform"
-                  data-testid={`active-order-${order.id}`}
-                  onClick={() => navigate(`/driver/order/${order.id}`)}>
-                  <div className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center">
-                          <Truck size={16} className="text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500">{formatDate(order.createdAt!)}</p>
-                        </div>
-                      </div>
-                      <div className="text-right flex flex-col items-end gap-1">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
-                        {order.estimatedDelivery && <CountdownBadge estimatedDelivery={order.estimatedDelivery} />}
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2 mb-3">
-                      <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
-                      <span className="text-xs text-gray-600 dark:text-gray-300 flex-1 line-clamp-2">{order.deliveryAddress}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
-                      <div>
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Votre gain</p>
-                        <span className="font-black text-emerald-600 text-base">{formatPrice(order.deliveryFee)}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        {["confirmed", "preparing"].includes(order.status) && (
-                          <button onClick={(e) => { e.stopPropagation(); updateStatus(order.id, "picked_up"); }} data-testid={`pickup-${order.id}`}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-blue-700 active:scale-95 transition-all shadow-md shadow-blue-200">
-                            📦 Récupérée
-                          </button>
-                        )}
-                        {order.status === "picked_up" && (
-                          <button onClick={(e) => { e.stopPropagation(); updateStatus(order.id, "delivered"); }} data-testid={`deliver-${order.id}`}
-                            className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black hover:from-emerald-600 hover:to-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-200">
-                            ✓ Livrée
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Available orders */}
-        {isOnline && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="relative">
-                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping absolute" />
-                <div className="w-2.5 h-2.5 bg-red-500 rounded-full" />
-              </div>
-              <h3 className="font-black text-sm text-gray-900 dark:text-white ml-0.5">Commandes disponibles</h3>
-              <span className="text-[10px] font-black bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full ml-auto">{availablePending.length}</span>
-            </div>
-
-            {availablePending.length === 0 ? (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Clock size={28} className="text-gray-300" />
-                </div>
-                <p className="text-gray-700 dark:text-gray-200 font-bold text-sm">En attente de commandes...</p>
-                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Les nouvelles commandes apparaîtront automatiquement</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {availablePending.map(order => (
-                  <div key={order.id}
-                    className="bg-white dark:bg-gray-900 rounded-2xl border-2 border-red-100 dark:border-red-900 shadow-sm hover:shadow-lg hover:border-red-300 dark:hover:border-red-700 transition-all"
-                    data-testid={`pending-order-${order.id}`}>
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
-                            <Package size={16} className="text-red-600" />
-                          </div>
-                          <div>
-                            <p className="font-black text-sm text-gray-900 dark:text-white">{order.orderNumber}</p>
-                            <p className="text-[10px] text-gray-400 dark:text-gray-500">Total: {formatPrice(order.total)}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">Votre gain</p>
-                          <p className="font-black text-emerald-600 text-base">{formatPrice(order.deliveryFee)}</p>
-                        </div>
-                      </div>
-
-                      {order.estimatedDelivery && <div className="mb-2"><CountdownBadge estimatedDelivery={order.estimatedDelivery} /></div>}
-
-                      <div className="flex items-start gap-2 mb-4">
-                        <MapPin size={12} className="mt-0.5 flex-shrink-0 text-red-400" />
-                        <span className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2">{order.deliveryAddress}</span>
-                      </div>
-
-                      <button onClick={() => acceptOrder(order.id)} data-testid={`accept-order-${order.id}`}
-                        className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-3 rounded-xl text-xs font-black hover:from-red-700 hover:to-red-800 active:scale-95 transition-all shadow-md shadow-red-200">
-                        🚀 Accepter cette livraison
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <ActiveMissionCard
+              order={primaryActive}
+              onAction={(status) => updateStatus(primaryActive.id, status)}
+            />
+            {activeOrders.length > 1 && (
+              <button
+                onClick={() => navigate("/driver/orders")}
+                className="w-full flex items-center justify-center gap-1.5 py-3 mt-2 rounded-xl text-xs font-semibold transition-all active:opacity-70 text-driver-muted"
+              >
+                +{activeOrders.length - 1} autre{activeOrders.length - 1 > 1 ? "s" : ""} livraison{activeOrders.length - 1 > 1 ? "s" : ""} en cours
+                <ChevronRight size={14} />
+              </button>
             )}
           </div>
         )}
 
+        {/* ── Available Orders Queue ──────────────────────────────── */}
+        {isOnline && availablePending.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="relative">
+                <div className="w-2.5 h-2.5 rounded-full absolute bg-driver-amber animate-ping" />
+                <div className="w-2.5 h-2.5 rounded-full bg-driver-amber" />
+              </div>
+              <p className="font-black text-sm text-white ml-1">Commandes disponibles</p>
+              <span className="text-[10px] font-black px-2 py-0.5 rounded-full ml-auto bg-driver-amber/20 text-driver-amber">
+                {availablePending.length}
+              </span>
+            </div>
+            <div className="space-y-3">
+              {availablePending.slice(0, 5).map(order => (
+                <PendingOrderCard key={order.id} order={order} />
+              ))}
+              {availablePending.length > 5 && (
+                <button
+                  onClick={() => navigate("/driver/orders")}
+                  className="w-full py-3 rounded-2xl text-sm font-bold transition-all active:opacity-70 bg-driver-surface text-driver-muted border border-driver-border"
+                >
+                  Voir {availablePending.length - 5} de plus
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Waiting state ─────────────────────────────────────────────── */}
+        {isOnline && !isLoading && activeOrders.length === 0 && availablePending.length === 0 && (
+          <div className="rounded-3xl p-8 flex flex-col items-center text-center bg-driver-surface border border-driver-border">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-driver-green/12">
+              <Clock size={28} className="text-driver-green" />
+            </div>
+            <p className="font-black text-lg text-white mb-2">En attente de commandes</p>
+            <p className="text-sm text-driver-muted">Vous serez notifié dès qu'une commande est disponible</p>
+          </div>
+        )}
+
+        {/* ── Quick link to earnings ─────────────────────────────── */}
+        {deliveredToday.length > 0 && (
+          <button
+            onClick={() => navigate("/driver/earnings")}
+            className="w-full flex items-center gap-3 rounded-2xl p-4 transition-all active:opacity-80 bg-driver-green/[0.06] border border-driver-green/15"
+            data-testid="button-view-earnings"
+          >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-driver-green/15">
+              <TrendingUp size={18} className="text-driver-green" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-black text-white">Gains du jour</p>
+              <p className="text-xs text-driver-muted">{deliveredToday.length} livraisons effectuées</p>
+            </div>
+            <span className="text-lg font-black text-driver-green">{formatPrice(todayEarnings)}</span>
+            <ChevronRight size={16} className="text-driver-subtle" />
+          </button>
+        )}
       </div>
     </div>
   );

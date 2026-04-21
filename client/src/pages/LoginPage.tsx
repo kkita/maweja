@@ -3,12 +3,13 @@ import { useAuth } from "../lib/auth";
 import { useLocation } from "wouter";
 import { Eye, EyeOff, User, Mail, Lock, Phone, MapPin, ArrowRight } from "lucide-react";
 import splashIcon from "@assets/maweja-icon-512.png";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 
 export default function LoginPage() {
   const { login, register } = useAuth();
   const [, navigate] = useLocation();
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -16,6 +17,9 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+
+  const isEmailLogin = identifier.includes("@");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,10 +27,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (isLogin) {
-        await login(email, password, "client");
+        await login(identifier, password, "client");
       } else {
         if (password.length < 6) { setError("Le mot de passe doit contenir au moins 6 caracteres"); setLoading(false); return; }
-        await register({ email, password, name, phone, role: "client", address });
+        if (!phone) { setError("Le numero de telephone est obligatoire"); setLoading(false); return; }
+        const emailValue = isEmailLogin ? identifier : "";
+        await register({ email: emailValue, password, name, phone, role: "client", address });
       }
       navigate("/");
     } catch (err: any) {
@@ -38,6 +44,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-5 py-10" style={{ background: "linear-gradient(160deg, #EC0000 0%, #B80000 50%, #8B0000 100%)" }}>
+      {showForgot && <ForgotPasswordModal onClose={() => setShowForgot(false)} userRole="client" />}
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <div
@@ -137,17 +144,24 @@ export default function LoginPage() {
             )}
 
             <div className="relative">
-              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+              {isEmailLogin || isLogin
+                ? <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                : <Phone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />}
               <input
-                type="email"
-                placeholder="Adresse email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+                type={isLogin ? "text" : "email"}
+                placeholder={isLogin ? "Email ou numero de telephone" : "Adresse email (optionnel)"}
+                value={identifier}
+                onChange={e => setIdentifier(e.target.value)}
                 data-testid="input-email"
                 className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-400 transition-all"
-                required
+                required={isLogin}
               />
             </div>
+            {!isLogin && (
+              <p className="text-xs text-gray-400 -mt-1 pl-1">
+                L'email est optionnel mais necesssaire pour reinitialiser le mot de passe par email.
+              </p>
+            )}
 
             <div className="relative">
               <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -199,7 +213,7 @@ export default function LoginPage() {
             {isLogin && (
               <button
                 type="button"
-                onClick={() => {}}
+                onClick={() => setShowForgot(true)}
                 className="w-full text-center text-xs text-gray-400 hover:text-red-500 transition-colors mt-1"
                 data-testid="link-forgot-password"
               >

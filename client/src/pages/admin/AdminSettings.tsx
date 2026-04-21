@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { Settings, Bell, Save, Loader2, Check, RefreshCw } from "lucide-react";
+import { Settings, Bell, Save, Loader2, Check, RefreshCw, Lock } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useToast } from "../../hooks/use-toast";
 import { apiRequest, queryClient } from "../../lib/queryClient";
@@ -18,6 +18,7 @@ const DEFAULTS = {
   points_per_order: "10",
   currency: "USD",
   whatsapp_number: "+243802540138",
+  override_code: "MAWEJA2025",
 };
 
 export default function AdminSettings() {
@@ -155,6 +156,32 @@ export default function AdminSettings() {
                 <SiWhatsapp size={12} /> Tester ce numero WhatsApp
               </a>
             )}
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-red-100 dark:border-red-900/30 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-11 h-11 bg-red-50 dark:bg-red-950/30 rounded-xl flex items-center justify-center">
+              <Lock size={20} className="text-red-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white">Sécurité — Code d'accès Override</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Code requis pour modifier les statuts finaux des commandes (Livrée, Annulée, Retournée)</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 block">Code d'accès override</label>
+            <input
+              type="text"
+              value={form.override_code}
+              onChange={e => set("override_code", e.target.value)}
+              placeholder="MAWEJA2025"
+              data-testid="input-override-code"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm dark:text-white font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+            <p className="text-[11px] text-red-500 dark:text-red-400 flex items-center gap-1">
+              <Lock size={10} /> Ce code est confidentiel. Partagez-le uniquement avec les personnes autorisées à modifier les statuts finaux.
+            </p>
           </div>
         </div>
 

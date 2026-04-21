@@ -2,20 +2,53 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson } from "../../lib/queryClient";
+import { useLocation } from "wouter";
 import DriverNav from "../../components/DriverNav";
-import { DollarSign, TrendingUp, Package, Clock, Calendar, EyeOff } from "lucide-react";
-import { formatPrice } from "../../lib/utils";
+import { dt, DSkeletonCard, DEmptyState } from "../../components/driver/DriverUI";
+import { DollarSign, TrendingUp, Package, Clock, Calendar, EyeOff, ChevronRight, Banknote, Phone, ArrowUpRight } from "lucide-react";
+import { formatPrice, formatPaymentMethod } from "../../lib/utils";
 import type { Order } from "@shared/schema";
 
 type Period = "all" | "today" | "week" | "month" | "custom";
 
+const PERIOD_LABELS: Record<Period, string> = {
+  all:     "Tout",
+  today:   "Aujourd'hui",
+  week:    "Semaine",
+  month:   "Mois",
+  custom:  "Personnalisé",
+};
+
+function filterByPeriod(orders: Order[], period: Period, from: string, to: string): Order[] {
+  const delivered = orders.filter(o => o.status === "delivered");
+  if (period === "all") return delivered;
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfDay); startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  return delivered.filter(o => {
+    const d = new Date(o.createdAt!);
+    if (period === "today") return d >= startOfDay;
+    if (period === "week")  return d >= startOfWeek;
+    if (period === "month") return d >= startOfMonth;
+    if (period === "custom") {
+      const f = from ? new Date(from) : new Date(0);
+      const t = to ? new Date(to + "T23:59:59") : new Date();
+      return d >= f && d <= t;
+    }
+    return true;
+  });
+}
+
 export default function DriverEarnings() {
   const { user } = useAuth();
-  const [period, setPeriod] = useState<Period>("all");
+  const [, navigate] = useLocation();
+  const [period, setPeriod] = useState<Period>("today");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
 
-  const { data: orders = [] } = useQuery<Order[]>({
+  const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders", { driverId: user?.id }],
     queryFn: () => authFetchJson(`/api/orders?driverId=${user?.id}`),
     enabled: !!user,
@@ -27,148 +60,182 @@ export default function DriverEarnings() {
   });
 
   const feesHidden = hideSetting?.value === "true";
-
-  const filtered = useMemo(() => {
-    const delivered = orders.filter(o => o.status === "delivered");
-    if (period === "all") return delivered;
-
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(startOfToday);
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    return delivered.filter(o => {
-      const d = new Date(o.createdAt!);
-      if (period === "today") return d >= startOfToday;
-      if (period === "week") return d >= startOfWeek;
-      if (period === "month") return d >= startOfMonth;
-      if (period === "custom") {
-        const from = customFrom ? new Date(customFrom) : new Date(0);
-        const to = customTo ? new Date(customTo + "T23:59:59") : new Date();
-        return d >= from && d <= to;
-      }
-      return true;
-    });
-  }, [orders, period, customFrom, customTo]);
-
+  const filtered = useMemo(() => filterByPeriod(orders, period, customFrom, customTo), [orders, period, customFrom, customTo]);
   const totalEarnings = filtered.reduce((s, o) => s + o.deliveryFee, 0);
-  const avgPerDelivery = filtered.length > 0 ? Math.round(totalEarnings / filtered.length) : 0;
+  const avgPerDelivery = filtered.length > 0 ? totalEarnings / filtered.length : 0;
+  const cashOrders = filtered.filter(o => o.paymentMethod === "cash").length;
+  const cashTotal = filtered.filter(o => o.paymentMethod === "cash").reduce((s, o) => s + o.deliveryFee, 0);
 
   if (feesHidden) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+      <div className="min-h-screen pb-28" style={{ background: dt.bg }}>
         <DriverNav />
-        <div className="max-w-lg mx-auto px-4 py-4">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-10 border border-gray-100 dark:border-gray-800 shadow-sm text-center mt-8">
-            <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <EyeOff size={32} className="text-gray-400" />
-            </div>
-            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2">Revenus masqués</h2>
-            <p className="text-sm text-gray-500 leading-relaxed">
-              L'affichage des frais de livraison est temporairement désactivé par l'administration.
-            </p>
-          </div>
+        <div className="max-w-lg mx-auto px-4 py-8">
+          <DEmptyState
+            icon={EyeOff}
+            title="Revenus masqués"
+            description="L'affichage des frais de livraison est temporairement désactivé par l'administration."
+          />
         </div>
       </div>
     );
   }
 
-  const periodLabels: Record<Period, string> = {
-    all: "Tout",
-    today: "Aujourd'hui",
-    week: "Semaine",
-    month: "Mois",
-    custom: "Personnalise",
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+    <div className="min-h-screen pb-28" style={{ background: dt.bg }}>
       <DriverNav />
-      <div className="max-w-lg mx-auto px-4 py-4">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4" data-testid="text-earnings-title">Mes revenus</h2>
+      <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
 
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-black text-white" data-testid="text-earnings-title">Mes revenus</h2>
+            <p className="text-xs mt-0.5" style={{ color: dt.text3 }}>Suivi de vos gains</p>
+          </div>
+          <button
+            onClick={() => navigate("/driver/rapport")}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:opacity-70"
+            style={{ background: dt.surface, border: `1px solid ${dt.border}`, color: dt.text2 }}
+            data-testid="button-view-rapport"
+          >
+            Rapport
+            <ChevronRight size={13} />
+          </button>
+        </div>
+
+        {/* Period pills */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
           {(["all", "today", "week", "month", "custom"] as Period[]).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               data-testid={`earnings-period-${p}`}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                period === p
-                  ? "bg-red-600 text-white shadow-lg shadow-red-200"
-                  : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-              }`}
+              className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0"
+              style={{
+                background: period === p ? dt.accent : dt.surface,
+                color: period === p ? "white" : dt.text2,
+                border: `1px solid ${period === p ? "transparent" : dt.border}`,
+                boxShadow: period === p ? "0 4px 12px rgba(225,0,0,0.3)" : "none",
+              }}
             >
-              {periodLabels[p]}
+              {PERIOD_LABELS[p]}
             </button>
           ))}
         </div>
 
+        {/* Custom date range */}
         {period === "custom" && (
-          <div className="flex gap-3 mb-4">
-            <div className="flex-1">
-              <label className="text-[10px] font-semibold text-gray-500 mb-1 block">Du</label>
-              <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
-                data-testid="input-earnings-from"
-                className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm" />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] font-semibold text-gray-500 mb-1 block">Au</label>
-              <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
-                data-testid="input-earnings-to"
-                className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm" />
-            </div>
+          <div className="flex gap-3">
+            {[
+              { label: "Du", value: customFrom, set: setCustomFrom, testId: "input-earnings-from" },
+              { label: "Au", value: customTo,   set: setCustomTo,   testId: "input-earnings-to" },
+            ].map(({ label, value, set, testId }) => (
+              <div key={label} className="flex-1">
+                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: dt.text3 }}>{label}</label>
+                <input
+                  type="date"
+                  value={value}
+                  onChange={e => set(e.target.value)}
+                  data-testid={testId}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-white focus:outline-none"
+                  style={{ background: dt.surface, border: `1px solid ${dt.border}`, colorScheme: "dark" }}
+                />
+              </div>
+            ))}
           </div>
         )}
 
-        <div className="relative bg-gradient-to-br from-red-600 via-red-700 to-red-900 rounded-3xl p-6 text-white mb-6 overflow-hidden" style={{ boxShadow: "0 8px 32px rgba(220,38,38,0.30)" }}>
-          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-y-16 translate-x-16" />
-          <p className="text-sm text-red-200 font-semibold">Revenus ({periodLabels[period].toLowerCase()})</p>
-          <p className="text-4xl font-black mt-1 relative z-10" data-testid="text-total-earnings">{formatPrice(totalEarnings)}</p>
-          <div className="flex items-center gap-1 mt-2 text-green-300 text-sm relative z-10">
-            <TrendingUp size={14} />
-            <span className="font-semibold">{filtered.length} livraison{filtered.length !== 1 ? "s" : ""} effectuée{filtered.length !== 1 ? "s" : ""}</span>
+        {/* Hero card */}
+        <div
+          className="rounded-3xl p-6 relative overflow-hidden"
+          style={{ background: "linear-gradient(135deg, #1a0000 0%, #220000 100%)", border: "1px solid rgba(225,0,0,0.2)", boxShadow: "0 8px 32px rgba(225,0,0,0.12)" }}
+        >
+          <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full" style={{ background: "rgba(225,0,0,0.08)" }} />
+          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: dt.text3 }}>Revenus — {PERIOD_LABELS[period].toLowerCase()}</p>
+          <p className="text-4xl font-black text-white mt-1 relative z-10" data-testid="text-total-earnings">{formatPrice(totalEarnings)}</p>
+          <div className="flex items-center gap-1.5 mt-2 relative z-10">
+            <TrendingUp size={14} style={{ color: dt.green }} />
+            <span className="text-sm font-semibold" style={{ color: dt.green }}>
+              {filtered.length} livraison{filtered.length !== 1 ? "s" : ""} effectuée{filtered.length !== 1 ? "s" : ""}
+            </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
-            <div className="w-10 h-10 bg-green-50 dark:bg-green-950/30 rounded-xl flex items-center justify-center mb-2">
-              <Package size={18} className="text-green-600" />
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { icon: Package, label: "Livraisons",        value: filtered.length,                color: dt.blue  },
+            { icon: Clock,   label: "Moy. par livraison", value: formatPrice(avgPerDelivery),   color: dt.amber },
+            { icon: Banknote,label: "Reçu en cash",       value: formatPrice(cashTotal),         color: dt.green },
+            { icon: DollarSign,label:"Courses cash",      value: cashOrders,                    color: "#c084fc"},
+          ].map(s => (
+            <div
+              key={s.label}
+              className="rounded-2xl p-4"
+              style={{ background: dt.surface, border: `1px solid ${dt.border}` }}
+            >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2.5" style={{ background: `${s.color}18` }}>
+                <s.icon size={17} style={{ color: s.color }} />
+              </div>
+              <p className="text-xl font-black text-white">{s.value}</p>
+              <p className="text-xs font-semibold mt-0.5" style={{ color: dt.text3 }}>{s.label}</p>
             </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-white" data-testid="text-delivery-count">{filtered.length}</p>
-            <p className="text-xs text-gray-500">Livraisons terminees</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
-            <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950/30 rounded-xl flex items-center justify-center mb-2">
-              <Clock size={18} className="text-blue-600" />
-            </div>
-            <p className="text-2xl font-black text-gray-900 dark:text-white">{formatPrice(avgPerDelivery)}</p>
-            <p className="text-xs text-gray-500">Moy. par livraison</p>
-          </div>
+          ))}
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Historique des gains</h3>
+        {/* Earnings history */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: dt.surface, border: `1px solid ${dt.border}` }}>
+          <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${dt.border}` }}>
+            <p className="font-black text-sm text-white">Historique des gains</p>
           </div>
-          {filtered.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">Aucun gain pour cette période</div>
-          ) : (
-            <div className="divide-y divide-gray-50 dark:divide-gray-800">
-              {filtered.map((o) => (
-                <div key={o.id} className="p-4 flex items-center justify-between" data-testid={`earning-${o.id}`}>
+
+          {isLoading ? (
+            <div className="p-4 space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center justify-between animate-pulse">
                   <div>
-                    <p className="font-medium text-sm text-gray-900 dark:text-white">{o.orderNumber}</p>
-                    <p className="text-xs text-gray-400">{o.deliveryAddress?.split(",")[0]}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">
-                      {new Date(o.createdAt!).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
+                    <div className="h-3 w-24 rounded mb-1.5" style={{ background: dt.surface2 }} />
+                    <div className="h-2.5 w-32 rounded" style={{ background: dt.surface3 }} />
                   </div>
-                  <span className="font-bold text-green-600">+{formatPrice(o.deliveryFee)}</span>
+                  <div className="h-4 w-16 rounded" style={{ background: dt.surface2 }} />
                 </div>
               ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-8 text-center text-sm" style={{ color: dt.text3 }}>Aucun gain pour cette période</div>
+          ) : (
+            <div>
+              {filtered.map((o, i) => {
+                const isCash = o.paymentMethod === "cash";
+                return (
+                  <div
+                    key={o.id}
+                    className="px-4 py-3.5 flex items-center justify-between"
+                    style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${dt.border}` : "none" }}
+                    data-testid={`earning-${o.id}`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: isCash ? "rgba(34,197,94,0.12)" : "rgba(96,165,250,0.12)" }}
+                      >
+                        {isCash ? <Banknote size={14} style={{ color: dt.green }} /> : <Phone size={14} style={{ color: dt.blue }} />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm text-white">{o.orderNumber}</p>
+                        <p className="text-[10px] truncate" style={{ color: dt.text3 }}>{o.deliveryAddress?.split(",")[0]}</p>
+                        <p className="text-[10px]" style={{ color: dt.text3 }}>
+                          {new Date(o.createdAt!).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <ArrowUpRight size={13} style={{ color: dt.green }} />
+                      <span className="font-black text-sm" style={{ color: dt.green }}>+{formatPrice(o.deliveryFee)}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

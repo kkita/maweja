@@ -6,6 +6,8 @@ import { setupVite, serveStatic } from "./vite";
 import { seedDatabase } from "./seed";
 import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
+import { hashPassword } from "./auth";
+import { logger } from "./lib/logger";
 
 const app = express();
 
@@ -60,9 +62,14 @@ const pgStore = new PgSession({
   createTableIfMissing: true,
 });
 
+if (IS_PROD && !process.env.SESSION_SECRET) {
+  console.error("FATAL: SESSION_SECRET is not set. Refusing to start in production without it.");
+  process.exit(1);
+}
+
 const sessionOpts = {
   store: pgStore,
-  secret: process.env.SESSION_SECRET || "maweja-secret-2024",
+  secret: process.env.SESSION_SECRET || "maweja-dev-secret-do-not-use-in-prod",
   resave: true,
   saveUninitialized: false,
   rolling: true,
@@ -165,6 +172,16 @@ app.use((req: any, res, next) => {
   `);
 
   await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS menu_item_categories (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      store_type TEXT NOT NULL DEFAULT 'restaurant',
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS delivery_zones (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
@@ -226,6 +243,11 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS device_type TEXT DEFAULT 'web'`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS audit_log JSONB`);
   await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_zone TEXT`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS driver_accepted BOOLEAN NOT NULL DEFAULT false`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS refusal_reason TEXT`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_remarks JSONB`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_modifications JSONB`);
+  await db.execute(sql`ALTER TABLE service_categories ADD COLUMN IF NOT EXISTS show_budget BOOLEAN NOT NULL DEFAULT false`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS notifications (
@@ -372,14 +394,33 @@ app.use((req: any, res, next) => {
   await db.execute(sql`UPDATE restaurants SET min_order = 5 WHERE min_order > 100`);
   await db.execute(sql`UPDATE menu_items SET price = ROUND((price / 2500.0)::numeric, 2)::double precision WHERE price > 500`);
 
-  // Seed admin par défaut — crée les comptes s'ils n'existent pas encore
+  // Seed admin par défaut — hash passwords before inserting
+  const [hash1, hash2] = await Promise.all([
+    hashPassword("admin123"),
+    hashPassword("Maweja2026"),
+  ]);
   await db.execute(sql`
     INSERT INTO users (email, password, name, phone, role, is_online, verification_status)
     VALUES
-      ('admin@maweja.cd', 'admin123', 'Super Admin', '0802540138', 'admin', true, 'not_started'),
-      ('admin@maweja.net', 'Maweja2026', 'Admin MAWEJA', '0802540138', 'admin', true, 'not_started')
+      ('admin@maweja.cd', ${hash1}, 'Super Admin', '0802540138', 'admin', true, 'not_started'),
+      ('admin@maweja.net', ${hash2}, 'Admin MAWEJA', '0802540138', 'admin', true, 'not_started')
     ON CONFLICT (email) DO NOTHING
   `);
+
+  // Transparent password migration: rehash any account whose password is still plaintext
+  // (does not start with $2 which is the bcrypt prefix)
+  try {
+    const plainUsers = await db.execute(sql`SELECT id, password FROM users WHERE password NOT LIKE '$2%'`);
+    for (const row of plainUsers.rows as { id: number; password: string }[]) {
+      const hashed = await hashPassword(row.password);
+      await db.execute(sql`UPDATE users SET password = ${hashed} WHERE id = ${row.id}`);
+    }
+    if (plainUsers.rows.length > 0) {
+      console.log(`[security] Migrated ${plainUsers.rows.length} plaintext password(s) to bcrypt.`);
+    }
+  } catch (e) {
+    console.warn("[security] Password migration skipped:", e);
+  }
 
   // Seed default service categories
   const existingCats = await db.execute(sql`SELECT COUNT(*) as count FROM service_categories`);
@@ -396,6 +437,25 @@ app.use((req: any, res, next) => {
     `);
   }
 
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS password_reset_requests (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER,
+      user_name TEXT NOT NULL,
+      user_role TEXT NOT NULL DEFAULT 'client',
+      user_email TEXT,
+      user_phone TEXT,
+      status TEXT NOT NULL DEFAULT 'pending',
+      request_type TEXT NOT NULL DEFAULT 'chat',
+      token TEXT,
+      token_expiry TIMESTAMP,
+      message TEXT,
+      admin_note TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      resolved_at TIMESTAMP
+    )
+  `);
+
   const existingZones = await db.execute(sql`SELECT COUNT(*) as count FROM delivery_zones`);
   if (Number((existingZones.rows[0] as any).count) === 0) {
     await db.execute(sql`INSERT INTO delivery_zones (name, fee, color, neighborhoods, is_active, sort_order) VALUES
@@ -405,6 +465,64 @@ app.use((req: any, res, next) => {
     `);
   }
 
+  const existingMenuCats = await db.execute(sql`SELECT COUNT(*) as count FROM menu_item_categories`);
+  if (Number((existingMenuCats.rows[0] as any).count) === 0) {
+    await db.execute(sql`INSERT INTO menu_item_categories (name, store_type, is_active, sort_order) VALUES
+      ('Principal', 'restaurant', true, 0),
+      ('Entrée', 'restaurant', true, 1),
+      ('Dessert', 'restaurant', true, 2),
+      ('Boisson', 'restaurant', true, 3),
+      ('Snack', 'restaurant', true, 4),
+      ('Accompagnement', 'restaurant', true, 5),
+      ('Produit phare', 'boutique', true, 0),
+      ('Vêtements', 'boutique', true, 1),
+      ('Électronique', 'boutique', true, 2),
+      ('Beauté & Santé', 'boutique', true, 3),
+      ('Alimentation', 'boutique', true, 4),
+      ('Maison & Déco', 'boutique', true, 5)
+    `);
+  }
+
+  // Chat file attachments migration
+  await db.execute(sql`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS file_url TEXT`);
+  await db.execute(sql`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS file_type TEXT`);
+
+  // Loyalty points system migrations
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS loyalty_points_awarded BOOLEAN NOT NULL DEFAULT false`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS loyalty_credit_id INTEGER`);
+  await db.execute(sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS loyalty_credit_discount DOUBLE PRECISION NOT NULL DEFAULT 0`);
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS loyalty_credits (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      amount DOUBLE PRECISION NOT NULL DEFAULT 10,
+      points_converted INTEGER NOT NULL DEFAULT 1000,
+      source_order_id INTEGER,
+      is_used BOOLEAN NOT NULL DEFAULT false,
+      used_on_order_id INTEGER,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS wallet_payment_requests (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      deposit_id TEXT UNIQUE NOT NULL,
+      amount DOUBLE PRECISION NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'USD',
+      correspondent TEXT NOT NULL,
+      method_label TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'INITIATED',
+      failure_reason TEXT,
+      credited BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
   if (!IS_PROD) {
     process.env.FORCE_SEED = "1";
   }
@@ -413,7 +531,7 @@ app.use((req: any, res, next) => {
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: any, res: any, _next: any) => {
-    console.error(err);
+    logger.error("Unhandled server error", err);
     res.status(500).json({ message: err.message || "Internal server error" });
   });
 
@@ -425,6 +543,6 @@ app.use((req: any, res, next) => {
 
   const port = 5000;
   server.listen(port, "0.0.0.0", () => {
-    console.log(`MAWEJA server running on port ${port}`);
+    logger.info(`MAWEJA server running on port ${port}`);
   });
 })();

@@ -1,19 +1,19 @@
 import { useLocation } from "wouter";
 import { useAuth } from "../lib/auth";
-import { authFetchJson } from "../lib/queryClient";
-import { MapPin, LogOut } from "lucide-react";
+import { authFetchJson, apiRequest, queryClient } from "../lib/queryClient";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
 import { handleWSEvent } from "../lib/notify";
 import type { Notification as Notif } from "@shared/schema";
-import { useI18n } from "../lib/i18n";
+import { dt } from "./driver/DriverUI";
+import {
+  Home, Package, MessageSquare, DollarSign, User, LogOut, MapPin
+} from "lucide-react";
 
 export default function DriverNav() {
   const [location, navigate] = useLocation();
   const { user, logout, setUser } = useAuth();
-  const { t } = useI18n();
   const [isOnline, setIsOnline] = useState(user?.isOnline || false);
   const [toggling, setToggling] = useState(false);
 
@@ -31,14 +31,12 @@ export default function DriverNav() {
     refetchInterval: 10000,
   });
 
-  const unreadChatCount = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
-  const unreadNotifCount = notifications.filter(n => !n.isRead && n.type !== "chat").length;
+  const unreadChat = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
+  const unreadNotif = notifications.filter(n => !n.isRead && n.type !== "chat").length;
 
   useEffect(() => {
     return onWSMessage((data) => {
-      if (data.type === "chat_message" || data.type === "notification" ||
-          data.type === "order_assigned" || data.type === "new_order" ||
-          data.type === "order_cancelled" || data.type === "order_status") {
+      if (["chat_message", "notification", "order_assigned", "new_order", "order_cancelled", "order_status"].includes(data.type)) {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -65,122 +63,97 @@ export default function DriverNav() {
     }
   };
 
-  const links = [
+  const tabs = [
     {
       path: "/",
-      label: t.driver.home,
-      badge: unreadNotifCount,
-      icon: (active: boolean, col: string) => (
-        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-          <path d="M9 21V12h6v9" strokeWidth="1.8" fill="none" stroke={active ? "white" : col} />
-        </svg>
-      ),
+      label: "Accueil",
+      badge: unreadNotif,
+      icon: Home,
     },
     {
       path: "/driver/orders",
-      label: t.driver.orders,
+      label: "Livraisons",
       badge: 0,
-      icon: (active: boolean, col: string) => (
-        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 10V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16v-2" />
-          <polyline points="3.29 7 12 12 20.71 7" fill="none" stroke={active ? "white" : col} strokeWidth="1.8" />
-          <line x1="12" y1="22" x2="12" y2="12" stroke={active ? "white" : col} strokeWidth="1.8" />
-        </svg>
-      ),
+      icon: Package,
     },
     {
       path: "/driver/chat",
-      label: t.driver.messages,
-      badge: unreadChatCount,
-      icon: (active: boolean, col: string) => (
-        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-          {active && <path d="M8 10h8M8 13h5" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" />}
-        </svg>
-      ),
+      label: "Chat",
+      badge: unreadChat,
+      icon: MessageSquare,
     },
     {
       path: "/driver/earnings",
-      label: t.driver.revenue,
+      label: "Gains",
       badge: 0,
-      icon: (active: boolean, col: string) => (
-        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 6v2m0 8v2m-3-7h4.5a1.5 1.5 0 010 3H9.5a1.5 1.5 0 000 3H14" fill="none" stroke={active ? "white" : col} strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-      ),
-    },
-    {
-      path: "/driver/rapport",
-      label: "Rapport",
-      badge: 0,
-      icon: (active: boolean, col: string) => (
-        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M8 12h8M8 8h8M8 16h5" fill="none" stroke={active ? "white" : col} strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: DollarSign,
     },
     {
       path: "/driver/settings",
-      label: t.driver.settings,
+      label: "Profil",
       badge: 0,
-      icon: (active: boolean, col: string) => (
-        <svg width="21" height="21" viewBox="0 0 24 24" fill={active ? col : "none"} stroke={col} strokeWidth={active ? 0 : 1.8} strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="4" fill={active ? "white" : "none"} stroke={active ? "transparent" : col} strokeWidth="1.8" />
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" fill="none" stroke={active ? "white" : col} strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: User,
     },
   ];
 
   return (
     <>
-      {/* ─── Header ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800/60 px-4 py-3">
+      {/* ─── Header ───────────────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-50 px-4 py-3"
+        style={{
+          background: "rgba(14,14,14,0.97)",
+          borderBottom: `1px solid ${dt.border}`,
+          backdropFilter: "blur(20px)",
+        }}
+      >
         <div className="max-w-lg mx-auto flex items-center justify-between">
-
           {/* Brand */}
           <div className="flex flex-col leading-none">
             <div className="flex items-center gap-2">
+              <span className="text-white font-black text-xl tracking-tight">MAWEJA</span>
               <span
-                className="text-[22px] text-gray-900 dark:text-white tracking-tight"
-                style={{ fontFamily: "system-ui, -apple-system, sans-serif", letterSpacing: "-0.02em", fontWeight: 800 }}
+                className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide text-black"
+                style={{ background: dt.blue }}
               >
-                MAWEJA
-              </span>
-              <span className="bg-blue-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
                 Agent
               </span>
             </div>
-            <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 font-medium tracking-wide mt-0.5">
-              <MapPin size={9} className="flex-shrink-0" strokeWidth={2.5} />
+            <span className="flex items-center gap-1 text-[10px] font-medium tracking-wide mt-0.5" style={{ color: dt.text3 }}>
+              <MapPin size={9} strokeWidth={2.5} />
               Kinshasa, RDC
             </span>
           </div>
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
-            {/* Online/Offline toggle */}
+            {/* Status toggle */}
             <button
               onClick={toggleOnline}
               disabled={toggling}
               data-testid="button-toggle-online"
-              className={`relative flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
-                isOnline
-                  ? "bg-green-500 text-white shadow-lg shadow-green-200 dark:shadow-green-900/40"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-              } ${toggling ? "opacity-60" : ""}`}
+              className={`flex items-center gap-2 pl-2.5 pr-3.5 py-2 rounded-2xl text-xs font-bold transition-all active:scale-95 ${toggling ? "opacity-60" : ""}`}
+              style={{
+                background: isOnline ? dt.green : dt.surface2,
+                color: isOnline ? "black" : dt.text2,
+                boxShadow: isOnline ? "0 0 12px rgba(34,197,94,0.35)" : "none",
+              }}
             >
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isOnline ? "bg-white animate-pulse" : "bg-gray-400"}`} />
-              {isOnline ? t.driver.online : t.driver.offline}
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{
+                  background: isOnline ? "black" : dt.text3,
+                  animation: isOnline ? "ping 1.2s cubic-bezier(0,0,0.2,1) infinite" : "none",
+                }}
+              />
+              {isOnline ? "En ligne" : "Hors ligne"}
             </button>
 
             {/* Logout */}
             <button
               onClick={async () => { await logout(); navigate("/driver/login"); }}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-400 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 transition-all active:scale-95"
+              className="w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-95"
+              style={{ background: dt.surface2, color: dt.text3 }}
               data-testid="button-logout"
             >
               <LogOut size={16} />
@@ -189,39 +162,55 @@ export default function DriverNav() {
         </div>
       </header>
 
-      {/* ─── Bottom navigation ────────────────────────────────────────────────── */}
+      {/* ─── Bottom Nav ───────────────────────────────────────────────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pt-2 pointer-events-none"
-        style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
+        className="fixed bottom-0 left-0 right-0 z-50"
+        style={{
+          background: "rgba(14,14,14,0.97)",
+          borderTop: `1px solid ${dt.border}`,
+          backdropFilter: "blur(24px)",
+          paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+        }}
       >
-        <div
-          className="pointer-events-auto flex items-center gap-0.5 bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-[28px] px-1.5 py-2 border border-gray-100 dark:border-gray-800/60"
-          style={{ boxShadow: "0 8px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08)" }}
-        >
-          {links.map((l) => {
-            const isActive = location === l.path || (l.path !== "/" && location.startsWith(l.path));
-            const iconColor = isActive ? "white" : "#9CA3AF";
+        <div className="max-w-lg mx-auto flex items-center">
+          {tabs.map((tab) => {
+            const isActive = location === tab.path || (tab.path !== "/" && location.startsWith(tab.path));
+            const Icon = tab.icon;
 
             return (
               <button
-                key={l.path}
-                onClick={() => navigate(l.path)}
-                data-testid={`driver-nav-${l.path.replace(/\//g, "") || "home"}`}
-                className={`relative flex flex-col items-center justify-center gap-1 rounded-[20px] transition-all duration-250 active:scale-90 ${
-                  isActive
-                    ? "bg-red-600 text-white px-4 py-2.5 min-w-[64px]"
-                    : "text-gray-400 dark:text-gray-500 px-3 py-2.5 min-w-[52px] hover:text-gray-600 dark:hover:text-gray-300"
-                }`}
+                key={tab.path}
+                onClick={() => navigate(tab.path)}
+                data-testid={`driver-nav-${tab.path.replace(/\//g, "") || "home"}`}
+                className="flex-1 flex flex-col items-center justify-center pt-3 pb-1 gap-1 relative transition-all active:scale-90"
               >
-                <div className={`transition-transform duration-200 ${isActive ? "scale-105" : "scale-100"}`}>
-                  {l.icon(isActive, iconColor)}
-                </div>
-                {l.badge > 0 && (
+                {/* Active indicator top bar */}
+                {isActive && (
+                  <div
+                    className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
+                    style={{ width: 24, height: 3, background: dt.accent }}
+                  />
+                )}
+
+                <Icon
+                  size={22}
+                  style={{ color: isActive ? dt.accent : dt.text3 }}
+                  strokeWidth={isActive ? 2.5 : 1.8}
+                />
+                <span
+                  className="text-[10px] font-bold"
+                  style={{ color: isActive ? dt.accent : dt.text3 }}
+                >
+                  {tab.label}
+                </span>
+
+                {tab.badge > 0 && (
                   <span
-                    className={`absolute -top-1 -right-1 text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center ${isActive ? "bg-white text-red-600" : "bg-red-600"}`}
-                    data-testid={`driver-badge-${l.path.replace(/\//g, "") || "home"}`}
+                    className="absolute top-2 right-[calc(50%-18px)] text-white text-[8px] font-black min-w-4 h-4 px-0.5 rounded-full flex items-center justify-center"
+                    style={{ background: dt.accent }}
+                    data-testid={`driver-badge-${tab.path.replace(/\//g, "") || "home"}`}
                   >
-                    {l.badge > 99 ? "99+" : l.badge}
+                    {tab.badge > 99 ? "99+" : tab.badge}
                   </span>
                 )}
               </button>

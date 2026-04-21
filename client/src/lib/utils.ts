@@ -22,13 +22,13 @@ export function formatDate(date: string | Date): string {
 
 export const statusLabels: Record<string, string> = {
   pending: "En attente",
-  confirmed: "Confirmee",
-  preparing: "En preparation",
-  ready: "Prete",
-  picked_up: "En livraison",
-  delivered: "Livree",
-  returned: "Retournee",
-  cancelled: "Annulee",
+  confirmed: "Confirmée",
+  preparing: "En Cours de Livraison",
+  ready: "En Cours de Livraison",
+  picked_up: "En Cours de Livraison",
+  delivered: "Livrée",
+  returned: "Retournée",
+  cancelled: "Annulée",
 };
 
 export const statusColors: Record<string, string> = {

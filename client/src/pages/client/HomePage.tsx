@@ -1,768 +1,450 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import ClientNav from "../../components/ClientNav";
-import AdBanner from "../../components/AdBanner";
 import { useI18n } from "../../lib/i18n";
-import { Star, Clock, Heart, MapPin, ChevronRight, Search, Tag } from "lucide-react";
-import { formatPrice } from "../../lib/utils";
+import { Tag, ShoppingBag, Store, Utensils, Flame, Search, TrendingUp } from "lucide-react";
+import ClientNav from "../../components/ClientNav";
+import AdBanner from "../../components/client/AdBanner";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { resolveImg } from "../../lib/queryClient";
-import type { Restaurant, ServiceCategory, ServiceCatalogItem, RestaurantCategory, Promotion, BoutiqueCategory } from "@shared/schema";
+import type { Restaurant, ServiceCategory, ServiceCatalogItem as CatalogItem, RestaurantCategory, BoutiqueCategory } from "@shared/schema";
+import {
+  RestaurantCard,
+  RestaurantCardSkeleton,
+  BoutiqueGridCard,
+  FeaturedRestaurantCard,
+  PromoCard,
+  MPill,
+  MSectionHeader,
+  MEmptyState,
+  ServiceCategoryItem,
+} from "../../components/client/ClientUI";
 
-/* ────────────────────────────────────────────────────────────────────────────
-   CATEGORY ITEM — dynamic from API with image
-───────────────────────────────────────────────────────────────────────────── */
-const FALLBACK_EMOJIS: Record<string, string> = {
-  fastfood: "🍔", "fast food": "🍔",
-  delivery: "🛵", livraison: "🛵",
-  grocery: "🛍️", épicerie: "🛍️",
-  pizza: "🍕",
-  promo: "🏷️", promotion: "🏷️",
-  restaurant: "🍽️",
-  shop: "🛒", boutique: "🛒",
-  all: "✦", tout: "✦",
-  hotel: "🏨", hôtellerie: "🏨",
-  transport: "🚗",
-  coiffure: "💇", salon: "💇",
-  massage: "💆",
-  nettoyage: "🧹", ménage: "🧹",
-  coursier: "📦",
-  services: "🔧",
-};
+const PAGE_SIZE = 10;
 
-function getFallbackEmoji(name: string): string {
-  const lower = name.toLowerCase();
-  for (const [k, v] of Object.entries(FALLBACK_EMOJIS)) {
-    if (lower.includes(k)) return v;
-  }
-  return "✦";
+function getRestaurantPromoLabel(r: Restaurant): string | undefined {
+  if (r.discountLabel) return r.discountLabel;
+  if (r.discountPercent && r.discountPercent > 0) return `-${r.discountPercent}%`;
+  return undefined;
 }
-
-interface CategoryItemProps {
-  name: string;
-  imageUrl?: string | null;
-  active: boolean;
-  testId: string;
-  onClick: () => void;
-}
-
-function CategoryItem({ name, imageUrl, active, testId, onClick }: CategoryItemProps) {
-  return (
-    <button
-      onClick={onClick}
-      data-testid={testId}
-      className="flex flex-col items-center gap-1.5 active:scale-90 transition-transform flex-shrink-0"
-      style={{ width: 68 }}
-    >
-      <div
-        className={`w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center border-[1.5px] transition-all ${
-          active
-            ? "border-amber-400 shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
-            : "border-gray-200/60 dark:border-gray-700/60 shadow-sm"
-        } ${!imageUrl ? "bg-gray-50 dark:bg-gray-800" : ""}`}
-        style={active ? { borderWidth: "2.5px" } : {}}
-      >
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <span style={{ fontSize: 26 }}>{getFallbackEmoji(name)}</span>
-        )}
-      </div>
-      <span
-        className={`text-center leading-tight ${active ? "text-amber-500 font-bold" : "text-gray-600 dark:text-gray-400 font-medium"}`}
-        style={{
-          fontSize: 10,
-          width: 68,
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-        }}
-      >
-        {name}
-      </span>
-    </button>
-  );
-}
-
-/* FOOD FILTER PILLS — now loaded dynamically from /api/restaurant-categories */
-
-/* ────────────────────────────────────────────────────────────────────────────
-   RESTAURANT CARD — cover fully rounded + logo left of text
-───────────────────────────────────────────────────────────────────────────── */
-function RestaurantCard({ r, onClick }: { r: Restaurant; onClick: () => void }) {
-  const [fav, setFav] = useState(false);
-
-  return (
-    <div
-      className="bg-white dark:bg-gray-900 rounded-3xl mb-4 overflow-hidden"
-      style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }}
-      data-testid={`restaurant-card-${r.id}`}
-    >
-      {/* ── Cover photo — fully rounded, inside card with margin ── */}
-      <button onClick={onClick} className="block w-full px-3 pt-3" style={{ display: "block" }}>
-        <div
-          className="relative w-full rounded-2xl overflow-hidden"
-          style={{ height: 188 }}
-        >
-          <img
-            src={resolveImg(r.image)}
-            alt={r.name}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          {/* Gradient for readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-          {/* Discount badge — set from admin dashboard */}
-          {(r as any).discountPercent > 0 && (
-            <div className="absolute top-2.5 right-2.5 bg-green-500 text-white font-bold rounded-full px-2.5 py-1 flex items-center gap-1" style={{ fontSize: 10 }}>
-              <span>🏷</span>
-              <span>-{(r as any).discountPercent}%</span>
-              {(r as any).discountLabel && <span>· {(r as any).discountLabel}</span>}
-            </div>
-          )}
-
-          {/* Closed overlay */}
-          {!r.isActive && (
-            <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm bg-black/60 px-4 py-2 rounded-xl">FERMÉ</span>
-            </div>
-          )}
-        </div>
-      </button>
-
-      {/* ── Info section — logo left of text, visually distinct ── */}
-      <div className="px-4 py-3.5 flex items-start gap-3">
-        {/* Circular logo — solid fill, no whitespace */}
-        <div
-          className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 bg-red-100"
-          style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}
-        >
-          {r.logoUrl ? (
-            <img
-              src={resolveImg(r.logoUrl)}
-              alt={r.name}
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-              <span className="text-white font-black text-lg">{r.name.charAt(0)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Text */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1.5">
-            <button onClick={onClick} className="text-left flex-1 min-w-0">
-              <p className="font-bold text-gray-900 dark:text-white leading-tight truncate" style={{ fontSize: 14 }}>
-                {r.name}
-              </p>
-              {r.cuisine && (
-                <p className="text-gray-400 dark:text-gray-500 text-xs truncate">{r.cuisine}</p>
-              )}
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); setFav(!fav); }}
-              className="flex-shrink-0 active:scale-90 transition-transform"
-              data-testid={`button-fav-${r.id}`}
-            >
-              <Heart
-                size={18}
-                className={fav ? "fill-red-500 text-red-500" : "text-red-300"}
-                strokeWidth={1.8}
-              />
-            </button>
-          </div>
-
-          {/* Metrics row */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-1">
-              <Star size={12} className="text-amber-400 fill-amber-400" />
-              <span className="text-gray-700 font-semibold" style={{ fontSize: 11 }}>{r.rating}</span>
-            </div>
-            <div className="w-px h-3 bg-gray-200" />
-            <div className="flex items-center gap-1 text-gray-500">
-              <Clock size={11} strokeWidth={1.8} />
-              <span style={{ fontSize: 11 }}>{r.deliveryTime || "—"}</span>
-            </div>
-            <div className="w-px h-3 bg-gray-200" />
-            {(r as any).isFeatured && (
-              <span className="text-amber-500 font-bold flex items-center gap-0.5" style={{ fontSize: 11 }}>
-                <Star size={10} className="fill-amber-400 text-amber-400" />
-                Partenaire
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────────────────────
-   MAIN PAGE
-───────────────────────────────────────────────────────────────────────────── */
-const PAGE_SIZE = 6;
 
 export default function HomePage() {
   const [, navigate] = useLocation();
-  const { t } = useI18n();
+  const { t }        = useI18n();
 
-  const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants?type=restaurant"] });
-  const { data: serviceCategories = [] } = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
-  const { data: catalogItems = [] } = useQuery<ServiceCatalogItem[]>({ queryKey: ["/api/service-catalog"] });
-  const { data: restaurantCategories = [] } = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
-  const { data: activePromotions = [] } = useQuery<Promotion[]>({ queryKey: ["/api/promotions/active"] });
-  const { data: boutiques = [] } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants?type=boutique"] });
-  const { data: boutiqueCategories = [] } = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"] });
-  const activeBoutiqueCats = boutiqueCategories.filter(c => c.isActive);
-  const activeRestCats = restaurantCategories.filter(c => c.isActive);
-
-  const promoRestaurants = restaurants.filter(r => {
-    return activePromotions.some(p => (p as any).restaurantId === r.id) || (r as any).discountPercent > 0;
-  });
-
-  const getRestaurantPromos = (restaurantId: number) => {
-    return activePromotions.filter(p => (p as any).restaurantId === restaurantId);
-  };
-
-  const [activeCatId, setActiveCatId] = useState<number | null>(null);
-  const [activeCuisine, setActiveCuisine] = useState<string | null>(null);
+  const [activeCuisine, setActiveCuisine]             = useState<string | null>(null);
+  const [activeCatId, setActiveCatId]                 = useState<number | null>(null);
   const [activeBoutiqueCatId, setActiveBoutiqueCatId] = useState<number | null>(null);
-  const [displayCount, setDisplayCount] = useState(PAGE_SIZE);
-  const [globalSearch, setGlobalSearch] = useState("");
+  const [localSearch, setLocalSearch]                 = useState("");
+  const [displayCount, setDisplayCount]               = useState(PAGE_SIZE);
 
-  /* ── Listen to ClientNav search events ── */
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const q = (e as CustomEvent).detail?.query ?? "";
-      setGlobalSearch(q);
-      if (q) { setActiveCuisine(null); setActiveCatId(null); }
-    };
-    document.addEventListener("maweja-search", handler);
-    return () => document.removeEventListener("maweja-search", handler);
-  }, []);
+  const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
+  const { data: activeCategories = [] }       = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories/active"] });
+  const { data: catalogItems = [] }           = useQuery<CatalogItem[]>({ queryKey: ["/api/catalog-items"] });
+  const { data: restCats = [] }               = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
+  const { data: boutiqueCats = [] }           = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"] });
 
-  /* filter restaurants — supports category by ID or name, and Promos */
-  const filtered = restaurants.filter(r => {
-    if (globalSearch) {
-      const q = globalSearch.toLowerCase();
-      return (r.name?.toLowerCase().includes(q) || r.cuisine?.toLowerCase().includes(q) || r.address?.toLowerCase().includes(q));
-    }
-    if (activeCuisine) {
-      if (activeCuisine === "Promos") return (r as any).discountPercent > 0 || activePromotions.some(p => (p as any).restaurantId === r.id);
-      const matchCat = activeRestCats.find(c => c.name === activeCuisine);
-      if (matchCat) {
-        return (r as any).categoryId === matchCat.id || r.cuisine === activeCuisine;
-      }
-      return r.cuisine === activeCuisine;
-    }
-    return true;
-  });
+  const activeRestaurants = restaurants.filter(r => r.isActive);
+  const boutiques         = activeRestaurants.filter(r => r.type === "boutique");
+  const restOnly          = activeRestaurants.filter(r => r.type !== "boutique");
+  const promoRestaurants  = restOnly.filter(r => r.discountLabel || (r.discountPercent && r.discountPercent > 0));
+  const featuredRests     = restOnly.filter(r => r.isFeatured).slice(0, 8);
 
-  const activeCategories = serviceCategories.filter(c => c.isActive);
-
-  /* Service categories matching search */
-  const matchedServices = globalSearch
-    ? activeCategories.filter(c => c.name.toLowerCase().includes(globalSearch.toLowerCase()))
+  const matchedRestaurants = localSearch
+    ? activeRestaurants.filter(r =>
+        r.name.toLowerCase().includes(localSearch.toLowerCase()) ||
+        (r.cuisine || "").toLowerCase().includes(localSearch.toLowerCase())
+      )
     : [];
 
-  /* filter boutiques by selected boutique category */
-  const filteredBoutiques = boutiques.filter(b => {
-    if (!b.isActive) return false;
-    if (globalSearch) {
-      const q = globalSearch.toLowerCase();
-      return (b.name?.toLowerCase().includes(q) || b.cuisine?.toLowerCase().includes(q));
-    }
-    if (activeBoutiqueCatId) {
-      return (b as any).categoryId === activeBoutiqueCatId || b.cuisine === activeBoutiqueCats.find(c => c.id === activeBoutiqueCatId)?.name;
+  const matchedServices = localSearch
+    ? activeCategories.filter(cat => cat.name.toLowerCase().includes(localSearch.toLowerCase()))
+    : [];
+
+  const activeRestCats = restCats.filter(cat => restOnly.some(r => r.categoryId === cat.id));
+  const activeBoutiqueCats = boutiqueCats.filter(cat => boutiques.some(b => b.categoryId === cat.id));
+
+  const filteredBoutiques = activeBoutiqueCatId
+    ? boutiques.filter(b => b.categoryId === activeBoutiqueCatId)
+    : boutiques;
+
+  const filteredRestaurants = restOnly.filter(r => {
+    if (activeCuisine === "Promos") return promoRestaurants.includes(r);
+    if (activeCuisine && restCats.length) {
+      const cat = restCats.find(c => c.name === activeCuisine);
+      if (cat) return r.categoryId === cat.id;
     }
     return true;
   });
 
-  const displayed = filtered.slice(0, displayCount);
-  const hasMore = displayCount < filtered.length;
+  const displayed = filteredRestaurants.slice(0, displayCount);
+  const hasMore   = filteredRestaurants.length > displayCount;
 
-  /* Infinite scroll sentinel */
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const loadMore = useCallback(() => {
-    setDisplayCount(prev => prev + PAGE_SIZE);
-  }, []);
+  const loadMore    = useCallback(() => setDisplayCount(prev => prev + PAGE_SIZE), []);
 
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore) loadMore();
-      },
+      entries => { if (entries[0].isIntersecting && hasMore) loadMore(); },
       { rootMargin: "200px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
-  /* Reset count when filter changes */
-  useEffect(() => {
-    setDisplayCount(PAGE_SIZE);
-  }, [activeCuisine]);
+  useEffect(() => { setDisplayCount(PAGE_SIZE); }, [activeCuisine]);
 
-  /* Service category click */
   const handleServiceClick = (cat: ServiceCategory) => {
     const hasCatalog = catalogItems.some(item => item.categoryId === cat.id && item.isActive);
-    if (hasCatalog) {
-      navigate(`/services?cat=${cat.id}`);
-    } else {
+    if (hasCatalog) navigate(`/services?cat=${cat.id}`);
+    else {
       sessionStorage.setItem("maweja_service_request", JSON.stringify({
-        categoryId: cat.id,
-        categoryName: cat.name,
-        categoryImageUrl: cat.imageUrl || null,
-        catalogItemId: null,
-        catalogItemName: null,
-        catalogItemPrice: null,
-        catalogItemImage: null,
+        categoryId: cat.id, categoryName: cat.name, categoryImageUrl: cat.imageUrl || null,
+        catalogItemId: null, catalogItemName: null, catalogItemPrice: null, catalogItemImage: null,
       }));
       navigate("/services/new");
     }
   };
 
-  /* Category toggle */
-  const handleCatClick = (cat: ServiceCategory) => {
-    if (activeCatId === cat.id) {
-      setActiveCatId(null);
-      setActiveCuisine(null);
-    } else {
-      setActiveCatId(cat.id);
-      handleServiceClick(cat);
-    }
-  };
-
-  /* Pill toggle */
   const handlePill = (cuisine: string) => {
     setActiveCuisine(prev => prev === cuisine ? null : cuisine);
     setActiveCatId(null);
   };
 
-  /* Static "Tous les services" category */
-  const STATIC_SERVICES_CAT = { id: -1, name: "Tous les services", imageUrl: null, isActive: true };
+  const hasSearch = !!localSearch;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0c0c0c] pb-28">
       <ClientNav />
 
-      <div className="max-w-lg mx-auto px-4 pt-5">
+      <div className="max-w-lg mx-auto">
 
-        {/* ── Sponsorisés ─────────────────────────────────────── */}
-        <section className="mb-5">
-          <p
-            className="font-bold text-gray-900 dark:text-white mb-2.5"
-            style={{ fontSize: 15, borderBottom: "2px solid #EC0000", display: "inline-block", paddingBottom: 2 }}
-          >
-            Sponsorisés
-          </p>
-          <AdBanner />
-        </section>
-
-        {/* ── Services title ────────────────────────────────────────── */}
-        {activeCategories.length > 0 && (
-          <div className="mb-3">
-            <p
-              className="font-black text-gray-900 dark:text-white"
-              style={{
-                fontSize: 15,
-                borderBottom: "2.5px solid #dc2626",
-                display: "inline-block",
-                paddingBottom: 3,
-                letterSpacing: "-0.2px",
-              }}
-            >
-              Services
-            </p>
+        {/* ══ SEARCH BAR ══════════════════════════════════════════════════ */}
+        <div className={`px-4 pt-4 mb-5`}>
+          <div className="relative">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <Search size={16} className="text-gray-400 dark:text-gray-500" />
+            </div>
+            <input
+              type="search"
+              value={localSearch}
+              onChange={e => { setLocalSearch(e.target.value); if (!e.target.value) { setActiveCuisine(null); } }}
+              placeholder="Plat, restaurant, boutique, service…"
+              data-testid="input-home-search"
+              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-[#181818] rounded-[18px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 dark:focus:ring-brand/30 transition-all"
+              style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}
+            />
           </div>
-        )}
-
-        {/* ── Category grid — 2-row horizontal scroll — dynamic from Admin ── */}
-        {activeCategories.length > 0 && (
-          <section className="mb-5">
-            <div
-              className="overflow-x-auto no-scrollbar -mx-4 px-4"
-              data-testid="category-grid-scroll"
-            >
-              <div
-                className="grid gap-x-2 gap-y-3 pb-1"
-                style={{
-                  gridTemplateRows: "repeat(2, auto)",
-                  gridAutoFlow: "column",
-                  width: "max-content",
-                }}
-              >
-                {/* Static "Tous les services" entry */}
-                <CategoryItem
-                  key="all-services"
-                  name="Tous les services"
-                  imageUrl={null}
-                  active={false}
-                  testId="cat-all-services"
-                  onClick={() => navigate("/services")}
-                />
-
-                {activeCategories.map(cat => (
-                  <CategoryItem
-                    key={cat.id}
-                    name={cat.name}
-                    imageUrl={cat.imageUrl}
-                    active={activeCatId === cat.id}
-                    testId={`cat-${cat.id}`}
-                    onClick={() => handleCatClick(cat)}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── Promotions Section ── auto-display when restaurants have promotions ── */}
-        {promoRestaurants.length > 0 && !globalSearch && !activeCuisine && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <p
-                className="font-black text-gray-900 dark:text-white flex items-center gap-2"
-                style={{
-                  fontSize: 15,
-                  borderBottom: "2.5px solid #EC0000",
-                  display: "inline-block",
-                  paddingBottom: 3,
-                  letterSpacing: "-0.2px",
-                }}
-              >
-                <Tag size={15} className="text-red-600" />
-                Promotions
-              </p>
-              {promoRestaurants.length > 3 && (
-                <button
-                  onClick={() => { setActiveCuisine("Promos"); }}
-                  className="text-red-600 font-semibold flex items-center gap-1"
-                  style={{ fontSize: 12 }}
-                  data-testid="button-see-all-promos"
-                >
-                  Tout voir <ChevronRight size={13} />
-                </button>
-              )}
-            </div>
-            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1">
-              {promoRestaurants.slice(0, 6).map(r => {
-                const promos = getRestaurantPromos(r.id);
-                const promoLabel = promos.length > 0
-                  ? promos[0].description
-                  : (r as any).discountPercent > 0
-                    ? `-${(r as any).discountPercent}% ${(r as any).discountLabel || ''}`
-                    : '';
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => navigate(`/restaurant/${r.id}`)}
-                    className="flex-shrink-0 bg-white dark:bg-gray-900 rounded-2xl overflow-hidden active:scale-95 transition-all"
-                    style={{ width: 160, boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}
-                    data-testid={`promo-card-${r.id}`}
-                  >
-                    <div className="relative w-full" style={{ height: 100 }}>
-                      <img src={resolveImg(r.image)} alt={r.name} className="w-full h-full object-cover" loading="lazy" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                      <div className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Tag size={8} />
-                        PROMO
-                      </div>
-                    </div>
-                    <div className="px-3 py-2.5">
-                      <p className="font-bold text-gray-900 dark:text-white text-xs truncate">{r.name}</p>
-                      {promoLabel && (
-                        <p className="text-[10px] text-red-600 font-semibold truncate mt-0.5">{promoLabel}</p>
-                      )}
-                      <p className="text-[10px] text-gray-400 truncate mt-0.5">{r.cuisine}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ── Search results: Services ────────────────────────────── */}
-        {globalSearch && matchedServices.length > 0 && (
-          <section className="mb-5">
-            <p className="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2" style={{ fontSize: 14 }}>
-              <Search size={14} className="text-red-500" />
-              Services trouvés
-            </p>
-            <div className="flex gap-3 flex-wrap">
-              {matchedServices.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => { setGlobalSearch(""); navigate(`/services?cat=${cat.id}`); }}
-                  data-testid={`search-service-${cat.id}`}
-                  className="flex items-center gap-2 bg-white dark:bg-gray-900 rounded-2xl px-4 py-2.5 active:scale-95 transition-all"
-                  style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.08)", border: "1px solid rgba(220,38,38,0.15)" }}
-                >
-                  {cat.imageUrl && <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="w-7 h-7 rounded-lg object-cover" />}
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{cat.name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Boutiques Section ── shows when boutiques exist ── */}
-        {boutiques.length > 0 && !activeCuisine && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 16 }}>
-                🛍️ Boutiques & Commerces
-              </h2>
-              <button
-                onClick={() => navigate("/boutiques")}
-                className="text-red-600 font-semibold flex items-center gap-0.5"
-                style={{ fontSize: 12 }}
-                data-testid="button-view-all-boutiques"
-              >
-                Tout voir <ChevronRight size={13} />
-              </button>
-            </div>
-            {activeBoutiqueCats.length > 0 && (
-              <div className="flex gap-2 overflow-x-auto pb-2 mb-3 no-scrollbar" data-testid="boutique-cat-pills">
-                <button
-                  onClick={() => setActiveBoutiqueCatId(null)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
-                    !activeBoutiqueCatId ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
-                  }`}
-                  style={{
-                    border: !activeBoutiqueCatId ? "1.5px solid #dc2626" : "1.5px solid transparent",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                    fontSize: 12,
-                  }}
-                  data-testid="boutique-pill-all"
-                >
-                  ✦ Tout
-                </button>
-                {activeBoutiqueCats.sort((a, b) => a.sortOrder - b.sortOrder).map(cat => {
-                  const isActive = activeBoutiqueCatId === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setActiveBoutiqueCatId(isActive ? null : cat.id)}
-                      className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
-                        isActive ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
-                      }`}
-                      style={{
-                        border: isActive ? "1.5px solid #dc2626" : "1.5px solid transparent",
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                        fontSize: 12,
-                      }}
-                      data-testid={`boutique-cat-chip-${cat.id}`}
-                    >
-                      <span style={{ fontSize: 14 }}>{cat.emoji}</span> {cat.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar" style={{ scrollSnapType: "x mandatory" }}>
-              {filteredBoutiques.map(b => (
-                <div
-                  key={b.id}
-                  onClick={() => navigate(`/restaurant/${b.id}`)}
-                  className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden cursor-pointer active:scale-[0.97] transition-all flex-shrink-0"
-                  style={{ width: 150, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", scrollSnapAlign: "start" }}
-                  data-testid={`boutique-card-${b.id}`}
-                >
-                  <div className="relative" style={{ height: 100 }}>
-                    <img
-                      src={resolveImg(b.image)}
-                      alt={b.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-2.5">
-                    <p className="font-bold text-gray-900 dark:text-white text-xs truncate">{b.name}</p>
-                    <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{b.cuisine}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star size={10} className="text-yellow-500 fill-yellow-500" />
-                      <span className="text-[10px] font-semibold text-gray-700 dark:text-gray-300">{b.rating}</span>
-                      <span className="text-[10px] text-gray-400 ml-auto">{b.deliveryTime}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {filteredBoutiques.length === 0 && (
-              <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 text-center" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.08)" }}>
-                <p className="text-gray-400 text-xs">
-                  {activeBoutiqueCatId ? "Aucune boutique dans cette catégorie" : "Bientôt disponible dans votre zone"}
-                </p>
-                {activeBoutiqueCatId && (
-                  <button onClick={() => setActiveBoutiqueCatId(null)} className="mt-2 text-red-600 text-xs font-bold" data-testid="button-reset-boutique-filter">
-                    Tout afficher
-                  </button>
-                )}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* ── Title: Tous les établissements ──────────────────── */}
-        <p
-          className="font-black text-gray-900 dark:text-white mb-3"
-          style={{
-            fontSize: 15,
-            borderBottom: "2.5px solid #EC0000",
-            display: "inline-block",
-            paddingBottom: 3,
-            letterSpacing: "-0.2px",
-          }}
-        >
-          Restaurants
-        </p>
-
-        {/* ── Food type pills — dynamic from admin ─────────── */}
-        {activeRestCats.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 mb-5 pb-0.5" data-testid="food-pills">
-            <button
-              onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
-                !activeCuisine ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
-              }`}
-              style={{
-                border: !activeCuisine ? "1.5px solid #dc2626" : "1.5px solid transparent",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-              }}
-              data-testid="pill-all"
-            >
-              <span style={{ fontSize: 14 }}>✦</span>
-              <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>Tout</span>
-            </button>
-            {promoRestaurants.length > 0 && (
-              <button
-                onClick={() => handlePill("Promos")}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
-                  activeCuisine === "Promos" ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
-                }`}
-                style={{
-                  border: activeCuisine === "Promos" ? "1.5px solid #dc2626" : "1.5px solid transparent",
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                }}
-                data-testid="pill-promos"
-              >
-                <span style={{ fontSize: 14 }}>🏷️</span>
-                <span style={{ fontSize: 12, whiteSpace: "nowrap" }}>Promos</span>
-              </button>
-            )}
-            {activeRestCats.map(cat => {
-              const isActive = activeCuisine === cat.name;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handlePill(cat.name)}
-                  data-testid={`pill-${cat.id}`}
-                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full active:scale-95 transition-all ${
-                    isActive ? "bg-red-600 text-white font-bold" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 font-medium"
-                  }`}
-                  style={{
-                    border: isActive ? "1.5px solid #dc2626" : "1.5px solid transparent",
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>{cat.emoji}</span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {cat.name}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ── Section title ─────────────────────────────────────── */}
-        <div id="restaurants-section" className="flex items-center justify-between mb-4">
-          {(globalSearch || activeCuisine) && (
-            <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 15 }}>
-              {globalSearch ? `Résultats pour "${globalSearch}"` : activeCuisine}
-            </p>
-          )}
-          {(activeCuisine) && (
-            <button
-              onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}
-              className="text-red-600 font-semibold flex items-center gap-1"
-              style={{ fontSize: 12 }}
-              data-testid="button-clear-filter"
-            >
-              Tout voir <ChevronRight size={13} />
-            </button>
-          )}
         </div>
 
-        {/* ── Restaurant cards ──────────────────────────────────── */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }}>
-                <div className="px-3 pt-3">
-                  <div className="animate-pulse bg-gray-200 dark:bg-gray-800 rounded-2xl" style={{ height: 188 }} />
+        {/* ══ SEARCH RESULTS ══════════════════════════════════════════════ */}
+        {hasSearch && (
+          <div className="px-4">
+            {matchedServices.length > 0 && (
+              <section className="mb-5">
+                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Services</p>
+                <div className="flex gap-2.5 flex-wrap">
+                  {matchedServices.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => { setLocalSearch(""); navigate(`/services?cat=${cat.id}`); }}
+                      data-testid={`search-service-${cat.id}`}
+                      className="flex items-center gap-2 bg-white dark:bg-[#181818] rounded-[14px] px-4 py-2.5 active:scale-95 transition-transform"
+                      style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.07)", border: "1px solid rgba(225,0,0,0.1)" }}
+                    >
+                      {cat.imageUrl && <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="w-6 h-6 rounded-lg object-cover" />}
+                      <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{cat.name}</span>
+                    </button>
+                  ))}
                 </div>
-                <div className="p-4 flex gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-gray-800 animate-pulse flex-shrink-0" />
-                  <div className="flex-1 space-y-2 pt-1">
-                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-full" />
-                    <div className="h-3 w-48 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-full" />
+              </section>
+            )}
+
+            {matchedRestaurants.length > 0 ? (
+              <section className="mb-4">
+                <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
+                  Résultats pour « {localSearch} »
+                </p>
+                {matchedRestaurants.map(r => (
+                  <RestaurantCard
+                    key={r.id}
+                    r={r}
+                    onClick={() => navigate(`/restaurant/${r.id}`)}
+                  />
+                ))}
+              </section>
+            ) : matchedServices.length === 0 && (
+              <MEmptyState
+                icon={<Search size={36} />}
+                title="Aucun résultat"
+                description={`Rien trouvé pour « ${localSearch} »`}
+                action={{ label: "Effacer", onClick: () => setLocalSearch(""), testId: "button-clear-search" }}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ══ CONTENU PRINCIPAL (hors recherche) ══════════════════════════ */}
+        {!hasSearch && (
+          <>
+            {/* ── AdBanner pleine largeur ── */}
+            <section className="mb-7 px-4">
+              <AdBanner />
+            </section>
+
+            {/* ── Services ── */}
+            {activeCategories.length > 0 && (
+              <section className="mb-7">
+                <div className="px-5 mb-3.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 17, letterSpacing: "-0.3px" }}>Services</h2>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">Commandes express sur Kinshasa</p>
+                    </div>
+                    <button
+                      onClick={() => navigate("/services")}
+                      data-testid="button-view-all-services"
+                      className="text-brand font-semibold flex items-center gap-0.5 active:opacity-70"
+                      style={{ fontSize: 12 }}
+                    >
+                      Tout voir
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : displayed.length === 0 ? (
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-10 text-center" style={{ boxShadow: "0 2px 20px rgba(0,0,0,0.09)" }} data-testid="text-no-results">
-            <p className="text-gray-700 dark:text-gray-200 font-semibold text-sm">{t.client.noRestaurant}</p>
-            <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{t.client.noInCategory}</p>
-            <button
-              onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}
-              className="mt-4 bg-red-600 text-white text-xs font-bold px-5 py-2 rounded-xl active:scale-95 transition-all"
-              data-testid="button-reset-filters"
-            >
-              Tout afficher
-            </button>
-          </div>
-        ) : (
-          <>
-            {displayed.map(r => (
-              <RestaurantCard
-                key={r.id}
-                r={r}
-                onClick={() => navigate(`/restaurant/${r.id}`)}
-              />
-            ))}
+                <div className="overflow-x-auto no-scrollbar -mx-0 px-5">
+                  <div className="grid grid-rows-2 grid-flow-col gap-x-3 gap-y-4 pb-1 w-max">
+                    <ServiceCategoryItem
+                      name="Tout voir"
+                      emoji="✦"
+                      onClick={() => navigate("/services")}
+                      testId="cat-all-services"
+                    />
+                    {activeCategories.map(cat => (
+                      <ServiceCategoryItem
+                        key={cat.id}
+                        name={cat.name}
+                        imageUrl={cat.imageUrl}
+                        active={activeCatId === cat.id}
+                        onClick={() => { setActiveCatId(cat.id); handleServiceClick(cat); }}
+                        testId={`cat-${cat.id}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
 
-            {/* Infinite scroll sentinel */}
-            <div ref={sentinelRef} className="h-4" data-testid="scroll-sentinel" />
+            {/* ── Promotions en cours ── */}
+            {promoRestaurants.length > 0 && !activeCuisine && (
+              <section className="mb-7">
+                <div className="px-5 mb-1">
+                  <MSectionHeader
+                    title="Promotions en cours"
+                    icon={<Tag size={15} />}
+                    action={promoRestaurants.length > 3
+                      ? { label: "Tout voir", onClick: () => setActiveCuisine("Promos"), testId: "button-see-all-promos" }
+                      : undefined
+                    }
+                  />
+                </div>
+                <div className="overflow-x-auto no-scrollbar px-5 pb-2">
+                  <div className="flex gap-3">
+                    {promoRestaurants.slice(0, 8).map(r => (
+                      <PromoCard
+                        key={r.id}
+                        r={r}
+                        promoLabel={getRestaurantPromoLabel(r)}
+                        onClick={() => navigate(`/restaurant/${r.id}`)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
 
-            {/* Loading more indicator */}
-            {hasMore && (
-              <div className="flex justify-center py-4">
-                <div className="w-5 h-5 border-2 border-gray-200 border-t-red-600 rounded-full animate-spin" />
+            {/* ── Boutiques & Commerces (grille 2 colonnes) ── */}
+            {boutiques.length > 0 && !activeCuisine && (
+              <section className="mb-7 px-5">
+                <MSectionHeader
+                  title="Boutiques & Commerces"
+                  subtitle="Mode, pharmacie, tech et plus"
+                  icon={<Store size={15} />}
+                  action={{ label: "Tout voir", onClick: () => navigate("/boutiques"), testId: "button-view-all-boutiques" }}
+                />
+
+                {activeBoutiqueCats.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-3 no-scrollbar -mx-5 px-5" data-testid="boutique-cat-pills">
+                    <MPill active={!activeBoutiqueCatId} onClick={() => setActiveBoutiqueCatId(null)} testId="boutique-pill-all">
+                      ✦ Tout
+                    </MPill>
+                    {activeBoutiqueCats.sort((a, b) => a.sortOrder - b.sortOrder).map(cat => (
+                      <MPill
+                        key={cat.id}
+                        active={activeBoutiqueCatId === cat.id}
+                        onClick={() => setActiveBoutiqueCatId(activeBoutiqueCatId === cat.id ? null : cat.id)}
+                        testId={`boutique-cat-chip-${cat.id}`}
+                      >
+                        <span className="text-[13px]">{cat.emoji}</span> {cat.name}
+                      </MPill>
+                    ))}
+                  </div>
+                )}
+
+                {filteredBoutiques.length > 0 ? (
+                  <div className="overflow-x-auto no-scrollbar -mx-5 px-5 pb-1">
+                    <div className="flex gap-3">
+                      {filteredBoutiques.map(b => (
+                        <div key={b.id} className="flex-shrink-0" style={{ width: 152 }}>
+                          <BoutiqueGridCard
+                            b={b}
+                            onClick={() => navigate(`/restaurant/${b.id}`)}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-white dark:bg-[#181818] rounded-[18px] p-6 text-center" style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.05)" }}>
+                    <p className="text-gray-400 text-xs">
+                      {activeBoutiqueCatId ? "Aucune boutique dans cette catégorie" : "Bientôt disponible dans votre zone"}
+                    </p>
+                    {activeBoutiqueCatId && (
+                      <button onClick={() => setActiveBoutiqueCatId(null)} className="mt-2 text-brand text-xs font-bold" data-testid="button-reset-boutique-filter">
+                        Tout afficher
+                      </button>
+                    )}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ── Séparateur ── */}
+            {boutiques.length > 0 && !activeCuisine && (
+              <div className="flex items-center gap-3 mb-6 px-5">
+                <div className="flex-1 h-px bg-gray-200/70 dark:bg-[#222]" />
+                <div
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                  style={{ background: "rgba(0,0,0,0.045)", border: "1px solid rgba(0,0,0,0.07)" }}
+                >
+                  <Utensils size={10} className="text-gray-400 dark:text-gray-600" />
+                  <span className="text-[10px] font-black text-gray-400 dark:text-gray-600 tracking-widest uppercase">Restaurants</span>
+                </div>
+                <div className="flex-1 h-px bg-gray-200/70 dark:bg-[#222]" />
               </div>
+            )}
+
+            {/* ── Coups de cœur (featured) ── */}
+            {featuredRests.length > 0 && !activeCuisine && (
+              <section className="mb-7">
+                <div className="px-5 mb-1">
+                  <MSectionHeader
+                    title="Coups de cœur"
+                    subtitle="Nos meilleures adresses du moment"
+                    icon={<Flame size={15} />}
+                  />
+                </div>
+                <div className="overflow-x-auto no-scrollbar px-5 pb-2">
+                  <div className="flex gap-3">
+                    {featuredRests.map(r => (
+                      <FeaturedRestaurantCard
+                        key={r.id}
+                        r={r}
+                        onClick={() => navigate(`/restaurant/${r.id}`)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </section>
             )}
           </>
         )}
+
+        {/* ══ SECTION RESTAURANTS ══════════════════════════════════════════ */}
+        {!hasSearch && (
+          <section className="px-5">
+            {/* Header + pills */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {!activeCuisine ? (
+                    <TrendingUp size={15} className="text-brand" />
+                  ) : null}
+                  <div>
+                    <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 17, letterSpacing: "-0.3px" }}>
+                      {activeCuisine ? activeCuisine : "Tous les restaurants"}
+                    </h2>
+                    {!activeCuisine && (
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
+                        {restOnly.length} restaurants disponibles
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {activeCuisine && (
+                  <button
+                    onClick={() => { setActiveCuisine(null); setActiveCatId(null); }}
+                    data-testid="button-clear-filter"
+                    className="text-brand font-semibold flex items-center gap-0.5 active:opacity-70"
+                    style={{ fontSize: 12 }}
+                  >
+                    Tout voir
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                  </button>
+                )}
+              </div>
+
+              {activeRestCats.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 pb-1" data-testid="food-pills">
+                  <MPill active={!activeCuisine} onClick={() => { setActiveCuisine(null); setActiveCatId(null); }} testId="pill-all">
+                    <span className="text-[13px]">✦</span> Tout
+                  </MPill>
+                  {promoRestaurants.length > 0 && (
+                    <MPill active={activeCuisine === "Promos"} onClick={() => handlePill("Promos")} testId="pill-promos">
+                      <span className="text-[13px]">🏷️</span> Promos
+                    </MPill>
+                  )}
+                  {activeRestCats.map(cat => (
+                    <MPill key={cat.id} active={activeCuisine === cat.name} onClick={() => handlePill(cat.name)} testId={`pill-${cat.id}`}>
+                      <span className="text-[13px]">{cat.emoji}</span> {cat.name}
+                    </MPill>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Cards */}
+            {isLoading ? (
+              [1, 2, 3].map(i => <RestaurantCardSkeleton key={i} />)
+            ) : displayed.length === 0 ? (
+              <MEmptyState
+                icon={<ShoppingBag size={36} />}
+                title={t.client.noRestaurant}
+                description={t.client.noInCategory}
+                action={{ label: "Tout afficher", onClick: () => { setActiveCuisine(null); setActiveCatId(null); }, testId: "button-reset-filters" }}
+              />
+            ) : (
+              <>
+                {displayed.map(r => (
+                  <RestaurantCard
+                    key={r.id}
+                    r={r}
+                    onClick={() => navigate(`/restaurant/${r.id}`)}
+                    promoLabel={activeCuisine === "Promos" ? getRestaurantPromoLabel(r) : undefined}
+                  />
+                ))}
+                <div ref={sentinelRef} className="h-4" data-testid="scroll-sentinel" />
+                {hasMore && (
+                  <div className="flex justify-center py-6">
+                    <div className="w-5 h-5 border-2 border-gray-200 dark:border-gray-700 border-t-brand rounded-full animate-spin" />
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        )}
+
       </div>
     </div>
   );

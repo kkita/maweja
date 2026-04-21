@@ -2,12 +2,66 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DriverNav from "../../components/DriverNav";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
-import { Send, MessageCircle, Shield, Circle, ArrowLeft } from "lucide-react";
+import { handleWSEvent } from "../../lib/notify";
+import { Send, MessageCircle, Shield, Circle, ArrowLeft, Download, FileText } from "lucide-react";
 import type { ChatMessage, User as UserType } from "@shared/schema";
 
 type SafeUser = Omit<UserType, "password">;
+
+function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
+  const fileUrl = (msg as any).fileUrl;
+  const fileType = (msg as any).fileType;
+  if (!fileUrl) return null;
+
+  const resolvedUrl = resolveImg(fileUrl);
+  const fileName = fileUrl.split("/").pop() || "fichier";
+
+  if (fileType === "image") {
+    return (
+      <div className="mt-1.5">
+        <img
+          src={resolvedUrl}
+          alt="Image partagée"
+          className="rounded-xl max-w-[200px] max-h-[180px] object-cover cursor-pointer"
+          onClick={() => window.open(resolvedUrl, "_blank")}
+        />
+        <a
+          href={resolvedUrl}
+          download
+          target="_blank"
+          rel="noreferrer"
+          className={`flex items-center gap-1 mt-1 text-[10px] font-semibold underline ${isMe ? "text-red-200" : "text-blue-500"}`}
+        >
+          <Download size={10} /> Télécharger
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`mt-1.5 flex items-center gap-2 px-3 py-2 rounded-xl ${isMe ? "bg-red-700" : "bg-gray-100 dark:bg-gray-700"}`}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800" : "bg-blue-100 dark:bg-blue-900/40"}`}>
+        <FileText size={16} className={isMe ? "text-red-200" : "text-blue-600"} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[11px] font-bold truncate ${isMe ? "text-white" : "text-gray-800 dark:text-white"}`}>Document PDF</p>
+        <p className={`text-[9px] truncate ${isMe ? "text-red-200" : "text-gray-400"}`}>{fileName}</p>
+      </div>
+      <a
+        href={resolvedUrl}
+        download
+        target="_blank"
+        rel="noreferrer"
+        className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800 text-red-100 hover:bg-red-900" : "bg-blue-50 dark:bg-blue-900/40 text-blue-600 hover:bg-blue-100"} transition-colors`}
+        title="Télécharger"
+      >
+        <Download size={13} />
+      </a>
+    </div>
+  );
+}
 
 export default function DriverChat() {
   const { user } = useAuth();
@@ -45,6 +99,7 @@ export default function DriverChat() {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }
+      handleWSEvent(data);
     });
   }, []);
 
@@ -110,20 +165,25 @@ export default function DriverChat() {
                 <p className="text-xs mt-1">Envoyez votre premier message a l'administration</p>
               </div>
             )}
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"}`} data-testid={`driver-msg-${msg.id}`}>
-                <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
-                  msg.senderId === user?.id
-                    ? "bg-red-600 text-white rounded-br-md"
-                    : "bg-white text-gray-900 dark:text-white rounded-bl-md shadow-sm border border-gray-100 dark:border-gray-800"
-                }`}>
-                  <p>{msg.message}</p>
-                  <p className={`text-[9px] mt-1 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400 dark:text-gray-500"}`}>
-                    {formatTime(msg.createdAt)}
-                  </p>
+            {messages.map((msg) => {
+              const isMe = msg.senderId === user?.id;
+              const hasText = !!(msg as any).message;
+              return (
+                <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`} data-testid={`driver-msg-${msg.id}`}>
+                  <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
+                    isMe
+                      ? "bg-red-600 text-white rounded-br-md"
+                      : "bg-white text-gray-900 dark:text-white rounded-bl-md shadow-sm border border-gray-100 dark:border-gray-800"
+                  }`}>
+                    {hasText && <p>{msg.message}</p>}
+                    <FileAttachment msg={msg} isMe={isMe} />
+                    <p className={`text-[9px] mt-1 ${isMe ? "text-red-200" : "text-gray-400 dark:text-gray-500"}`}>
+                      {formatTime(msg.createdAt ?? new Date())}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div ref={messagesEnd} />
           </div>
 

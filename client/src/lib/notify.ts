@@ -1,3 +1,34 @@
+export function playAdminAlertSound() {
+  try {
+    const audio = new Audio("/notification.mp3");
+    audio.volume = 1.0;
+    audio.play().catch(() => {});
+  } catch {}
+}
+
+export function playNotifSound() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = "sine";
+      const t0 = ctx.currentTime + i * 0.18;
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.35, t0 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.42);
+      osc.start(t0);
+      osc.stop(t0 + 0.45);
+    });
+  } catch {}
+}
+
 const STATUS_FR: Record<string, string> = {
   pending: "En attente",
   confirmed: "Confirmée ✅",
@@ -151,6 +182,21 @@ export function handleWSEvent(data: any) {
       showNotif("❌ MAWEJA – Commande annulée", oc ? `Commande #${oc.orderNumber} a été annulée` : "Une commande a été annulée");
       break;
     }
+    case "service_update": {
+      const srv = data.data || data;
+      const statusMap: Record<string, string> = {
+        pending: "En attente",
+        reviewing: "En cours d'examen",
+        accepted: "Acceptée ✅",
+        rejected: "Refusée ❌",
+        completed: "Terminée ✅",
+      };
+      const label = statusMap[srv.status] || srv.status;
+      const note = srv.adminNotes ? `\n${srv.adminNotes}` : "";
+      playNotifSound();
+      showNotif("📋 MAWEJA – Service", `${srv.categoryName || "Demande"} : ${label}${note}`);
+      break;
+    }
     case "notification": {
       const n = data.notification || data.data || {};
       const title = n.title || data.title || "MAWEJA";
@@ -161,7 +207,9 @@ export function handleWSEvent(data: any) {
     case "chat_message": {
       const chatOk = localStorage.getItem("maweja_notif_messages") !== "false";
       if (!chatOk) return;
-      showNotif("💬 MAWEJA – Message", data.notification?.message || "Nouveau message reçu");
+      playAdminAlertSound();
+      try { navigator.vibrate?.([200, 80, 200]); } catch {}
+      showNotif("💬 MAWEJA – Message", data.notification?.message || data.message?.message || "Nouveau message reçu");
       break;
     }
     case "alarm":

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson, apiRequest, queryClient, resolveImg } from "../../lib/queryClient";
-import { ArrowLeft, Bell, Check, Package, Tag, Info, X } from "lucide-react";
+import { ArrowLeft, Bell, Check, Package, Tag, Info, X, MessageCircle, ShoppingBag, Megaphone } from "lucide-react";
 import ClientNav from "../../components/ClientNav";
 import type { Notification as Notif } from "@shared/schema";
 
@@ -23,10 +23,79 @@ function timeAgo(date: string | Date) {
   return `Il y a ${Math.floor(h / 24)}j`;
 }
 
+function NotifDetailModal({ notif, onClose, navigate }: { notif: Notif; onClose: () => void; navigate: (to: string) => void }) {
+  const typeIcon: Record<string, JSX.Element> = {
+    order: <ShoppingBag size={22} className="text-blue-500" />,
+    promo: <Tag size={22} className="text-amber-500" />,
+    chat: <MessageCircle size={22} className="text-green-500" />,
+    info: <Megaphone size={22} className="text-red-500" />,
+  };
+  const icon = typeIcon[notif.type] || <Info size={22} className="text-gray-400" />;
+  const imageUrl = (notif as any).imageUrl;
+
+  const handleActionClick = () => {
+    onClose();
+    if (notif.type === "order") navigate("/orders");
+    else if (notif.type === "chat") navigate("/");
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div
+        className="relative w-full max-w-md mx-4 mb-8 sm:mb-0 bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-2xl"
+        style={{ animation: "slideUp 0.28s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {imageUrl && (
+          <div className="w-full" style={{ height: 200 }}>
+            <img src={resolveImg(imageUrl)} alt={notif.title || ""} className="w-full h-full object-cover" />
+          </div>
+        )}
+        <div className="p-6">
+          <div className="flex items-start gap-4 mb-4">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+              notif.type === "order" ? "bg-blue-50 dark:bg-blue-950/40"
+              : notif.type === "promo" ? "bg-amber-50 dark:bg-amber-950/40"
+              : notif.type === "chat" ? "bg-green-50 dark:bg-green-950/40"
+              : "bg-red-50 dark:bg-red-950/40"
+            }`}>{icon}</div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-black text-gray-900 dark:text-white text-lg leading-tight">{notif.title || "Notification"}</h2>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-medium">
+                {new Intl.DateTimeFormat("fr-CD", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(notif.createdAt || new Date()))}
+              </p>
+            </div>
+            <button onClick={onClose} className="w-9 h-9 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
+              <X size={16} />
+            </button>
+          </div>
+          {notif.message && (
+            <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed bg-gray-50 dark:bg-gray-800/60 rounded-2xl px-4 py-3">{notif.message}</p>
+          )}
+          {(notif.type === "order" || notif.type === "chat") && (
+            <button
+              onClick={handleActionClick}
+              className="mt-4 w-full bg-red-600 text-white py-3.5 rounded-2xl font-bold text-sm hover:bg-red-700 transition-colors active:scale-[0.98]"
+            >
+              {notif.type === "order" ? "Voir mes commandes" : "Ouvrir le chat"}
+            </button>
+          )}
+        </div>
+      </div>
+      <style>{`@keyframes slideUp { from { transform: translateY(40px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }`}</style>
+    </div>
+  );
+}
+
 export default function NotificationsPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [selectedNotif, setSelectedNotif] = useState<Notif | null>(null);
 
   const { data: notifications = [], isLoading } = useQuery<Notif[]>({
     queryKey: ["/api/notifications", user?.id],
@@ -175,7 +244,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => {
                     if (!n.isRead) markRead.mutate(n.id);
-                    if (n.type === "order") navigate("/orders");
+                    setSelectedNotif(n);
                   }}
                   className="w-full p-4 flex gap-3 text-left"
                 >
@@ -225,6 +294,14 @@ export default function NotificationsPage() {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {selectedNotif && (
+        <NotifDetailModal
+          notif={selectedNotif}
+          onClose={() => setSelectedNotif(null)}
+          navigate={navigate}
+        />
       )}
     </div>
   );

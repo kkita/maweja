@@ -42,10 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const headers: Record<string, string> = { "X-User-Role": role };
       if (token) headers["Authorization"] = `Bearer ${token}`;
+      const ctrl = new AbortController();
+      const timeoutId = setTimeout(() => ctrl.abort(), 8000);
       const res = await fetch((import.meta.env.VITE_API_BASE_URL || "") + "/api/auth/me", {
         credentials: "include",
         headers,
-      });
+        signal: ctrl.signal,
+      }).finally(() => clearTimeout(timeoutId));
       if (res.ok) {
         const u = await res.json();
         // Persist token if returned (from fresh login on another device)
@@ -83,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(u);
   };
 
-  const register = async (data: { email: string; password: string; name: string; phone: string; role?: string; address?: string }) => {
+  const register = async (data: { email?: string; password: string; name: string; phone: string; role?: string; address?: string }) => {
     setUserRole("client");
     const res = await apiRequest("/api/auth/register", {
       method: "POST",

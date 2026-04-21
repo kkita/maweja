@@ -57,8 +57,8 @@ function AdMediaItem({ ad, active }: { ad: Advertisement; active: boolean }) {
       {ad.title && (
         <div className="absolute bottom-3 left-3 right-3">
           <p className="text-white text-sm font-bold drop-shadow-lg leading-tight">{ad.title}</p>
-          {ad.description && (
-            <p className="text-white/80 text-xs mt-0.5 leading-tight">{ad.description}</p>
+          {(ad as any).description && (
+            <p className="text-white/80 text-xs mt-0.5 leading-tight">{(ad as any).description}</p>
           )}
         </div>
       )}

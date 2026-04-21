@@ -67,6 +67,10 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+  /* Safe-area-aware bottom padding for bottom nav */
+  .pb-safe-nav {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
 }
 
 @keyframes slide-in-from-right {
@@ -92,6 +96,10 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+@keyframes slideIn {
+  from { transform: translateX(110%) scale(0.95); opacity: 0; }
+  to   { transform: translateX(0) scale(1);       opacity: 1; }
 }
 .animate-in {
   animation-duration: 0.3s;
@@ -131,6 +139,24 @@
 
 .leaflet-container {
   z-index: 0 !important;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slideInDown {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes fadeUp {
+  from { transform: translateY(6px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(100%); opacity: 0.8; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 @media print {

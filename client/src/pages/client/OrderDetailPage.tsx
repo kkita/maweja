@@ -1,112 +1,25 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
-import { useAuth } from "../../lib/auth";
-import { authFetch, apiRequest, queryClient , authFetchJson} from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
-import { formatPrice, formatDate, statusLabels, statusColors, paymentLabels } from "../../lib/utils";
+import { formatPrice, formatDate, statusLabels, paymentLabels } from "../../lib/utils";
 import ClientNav from "../../components/ClientNav";
-import {
-  ArrowLeft, Clock, CheckCircle, ChefHat, Package, Truck, MapPin,
-  Star, X, Phone, MessageCircle, AlertTriangle, Ban,
-} from "lucide-react";
+import { ArrowLeft, Truck, Phone, Ban, AlertTriangle, Star, MessageSquare } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import type { Order, User, Restaurant } from "@shared/schema";
-
-const steps = [
-  { key: "pending", icon: Clock, label: "En attente" },
-  { key: "confirmed", icon: CheckCircle, label: "Confirmee" },
-  { key: "preparing", icon: ChefHat, label: "En preparation" },
-  { key: "ready", icon: Package, label: "Prete" },
-  { key: "picked_up", icon: Truck, label: "En livraison" },
-  { key: "delivered", icon: MapPin, label: "Livree" },
-];
-
-const cancelReasons = [
-  "Delai trop long",
-  "Changement d'avis",
-  "Erreur de commande",
-  "Autre",
-];
+import { StatusStepper } from "../../components/client/order-detail/StatusStepper";
+import { CancelModal, RateModal } from "../../components/client/order-detail/OrderModals";
+import { useOrderDetail } from "../../hooks/use-order-detail";
+import type { Order } from "@shared/schema";
 
 export default function OrderDetailPage() {
-  const [, params] = useRoute("/order/:id");
+  const [, params]   = useRoute("/order/:id");
   const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const id = Number(params?.id);
+  const { toast }    = useToast();
+  const id           = Number(params?.id);
 
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
-  const [customReason, setCustomReason] = useState("");
+  const [showRateModal,   setShowRateModal]   = useState(false);
 
-  const [showRateModal, setShowRateModal] = useState(false);
-  const [rating, setRating] = useState(0);
-  const [feedback, setFeedback] = useState("");
-
-  const { data: order, isLoading } = useQuery<Order>({
-    queryKey: ["/api/orders", id],
-    queryFn: () => authFetchJson(`/api/orders/${id}`),
-    enabled: !!id,
-    refetchInterval: 10000,
-  });
-
-  const { data: restaurant } = useQuery<Restaurant>({
-    queryKey: ["/api/restaurants", order?.restaurantId],
-    queryFn: () => authFetchJson(`/api/restaurants/${order?.restaurantId}`),
-    enabled: !!order?.restaurantId,
-  });
-
-  const { data: appSettings } = useQuery<Record<string, string>>({
-    queryKey: ["/api/settings"],
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const whatsappNumber = (appSettings?.whatsapp_number || "+243802540138")
-    .replace(/\s+/g, "")
-    .replace("+", "");
-
-  const { data: driver } = useQuery<Omit<User, "password">>({
-    queryKey: ["/api/drivers", order?.driverId],
-    queryFn: () =>
-      authFetch("/api/drivers")
-        .then((r) => r.json())
-        .then((drivers: any[]) => drivers.find((d) => d.id === order?.driverId)),
-    enabled: !!order?.driverId,
-  });
-
-  const cancelMutation = useMutation({
-    mutationFn: (reason: string) =>
-      apiRequest(`/api/orders/${id}/cancel`, {
-        method: "PATCH",
-        body: JSON.stringify({ reason }),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/orders", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      setShowCancelModal(false);
-      toast({ title: "Commande annulee", description: "Votre commande a ete annulee avec succes." });
-    },
-    onError: () => {
-      toast({ title: "Erreur", description: "Impossible d'annuler la commande.", variant: "destructive" });
-    },
-  });
-
-  const rateMutation = useMutation({
-    mutationFn: (data: { rating: number; feedback: string }) =>
-      apiRequest(`/api/orders/${id}/rate`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/orders", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      setShowRateModal(false);
-      toast({ title: "Merci!", description: "Votre avis a ete enregistre." });
-    },
-    onError: () => {
-      toast({ title: "Erreur", description: "Impossible d'envoyer l'avis.", variant: "destructive" });
-    },
-  });
+  const { order, isLoading, restaurant, driver, whatsappNumber, cancelMutation, rateMutation } = useOrderDetail(id);
 
   if (isLoading || !order) {
     return (
@@ -116,32 +29,65 @@ export default function OrderDetailPage() {
     );
   }
 
-  const currentStepIndex = steps.findIndex((s) => s.key === order.status);
-  const items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
   const isCancelled = order.status === "cancelled";
-  const canCancel = order.status === "pending" || order.status === "confirmed";
-  const canRate = order.status === "delivered" && order.rating == null;
+  const canCancel   = order.status === "pending" || order.status === "confirmed";
+  const canRate     = order.status === "delivered" && order.rating == null;
+  const items: any[] = (() => { try { return typeof order.items === "string" ? JSON.parse(order.items) : (order.items as any[]); } catch { return []; } })();
 
-  const handleCancel = () => {
-    const reason = cancelReason === "Autre" ? customReason : cancelReason;
+  const handleCancel = (reason: string) => {
     if (!reason.trim()) {
       toast({ title: "Erreur", description: "Veuillez indiquer une raison.", variant: "destructive" });
       return;
     }
-    cancelMutation.mutate(reason);
+    cancelMutation.mutate(reason, { onSuccess: () => setShowCancelModal(false) });
   };
 
-  const handleRate = () => {
+  const handleRate = (rating: number, feedback: string) => {
     if (rating === 0) {
       toast({ title: "Erreur", description: "Veuillez donner une note.", variant: "destructive" });
       return;
     }
-    rateMutation.mutate({ rating, feedback });
+    rateMutation.mutate({ rating, feedback }, { onSuccess: () => setShowRateModal(false) });
   };
+
+  const openWhatsApp = () => {
+    const dateStr  = new Date(order.createdAt!).toLocaleDateString("fr-CD", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const restName = restaurant?.name || "Restaurant";
+    const msg = encodeURIComponent(
+      `Bonjour MAWEJA,\n\nJe vous contacte au sujet de ma commande:\n` +
+      `- N° de commande: ${order.orderNumber}\n` +
+      `- Date: ${dateStr}\n` +
+      `- Restaurant: ${restName}\n` +
+      `- Montant: ${formatPrice(order.total)}\n` +
+      `- Statut actuel: ${statusLabels[order.status] || order.status}\n\n` +
+      `Merci de votre aide.`
+    );
+    window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, "_blank");
+  };
+
+  const adminRemarks: any[] = Array.isArray((order as any).adminRemarks)
+    ? (order as any).adminRemarks
+    : (() => { try { return JSON.parse((order as any).adminRemarks || "[]"); } catch { return []; } })();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-24">
       <ClientNav />
+
+      {showCancelModal && (
+        <CancelModal
+          isPending={cancelMutation.isPending}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancel}
+        />
+      )}
+      {showRateModal && (
+        <RateModal
+          isPending={rateMutation.isPending}
+          onClose={() => setShowRateModal(false)}
+          onSubmit={handleRate}
+        />
+      )}
+
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="flex items-center gap-3 mb-6">
           <button
@@ -162,13 +108,12 @@ export default function OrderDetailPage() {
             <Ban size={20} className="text-red-600 flex-shrink-0" />
             <div>
               <p className="font-semibold text-red-700 dark:text-red-400 text-sm">Commande annulee</p>
-              {order.cancelReason && (
-                <p className="text-xs text-red-500 mt-0.5">Raison : {order.cancelReason}</p>
-              )}
+              {order.cancelReason && <p className="text-xs text-red-500 mt-0.5">Raison : {order.cancelReason}</p>}
             </div>
           </div>
         )}
 
+        {/* Status */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Statut de la commande</h3>
@@ -182,129 +127,71 @@ export default function OrderDetailPage() {
               {order.status === "delivered" ? "Livrée ✓" : isCancelled ? "Annulée" : "En cours…"}
             </div>
           </div>
-          {!isCancelled && (
-            <div className="w-full">
-              {/* Single row: icon + label per step, aligned with progress line */}
-              <div className="relative flex justify-between items-start w-full">
-                {/* Background line — at center of circles (top: 16px = half of 32px) */}
-                <div className="absolute h-0.5 rounded-full bg-gray-200 dark:bg-gray-700" style={{ left: 16, right: 16, top: 16, zIndex: 0 }} />
-                {/* Red fill line */}
-                <div
-                  className="absolute h-0.5 rounded-full transition-all duration-700"
-                  style={{
-                    left: 16,
-                    top: 16,
-                    background: "linear-gradient(to right, #EC0000, #ff5555)",
-                    width: currentStepIndex === 0 ? 0 : `calc(${(currentStepIndex / (steps.length - 1)) * 100}% - 32px)`,
-                    zIndex: 0,
-                  }}
-                />
-                {/* Step: icon + label stacked, centered */}
-                {steps.map((step, i) => {
-                  const isCompleted = i < currentStepIndex;
-                  const isCurrent = i === currentStepIndex;
-                  const isFuture = i > currentStepIndex;
-                  const StepIcon = step.icon;
-                  return (
-                    <div key={step.key} className="flex flex-col items-center" style={{ zIndex: 1, width: `${100 / steps.length}%` }} data-testid={`step-${step.key}`}>
-                      {/* Circle */}
-                      <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 flex-shrink-0"
-                        style={{
-                          background: isCurrent ? "#EC0000" : isCompleted ? "#DCFCE7" : "#F3F4F6",
-                          border: isFuture ? "1.5px dashed #D1D5DB" : "none",
-                          boxShadow: isCurrent ? "0 0 0 3px rgba(236,0,0,0.15)" : "none",
-                        }}
-                      >
-                        <StepIcon size={14} style={{ color: isCurrent ? "#fff" : isCompleted ? "#16A34A" : "#C4C4C4" }} />
-                      </div>
-                      {/* Label — centered under icon */}
-                      <p
-                        className="text-center leading-tight mt-1.5 w-full"
-                        style={{
-                          fontSize: 9,
-                          fontWeight: isCurrent ? 700 : 500,
-                          color: isCurrent ? "#EC0000" : isCompleted ? "#16A34A" : "#9CA3AF",
-                          wordBreak: "break-word",
-                          hyphens: "auto",
-                        }}
-                      >
-                        {step.label}
-                      </p>
-                      {isCurrent && (
-                        <div className="w-1 h-1 rounded-full mt-0.5" style={{ background: "#EC0000", animation: "pulse 1s ease-in-out infinite" }} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {!isCancelled && <StatusStepper status={order.status} />}
         </div>
 
+        {/* Order summary */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
           <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Resume de la commande</h3>
-          {restaurant && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">{restaurant.name}</p>
-          )}
+          {restaurant && <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">{restaurant.name}</p>}
           <div className="space-y-2">
-            {(items as any[]).map((item: any, i: number) => (
+            {items.map((item: any, i: number) => (
               <div key={i} className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
-                  {item.qty} x {item.name}
-                </span>
+                <span className="text-gray-600 dark:text-gray-400">{item.qty} x {item.name}</span>
                 <span className="font-medium dark:text-white">{formatPrice(item.price * item.qty)}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-gray-100 dark:border-gray-800 mt-3 pt-3 space-y-1">
+          <div className="border-t border-gray-100 dark:border-gray-800 mt-3 pt-3 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Sous-total</span>
-              <span className="dark:text-white">{formatPrice(order.subtotal)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Sous-total articles</span>
+              <span className="font-medium dark:text-white">{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <div className="flex items-center gap-1.5">
-                <span className="text-gray-500 dark:text-gray-400">Livraison</span>
+                <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
                 {(order as any).deliveryZone && (
                   <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full text-white bg-blue-500">{(order as any).deliveryZone}</span>
                 )}
               </div>
-              <span className="dark:text-white">{formatPrice(order.deliveryFee)}</span>
+              <span className="font-medium dark:text-white">{formatPrice(order.deliveryFee)}</span>
             </div>
-            {order.taxAmount > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Taxes</span>
-                <span className="dark:text-white">{formatPrice(order.taxAmount)}</span>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500 dark:text-gray-400">Frais de service</span>
+              <span className="font-medium dark:text-white">{formatPrice(order.taxAmount)}</span>
+            </div>
+            {order.promoCode ? (
+              <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                <span>Réduction promo <span className="font-bold text-xs">({order.promoCode})</span></span>
+                <span className="font-medium">-{formatPrice(order.promoDiscount)}</span>
               </div>
-            )}
-            {order.promoDiscount > 0 && (
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Reduction promo</span>
-                <span>-{formatPrice(order.promoDiscount)}</span>
+            ) : order.promoDiscount > 0 ? (
+              <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                <span>Réduction</span>
+                <span className="font-medium">-{formatPrice(order.promoDiscount)}</span>
               </div>
-            )}
-            <div className="flex justify-between font-bold pt-1 border-t border-gray-100 dark:border-gray-800">
-              <span className="dark:text-white">Total</span>
+            ) : null}
+            <div className="flex justify-between font-bold text-base pt-2 border-t border-gray-100 dark:border-gray-800">
+              <span className="dark:text-white">Total payé</span>
               <span className="text-red-600">{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>
 
+        {/* Details */}
         <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
           <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Details</h3>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Numero</span>
-              <span className="font-medium dark:text-white">{order.orderNumber}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Date</span>
-              <span className="font-medium dark:text-white">{formatDate(order.createdAt!)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Paiement</span>
-              <span className="font-medium dark:text-white">{paymentLabels[order.paymentMethod] || order.paymentMethod}</span>
-            </div>
+            {[
+              { label: "Numero",   value: order.orderNumber },
+              { label: "Date",     value: formatDate(order.createdAt!) },
+              { label: "Paiement", value: paymentLabels[order.paymentMethod] || order.paymentMethod },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex justify-between">
+                <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                <span className="font-medium dark:text-white">{value}</span>
+              </div>
+            ))}
             <div className="flex justify-between items-start gap-2">
               <span className="text-gray-500 dark:text-gray-400 flex-shrink-0">Adresse</span>
               <span className="font-medium dark:text-white text-right">{order.deliveryAddress}</span>
@@ -312,6 +199,24 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
+        {/* Admin remarks */}
+        {adminRemarks.length > 0 && (
+          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-2xl p-4 mb-4" data-testid="admin-remarks-client">
+            <h3 className="font-semibold text-sm text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-2">
+              <MessageSquare size={14} /> Notes MAWEJA
+            </h3>
+            <div className="space-y-2">
+              {adminRemarks.map((r: any, i: number) => (
+                <div key={i}>
+                  <p className="text-sm text-amber-700 dark:text-amber-400 leading-relaxed">{r.text}</p>
+                  <p className="text-[10px] text-amber-500 mt-0.5">{formatDate(r.createdAt)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Driver */}
         {driver && (
           <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-4 mb-4">
             <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-3">Votre agent</h3>
@@ -335,20 +240,7 @@ export default function OrderDetailPage() {
         )}
 
         <button
-          onClick={() => {
-            const dateStr = new Date(order.createdAt!).toLocaleDateString("fr-CD", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
-            const restName = restaurant?.name || "Restaurant";
-            const msg = encodeURIComponent(
-              `Bonjour MAWEJA,\n\nJe vous contacte au sujet de ma commande:\n` +
-              `- N° de commande: ${order.orderNumber}\n` +
-              `- Date: ${dateStr}\n` +
-              `- Restaurant: ${restName}\n` +
-              `- Montant: ${formatPrice(order.total)}\n` +
-              `- Statut actuel: ${statusLabels[order.status] || order.status}\n\n` +
-              `Merci de votre aide.`
-            );
-            window.open(`https://wa.me/${whatsappNumber}?text=${msg}`, "_blank");
-          }}
+          onClick={openWhatsApp}
           data-testid="button-whatsapp-order"
           className="w-full py-3.5 rounded-2xl bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-green-200 mt-4 hover:bg-green-700 transition-all"
         >
@@ -379,105 +271,6 @@ export default function OrderDetailPage() {
           )}
         </div>
       </div>
-
-      {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" data-testid="modal-cancel">
-          <div className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-lg p-6 pb-8 animate-in slide-in-from-bottom">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <h3 className="font-bold text-lg dark:text-white">Annuler la commande</h3>
-              <button
-                onClick={() => setShowCancelModal(false)}
-                data-testid="button-close-cancel-modal"
-                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
-              >
-                <X size={16} className="dark:text-gray-300" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Pourquoi souhaitez-vous annuler ?</p>
-            <div className="space-y-2 mb-4">
-              {cancelReasons.map((reason) => (
-                <button
-                  key={reason}
-                  onClick={() => setCancelReason(reason)}
-                  data-testid={`cancel-reason-${reason}`}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    cancelReason === reason
-                      ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border-2 border-red-300 dark:border-red-700"
-                      : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
-                  }`}
-                >
-                  {reason}
-                </button>
-              ))}
-            </div>
-            {cancelReason === "Autre" && (
-              <textarea
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                placeholder="Decrivez votre raison..."
-                data-testid="input-custom-reason"
-                className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl p-3 text-sm mb-4 resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-300"
-              />
-            )}
-            <button
-              onClick={handleCancel}
-              disabled={cancelMutation.isPending}
-              data-testid="button-confirm-cancel"
-              className="w-full py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm disabled:opacity-50"
-            >
-              {cancelMutation.isPending ? "Annulation..." : "Confirmer l'annulation"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showRateModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" data-testid="modal-rate">
-          <div className="bg-white dark:bg-gray-900 rounded-t-3xl w-full max-w-lg p-6 pb-8 animate-in slide-in-from-bottom">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <h3 className="font-bold text-lg dark:text-white">Evaluer la commande</h3>
-              <button
-                onClick={() => setShowRateModal(false)}
-                data-testid="button-close-rate-modal"
-                className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center"
-              >
-                <X size={16} className="dark:text-gray-300" />
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Comment etait votre commande ?</p>
-            <div className="flex justify-center gap-2 mb-6">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setRating(s)}
-                  data-testid={`star-${s}`}
-                  className="p-1 transition-transform"
-                >
-                  <Star
-                    size={36}
-                    className={s <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300 dark:text-gray-600"}
-                  />
-                </button>
-              ))}
-            </div>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Un commentaire ? (optionnel)"
-              data-testid="input-feedback"
-              className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 rounded-xl p-3 text-sm mb-4 resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-300"
-            />
-            <button
-              onClick={handleRate}
-              disabled={rateMutation.isPending}
-              data-testid="button-submit-rating"
-              className="w-full py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm disabled:opacity-50"
-            >
-              {rateMutation.isPending ? "Envoi..." : "Envoyer mon avis"}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

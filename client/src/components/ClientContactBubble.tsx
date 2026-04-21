@@ -1,13 +1,54 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
-import { apiRequest, queryClient, authFetch , authFetchJson} from "../lib/queryClient";
+import { apiRequest, queryClient, authFetch, authFetchJson, resolveImg } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
 import { handleWSEvent } from "../lib/notify";
 import { useToast } from "../hooks/use-toast";
-import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2, Download, FileText } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import type { ChatMessage, User as UserType } from "@shared/schema";
+
+function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
+  const fileUrl = (msg as any).fileUrl;
+  const fileType = (msg as any).fileType;
+  if (!fileUrl) return null;
+  const resolvedUrl = resolveImg(fileUrl);
+  const fileName = fileUrl.split("/").pop() || "fichier";
+
+  if (fileType === "image") {
+    return (
+      <div className="mt-1">
+        <img
+          src={resolvedUrl}
+          alt="Image"
+          className="rounded-lg max-w-[160px] max-h-[140px] object-cover cursor-pointer"
+          onClick={() => window.open(resolvedUrl, "_blank")}
+        />
+        <a href={resolvedUrl} download target="_blank" rel="noreferrer"
+          className={`flex items-center gap-1 mt-0.5 text-[9px] font-semibold underline ${isMe ? "text-red-200" : "text-blue-500"}`}>
+          <Download size={9} /> Télécharger
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`mt-1 flex items-center gap-2 px-2.5 py-1.5 rounded-xl ${isMe ? "bg-red-700" : "bg-gray-100 dark:bg-gray-700"}`}>
+      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800" : "bg-blue-100 dark:bg-blue-900/40"}`}>
+        <FileText size={13} className={isMe ? "text-red-200" : "text-blue-600"} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[10px] font-bold truncate ${isMe ? "text-white" : "text-gray-800 dark:text-white"}`}>Document PDF</p>
+        <p className={`text-[8px] truncate ${isMe ? "text-red-200" : "text-gray-400"}`}>{fileName}</p>
+      </div>
+      <a href={resolvedUrl} download target="_blank" rel="noreferrer"
+        className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800 text-red-100" : "bg-blue-50 dark:bg-blue-900/40 text-blue-600"} transition-colors`}>
+        <Download size={11} />
+      </a>
+    </div>
+  );
+}
 
 type SafeUser = Omit<UserType, "password">;
 
@@ -218,20 +259,25 @@ export default function ClientContactBubble() {
                     <p className="text-xs">Envoyez votre premier message</p>
                   </div>
                 )}
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.senderId === user?.id ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
-                      msg.senderId === user?.id
-                        ? "bg-red-600 text-white rounded-br-sm"
-                        : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-bl-sm shadow-sm border border-gray-100 dark:border-gray-800"
-                    }`}>
-                      <p>{msg.message}</p>
-                      <p className={`text-[8px] mt-0.5 ${msg.senderId === user?.id ? "text-red-200" : "text-gray-400 dark:text-gray-500"}`}>
-                        {formatTime(msg.createdAt)}
-                      </p>
+                {messages.map((msg) => {
+                  const isMe = msg.senderId === user?.id;
+                  const hasText = !!(msg as any).message;
+                  return (
+                    <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[80%] px-3 py-2 rounded-xl text-xs ${
+                        isMe
+                          ? "bg-red-600 text-white rounded-br-sm"
+                          : "bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-bl-sm shadow-sm border border-gray-100 dark:border-gray-800"
+                      }`}>
+                        {hasText && <p>{msg.message}</p>}
+                        <FileAttachment msg={msg} isMe={isMe} />
+                        <p className={`text-[8px] mt-0.5 ${isMe ? "text-red-200" : "text-gray-400 dark:text-gray-500"}`}>
+                          {formatTime(msg.createdAt ?? new Date())}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <div ref={messagesEnd} />
               </div>
 

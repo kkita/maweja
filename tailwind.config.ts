@@ -6,6 +6,7 @@ export default {
   theme: {
     extend: {
       colors: {
+        /* ── shadcn base ── */
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -39,6 +40,42 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* ── MAWEJA brand scale ── */
+        brand: {
+          DEFAULT: "#E10000",
+          50:  "#fff1f1",
+          100: "#ffe0e0",
+          200: "#ffc7c7",
+          300: "#ff9e9e",
+          400: "#ff6464",
+          500: "#E10000",
+          600: "#c00000",
+          700: "#a00000",
+          800: "#830000",
+          900: "#6c0000",
+          950: "#3f0000",
+        },
+        /* ── Driver UI dark palette ──
+         * Maps 1-to-1 with the `dt` token object in DriverUI.tsx.
+         * Usage: bg-driver-surface, text-driver-muted, border-driver-border, etc.
+         * Opacity modifier: bg-driver-accent/10 → rgba(225,0,0,0.10)
+         */
+        driver: {
+          bg:      "#0c0c0c",
+          surface: "#181818",
+          s2:      "#1e1e1e",
+          s3:      "#2a2a2a",
+          border:  "#252525",
+          border2: "#2d2d2d",
+          muted:   "#888888",
+          subtle:  "#555555",
+          accent:  "#E10000",
+          green:   "#22c55e",
+          amber:   "#f59e0b",
+          blue:    "#60a5fa",
+          red:     "#ef4444",
+          orange:  "#f97316",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -47,6 +84,27 @@ export default {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+      },
+      boxShadow: {
+        "ds-xs":    "0 1px 4px rgba(0,0,0,0.06)",
+        "ds-sm":    "0 2px 8px rgba(0,0,0,0.08)",
+        "ds-md":    "0 4px 16px rgba(0,0,0,0.10)",
+        "ds-lg":    "0 8px 32px rgba(0,0,0,0.12)",
+        "ds-brand": "0 4px 16px rgba(225,0,0,0.28)",
+        /* bottom nav separator + ambient */
+        "nav-bottom": "0 -1px 0 rgba(0,0,0,0.06), 0 -8px 32px rgba(0,0,0,0.06)",
+        /* bottom sheet lift */
+        "sheet":    "0 -8px 48px rgba(0,0,0,0.20)",
+        /* driver glow effects */
+        "glow-green":  "0 0 20px rgba(34,197,94,0.40)",
+        "glow-accent": "0 4px 16px rgba(225,0,0,0.30)",
+        "glow-green-sm": "0 4px 12px rgba(34,197,94,0.30)",
+        "glow-amber-sm": "0 4px 12px rgba(245,158,11,0.30)",
+      },
+      transitionDuration: {
+        "ds-fast":   "150",
+        "ds-normal": "200",
+        "ds-slow":   "300",
       },
     },
   },

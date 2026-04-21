@@ -3,7 +3,7 @@ import { eq, desc, and, or, sql, gte, lte, ne } from "drizzle-orm";
 import {
   users, restaurants, menuItems, orders, notifications, chatMessages, walletTransactions, finances, savedAddresses,
   serviceCategories, serviceRequests, serviceCatalogItems, advertisements, promoBanners, appSettings, restaurantPayouts,
-  promotions, deliveryZones,
+  promotions, deliveryZones, passwordResetRequests, loyaltyCredits,
   type User, type InsertUser, type Restaurant, type InsertRestaurant,
   type MenuItem, type InsertMenuItem, type Order, type InsertOrder,
   type Notification, type InsertNotification, type ChatMessage, type InsertChatMessage,
@@ -18,11 +18,14 @@ import {
   type RestaurantPayout, type InsertRestaurantPayout,
   type Promotion, type InsertPromotion,
   type DeliveryZone, type InsertDeliveryZone,
+  type PasswordResetRequest, type InsertPasswordResetRequest,
+  type LoyaltyCredit, type InsertLoyaltyCredit,
 } from "@shared/schema";
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phone: string): Promise<User | undefined>;
   getUserByToken(token: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
@@ -31,6 +34,7 @@ export interface IStorage {
   getOnlineDrivers(): Promise<User[]>;
   getClients(): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
+  getAdmins(): Promise<User[]>;
 
   getRestaurants(): Promise<Restaurant[]>;
   getRestaurant(id: number): Promise<Restaurant | undefined>;
@@ -120,6 +124,16 @@ export interface IStorage {
   deleteDeliveryZone(id: number): Promise<void>;
 
   getDashboardStats(): Promise<any>;
+
+  createPasswordResetRequest(data: InsertPasswordResetRequest): Promise<PasswordResetRequest>;
+  getPasswordResetRequests(filters?: { status?: string }): Promise<PasswordResetRequest[]>;
+  getPasswordResetRequestByToken(token: string): Promise<PasswordResetRequest | undefined>;
+  updatePasswordResetRequest(id: number, data: Partial<PasswordResetRequest>): Promise<PasswordResetRequest | undefined>;
+
+  getLoyaltyCredits(userId: number): Promise<LoyaltyCredit[]>;
+  getActiveLoyaltyCredits(userId: number): Promise<LoyaltyCredit[]>;
+  createLoyaltyCredit(data: InsertLoyaltyCredit): Promise<LoyaltyCredit>;
+  markLoyaltyCreditUsed(id: number, usedOnOrderId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,6 +184,10 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers() {
     return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAdmins() {
+    return db.select().from(users).where(eq(users.role, "admin"));
   }
 
   async getRestaurants() {
@@ -603,7 +621,7 @@ export class DatabaseStorage implements IStorage {
     return z;
   }
   async createDeliveryZone(data: InsertDeliveryZone): Promise<DeliveryZone> {
-    const [z] = await db.insert(deliveryZones).values(data).returning();
+    const [z] = await db.insert(deliveryZones).values(data as any).returning();
     return z;
   }
   async updateDeliveryZone(id: number, data: Partial<DeliveryZone>): Promise<DeliveryZone | undefined> {
@@ -612,6 +630,53 @@ export class DatabaseStorage implements IStorage {
   }
   async deleteDeliveryZone(id: number): Promise<void> {
     await db.delete(deliveryZones).where(eq(deliveryZones.id, id));
+  }
+
+  async createPasswordResetRequest(data: InsertPasswordResetRequest): Promise<PasswordResetRequest> {
+    const [r] = await db.insert(passwordResetRequests).values(data).returning();
+    return r;
+  }
+  async getPasswordResetRequests(filters?: { status?: string }): Promise<PasswordResetRequest[]> {
+    let q = db.select().from(passwordResetRequests).$dynamic();
+    if (filters?.status) {
+      q = q.where(eq(passwordResetRequests.status, filters.status));
+    }
+    return q.orderBy(desc(passwordResetRequests.createdAt));
+  }
+  async getPasswordResetRequestByToken(token: string): Promise<PasswordResetRequest | undefined> {
+    const [r] = await db.select().from(passwordResetRequests).where(eq(passwordResetRequests.token, token));
+    return r;
+  }
+  async updatePasswordResetRequest(id: number, data: Partial<PasswordResetRequest>): Promise<PasswordResetRequest | undefined> {
+    const [r] = await db.update(passwordResetRequests).set(data).where(eq(passwordResetRequests.id, id)).returning();
+    return r;
+  }
+
+  async getLoyaltyCredits(userId: number): Promise<LoyaltyCredit[]> {
+    return db.select().from(loyaltyCredits)
+      .where(eq(loyaltyCredits.userId, userId))
+      .orderBy(desc(loyaltyCredits.createdAt));
+  }
+
+  async getActiveLoyaltyCredits(userId: number): Promise<LoyaltyCredit[]> {
+    return db.select().from(loyaltyCredits)
+      .where(and(
+        eq(loyaltyCredits.userId, userId),
+        eq(loyaltyCredits.isUsed, false),
+        gte(loyaltyCredits.expiresAt, new Date()),
+      ))
+      .orderBy(loyaltyCredits.expiresAt);
+  }
+
+  async createLoyaltyCredit(data: InsertLoyaltyCredit): Promise<LoyaltyCredit> {
+    const [c] = await db.insert(loyaltyCredits).values(data).returning();
+    return c;
+  }
+
+  async markLoyaltyCreditUsed(id: number, usedOnOrderId: number): Promise<void> {
+    await db.update(loyaltyCredits)
+      .set({ isUsed: true, usedOnOrderId })
+      .where(eq(loyaltyCredits.id, id));
   }
 }
 
