@@ -49,7 +49,7 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
               <CheckCircle2 size={18} className="text-driver-green" />
             </div>
             <div>
-              <p className="font-black text-base text-white">{order.orderNumber}</p>
+              <p className="font-black text-base text-driver-text">{order.orderNumber}</p>
               <p className="text-[10px] font-medium text-driver-subtle">Livraison terminée</p>
             </div>
           </div>
@@ -78,7 +78,7 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
                 {isCash ? <Banknote size={18} className="text-black" /> : <Phone size={18} className="text-black" />}
               </div>
               <div>
-                <p className="font-black text-base text-white">{formatPaymentMethod(order.paymentMethod)}</p>
+                <p className="font-black text-base text-driver-text">{formatPaymentMethod(order.paymentMethod)}</p>
                 <p className="text-xs text-driver-subtle">
                   {isCash ? "Paiement à la livraison" : order.paymentMethod === "mobile_money" ? "Mobile Money" : "Carte bancaire"}
                 </p>
@@ -91,7 +91,7 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
             <p className="text-[10px] font-bold uppercase tracking-wide mb-2 text-driver-subtle">Adresse de livraison</p>
             <div className="flex items-start gap-2">
               <MapPin size={14} className="flex-shrink-0 mt-0.5 text-driver-red" />
-              <p className="text-sm text-white font-medium">{order.deliveryAddress}</p>
+              <p className="text-sm text-driver-text font-medium">{order.deliveryAddress}</p>
             </div>
             {order.deliveryZone && (
               <span className="inline-block mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-driver-accent/15 text-driver-accent">
@@ -109,7 +109,7 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
                   <User size={14} className="text-driver-subtle" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">{order.orderName}</p>
+                  <p className="text-sm font-bold text-driver-text">{order.orderName}</p>
                   {order.orderPhone && <p className="text-xs text-driver-subtle">{order.orderPhone}</p>}
                 </div>
               </div>
@@ -127,9 +127,9 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
                       <span className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-[10px] font-black bg-driver-accent/15 text-driver-accent">
                         {item.quantity || 1}
                       </span>
-                      <p className="text-xs text-white font-medium truncate">{item.name}</p>
+                      <p className="text-xs text-driver-text font-medium truncate">{item.name}</p>
                     </div>
-                    <p className="text-xs font-bold text-white flex-shrink-0">{formatPrice((item.price || 0) * (item.quantity || 1))}</p>
+                    <p className="text-xs font-bold text-driver-text flex-shrink-0">{formatPrice((item.price || 0) * (item.quantity || 1))}</p>
                   </div>
                 ))}
               </div>
@@ -143,22 +143,22 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
               {subtotal > 0 && (
                 <div className="flex justify-between text-xs text-driver-subtle">
                   <span>Sous-total articles</span>
-                  <span className="font-medium text-white">{formatPrice(subtotal)}</span>
+                  <span className="font-medium text-driver-text">{formatPrice(subtotal)}</span>
                 </div>
               )}
               {order.deliveryFee != null && (
                 <div className="flex justify-between text-xs text-driver-subtle">
                   <span>Frais de livraison</span>
-                  <span className="font-medium text-white">{formatPrice(order.deliveryFee)}</span>
+                  <span className="font-medium text-driver-text">{formatPrice(order.deliveryFee)}</span>
                 </div>
               )}
               {order.taxAmount != null && order.taxAmount > 0 && (
                 <div className="flex justify-between text-xs text-driver-subtle">
                   <span>Frais de service</span>
-                  <span className="font-medium text-white">{formatPrice(order.taxAmount)}</span>
+                  <span className="font-medium text-driver-text">{formatPrice(order.taxAmount)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-black text-sm text-white pt-2 border-t border-driver-border">
+              <div className="flex justify-between font-black text-sm text-driver-text pt-2 border-t border-driver-border">
                 <span>Total commande</span>
                 <span>{formatPrice(order.total)}</span>
               </div>
@@ -220,7 +220,7 @@ function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
               )}
             </div>
             <div>
-              <p className="font-black text-sm text-white">{order.orderNumber}</p>
+              <p className="font-black text-sm text-driver-text">{order.orderNumber}</p>
               <p className="text-[10px] font-medium text-driver-subtle">{formatDate(order.createdAt!)}</p>
             </div>
           </div>
@@ -232,7 +232,7 @@ function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
 
         <div className="flex items-start gap-2 mb-3">
           <MapPin size={13} className="flex-shrink-0 mt-0.5 text-driver-red" />
-          <p className="text-xs text-white leading-snug line-clamp-2">{order.deliveryAddress}</p>
+          <p className="text-xs text-driver-text leading-snug line-clamp-2">{order.deliveryAddress}</p>
         </div>
 
         {/* Payment row */}
@@ -249,14 +249,14 @@ function OrderCard({ order, onTap }: { order: Order; onTap: () => void }) {
         <div className="flex items-center justify-between pt-3 border-t border-driver-border">
           <div>
             <p className="text-[10px] font-medium text-driver-subtle">Commission agent</p>
-            <p className="text-sm font-black text-white">
+            <p className="text-sm font-black text-driver-text">
               {formatPrice(commission)}
               <span className="text-[10px] font-normal ml-1 text-driver-subtle">/ {formatPrice(order.total)}</span>
             </p>
           </div>
           <div className="text-right">
             <p className="text-[10px] font-medium text-driver-subtle">Articles</p>
-            <p className="text-sm font-bold text-white">{items.length}</p>
+            <p className="text-sm font-bold text-driver-text">{items.length}</p>
           </div>
         </div>
       </div>
@@ -311,7 +311,7 @@ export default function DriverOrders() {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-xl font-black text-white">Mes livraisons</h2>
+            <h2 className="text-xl font-black text-driver-text">Mes livraisons</h2>
             <p className="text-xs mt-0.5 text-driver-subtle">{orders.length} livraison{orders.length !== 1 ? "s" : ""} au total</p>
           </div>
           <button

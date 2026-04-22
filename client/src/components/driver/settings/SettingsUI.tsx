@@ -25,7 +25,7 @@ export function SheetHeader({ icon: Icon, title, onClose }: { icon: any; title: 
         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-driver-accent/12">
           <Icon size={18} className="text-driver-accent" />
         </div>
-        <h3 className="font-black text-base text-white">{title}</h3>
+        <h3 className="font-black text-base text-driver-text">{title}</h3>
       </div>
       <button
         onClick={onClose}

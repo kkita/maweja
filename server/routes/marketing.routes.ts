@@ -323,18 +323,36 @@ export function registerMarketingRoutes(app: Express): void {
   });
 
   app.get("/api/finance/export", requireAdmin, async (req, res) => {
-    const filters: any = {};
-    if (req.query.type) filters.type = req.query.type;
-    if (req.query.dateFrom) filters.dateFrom = new Date(req.query.dateFrom as string);
-    if (req.query.dateTo) filters.dateTo = new Date(req.query.dateTo as string);
-    const data = await storage.getFinances(Object.keys(filters).length ? filters : undefined);
-    const csv = [
-      "ID,Type,Categorie,Montant ($),Description,Reference,Date",
-      ...data.map(f => `${f.id},${f.type},${f.category},${f.amount},"${f.description}",${f.reference || ""},${f.createdAt}`),
-    ].join("\n");
-    res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename=finances_maweja_${new Date().toISOString().split("T")[0]}.csv`);
-    res.send(csv);
+    const financeFilters: any = {};
+    const orderFilters: any = {};
+    if (req.query.type) financeFilters.type = req.query.type;
+    if (req.query.dateFrom) {
+      financeFilters.dateFrom = new Date(req.query.dateFrom as string);
+      orderFilters.dateFrom = new Date(req.query.dateFrom as string);
+    }
+    if (req.query.dateTo) {
+      financeFilters.dateTo = new Date(req.query.dateTo as string);
+      orderFilters.dateTo = new Date(req.query.dateTo as string);
+    }
+    const [finances, orders, users, restaurants] = await Promise.all([
+      storage.getFinances(Object.keys(financeFilters).length ? financeFilters : undefined),
+      storage.getOrders(Object.keys(orderFilters).length ? orderFilters : undefined),
+      storage.getAllUsers(),
+      storage.getRestaurants(),
+    ]);
+    const { buildFinanceWorkbook } = await import("../lib/financeExport.js");
+    const buffer = await buildFinanceWorkbook({
+      orders,
+      finances,
+      users,
+      restaurants,
+      dateFrom: req.query.dateFrom as string | undefined,
+      dateTo: req.query.dateTo as string | undefined,
+    });
+    const fileName = `finances_maweja_${new Date().toISOString().split("T")[0]}.xlsx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+    res.send(Buffer.from(buffer));
   });
 
   app.get("/api/restaurant-payouts", requireAdmin, async (_req, res) => {

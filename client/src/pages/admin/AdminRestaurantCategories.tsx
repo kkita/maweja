@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../../lib/queryClient";
-import AdminSidebar from "../../components/AdminSidebar";
+import AdminLayout from "../../components/AdminLayout";
 import { Plus, Pencil, Trash2, GripVertical, X } from "lucide-react";
 
 interface RestaurantCategory {
@@ -141,25 +141,17 @@ export default function AdminRestaurantCategories() {
   });
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-[#0d0d0d]">
-      <AdminSidebar />
-      <main className="flex-1 ml-64 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white">Catégories de restaurants</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Gérez les filtres de catégories affichés sur l'application client
-              </p>
-            </div>
-            <button
-              onClick={() => { resetForm(); setShowForm(true); }}
-              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-700 transition-colors"
-              data-testid="button-add-restaurant-category"
-            >
-              <Plus size={16} /> Ajouter
-            </button>
-          </div>
+    <AdminLayout title="Catégories de restaurants" subtitle="Gérez les filtres de catégories affichés sur l'application client">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-end mb-6">
+          <button
+            onClick={() => { resetForm(); setShowForm(true); }}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-red-700 transition-colors"
+            data-testid="button-add-restaurant-category"
+          >
+            <Plus size={16} /> Ajouter
+          </button>
+        </div>
 
           {showForm && (
             <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 mb-6 border border-gray-100 dark:border-gray-800" style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
@@ -326,8 +318,7 @@ export default function AdminRestaurantCategories() {
               ))}
             </div>
           )}
-        </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }

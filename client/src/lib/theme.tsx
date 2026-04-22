@@ -14,6 +14,36 @@ const ThemeContext = createContext<ThemeContextType>({
   resolvedTheme: "light",
 });
 
+/**
+ * Synchronise les system bars natives (Android + iOS) avec le thème actif.
+ * Utilise @capacitor/status-bar uniquement sur les plateformes natives
+ * (Capacitor.isNativePlatform() = true), sans impact sur le web desktop.
+ *
+ * Mode clair  → style Light  (icônes foncées sur fond blanc)
+ * Mode sombre → style Dark   (icônes claires sur fond sombre)
+ *
+ * Exportée pour permettre aux sections toujours sombres (ex : Driver app)
+ * de forcer le mode sombre des barres indépendamment du thème global.
+ */
+export async function syncNativeStatusBar(resolved: "light" | "dark") {
+  try {
+    const { Capacitor } = await import("@capacitor/core");
+    if (!Capacitor.isNativePlatform()) return;
+
+    const { StatusBar, Style } = await import("@capacitor/status-bar");
+
+    if (resolved === "dark") {
+      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setBackgroundColor({ color: "#111111" });
+    } else {
+      await StatusBar.setStyle({ style: Style.Light });
+      await StatusBar.setBackgroundColor({ color: "#FFFFFF" });
+    }
+  } catch {
+    // Plugin non disponible (build web ou plugin non sync) — silencieux
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>(() => {
     return (localStorage.getItem("maweja_theme") as ThemeMode) || "auto";
@@ -32,11 +62,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const apply = (t: ThemeMode) => {
       const resolved = getResolved(t);
       setResolvedTheme(resolved);
+
       if (resolved === "dark") {
         document.documentElement.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");
       }
+
+      syncNativeStatusBar(resolved);
     };
 
     apply(theme);

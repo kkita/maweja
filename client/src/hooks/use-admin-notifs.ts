@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { onWSMessage } from "../lib/websocket";
-import { queryClient } from "../lib/queryClient";
+import { queryClient, apiRequest } from "../lib/queryClient";
 import { playAdminAlertSound } from "../lib/notify";
+import { useAuth } from "../lib/auth";
 import {
   type Notif, type NotifType,
   NOTIF_HREFS, NOTIF_SESSION_KEY,
@@ -10,6 +11,7 @@ import {
 export type { Notif, NotifType };
 
 export function useAdminNotifs() {
+  const { user } = useAuth();
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
   const [notifRinging, setNotifRinging] = useState(false);
@@ -77,16 +79,29 @@ export function useAdminNotifs() {
     });
   }, []);
 
+  const markServerNotifsRead = async () => {
+    if (!user?.id) return;
+    try {
+      await apiRequest(`/api/notifications/read-all/${user.id}`, { method: "PATCH" });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", user.id] });
+    } catch {}
+  };
+
   const dismissNotif = (id: string) => setNotifs(prev => prev.filter(n => n.id !== id));
-  const markAllRead = () => setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+  const markAllRead = () => {
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    markServerNotifsRead();
+  };
   const clearAll = () => {
     setNotifs([]);
     setNotifPanelOpen(false);
     sessionStorage.removeItem(NOTIF_SESSION_KEY);
+    markServerNotifsRead();
   };
   const openPanel = () => {
     setNotifPanelOpen(true);
     setNotifs(p => p.map(n => ({ ...n, read: true })));
+    markServerNotifsRead();
   };
   const closePanel = () => setNotifPanelOpen(false);
 

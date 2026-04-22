@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Splash screen — rouge MAWEJA (ne pas modifier) -->
     <color name="maweja_red">#EC0000</color>
     <color name="splash_background">#EC0000</color>
+
+    <!-- System bars — mode clair : fond blanc, icônes foncées -->
+    <color name="sys_bar_bg">#FFFFFF</color>
 </resources>

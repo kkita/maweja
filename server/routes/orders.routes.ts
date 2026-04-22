@@ -195,12 +195,16 @@ export function registerOrdersRoutes(app: Express): void {
     req.body.subtotal = parseFloat(Number(req.body.subtotal).toFixed(2));
     req.body.promoDiscount = parseFloat(Number(req.body.promoDiscount || 0).toFixed(2));
 
-    // Enforce service fee from app settings — never trust client-sent taxAmount
+    // Enforce service fee from app settings — admin override may bypass this
     const appSettings = await storage.getSettings();
-    const settingsServiceFee = parseFloat(appSettings.service_fee || "0.76");
-    req.body.taxAmount = isFinite(settingsServiceFee) && settingsServiceFee >= 0
-      ? parseFloat(settingsServiceFee.toFixed(2))
-      : 0;
+    if (sessionUser?.role === "admin" && req.body.adminOverride === true && req.body.taxAmount !== undefined) {
+      req.body.taxAmount = parseFloat(Number(req.body.taxAmount || 0).toFixed(2));
+    } else {
+      const settingsServiceFee = parseFloat(appSettings.service_fee || "0.76");
+      req.body.taxAmount = isFinite(settingsServiceFee) && settingsServiceFee >= 0
+        ? parseFloat(settingsServiceFee.toFixed(2))
+        : 0;
+    }
 
     // Validate loyalty credit discount against actual credit in DB
     let loyaltyCreditDiscount = 0;
@@ -343,12 +347,17 @@ export function registerOrdersRoutes(app: Express): void {
       }
 
       if (req.body.status === "delivered" && order.driverId) {
-        const driverEarning = order.deliveryFee;
+        // Driver gets 80% of delivery fee, MAWEJA keeps 20%
+        const driverEarning = parseFloat((order.deliveryFee * 0.8).toFixed(2));
+        const mawejaShare = parseFloat((order.deliveryFee - driverEarning).toFixed(2));
         const driver = await storage.getUser(order.driverId);
         if (driver) {
           await storage.updateUser(driver.id, { walletBalance: (driver.walletBalance || 0) + driverEarning });
-          await storage.createWalletTransaction({ userId: driver.id, amount: driverEarning, type: "earning", description: `Gain livraison ${order.orderNumber}`, orderId: order.id });
-          await storage.createFinance({ type: "expense", category: "driver_payment", amount: driverEarning, description: `Paiement livreur ${driver.name} - ${order.orderNumber}`, orderId: order.id, userId: driver.id });
+          await storage.createWalletTransaction({ userId: driver.id, amount: driverEarning, type: "earning", description: `Gain livraison ${order.orderNumber} (80%)`, orderId: order.id });
+          await storage.createFinance({ type: "expense", category: "driver_payment", amount: driverEarning, description: `Paiement livreur ${driver.name} - ${order.orderNumber} (80% de $${order.deliveryFee.toFixed(2)})`, orderId: order.id, userId: driver.id });
+          if (mawejaShare > 0) {
+            await storage.createFinance({ type: "revenue", category: "delivery_commission", amount: mawejaShare, description: `Commission livraison MAWEJA ${order.orderNumber} (20%)`, orderId: order.id });
+          }
         }
         await storage.updateOrder(order.id, { paymentStatus: "paid" });
 

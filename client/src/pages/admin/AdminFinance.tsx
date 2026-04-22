@@ -332,7 +332,7 @@ export default function AdminFinance() {
     if (filter !== "all") exportParams.set("type", filter);
     if (dateFrom) exportParams.set("dateFrom", dateFrom);
     if (dateTo) exportParams.set("dateTo", dateTo);
-    downloadWithAuth(`/api/finance/export?${exportParams}`, `finances_maweja_${new Date().toISOString().split("T")[0]}.csv`);
+    downloadWithAuth(`/api/finance/export?${exportParams}`, `finances_maweja_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
   const exportOrders = () => {
@@ -581,7 +581,7 @@ export default function AdminFinance() {
           <Plus size={14} /> Ajouter
         </button>
         <button onClick={exportCSV} data-testid="button-export-finance" className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1 hover:bg-green-700">
-          <Download size={14} /> Export CSV
+          <Download size={14} /> Export Excel
         </button>
         <button onClick={exportOrders} data-testid="button-export-orders" className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1 hover:bg-blue-700">
           <FileSpreadsheet size={14} /> Export Commandes
@@ -738,7 +738,7 @@ export default function AdminFinance() {
           <span className="text-xs text-gray-500">{comptaOrders.length} commande{comptaOrders.length !== 1 ? "s" : ""} livrée{comptaOrders.length !== 1 ? "s" : ""}</span>
           <div className="ml-auto flex items-center gap-2">
             <button onClick={exportCSV} data-testid="button-export-finance" className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1 hover:bg-green-700">
-              <Download size={13} /> Export CSV
+              <Download size={13} /> Export Excel
             </button>
             <button onClick={exportOrders} data-testid="button-export-orders" className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1 hover:bg-blue-700">
               <FileSpreadsheet size={13} /> Export Commandes

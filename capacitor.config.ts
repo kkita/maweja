@@ -28,6 +28,17 @@ const config: CapacitorConfig = {
       launchShowDuration: 0,
       launchAutoHide: true,
     },
+    /**
+     * StatusBar — contrôle dynamique des system bars depuis le web.
+     * overlaysWebView: false → la status bar ne chevauche pas la WebView (iOS).
+     * style et backgroundColor sont mis à jour en temps réel par theme.tsx
+     * via syncNativeStatusBar() selon le thème actif (clair/sombre).
+     */
+    StatusBar: {
+      overlaysWebView: false,
+      style: "LIGHT",
+      backgroundColor: "#FFFFFF",
+    },
   },
 };
 

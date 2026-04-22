@@ -1,16 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+      AppTheme : thème de base hérité par toutes les variantes.
+      Les couleurs de barres ici ne s'appliquent QU'au splash (via NoActionBarLaunch).
+    -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:statusBarColor">@color/maweja_red</item>
-        <item name="android:navigationBarColor">@color/maweja_red</item>
         <item name="android:windowBackground">@color/splash_background</item>
     </style>
 
+    <!--
+      AppTheme.NoActionBar : thème actif APRÈS le splash.
+      Mode clair → barres blanches + icônes foncées.
+      Mode sombre → surchargé dans values-night/styles.xml.
+    -->
     <style name="AppTheme.NoActionBar" parent="AppTheme">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
+        <!-- Status bar : fond blanc + icônes foncées (mode clair) -->
+        <item name="android:statusBarColor">@color/sys_bar_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <!-- Navigation bar : fond blanc + icônes foncées (API 27+, mode clair) -->
+        <item name="android:navigationBarColor">@color/sys_bar_bg</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
+    <!--
+      AppTheme.NoActionBarLaunch : thème du SPLASH SCREEN uniquement.
+      Reste rouge, ne doit jamais changer.
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="AppTheme">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>

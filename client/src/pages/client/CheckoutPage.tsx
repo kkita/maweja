@@ -218,7 +218,7 @@ export default function CheckoutPage() {
           <div className="space-y-2">
             {paymentOptions.map((opt) => {
               const isWallet = opt.id === "wallet";
-              const disabled = isWallet && walletInsufficient;
+              const disabled = opt.comingSoon || (isWallet && walletInsufficient);
               return (
                 <button key={opt.id} onClick={() => !disabled && setPaymentMethod(opt.id)}
                   disabled={disabled} data-testid={`payment-${opt.id}`}
@@ -234,11 +234,18 @@ export default function CheckoutPage() {
                     <opt.Icon size={18} className="text-gray-600 dark:text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 dark:text-white">{opt.label}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-white">{opt.label}</p>
+                      {opt.comingSoon && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                          Bientôt
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {isWallet ? `Solde: ${formatPrice(user.walletBalance || 0)}` : opt.desc}
                     </p>
-                    {isWallet && walletInsufficient && <p className="text-xs text-red-500 mt-0.5">Solde insuffisant</p>}
+                    {isWallet && walletInsufficient && !opt.comingSoon && <p className="text-xs text-red-500 mt-0.5">Solde insuffisant</p>}
                   </div>
                   {paymentMethod === opt.id && (
                     <div className="w-6 h-6 bg-red-600 rounded-full flex items-center justify-center shrink-0">

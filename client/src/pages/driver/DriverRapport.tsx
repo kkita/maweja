@@ -70,7 +70,7 @@ export default function DriverRapport() {
   }, [filteredOrders]);
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: dt.bg }}>
+    <div className="min-h-screen pb-28 bg-driver-bg">
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
 
@@ -78,15 +78,14 @@ export default function DriverRapport() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/driver/earnings")}
-            className="w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90"
-            style={{ background: dt.surface, border: `1px solid ${dt.border}`, color: dt.text3 }}
+            className="w-10 h-10 flex items-center justify-center rounded-xl transition-all active:scale-90 bg-driver-surface border border-driver-border text-driver-text3"
             data-testid="button-back-rapport"
           >
             <ArrowLeft size={18} />
           </button>
           <div>
-            <h2 className="text-xl font-black text-white" data-testid="text-rapport-title">Rapport</h2>
-            <p className="text-xs mt-0.5" style={{ color: dt.text3 }}>Résumé détaillé de vos livraisons</p>
+            <h2 className="text-xl font-black text-driver-text" data-testid="text-rapport-title">Rapport</h2>
+            <p className="text-xs mt-0.5 text-driver-text3">Résumé détaillé de vos livraisons</p>
           </div>
         </div>
 
@@ -99,9 +98,9 @@ export default function DriverRapport() {
               data-testid={`rapport-period-${p}`}
               className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0"
               style={{
-                background: period === p ? dt.accent : dt.surface,
-                color: period === p ? "white" : dt.text2,
-                border: `1px solid ${period === p ? "transparent" : dt.border}`,
+                background: period === p ? dt.accent : "var(--driver-surface)",
+                color: period === p ? "white" : "var(--driver-text2)",
+                border: `1px solid ${period === p ? "transparent" : "var(--driver-border)"}`,
                 boxShadow: period === p ? "0 4px 12px rgba(225,0,0,0.3)" : "none",
               }}
             >
@@ -118,14 +117,13 @@ export default function DriverRapport() {
               { label: "Au", value: customTo,   set: setCustomTo,   testId: "input-rapport-to" },
             ].map(({ label, value, set, testId }) => (
               <div key={label} className="flex-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: dt.text3 }}>{label}</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5 text-driver-text3">{label}</label>
                 <input
                   type="date"
                   value={value}
                   onChange={e => set(e.target.value)}
                   data-testid={testId}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm text-white focus:outline-none"
-                  style={{ background: dt.surface, border: `1px solid ${dt.border}`, colorScheme: "dark" }}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-driver-text focus:outline-none bg-driver-surface border border-driver-border"
                 />
               </div>
             ))}
@@ -135,21 +133,20 @@ export default function DriverRapport() {
         {/* KPI grid */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: Package,    label: "Livraisons",    value: totalOrders,          color: dt.blue  },
-            { icon: DollarSign, label: "Gains totaux",  value: formatPrice(totalFees), color: dt.green },
-            { icon: TrendingUp, label: "Moy./livraison",value: formatPrice(avg),       color: dt.amber },
-            { icon: Banknote,   label: "Cash reçu",     value: formatPrice(cashTotal), color: "#c084fc" },
+            { icon: Package,    label: "Livraisons",     value: totalOrders,            color: dt.blue  },
+            { icon: DollarSign, label: "Gains totaux",   value: formatPrice(totalFees), color: dt.green },
+            { icon: TrendingUp, label: "Moy./livraison", value: formatPrice(avg),       color: dt.amber },
+            { icon: Banknote,   label: "Cash reçu",      value: formatPrice(cashTotal), color: "#c084fc" },
           ].map(s => (
             <div
               key={s.label}
-              className="rounded-2xl p-4 flex flex-col"
-              style={{ background: dt.surface, border: `1px solid ${dt.border}` }}
+              className="rounded-2xl p-4 flex flex-col bg-driver-surface border border-driver-border"
             >
               <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${s.color}18` }}>
                 <s.icon size={17} style={{ color: s.color }} />
               </div>
-              <p className="text-xl font-black text-white" data-testid={`rapport-${s.label.toLowerCase().replace(/[^a-z]/g, "-")}`}>{s.value}</p>
-              <p className="text-[11px] font-semibold mt-0.5" style={{ color: dt.text3 }}>{s.label}</p>
+              <p className="text-xl font-black text-driver-text" data-testid={`rapport-${s.label.toLowerCase().replace(/[^a-z]/g, "-")}`}>{s.value}</p>
+              <p className="text-[11px] font-semibold mt-0.5 text-driver-text3">{s.label}</p>
             </div>
           ))}
         </div>
@@ -164,12 +161,12 @@ export default function DriverRapport() {
         ) : (
           <div className="space-y-3">
             {ordersByDay.map(([day, data]) => (
-              <div key={day} className="rounded-2xl overflow-hidden" style={{ background: dt.surface, border: `1px solid ${dt.border}` }}>
+              <div key={day} className="rounded-2xl overflow-hidden bg-driver-surface border border-driver-border">
                 {/* Day header */}
-                <div className="px-4 py-3 flex items-center justify-between" style={{ background: dt.surface2 }}>
+                <div className="px-4 py-3 flex items-center justify-between bg-driver-s2">
                   <div className="flex items-center gap-2">
                     <Calendar size={13} style={{ color: dt.accent }} />
-                    <span className="text-xs font-bold text-white capitalize">{day}</span>
+                    <span className="text-xs font-bold text-driver-text capitalize">{day}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] font-black px-2 py-0.5 rounded-full" style={{ background: "rgba(96,165,250,0.15)", color: dt.blue }}>
@@ -187,7 +184,7 @@ export default function DriverRapport() {
                       <div
                         key={o.id}
                         className="px-4 py-3 flex items-center justify-between"
-                        style={{ borderTop: i > 0 ? `1px solid ${dt.border}` : "none" }}
+                        style={{ borderTop: i > 0 ? `1px solid var(--driver-border)` : "none" }}
                         data-testid={`rapport-order-${o.id}`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -198,9 +195,9 @@ export default function DriverRapport() {
                             {isCash ? <Banknote size={13} style={{ color: dt.green }} /> : <Phone size={13} style={{ color: dt.blue }} />}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-white">{o.orderNumber}</p>
-                            <p className="text-[10px] truncate" style={{ color: dt.text3 }}>{o.deliveryAddress?.split(",")[0]}</p>
-                            <p className="text-[10px] font-medium" style={{ color: dt.text3 }} data-testid={`rapport-payment-${o.id}`}>
+                            <p className="text-sm font-bold text-driver-text">{o.orderNumber}</p>
+                            <p className="text-[10px] truncate text-driver-text3">{o.deliveryAddress?.split(",")[0]}</p>
+                            <p className="text-[10px] font-medium text-driver-text3" data-testid={`rapport-payment-${o.id}`}>
                               {formatPaymentMethod(o.paymentMethod)}
                             </p>
                           </div>
@@ -215,7 +212,7 @@ export default function DriverRapport() {
           </div>
         )}
 
-        <p className="text-center text-[10px] pt-2" style={{ color: dt.text3 }}>MAWEJA Agent — Ed Corporation</p>
+        <p className="text-center text-[10px] pt-2 text-driver-text3">MAWEJA Agent — Ed Corporation</p>
       </div>
     </div>
   );

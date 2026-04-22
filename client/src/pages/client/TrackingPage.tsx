@@ -134,10 +134,12 @@ export default function TrackingPage() {
           </div>
         )}
 
-        {/* ── Tracking steps ───────────────────────────────────────── */}
+        {/* ── Tracking steps (horizontal) ──────────────────────────── */}
         <MCard padded>
-          <p className="font-bold text-gray-900 dark:text-white text-sm mb-4">Progression</p>
-          <div className="space-y-0">
+          <p className="font-bold text-gray-900 dark:text-white text-sm mb-5">Progression</p>
+
+          {/* Row of icons connected by horizontal lines */}
+          <div className="flex items-start justify-between relative">
             {STEPS.map((step, idx) => {
               const isDone = idx < currentStepIdx;
               const isCurrent = idx === currentStepIdx;
@@ -146,49 +148,75 @@ export default function TrackingPage() {
               const color = isCurrent ? STEP_COLORS[step.key] : isDone ? "#10B981" : "#D1D5DB";
 
               return (
-                <div key={step.key} className="flex gap-3.5" data-testid={`tracking-step-${step.key}`}>
-                  {/* Left: icon + line */}
-                  <div className="flex flex-col items-center">
+                <div
+                  key={step.key}
+                  className="flex flex-col items-center flex-1 relative min-w-0"
+                  data-testid={`tracking-step-${step.key}`}
+                >
+                  {/* Connector line to NEXT step (drawn from this icon's right edge) */}
+                  {idx < STEPS.length - 1 && (
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                        isPending ? "bg-gray-100 dark:bg-zinc-800" : ""
-                      }`}
-                      style={{ background: isPending ? undefined : `${color}20`, border: `2px solid ${isPending ? "#E5E7EB" : color}` }}
-                    >
-                      <Icon size={16} style={{ color: isPending ? "#D1D5DB" : color }} strokeWidth={isCurrent ? 2.5 : 2} />
-                    </div>
-                    {idx < STEPS.length - 1 && (
-                      <div
-                        className="w-0.5 flex-1 my-1 rounded-full min-h-[24px] transition-all duration-700"
-                        style={{ background: isDone ? "#10B981" : isCurrent ? `${color}40` : "#E5E7EB" }}
-                      />
-                    )}
+                      className="absolute top-[18px] left-1/2 right-[-50%] h-0.5 rounded-full transition-all duration-700 -z-0"
+                      style={{
+                        background: isDone
+                          ? "#10B981"
+                          : isCurrent
+                          ? `linear-gradient(90deg, ${color} 0%, ${color}40 100%)`
+                          : "#E5E7EB",
+                      }}
+                    />
+                  )}
+
+                  {/* Icon bubble */}
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 relative z-10 ${
+                      isPending ? "bg-gray-100 dark:bg-zinc-800" : ""
+                    } ${isCurrent ? "scale-110" : ""}`}
+                    style={{
+                      background: isPending ? undefined : `${color}20`,
+                      border: `2px solid ${isPending ? "#E5E7EB" : color}`,
+                      boxShadow: isCurrent ? `0 0 0 4px ${color}15` : "none",
+                    }}
+                  >
+                    <Icon
+                      size={15}
+                      style={{ color: isPending ? "#D1D5DB" : color }}
+                      strokeWidth={isCurrent ? 2.5 : 2}
+                    />
                   </div>
 
-                  {/* Right: text */}
-                  <div className={`pb-4 flex-1 min-w-0 ${isCurrent ? "" : ""}`}>
-                    <p
-                      className={`font-bold leading-tight ${isPending ? "text-gray-300 dark:text-zinc-600" : "text-gray-900 dark:text-white"}`}
-                      style={{ fontSize: 14 }}
-                    >
-                      {step.label}
-                    </p>
-                    <p
-                      className={`text-xs mt-0.5 leading-relaxed ${isPending ? "text-gray-300 dark:text-zinc-700" : "text-gray-400 dark:text-gray-500"}`}
-                    >
-                      {step.desc}
-                    </p>
-                    {isCurrent && (
-                      <div className="flex items-center gap-1.5 mt-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: color }} />
-                        <span className="font-semibold" style={{ fontSize: 11, color }}>En cours…</span>
-                      </div>
-                    )}
-                  </div>
+                  {/* Label below */}
+                  <p
+                    className={`font-bold leading-tight mt-2 text-center px-0.5 ${
+                      isPending ? "text-gray-300 dark:text-zinc-600" : "text-gray-900 dark:text-white"
+                    }`}
+                    style={{ fontSize: 11 }}
+                  >
+                    {step.label}
+                  </p>
+
+                  {/* "En cours…" pulse — only on current step */}
+                  {isCurrent && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: color }} />
+                      <span className="font-semibold" style={{ fontSize: 9, color }}>
+                        En cours
+                      </span>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+
+          {/* Description of the CURRENT step shown below the bar */}
+          {STEPS[currentStepIdx] && (
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800">
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed text-center">
+                {STEPS[currentStepIdx].desc}
+              </p>
+            </div>
+          )}
         </MCard>
 
         {/* ── Driver card ──────────────────────────────────────────── */}

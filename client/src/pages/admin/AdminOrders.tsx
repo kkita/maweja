@@ -294,8 +294,8 @@ export default function AdminOrders() {
               <hr style={{ margin: "12px 0" }} />
               <p style={{ color: "#f97316" }}>Commission MAWEJA: {formatPrice(selectedOrder.commission)}</p>
               <p style={{ color: "#3b82f6" }}>Net restaurateur: {formatPrice(Math.max(0, selectedOrder.subtotal - selectedOrder.commission))}</p>
-              <p style={{ color: "#10b981" }}>Gain agent livraison: {formatPrice(selectedOrder.deliveryFee)}</p>
-              <p style={{ color: "#8b5cf6" }}>Revenus MAWEJA (commission + service): {formatPrice(parseFloat((selectedOrder.commission + selectedOrder.taxAmount).toFixed(2)))}</p>
+              <p style={{ color: "#10b981" }}>Gain agent livraison (80%): {formatPrice(parseFloat((selectedOrder.deliveryFee * 0.8).toFixed(2)))}</p>
+              <p style={{ color: "#8b5cf6" }}>Revenus MAWEJA (commission + service + 20% livraison): {formatPrice(parseFloat((selectedOrder.commission + selectedOrder.taxAmount + selectedOrder.deliveryFee * 0.2).toFixed(2)))}</p>
             </div>
             <hr style={{ margin: "16px 0" }} />
             <p style={{ textAlign: "center", fontSize: 11, color: "#999" }}>Merci pour votre commande - MAWEJA Delivery</p>

@@ -67,12 +67,12 @@ export default function DriverDashboard() {
       <div className="max-w-lg mx-auto px-4 pt-5 pb-6 space-y-4">
 
         {/* ── Hero / Greeting ─────────────────────────────────────── */}
-        <div className="rounded-3xl p-5 relative overflow-hidden bg-[linear-gradient(135deg,#1a0000_0%,#220000_60%,#1a1a1a_100%)] border border-driver-accent/20 shadow-[0_8px_32px_rgba(225,0,0,0.1)]">
+        <div className="rounded-3xl p-5 relative overflow-hidden bg-[linear-gradient(135deg,#fff0f0_0%,#ffe4e4_60%,#f8f8f8_100%)] dark:bg-[linear-gradient(135deg,#1a0000_0%,#220000_60%,#1a1a1a_100%)] border border-driver-accent/20 shadow-[0_8px_32px_rgba(225,0,0,0.1)]">
           <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full opacity-10 bg-driver-accent" />
           <div className="relative flex items-start justify-between">
             <div>
               <p className="text-xs font-semibold mb-0.5 text-driver-subtle">{greeting},</p>
-              <h2 className="text-2xl font-black text-white">{user?.name?.split(" ")[0]} 👋</h2>
+              <h2 className="text-2xl font-black text-driver-text">{user?.name?.split(" ")[0]} 👋</h2>
               <p className="text-xs mt-1.5 text-driver-muted">
                 {isOnline
                   ? activeOrders.length > 0
@@ -137,7 +137,7 @@ export default function DriverDashboard() {
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${s.iconBg}`}>
                 <s.icon size={16} className={s.tc} />
               </div>
-              <p className="text-base font-black text-white">{statValues[i]}</p>
+              <p className="text-base font-black text-driver-text">{statValues[i]}</p>
               <p className="text-[10px] font-semibold mt-0.5 text-driver-subtle">{s.label}</p>
             </div>
           ))}
@@ -181,7 +181,7 @@ export default function DriverDashboard() {
             <div className="w-20 h-20 rounded-full flex items-center justify-center mb-5 bg-driver-s2">
               <Power size={32} className="text-driver-subtle" />
             </div>
-            <p className="font-black text-xl text-white mb-2">Vous êtes hors ligne</p>
+            <p className="font-black text-xl text-driver-text mb-2">Vous êtes hors ligne</p>
             <p className="text-sm mb-8 max-w-xs leading-relaxed text-driver-muted">
               Passez en ligne pour recevoir des commandes et commencer à livrer
             </p>
@@ -218,7 +218,7 @@ export default function DriverDashboard() {
                 <div className="w-2.5 h-2.5 rounded-full absolute bg-driver-amber animate-ping" />
                 <div className="w-2.5 h-2.5 rounded-full bg-driver-amber" />
               </div>
-              <p className="font-black text-sm text-white ml-1">Commandes disponibles</p>
+              <p className="font-black text-sm text-driver-text ml-1">Commandes disponibles</p>
               <span className="text-[10px] font-black px-2 py-0.5 rounded-full ml-auto bg-driver-amber/20 text-driver-amber">
                 {availablePending.length}
               </span>
@@ -245,7 +245,7 @@ export default function DriverDashboard() {
             <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-driver-green/12">
               <Clock size={28} className="text-driver-green" />
             </div>
-            <p className="font-black text-lg text-white mb-2">En attente de commandes</p>
+            <p className="font-black text-lg text-driver-text mb-2">En attente de commandes</p>
             <p className="text-sm text-driver-muted">Vous serez notifié dès qu'une commande est disponible</p>
           </div>
         )}
@@ -261,7 +261,7 @@ export default function DriverDashboard() {
               <TrendingUp size={18} className="text-driver-green" />
             </div>
             <div className="flex-1 text-left">
-              <p className="text-sm font-black text-white">Gains du jour</p>
+              <p className="text-sm font-black text-driver-text">Gains du jour</p>
               <p className="text-xs text-driver-muted">{deliveredToday.length} livraisons effectuées</p>
             </div>
             <span className="text-lg font-black text-driver-green">{formatPrice(todayEarnings)}</span>

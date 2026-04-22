@@ -25,7 +25,7 @@ export function RefuseModal({ isPending, onClose, onConfirm }: RefuseModalProps)
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-driver-red/12">
               <ThumbsDown size={18} className="text-driver-red" />
             </div>
-            <h3 className="font-black text-base text-white">Refuser la commande</h3>
+            <h3 className="font-black text-base text-driver-text">Refuser la commande</h3>
           </div>
           <button
             onClick={onClose}
@@ -47,7 +47,7 @@ export function RefuseModal({ isPending, onClose, onConfirm }: RefuseModalProps)
               placeholder="Ex: Zone trop lointaine, véhicule en panne..."
               rows={3}
               data-testid="textarea-refusal-reason"
-              className="w-full px-4 py-3 rounded-2xl text-sm text-white resize-none focus:outline-none placeholder-gray-600 bg-driver-s2 border border-driver-border"
+              className="w-full px-4 py-3 rounded-2xl text-sm text-driver-text resize-none focus:outline-none placeholder-driver-subtle bg-driver-s2 border border-driver-border"
             />
           </div>
           <div className="flex gap-2">

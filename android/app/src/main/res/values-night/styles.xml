@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      AppTheme.NoActionBar — mode SOMBRE (night).
+      Barres sombres + icônes claires.
+      Le splash (NoActionBarLaunch) reste rouge — défini dans values/ uniquement.
+    -->
+    <style name="AppTheme.NoActionBar" parent="AppTheme">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <!-- Status bar : fond sombre + icônes claires -->
+        <item name="android:statusBarColor">@color/sys_bar_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- Navigation bar : fond sombre + icônes claires (API 27+) -->
+        <item name="android:navigationBarColor">@color/sys_bar_bg</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+</resources>

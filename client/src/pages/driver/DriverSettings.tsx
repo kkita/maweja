@@ -36,19 +36,19 @@ export default function DriverSettings() {
 
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         <div>
-          <h2 className="text-xl font-black text-white" data-testid="text-driver-settings-title">Profil</h2>
+          <h2 className="text-xl font-black text-driver-text" data-testid="text-driver-settings-title">Profil</h2>
           <p className="text-xs mt-0.5 text-driver-subtle">Paramètres de votre compte agent</p>
         </div>
 
         {user && (
-          <div className="rounded-3xl p-5 relative overflow-hidden bg-[linear-gradient(135deg,#1a0000_0%,#220000_100%)] border border-driver-accent/20">
+          <div className="driver-hero-gradient rounded-3xl p-5 relative overflow-hidden border border-driver-accent/20">
             <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full opacity-10 bg-driver-accent" />
             <div className="relative flex items-center gap-4">
-              <div className="w-16 h-16 rounded-3xl flex items-center justify-center flex-shrink-0 bg-white/[0.08] border border-white/10">
+              <div className="w-16 h-16 rounded-3xl flex items-center justify-center flex-shrink-0 bg-driver-s2 border border-driver-border">
                 <User size={28} className="text-driver-muted" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-lg text-white truncate">{user.name}</p>
+                <p className="font-black text-lg text-driver-text truncate">{user.name}</p>
                 <p className="text-xs truncate text-driver-subtle">{user.email}</p>
                 {user.phone && (
                   <div className="flex items-center gap-1.5 mt-1">
@@ -69,9 +69,14 @@ export default function DriverSettings() {
         )}
 
         <div className="rounded-2xl overflow-hidden bg-driver-surface border border-driver-border">
-          <div className="px-4 py-3 flex items-center gap-2 border-b border-driver-border">
-            <MonitorSmartphone size={15} className="text-driver-accent" />
-            <p className="font-bold text-sm text-white">Thème de l'application</p>
+          <div className="px-4 py-3 border-b border-driver-border">
+            <div className="flex items-center gap-2">
+              <MonitorSmartphone size={15} className="text-driver-accent" />
+              <p className="font-bold text-sm text-driver-text">Thème de l'interface</p>
+            </div>
+            <p className="text-[11px] mt-1 text-driver-subtle">
+              Contrôle la couleur des barres système et l'apparence de l'interface Agent.
+            </p>
           </div>
           <div className="p-4"><ThemePicker /></div>
         </div>
@@ -79,7 +84,7 @@ export default function DriverSettings() {
         <div className="rounded-2xl overflow-hidden bg-driver-surface border border-driver-border">
           <div className="px-4 py-3 flex items-center gap-2 border-b border-driver-border">
             <Globe size={15} className="text-driver-accent" />
-            <p className="font-bold text-sm text-white">{t.settings.language}</p>
+            <p className="font-bold text-sm text-driver-text">{t.settings.language}</p>
           </div>
           <div className="p-4 flex gap-2">
             {[
@@ -118,7 +123,7 @@ export default function DriverSettings() {
                 <Icon size={16} className={iconText} />
               </div>
               <div className="flex-1 text-left min-w-0">
-                <p className="text-sm font-bold text-white">{label}</p>
+                <p className="text-sm font-bold text-driver-text">{label}</p>
                 <p className="text-[11px] mt-0.5 text-driver-subtle">{desc}</p>
               </div>
               <ChevronRight size={16} className="text-driver-subtle" />

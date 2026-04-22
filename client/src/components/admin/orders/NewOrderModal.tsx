@@ -116,12 +116,12 @@ export default function NewOrderModal({ isOpen, onClose, restaurants, deliveryZo
         const item = menuItems.find(m => m.id === Number(id));
         const customPrice = parseFloat(newOrderItemPrices[Number(id)] ?? "");
         const price = isFinite(customPrice) && customPrice >= 0 ? customPrice : (item?.price ?? 0);
-        return { menuItemId: Number(id), name: item?.name ?? "", price, qty };
+        return { menuItemId: Number(id), name: item?.name ?? "", price, quantity: qty };
       });
 
     const customItemsArr = newOrderCustomItems
       .filter(ci => ci.qty > 0 && ci.name.trim())
-      .map(ci => ({ menuItemId: null, name: ci.name.trim(), price: parseFloat(ci.price) || 0, qty: ci.qty }));
+      .map(ci => ({ name: ci.name.trim(), price: parseFloat(ci.price) || 0, quantity: ci.qty }));
 
     const itemsArr = [...menuItemsArr, ...customItemsArr];
 

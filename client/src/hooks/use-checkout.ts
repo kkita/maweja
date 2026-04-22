@@ -23,13 +23,13 @@ export interface CheckoutData {
 }
 
 export const paymentOptions = [
-  { id: "cash",        label: "Cash",              desc: "Paiement a la livraison",        Icon: Banknote   },
-  { id: "mobile_money",label: "Mobile Money",      desc: "M-Pesa / Orange Money / Airtel", Icon: Smartphone },
-  { id: "wallet",      label: "Wallet MAWEJA",     desc: "Solde du portefeuille",          Icon: Wallet     },
-  { id: "google_pay",  label: "Google Pay",        desc: "Paiement Google",                Icon: CreditCard },
-  { id: "pos",         label: "POS",               desc: "Terminal de paiement",           Icon: CreditCard },
-  { id: "illico_cash", label: "IllicoCash",        desc: "Paiement IllicoCash",            Icon: Banknote   },
-  { id: "card",        label: "Carte de Credit",   desc: "Visa, Mastercard",               Icon: CreditCard },
+  { id: "cash",        label: "Cash",              desc: "Paiement a la livraison",        Icon: Banknote,   comingSoon: false },
+  { id: "mobile_money",label: "Mobile Money",      desc: "M-Pesa / Orange Money / Airtel", Icon: Smartphone, comingSoon: true  },
+  { id: "wallet",      label: "Wallet MAWEJA",     desc: "Solde du portefeuille",          Icon: Wallet,     comingSoon: true  },
+  { id: "google_pay",  label: "Google Pay",        desc: "Paiement Google",                Icon: CreditCard, comingSoon: true  },
+  { id: "pos",         label: "POS",               desc: "Terminal de paiement",           Icon: CreditCard, comingSoon: true  },
+  { id: "illico_cash", label: "IllicoCash",        desc: "Paiement IllicoCash",            Icon: Banknote,   comingSoon: true  },
+  { id: "card",        label: "Carte de Credit",   desc: "Visa, Mastercard",               Icon: CreditCard, comingSoon: true  },
 ];
 
 export function useCheckout() {
@@ -129,7 +129,7 @@ export function useCheckout() {
         body: JSON.stringify({
           clientId: user!.id,
           restaurantId: items[0].restaurantId,
-          items: JSON.stringify(items.map((i) => ({ name: i.name, qty: i.quantity, price: i.price }))),
+          items: items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
           subtotal, deliveryFee, taxAmount: serviceFee, total: netTotal,
           paymentMethod, paymentStatus: paymentMethod === "cash" ? "pending" : "paid",
           deliveryAddress: checkoutData.deliveryAddress || "Adresse non specifiee",

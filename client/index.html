@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>MAWEJA - Livraison Kinshasa</title>
     <meta name="description" content="MAWEJA - Service de livraison de repas a Kinshasa, RDC. Commandez vos plats preferes en quelques clics." />
     <meta property="og:title" content="MAWEJA - Livraison Kinshasa" />
@@ -18,10 +20,32 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   </head>
   <body style="margin:0;padding:0;background:#EC0000;min-height:100vh;">
-    <div id="maweja-native-splash" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#EC0000;display:flex;align-items:center;justify-content:center;z-index:99999;">
-      <img src="./maweja-splash.gif" alt="" style="width:100vw;height:100vh;object-fit:cover;" />
+    <div id="maweja-native-splash" onclick="window.__mawejaKillSplash&&window.__mawejaKillSplash()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#EC0000;display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.3s ease;cursor:pointer;">
+      <img src="/maweja-splash.gif" alt="" onerror="this.style.display='none'" style="width:100vw;height:100vh;object-fit:cover;pointer-events:none;" />
     </div>
     <div id="root" style="background:#EC0000;min-height:100vh;"></div>
+    <script>
+      // Centralized splash killer — usable from anywhere
+      window.__mawejaKillSplash = function() {
+        if (window.__MAWEJA_SPLASH_TIMER__) { clearTimeout(window.__MAWEJA_SPLASH_TIMER__); window.__MAWEJA_SPLASH_TIMER__ = null; }
+        var el = document.getElementById('maweja-native-splash');
+        if (el) {
+          el.style.opacity = '0';
+          setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+        }
+      };
+      // Hard safety net: 3s max — even if React never mounts (JS error, slow network)
+      window.__MAWEJA_SPLASH_TIMER__ = setTimeout(window.__mawejaKillSplash, 3000);
+      // Surface any uncaught errors visibly so the user reports something useful instead of a blank screen
+      window.addEventListener('error', function(ev) {
+        try {
+          var box = document.createElement('div');
+          box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#000;color:#fff;font:12px monospace;padding:10px;z-index:1000000;max-height:40vh;overflow:auto;';
+          box.textContent = '[JS Error] ' + (ev.message || ev.error) + ' @ ' + (ev.filename || '') + ':' + (ev.lineno || '');
+          document.body.appendChild(box);
+        } catch(_) {}
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

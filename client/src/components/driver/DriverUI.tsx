@@ -1,9 +1,9 @@
 /*
  * DriverUI — Couche UI driver de MAWEJA
  *
- * Construit sur les primitives partagées du Design System.
- * L'app driver est toujours en mode sombre.
- * Toutes les APIs existantes sont préservées pour la compatibilité.
+ * Supporte les modes clair ET sombre via CSS variables.
+ * Les tokens neutres (bg, surface, text…) s'adaptent automatiquement.
+ * Les couleurs de marque (accent, green, blue…) restent fixes.
  */
 import { type ReactNode, type CSSProperties } from "react";
 import { type LucideIcon } from "lucide-react";
@@ -18,23 +18,23 @@ function cx(...c: (string | undefined | false | null)[]): string {
   return c.filter(Boolean).join(" ");
 }
 
-/* ── Design tokens driver (backward compat — toujours dark) ─────────────── */
+/* ── Design tokens driver — référencent les CSS variables adaptatives ───── */
 export const dt = {
-  bg:       "#0e0e0e",
-  surface:  "#191919",
-  surface2: "#222222",
-  surface3: "#2c2c2c",
-  border:   "rgba(255,255,255,0.07)",
-  border2:  "rgba(255,255,255,0.13)",
+  bg:       "var(--driver-bg)",
+  surface:  "var(--driver-surface)",
+  surface2: "var(--driver-s2)",
+  surface3: "var(--driver-s3)",
+  border:   "var(--driver-border)",
+  border2:  "var(--driver-border2)",
   green:    "#22c55e",
   orange:   "#f97316",
   amber:    "#f59e0b",
   blue:     "#60a5fa",
   red:      "#ef4444",
   accent:   "#E10000",
-  text:     "#FFFFFF",
-  text2:    "#9ca3af",
-  text3:    "#6b7280",
+  text:     "var(--driver-text)",
+  text2:    "var(--driver-text2)",
+  text3:    "var(--driver-text3)",
 } as const;
 
 /* ── Status config driver ────────────────────────────────────────────────── */
@@ -64,7 +64,7 @@ type DBtnVariant = "accept" | "refuse" | "amber" | "blue" | "deliver" | "seconda
 type DBtnSize = "sm" | "md" | "lg" | "xl";
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- * DBtn → AppButton (driver-specific styles for non-mappable variants)         *
+ * DBtn — bouton driver avec variants adaptatifs                               *
  * ─────────────────────────────────────────────────────────────────────────── */
 interface DBtnProps {
   label: string;
@@ -91,8 +91,8 @@ const DVARIANT_STYLE: Record<DBtnVariant, string> = {
   amber:     "bg-amber-500 text-black shadow-lg shadow-amber-900/30 font-bold",
   blue:      "bg-blue-400 text-black shadow-lg shadow-blue-900/30 font-bold",
   deliver:   "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-900/30 font-bold",
-  secondary: "bg-white/10 text-white border border-white/10 font-bold",
-  ghost:     "text-zinc-400 font-semibold",
+  secondary: "bg-driver-s2 text-driver-text border border-driver-border font-bold",
+  ghost:     "text-driver-subtle font-semibold",
   accent:    "bg-brand text-white shadow-ds-brand font-bold",
 };
 
@@ -119,7 +119,7 @@ export function DBtn({ label, icon: Icon, variant = "secondary", onClick, loadin
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- * DCard → AppCard (dark context)                                              *
+ * DCard — carte driver adaptative                                             *
  * ─────────────────────────────────────────────────────────────────────────── */
 export function DCard({ children, className = "", style, onClick }: {
   children: ReactNode; className?: string; style?: CSSProperties; onClick?: () => void;
@@ -141,7 +141,7 @@ export function DCard({ children, className = "", style, onClick }: {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- * DStatCard → AppStatCard (dark context)                                      *
+ * DStatCard — carte stat driver adaptative                                    *
  * ─────────────────────────────────────────────────────────────────────────── */
 export function DStatCard({ label, value, icon: Icon, color = dt.text2, sub }: {
   label: string; value: string | number; icon?: LucideIcon; color?: string; sub?: string;
@@ -159,7 +159,7 @@ export function DStatCard({ label, value, icon: Icon, color = dt.text2, sub }: {
           <Icon size={17} style={{ color }} />
         </div>
       )}
-      <p className="text-xl font-black text-white">{typeof value === "number" ? value.toLocaleString() : value}</p>
+      <p className="text-xl font-black text-driver-text">{typeof value === "number" ? value.toLocaleString() : value}</p>
       <p className="text-[11px] font-semibold mt-0.5" style={{ color: dt.text2 }}>{label}</p>
       {sub && <p className="text-[10px] mt-0.5" style={{ color: dt.text3 }}>{sub}</p>}
     </motion.div>
@@ -175,7 +175,7 @@ export function DSectionHeader({ title, badge, action, onAction }: {
   return (
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
-        <p className="font-black text-sm text-white">{title}</p>
+        <p className="font-black text-sm text-driver-text">{title}</p>
         {badge != null && badge > 0 && (
           <span className="text-[10px] font-black px-2 py-0.5 rounded-full text-white bg-brand">{badge}</span>
         )}
@@ -208,7 +208,7 @@ export function DStatusBadge({ status }: { status: string }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- * DEmptyState → AppEmptyState (dark context)                                  *
+ * DEmptyState — état vide driver adaptatif                                    *
  * ─────────────────────────────────────────────────────────────────────────── */
 export function DEmptyState({ icon: Icon, title, description, action, onAction }: {
   icon: LucideIcon; title: string; description?: string; action?: string; onAction?: () => void;
@@ -229,7 +229,7 @@ export function DEmptyState({ icon: Icon, title, description, action, onAction }
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, type: "spring", damping: 24, stiffness: 280 }}
       >
-        <p className="font-black text-base text-white mb-2">{title}</p>
+        <p className="font-black text-base text-driver-text mb-2">{title}</p>
         {description && (
           <p className="text-sm mb-6 max-w-xs leading-relaxed" style={{ color: dt.text2 }}>{description}</p>
         )}
@@ -248,7 +248,7 @@ export function DEmptyState({ icon: Icon, title, description, action, onAction }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── *
- * DSkeletonCard → AppSkeleton (dark context)                                  *
+ * DSkeletonCard — skeleton adaptatif                                          *
  * ─────────────────────────────────────────────────────────────────────────── */
 export function DSkeletonCard() {
   return (
@@ -280,7 +280,7 @@ export function DInfoRow({ icon: Icon, label, value, color, onTap }: {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-[10px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: dt.text3 }}>{label}</p>
-        <p className="text-sm font-bold text-white leading-snug">{value}</p>
+        <p className="text-sm font-bold text-driver-text leading-snug">{value}</p>
       </div>
       {onTap && (
         <div className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{ color: dt.accent, background: `${dt.accent}15` }}>Appel</div>

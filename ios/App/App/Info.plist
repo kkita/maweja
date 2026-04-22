@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Identité de l'application -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>fr</string>
+    <key>CFBundleDisplayName</key>
+    <string>MAWEJA</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+
+    <!-- Status Bar iOS
+         UIViewControllerBasedStatusBarAppearance = NO
+         → permet au plugin Capacitor StatusBar de contrôler le style
+           programmatiquement depuis le web (via StatusBar.setStyle()).
+         → sans ce flag, iOS ignore les appels JS au style de la status bar.
+    -->
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+
+    <!-- Style par défaut au démarrage (avant que le thème JS soit résolu).
+         "UIStatusBarStyleDefault" = icônes foncées (adapté au splash rouge). -->
+    <key>UIStatusBarStyle</key>
+    <string>UIStatusBarStyleDefault</string>
+
+    <!-- Orientation supportées (portrait uniquement, comme une app mobile) -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- Sécurité réseau : interdit le HTTP non chiffré -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+    </dict>
+
+    <!-- Accès requis par Capacitor -->
+    <key>NSCameraUsageDescription</key>
+    <string>MAWEJA utilise l'appareil photo pour vos photos de profil et commandes.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>MAWEJA accède à votre galerie pour vos photos de profil et commandes.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>MAWEJA utilise votre position pour la livraison et le suivi en temps réel.</string>
+</dict>
+</plist>

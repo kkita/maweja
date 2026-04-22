@@ -55,20 +55,25 @@ export default {
           900: "#6c0000",
           950: "#3f0000",
         },
-        /* ── Driver UI dark palette ──
-         * Maps 1-to-1 with the `dt` token object in DriverUI.tsx.
-         * Usage: bg-driver-surface, text-driver-muted, border-driver-border, etc.
-         * Opacity modifier: bg-driver-accent/10 → rgba(225,0,0,0.10)
+        /* ── Driver UI palette — adaptatif light/dark via CSS variables ──
+         * Les tokens neutres (bg, surface, border, text…) référencent des
+         * variables CSS définies dans index.css pour :root et .dark.
+         * Les couleurs de marque (accent, green, amber…) restent constantes.
+         * Usage: bg-driver-surface, text-driver-text, border-driver-border, etc.
+         * Opacity modifier fonctionne sur les couleurs de marque: bg-driver-accent/10
          */
         driver: {
-          bg:      "#0c0c0c",
-          surface: "#181818",
-          s2:      "#1e1e1e",
-          s3:      "#2a2a2a",
-          border:  "#252525",
-          border2: "#2d2d2d",
-          muted:   "#888888",
-          subtle:  "#555555",
+          bg:      "var(--driver-bg)",
+          surface: "var(--driver-surface)",
+          s2:      "var(--driver-s2)",
+          s3:      "var(--driver-s3)",
+          border:  "var(--driver-border)",
+          border2: "var(--driver-border2)",
+          muted:   "var(--driver-muted)",
+          subtle:  "var(--driver-subtle)",
+          text:    "var(--driver-text)",
+          text2:   "var(--driver-text2)",
+          text3:   "var(--driver-text3)",
           accent:  "#E10000",
           green:   "#22c55e",
           amber:   "#f59e0b",

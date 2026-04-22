@@ -1,10 +1,20 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { Settings, Bell, Save, Loader2, Check, RefreshCw, Lock } from "lucide-react";
+import { useRef } from "react";
+import { Settings, Bell, Save, Loader2, Check, RefreshCw, Lock, Volume2, Play, Music, Upload, Trash2 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useToast } from "../../hooks/use-toast";
 import { apiRequest, queryClient } from "../../lib/queryClient";
+import {
+  RINGTONES, type RingtoneId,
+  getSelectedRingtone, setSelectedRingtone,
+  getRingtoneVolume, setRingtoneVolume,
+  playRingtone,
+  getCustomRingtone, setCustomRingtone, clearCustomRingtone, fileToDataUrl,
+} from "../../lib/notify";
+
+const CUSTOM_MAX_BYTES = 3 * 1024 * 1024; // 3 Mo
 
 const DEFAULTS = {
   app_name: "MAWEJA",
@@ -47,6 +57,77 @@ export default function AdminSettings() {
 
   const set = (key: keyof typeof form, value: string) => setForm(f => ({ ...f, [key]: value }));
   const toggle = (key: keyof typeof form) => setForm(f => ({ ...f, [key]: f[key] === "true" ? "false" : "true" }));
+
+  /* ─── Sonneries (stockées en localStorage) ─── */
+  const [ringtone, setRingtone] = useState<RingtoneId>("maweja");
+  const [volume, setVolume] = useState<number>(1);
+  const [customName, setCustomName] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setRingtone(getSelectedRingtone());
+    setVolume(getRingtoneVolume());
+    const c = getCustomRingtone();
+    setCustomName(c?.name || null);
+  }, []);
+
+  const onPickRingtone = (id: RingtoneId) => {
+    if (id === "custom" && !customName) {
+      fileInputRef.current?.click();
+      return;
+    }
+    setRingtone(id);
+    setSelectedRingtone(id);
+    playRingtone(id, volume);
+    const label = id === "custom" ? (customName || "Sonnerie personnalisée") : RINGTONES.find(r => r.id === id)?.label || "";
+    toast({ title: "Sonnerie sélectionnée", description: label });
+  };
+
+  const onChangeVolume = (v: number) => {
+    setVolume(v);
+    setRingtoneVolume(v);
+  };
+
+  const onUploadCustom = async (file: File) => {
+    if (!file.type.startsWith("audio/")) {
+      toast({ title: "Format invalide", description: "Choisis un fichier audio (mp3, wav, ogg, m4a…)", variant: "destructive" });
+      return;
+    }
+    if (file.size > CUSTOM_MAX_BYTES) {
+      toast({
+        title: "Fichier trop volumineux",
+        description: `Limite : ${(CUSTOM_MAX_BYTES / 1024 / 1024).toFixed(0)} Mo. Le tien : ${(file.size / 1024 / 1024).toFixed(2)} Mo.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setUploading(true);
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      setCustomRingtone(dataUrl, file.name);
+      setCustomName(file.name);
+      setRingtone("custom");
+      setSelectedRingtone("custom");
+      playRingtone("custom", volume);
+      toast({ title: "Sonnerie importée 🎵", description: file.name });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e?.message || "Import impossible", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const onClearCustom = () => {
+    clearCustomRingtone();
+    setCustomName(null);
+    if (ringtone === "custom") {
+      setRingtone("maweja");
+      setSelectedRingtone("maweja");
+    }
+    toast({ title: "Sonnerie personnalisée supprimée" });
+  };
 
   const textField = (key: keyof typeof form, label: string, type = "text", placeholder = "") => (
     <div>
@@ -125,6 +206,149 @@ export default function AdminSettings() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ─── Sonneries de notification ─── */}
+        <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm p-6 hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-11 h-11 bg-purple-50 dark:bg-purple-950/30 rounded-xl flex items-center justify-center">
+              <Music size={20} className="text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-gray-900 dark:text-white">Sonneries de notification</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Choisissez la sonnerie jouée pour les nouvelles commandes et messages</p>
+            </div>
+          </div>
+
+          {/* Volume */}
+          <div className="mb-5 p-4 bg-gray-50 dark:bg-gray-800/40 rounded-xl">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-2">
+                <Volume2 size={14} /> Volume
+              </label>
+              <span className="text-xs font-bold text-purple-600 tabular-nums">{Math.round(volume * 100)}%</span>
+            </div>
+            <input
+              type="range" min="0" max="1" step="0.05" value={volume}
+              onChange={e => onChangeVolume(parseFloat(e.target.value))}
+              data-testid="slider-ringtone-volume"
+              className="w-full accent-purple-600"
+            />
+          </div>
+
+          {/* Liste de sonneries */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {RINGTONES.map(r => {
+              const active = ringtone === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => onPickRingtone(r.id)}
+                  data-testid={`ringtone-${r.id}`}
+                  className={`relative text-left p-3.5 rounded-xl border-2 transition-all flex items-center gap-3 ${
+                    active
+                      ? "border-purple-600 bg-purple-50 dark:bg-purple-950/30"
+                      : "border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-gray-800/40"
+                  }`}
+                >
+                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    active ? "bg-purple-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-500"
+                  }`}>
+                    {active ? <Check size={16} /> : <Play size={14} />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-bold truncate ${active ? "text-purple-700 dark:text-purple-300" : "text-gray-900 dark:text-white"}`}>
+                      {r.label}
+                    </p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{r.description}</p>
+                  </div>
+                  {r.id === "maweja" && (
+                    <span className="text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400">DÉFAUT</span>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Carte sonnerie personnalisée */}
+            <button
+              type="button"
+              onClick={() => onPickRingtone("custom")}
+              data-testid="ringtone-custom"
+              className={`relative text-left p-3.5 rounded-xl border-2 transition-all flex items-center gap-3 ${
+                ringtone === "custom"
+                  ? "border-purple-600 bg-purple-50 dark:bg-purple-950/30"
+                  : customName
+                    ? "border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-gray-800/40"
+                    : "border-dashed border-purple-300 dark:border-purple-800 bg-purple-50/40 dark:bg-purple-950/10 hover:bg-purple-50 dark:hover:bg-purple-950/30"
+              } sm:col-span-2`}
+            >
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                ringtone === "custom" ? "bg-purple-600 text-white" : "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400"
+              }`}>
+                {ringtone === "custom" ? <Check size={16} /> : <Upload size={14} />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className={`text-sm font-bold truncate ${ringtone === "custom" ? "text-purple-700 dark:text-purple-300" : "text-gray-900 dark:text-white"}`}>
+                  {customName || "Importer ma propre sonnerie"}
+                </p>
+                <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                  {customName ? "Sonnerie personnalisée importée" : "Clique pour choisir un fichier audio (MP3, WAV, OGG, M4A · max 3 Mo)"}
+                </p>
+              </div>
+              <span className="text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400">PERSO</span>
+            </button>
+          </div>
+
+          {/* Input file caché */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac"
+            className="hidden"
+            data-testid="input-custom-ringtone"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) onUploadCustom(f);
+            }}
+          />
+
+          {/* Actions */}
+          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+            <button
+              type="button"
+              onClick={() => playRingtone(ringtone, volume)}
+              data-testid="button-test-ringtone"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold transition-colors"
+            >
+              <Play size={14} /> Tester la sonnerie sélectionnée
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              data-testid="button-upload-ringtone"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-purple-600 text-purple-700 dark:text-purple-400 text-sm font-bold hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors disabled:opacity-50"
+            >
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {uploading ? "Import en cours…" : customName ? "Remplacer la sonnerie perso" : "Importer une sonnerie"}
+            </button>
+            {customName && (
+              <button
+                type="button"
+                onClick={onClearCustom}
+                data-testid="button-clear-ringtone"
+                title="Supprimer la sonnerie personnalisée"
+                className="sm:w-auto flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-950/30 text-sm font-bold transition-colors"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2 text-center">
+            La sonnerie est sauvegardée dans ton navigateur (localStorage) et jouée automatiquement à chaque nouvelle commande / message.
+            Le fichier perso reste sur ton appareil — il n'est pas envoyé sur le serveur.
+          </p>
         </div>
 
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-900 rounded-2xl border border-green-100 dark:border-gray-800 shadow-sm p-6 hover:shadow-md transition-shadow">

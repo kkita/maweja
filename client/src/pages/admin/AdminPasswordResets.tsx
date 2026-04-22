@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../../lib/queryClient";
+import AdminLayout from "../../components/AdminLayout";
 import { Key, MessageCircle, Mail, Clock, CheckCircle2, XCircle, RefreshCw, Copy, Lock, User, Phone, ChevronDown, ChevronUp } from "lucide-react";
 import type { PasswordResetRequest } from "@shared/schema";
 
@@ -221,22 +222,13 @@ export default function AdminPasswordResets() {
   const pendingCount = requests.filter(r => r.status === "pending").length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d]">
-      <div className="max-w-3xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center">
-              <Key size={20} className="text-red-500" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-gray-900 dark:text-white">Reinitialisation Mots de Passe</h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Gerez les demandes de reinitialisation</p>
-            </div>
-          </div>
-          {pendingCount > 0 && (
+    <AdminLayout title="Réinitialisation Mots de Passe" subtitle="Gérez les demandes de réinitialisation">
+      <div className="max-w-3xl mx-auto">
+        {pendingCount > 0 && (
+          <div className="flex justify-end mb-4">
             <span className="bg-red-500 text-white text-xs font-black px-3 py-1 rounded-full" data-testid="badge-pending-count">{pendingCount} en attente</span>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
           {(["all", "pending", "resolved", "rejected"] as const).map(f => (
@@ -278,6 +270,6 @@ export default function AdminPasswordResets() {
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   );
 }

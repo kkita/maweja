@@ -249,12 +249,12 @@ export default function OrderDetailPanel({ order, restaurants, drivers, onPrint,
               <span className="font-bold text-blue-600 dark:text-blue-400">{formatPrice(Math.max(0, order.subtotal - order.commission))}</span>
             </div>
             <div className="flex justify-between text-xs gap-2">
-              <span className="text-emerald-600 dark:text-emerald-400">Gain agent livraison</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatPrice(order.deliveryFee)}</span>
+              <span className="text-emerald-600 dark:text-emerald-400">Gain agent livraison (80%)</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatPrice(parseFloat((order.deliveryFee * 0.8).toFixed(2)))}</span>
             </div>
             <div className="flex justify-between text-xs gap-2">
-              <span className="text-purple-600 dark:text-purple-400">Revenus MAWEJA (service)</span>
-              <span className="font-bold text-purple-600 dark:text-purple-400">{formatPrice(parseFloat((order.commission + order.taxAmount).toFixed(2)))}</span>
+              <span className="text-purple-600 dark:text-purple-400">Revenus MAWEJA (commission + service + 20% livraison)</span>
+              <span className="font-bold text-purple-600 dark:text-purple-400">{formatPrice(parseFloat((order.commission + order.taxAmount + order.deliveryFee * 0.2).toFixed(2)))}</span>
             </div>
           </div>
         </div>
@@ -490,7 +490,7 @@ export default function OrderDetailPanel({ order, restaurants, drivers, onPrint,
           </>
         )}
 
-        {!order.driverId && (
+        {!order.driverId && !["delivered", "cancelled", "returned"].includes(order.status) && (
           <select
             onChange={e => onAssignDriver(order.id, Number(e.target.value))}
             defaultValue=""

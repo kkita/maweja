@@ -1,34 +1,205 @@
-export function playAdminAlertSound() {
+/* ─────────────────────────────────────────────────────────────
+   MAWEJA — Système de notifications + sonneries personnalisables
+   ───────────────────────────────────────────────────────────── */
+
+export type RingtoneId =
+  | "maweja"
+  | "classic"
+  | "chime"
+  | "bell"
+  | "ding"
+  | "digital"
+  | "silent"
+  | "custom";
+
+export interface Ringtone {
+  id: RingtoneId;
+  label: string;
+  description: string;
+  kind: "file" | "synth" | "custom";
+  src?: string;
+}
+
+export const RINGTONES: Ringtone[] = [
+  { id: "maweja",  label: "MAWEJA Officiel", description: "Sonnerie signature MAWEJA", kind: "file",  src: "/sounds/maweja.mp3" },
+  { id: "classic", label: "Classique",       description: "Notification standard",     kind: "file",  src: "/sounds/classic.mp3" },
+  { id: "chime",   label: "Carillon",        description: "3 notes ascendantes douces", kind: "synth" },
+  { id: "bell",    label: "Cloche",          description: "Sonnerie type cloche",       kind: "synth" },
+  { id: "ding",    label: "Ding",            description: "Une note courte et claire",  kind: "synth" },
+  { id: "digital", label: "Digital",         description: "Bip moderne aigu",            kind: "synth" },
+  { id: "silent",  label: "Silencieux",      description: "Aucun son (notif visuelle uniquement)", kind: "synth" },
+];
+
+const LS_RINGTONE = "maweja_ringtone";
+const LS_VOLUME = "maweja_ringtone_volume";
+const LS_CUSTOM_DATA = "maweja_ringtone_custom_data";
+const LS_CUSTOM_NAME = "maweja_ringtone_custom_name";
+
+/* ─── Custom uploaded ringtone ─────────────────────────────── */
+export interface CustomRingtone {
+  dataUrl: string;
+  name: string;
+}
+
+export function getCustomRingtone(): CustomRingtone | null {
   try {
-    const audio = new Audio("/notification.mp3");
-    audio.volume = 1.0;
-    audio.play().catch(() => {});
+    const dataUrl = localStorage.getItem(LS_CUSTOM_DATA);
+    const name = localStorage.getItem(LS_CUSTOM_NAME) || "Sonnerie personnalisée";
+    if (dataUrl && dataUrl.startsWith("data:audio")) return { dataUrl, name };
   } catch {}
+  return null;
+}
+
+export function setCustomRingtone(dataUrl: string, name: string) {
+  try {
+    localStorage.setItem(LS_CUSTOM_DATA, dataUrl);
+    localStorage.setItem(LS_CUSTOM_NAME, name);
+  } catch (e) {
+    throw new Error("Le fichier est trop volumineux pour être stocké (limite navigateur dépassée).");
+  }
+}
+
+export function clearCustomRingtone() {
+  try {
+    localStorage.removeItem(LS_CUSTOM_DATA);
+    localStorage.removeItem(LS_CUSTOM_NAME);
+  } catch {}
+}
+
+/** Read a File and convert to a data URL string. */
+export function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error || new Error("Lecture du fichier échouée"));
+    reader.readAsDataURL(file);
+  });
+}
+
+export function getSelectedRingtone(): RingtoneId {
+  try {
+    const v = localStorage.getItem(LS_RINGTONE) as RingtoneId | null;
+    if (v === "custom") return "custom";
+    if (v && RINGTONES.some(r => r.id === v)) return v;
+  } catch {}
+  return "maweja";
+}
+
+export function setSelectedRingtone(id: RingtoneId) {
+  try { localStorage.setItem(LS_RINGTONE, id); } catch {}
+}
+
+export function getRingtoneVolume(): number {
+  try {
+    const v = parseFloat(localStorage.getItem(LS_VOLUME) || "1");
+    if (!isNaN(v) && v >= 0 && v <= 1) return v;
+  } catch {}
+  return 1;
+}
+
+export function setRingtoneVolume(v: number) {
+  try { localStorage.setItem(LS_VOLUME, String(Math.max(0, Math.min(1, v)))); } catch {}
+}
+
+/* ─── Synth tones (Web Audio) ──────────────────────────────── */
+function playSynth(id: RingtoneId, volume: number) {
+  if (id === "silent") return;
+  try {
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const master = ctx.createGain();
+    master.gain.value = volume;
+    master.connect(ctx.destination);
+
+    const note = (freq: number, start: number, dur: number, type: OscillatorType = "sine", peak = 0.35) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      osc.connect(g);
+      g.connect(master);
+      const t0 = ctx.currentTime + start;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(peak, t0 + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.05);
+    };
+
+    switch (id) {
+      case "chime":
+        note(523.25, 0,    0.45);
+        note(659.25, 0.18, 0.45);
+        note(783.99, 0.36, 0.55);
+        break;
+      case "bell":
+        note(880, 0,    0.9, "triangle", 0.45);
+        note(660, 0.05, 0.9, "sine",     0.25);
+        break;
+      case "ding":
+        note(1046.5, 0, 0.6, "sine", 0.5);
+        break;
+      case "digital":
+        note(1200, 0,    0.12, "square", 0.25);
+        note(1600, 0.15, 0.12, "square", 0.25);
+        note(1200, 0.30, 0.18, "square", 0.25);
+        break;
+      default:
+        note(659.25, 0, 0.4);
+    }
+  } catch {}
+}
+
+/* ─── Main API: play the selected ringtone ─────────────────── */
+export function playRingtone(idOverride?: RingtoneId, volumeOverride?: number) {
+  const id = idOverride ?? getSelectedRingtone();
+  const vol = volumeOverride ?? getRingtoneVolume();
+  if (id === "silent" || vol === 0) return;
+
+  if (id === "custom") {
+    const custom = getCustomRingtone();
+    if (custom) {
+      try {
+        const audio = new Audio(custom.dataUrl);
+        audio.volume = vol;
+        audio.play().catch(() => playSynth("chime", vol));
+        return;
+      } catch {
+        playSynth("chime", vol);
+        return;
+      }
+    }
+    // Pas de fichier custom enregistré → fallback
+    playSynth("chime", vol);
+    return;
+  }
+
+  const def = RINGTONES.find(r => r.id === id);
+  if (!def) return;
+  if (def.kind === "file" && def.src) {
+    try {
+      const audio = new Audio(def.src);
+      audio.volume = vol;
+      audio.play().catch(() => playSynth("chime", vol));
+    } catch {
+      playSynth("chime", vol);
+    }
+  } else {
+    playSynth(id, vol);
+  }
+}
+
+/* ─── Backward-compat exports ──────────────────────────────── */
+export function playAdminAlertSound() {
+  playRingtone();
 }
 
 export function playNotifSound() {
-  try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const notes = [523.25, 659.25, 783.99];
-    notes.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = "sine";
-      const t0 = ctx.currentTime + i * 0.18;
-      gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(0.35, t0 + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.42);
-      osc.start(t0);
-      osc.stop(t0 + 0.45);
-    });
-  } catch {}
+  playRingtone();
 }
 
+/* ─── French status labels ─────────────────────────────────── */
 const STATUS_FR: Record<string, string> = {
   pending: "En attente",
   confirmed: "Confirmée ✅",
@@ -193,7 +364,7 @@ export function handleWSEvent(data: any) {
       };
       const label = statusMap[srv.status] || srv.status;
       const note = srv.adminNotes ? `\n${srv.adminNotes}` : "";
-      playNotifSound();
+      playRingtone();
       showNotif("📋 MAWEJA – Service", `${srv.categoryName || "Demande"} : ${label}${note}`);
       break;
     }
@@ -207,7 +378,7 @@ export function handleWSEvent(data: any) {
     case "chat_message": {
       const chatOk = localStorage.getItem("maweja_notif_messages") !== "false";
       if (!chatOk) return;
-      playAdminAlertSound();
+      playRingtone();
       try { navigator.vibrate?.([200, 80, 200]); } catch {}
       showNotif("💬 MAWEJA – Message", data.notification?.message || data.message?.message || "Nouveau message reçu");
       break;

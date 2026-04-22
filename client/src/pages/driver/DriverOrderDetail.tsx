@@ -186,7 +186,7 @@ export default function DriverOrderDetail() {
         <div className="rounded-2xl p-4 bg-driver-surface border border-driver-border">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-xl font-black text-white" data-testid="text-order-number">{order.orderNumber}</p>
+              <p className="text-xl font-black text-driver-text" data-testid="text-order-number">{order.orderNumber}</p>
               <p className="text-[11px] flex items-center gap-1 mt-0.5 text-driver-subtle">
                 <Clock size={11} /> {formatDate(order.createdAt!)}
               </p>
@@ -202,7 +202,7 @@ export default function DriverOrderDetail() {
         {order.notes && (
           <div className="rounded-2xl p-4 bg-driver-amber/8 border border-driver-amber/20">
             <p className="text-[10px] font-black uppercase tracking-wider mb-1.5 text-driver-amber">Instructions du client</p>
-            <p className="text-sm text-white">{order.notes}</p>
+            <p className="text-sm text-driver-text">{order.notes}</p>
           </div>
         )}
 
@@ -213,7 +213,7 @@ export default function DriverOrderDetail() {
               <span className="text-xs font-black uppercase tracking-wider text-driver-orange">Point de récupération</span>
             </div>
             <div className="p-4">
-              <p className="font-black text-base text-white mb-2" data-testid="text-restaurant-name">{restaurant.name}</p>
+              <p className="font-black text-base text-driver-text mb-2" data-testid="text-restaurant-name">{restaurant.name}</p>
               <div className="flex items-start gap-2 mb-3">
                 <MapPin size={13} className="flex-shrink-0 mt-0.5 text-driver-subtle" />
                 <p className="text-xs text-driver-muted">{restaurant.address}</p>
@@ -251,7 +251,7 @@ export default function DriverOrderDetail() {
                 <User size={18} className="text-driver-accent" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-black text-base text-white" data-testid="text-client-name">{clientName}</p>
+                <p className="font-black text-base text-driver-text" data-testid="text-client-name">{clientName}</p>
                 {clientPhone && (
                   <button onClick={() => copyToClipboard(clientPhone)} className="flex items-center gap-1 active:opacity-70">
                     <p className="text-xs text-driver-subtle" data-testid="text-client-phone">{clientPhone}</p>
@@ -262,7 +262,7 @@ export default function DriverOrderDetail() {
             </div>
             <div className="flex items-start gap-2 p-3 rounded-xl mb-3 bg-driver-s2">
               <MapPin size={14} className="flex-shrink-0 mt-0.5 text-driver-red" />
-              <p className="text-sm font-medium text-white" data-testid="text-delivery-address">{order.deliveryAddress}</p>
+              <p className="text-sm font-medium text-driver-text" data-testid="text-delivery-address">{order.deliveryAddress}</p>
             </div>
             {clientPhone && (
               <div className="grid grid-cols-2 gap-2 mb-2">
@@ -300,7 +300,7 @@ export default function DriverOrderDetail() {
           <div className="px-4 py-3 flex items-center justify-between border-b border-driver-border bg-driver-s2">
             <div className="flex items-center gap-2">
               <Receipt size={14} className="text-driver-accent" />
-              <span className="text-xs font-black uppercase tracking-wider text-white">Facture détaillée</span>
+              <span className="text-xs font-black uppercase tracking-wider text-driver-text">Facture détaillée</span>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-driver-s3 text-driver-muted">
               {items.length} article{items.length > 1 ? "s" : ""}
@@ -318,11 +318,11 @@ export default function DriverOrderDetail() {
                     {item.quantity || 1}x
                   </span>
                   <div>
-                    <p className="text-sm font-semibold text-white">{item.name}</p>
+                    <p className="text-sm font-semibold text-driver-text">{item.name}</p>
                     {item.price && <p className="text-[10px] text-driver-subtle">{formatPrice(item.price)} / unité</p>}
                   </div>
                 </div>
-                <span className="text-sm font-bold text-white">{formatPrice((item.price || 0) * (item.quantity || 1))}</span>
+                <span className="text-sm font-bold text-driver-text">{formatPrice((item.price || 0) * (item.quantity || 1))}</span>
               </div>
             ))}
             {hasMoreItems && (
@@ -342,7 +342,7 @@ export default function DriverOrderDetail() {
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between text-sm">
                   <span className="text-driver-subtle">{label}</span>
-                  <span className="font-semibold text-white">{formatPrice(value)}</span>
+                  <span className="font-semibold text-driver-text">{formatPrice(value)}</span>
                 </div>
               ))}
               {order.promoDiscount > 0 && (
@@ -352,7 +352,7 @@ export default function DriverOrderDetail() {
                 </div>
               )}
               <div className="flex justify-between items-center pt-3 border-t border-driver-border">
-                <span className="text-base font-black text-white">TOTAL CLIENT</span>
+                <span className="text-base font-black text-driver-text">TOTAL CLIENT</span>
                 <span className="text-xl font-black text-driver-accent">{formatPrice(order.total)}</span>
               </div>
             </div>
@@ -365,7 +365,7 @@ export default function DriverOrderDetail() {
           </div>
           <div className="flex-1">
             <p className={`text-[10px] font-bold uppercase tracking-wide ${isCash ? "text-driver-green" : "text-driver-blue"}`}>Mode de paiement</p>
-            <p className="text-sm font-black text-white" data-testid="text-payment-method">{formatPaymentMethod(order.paymentMethod)}</p>
+            <p className="text-sm font-black text-driver-text" data-testid="text-payment-method">{formatPaymentMethod(order.paymentMethod)}</p>
             {isCash && <p className="text-[10px] text-driver-subtle">À percevoir à la livraison</p>}
           </div>
           {isCash && <div className="text-2xl font-black text-driver-green">{formatPrice(order.total)}</div>}
@@ -378,12 +378,12 @@ export default function DriverOrderDetail() {
               <div className="space-y-1 mb-3">
                 <div className="flex justify-between text-xs text-driver-muted">
                   <span>Total encaissé client</span>
-                  <span className="font-semibold text-white">{formatPrice(order.total)}</span>
+                  <span className="font-semibold text-driver-text">{formatPrice(order.total)}</span>
                 </div>
               </div>
               <div className="pt-3 border-t border-driver-green/20">
                 <p className="text-[10px] uppercase tracking-wider text-driver-green">Votre gain</p>
-                <p className="text-3xl font-black text-white" data-testid="text-driver-earning">{formatPrice(order.deliveryFee)}</p>
+                <p className="text-3xl font-black text-driver-text" data-testid="text-driver-earning">{formatPrice(order.deliveryFee)}</p>
                 <p className="text-[9px] mt-0.5 text-driver-subtle">(= frais de livraison)</p>
               </div>
             </div>
@@ -399,7 +399,7 @@ export default function DriverOrderDetail() {
               <div className="rounded-2xl p-5 space-y-4 bg-driver-amber/[0.06] border border-driver-amber/20">
                 <div className="flex items-center gap-2">
                   <AlertTriangle size={16} className="text-driver-amber flex-shrink-0" />
-                  <p className="text-sm font-black text-white">Nouvelle commande assignée</p>
+                  <p className="text-sm font-black text-driver-text">Nouvelle commande assignée</p>
                 </div>
                 <p className="text-xs leading-relaxed text-driver-muted">
                   Vous avez été assigné à cette commande. Acceptez-la pour commencer la livraison ou refusez si vous n'êtes pas disponible.

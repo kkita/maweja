@@ -29,7 +29,7 @@ export function NotificationsModal({ onClose }: { onClose: () => void }) {
       <div className="px-5 py-4 space-y-4">
         {permission !== "granted" && (
           <div className="rounded-2xl p-4 bg-driver-red/8 border border-driver-red/20">
-            <p className="text-sm font-bold text-white mb-1">Notifications désactivées</p>
+            <p className="text-sm font-bold text-driver-text mb-1">Notifications désactivées</p>
             <p className="text-xs mb-3 text-driver-muted">Activez pour recevoir les nouvelles commandes et alertes.</p>
             <button
               onClick={requestPermission}
@@ -43,7 +43,7 @@ export function NotificationsModal({ onClose }: { onClose: () => void }) {
         {permission === "granted" && (
           <div className="flex items-center gap-3 rounded-2xl p-4 bg-driver-green/8 border border-driver-green/20">
             <Check size={16} className="text-driver-green" />
-            <p className="text-sm font-bold text-white">Notifications activées</p>
+            <p className="text-sm font-bold text-driver-text">Notifications activées</p>
           </div>
         )}
         {[
@@ -52,7 +52,7 @@ export function NotificationsModal({ onClose }: { onClose: () => void }) {
         ].map(({ label, desc, key, val, set }) => (
           <div key={key} className="flex items-center justify-between rounded-2xl p-4 bg-driver-s2">
             <div>
-              <p className="text-sm font-bold text-white">{label}</p>
+              <p className="text-sm font-bold text-driver-text">{label}</p>
               <p className="text-xs mt-0.5 text-driver-subtle">{desc}</p>
             </div>
             <button
@@ -71,12 +71,12 @@ export function NotificationsModal({ onClose }: { onClose: () => void }) {
 
 export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
   const sections = [
-    { title: "1. Données collectées",  body: "MAWEJA collecte vos informations de compte (nom, email, téléphone), votre statut de localisation GPS (activé/désactivé), et l'historique de vos livraisons." },
+    { title: "1. Données collectées",     body: "MAWEJA collecte vos informations de compte (nom, email, téléphone), votre statut de localisation GPS (activé/désactivé), et l'historique de vos livraisons." },
     { title: "2. Utilisation des données", body: "Vos données servent à : assigner et suivre les livraisons, calculer vos revenus, améliorer la plateforme, vous contacter en cas de problème." },
-    { title: "3. Localisation GPS",    body: "Votre position GPS n'est partagée avec les clients que pendant une livraison active. Elle est désactivée dès que vous passez hors ligne." },
-    { title: "4. Revenus et paiements", body: "Vos données de revenus sont confidentielles et ne sont partagées qu'avec l'administration MAWEJA pour le calcul des commissions." },
-    { title: "5. Vos droits",          body: "Vous pouvez demander la modification ou suppression de votre compte à tout moment en contactant le support au 0802540138." },
-    { title: "6. Contact",             body: "Ed Corporation — Kinshasa, RDC — Tél : 0802540138 — Email : support@maweja.cd" },
+    { title: "3. Localisation GPS",        body: "Votre position GPS n'est partagée avec les clients que pendant une livraison active. Elle est désactivée dès que vous passez hors ligne." },
+    { title: "4. Revenus et paiements",    body: "Vos données de revenus sont confidentielles et ne sont partagées qu'avec l'administration MAWEJA pour le calcul des commissions." },
+    { title: "5. Vos droits",              body: "Vous pouvez demander la modification ou suppression de votre compte à tout moment en contactant le support au 0802540138." },
+    { title: "6. Contact",                 body: "Ed Corporation — Kinshasa, RDC — Tél : 0802540138 — Email : support@maweja.cd" },
   ];
   return (
     <BottomSheet onClose={onClose}>
@@ -84,7 +84,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
       <div className="px-5 py-4 space-y-4">
         {sections.map(({ title, body }) => (
           <div key={title} className="rounded-2xl p-4 bg-driver-s2">
-            <h4 className="font-bold text-sm text-white mb-1.5">{title}</h4>
+            <h4 className="font-bold text-sm text-driver-text mb-1.5">{title}</h4>
             <p className="text-xs leading-relaxed text-driver-muted">{body}</p>
           </div>
         ))}
@@ -128,7 +128,7 @@ export function ContactSupportModal({ onClose, userId }: { onClose: () => void; 
             <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-driver-green/15">
               <Check size={28} className="text-driver-green" />
             </div>
-            <h4 className="text-lg font-black text-white mb-2">Message envoyé !</h4>
+            <h4 className="text-lg font-black text-driver-text mb-2">Message envoyé !</h4>
             <p className="text-sm text-driver-muted">L'administration vous répondra dans les meilleurs délais.</p>
             <button
               onClick={onClose}
@@ -140,7 +140,7 @@ export function ContactSupportModal({ onClose, userId }: { onClose: () => void; 
         ) : (
           <div className="space-y-4">
             <div className="rounded-2xl p-4 bg-driver-blue/8 border border-driver-blue/20">
-              <p className="text-sm font-bold text-white mb-1">Support Agent — Disponible 24h/24</p>
+              <p className="text-sm font-bold text-driver-text mb-1">Support Agent — Disponible 24h/24</p>
               <a href="tel:+243802540138" className="text-xs font-bold text-driver-blue">📞 0802540138</a>
             </div>
             <div>
@@ -151,7 +151,7 @@ export function ContactSupportModal({ onClose, userId }: { onClose: () => void; 
                 placeholder="Problème technique, question sur les revenus..."
                 data-testid="input-support-message"
                 rows={4}
-                className="w-full px-4 py-3 rounded-2xl text-sm text-white resize-none focus:outline-none placeholder-gray-600 bg-driver-s2 border border-driver-border"
+                className="w-full px-4 py-3 rounded-2xl text-sm text-driver-text resize-none focus:outline-none placeholder-driver-subtle bg-driver-s2 border border-driver-border"
               />
             </div>
             <button
@@ -185,7 +185,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
           <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-4 bg-driver-accent shadow-[0_12px_32px_rgba(225,0,0,0.4)]">
             <span className="text-white text-3xl font-black">M</span>
           </div>
-          <h2 className="text-2xl font-black text-white">MAWEJA Agent</h2>
+          <h2 className="text-2xl font-black text-driver-text">MAWEJA Agent</h2>
           <p className="text-sm mt-1 text-driver-subtle">Version 1.0.0</p>
         </div>
         <div className="rounded-2xl overflow-hidden bg-driver-s2">
@@ -195,7 +195,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
               className={`flex items-center justify-between px-4 py-3.5 ${i < rows.length - 1 ? "border-b border-driver-border" : ""}`}
             >
               <span className="text-xs font-semibold text-driver-subtle">{label}</span>
-              <span className="text-sm font-bold text-white">{value}</span>
+              <span className="text-sm font-bold text-driver-text">{value}</span>
             </div>
           ))}
         </div>

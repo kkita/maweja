@@ -24,24 +24,24 @@ export default function PendingOrderCard({ order }: PendingOrderCardProps) {
               <Package size={18} style={{ color: dt.amber }} />
             </div>
             <div>
-              <p className="font-black text-white text-sm">{order.orderNumber}</p>
-              <p className="text-[10px] font-medium" style={{ color: dt.text3 }}>{formatDate(order.createdAt!)}</p>
+              <p className="font-black text-driver-text text-sm">{order.orderNumber}</p>
+              <p className="text-[10px] font-medium text-driver-text3">{formatDate(order.createdAt!)}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-black px-2.5 py-1 rounded-lg" style={{ background: "rgba(245,158,11,0.15)", color: dt.amber }}>
               Disponible
             </span>
-            <ChevronRight size={16} style={{ color: dt.text3 }} />
+            <ChevronRight size={16} className="text-driver-text3" />
           </div>
         </div>
 
         <div className="flex items-start gap-2 mb-3">
           <MapPin size={13} className="flex-shrink-0 mt-0.5" style={{ color: dt.red }} />
-          <p className="text-xs text-white leading-snug">{order.deliveryAddress}</p>
+          <p className="text-xs text-driver-text leading-snug">{order.deliveryAddress}</p>
         </div>
 
-        <div className="flex items-center justify-between pt-3" style={{ borderTop: `1px solid ${dt.border}` }}>
+        <div className="flex items-center justify-between pt-3 border-t border-driver-border">
           <div
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
             style={{ background: isCash ? "rgba(34,197,94,0.1)" : "rgba(96,165,250,0.1)" }}

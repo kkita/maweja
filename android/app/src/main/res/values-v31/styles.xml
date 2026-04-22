@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+      AppTheme (Android 12+) : même base que values/styles.xml.
+    -->
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:statusBarColor">@color/maweja_red</item>
-        <item name="android:navigationBarColor">@color/maweja_red</item>
         <item name="android:windowBackground">@color/splash_background</item>
     </style>
 
+    <!--
+      AppTheme.NoActionBar (Android 12+) : barres claires en mode clair.
+      Mode sombre → surchargé dans values-night-v31/styles.xml.
+    -->
     <style name="AppTheme.NoActionBar" parent="AppTheme">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
+        <item name="android:statusBarColor">@color/sys_bar_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/sys_bar_bg</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 
+    <!--
+      AppTheme.NoActionBarLaunch (Android 12+) : splash rouge + API SplashScreen.
+      Ne pas modifier — doit rester rouge.
+    -->
     <style name="AppTheme.NoActionBarLaunch" parent="AppTheme">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>

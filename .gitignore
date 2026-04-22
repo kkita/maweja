@@ -5,6 +5,23 @@ server/public
 vite.config.ts.*
 *.tar.gz
 
+# TypeScript compilation outputs — ne jamais commiter ces artefacts
+**/*.js.map
+**/*.d.ts.map
+server/*.js
+server/*.d.ts
+shared/*.js
+shared/*.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environnement local
+.env
+.env.local
+.env.production
+
 # Keystores — NE JAMAIS commiter ces fichiers !
 keystore/
 *.jks

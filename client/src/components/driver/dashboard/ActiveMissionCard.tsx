@@ -21,14 +21,13 @@ export default function ActiveMissionCard({ order, onAction }: ActiveMissionCard
 
   return (
     <div
-      className="rounded-3xl overflow-hidden relative"
+      className="driver-mission-gradient rounded-3xl overflow-hidden relative"
       style={{
-        background: "linear-gradient(135deg, #1a1a1a 0%, #222 100%)",
         border: `1px solid ${isPickedUp ? "rgba(249,115,22,0.4)" : "rgba(96,165,250,0.3)"}`,
         boxShadow: isPickedUp ? "0 0 24px rgba(249,115,22,0.12)" : "0 0 24px rgba(96,165,250,0.12)",
       }}
     >
-      <div className="flex items-center gap-2 px-4 pt-3 pb-2" style={{ borderBottom: `1px solid ${dt.border}` }}>
+      <div className="flex items-center gap-2 px-4 pt-3 pb-2 border-b border-driver-border">
         <div className="relative">
           <div className="w-2 h-2 rounded-full" style={{ background: isPickedUp ? dt.orange : dt.blue, opacity: 0.4, position: "absolute", animation: "ping 1.2s cubic-bezier(0,0,0.2,1) infinite" }} />
           <div className="w-2 h-2 rounded-full" style={{ background: isPickedUp ? dt.orange : dt.blue }} />
@@ -38,8 +37,7 @@ export default function ActiveMissionCard({ order, onAction }: ActiveMissionCard
         </span>
         <button
           onClick={() => navigate(`/driver/order/${order.id}`)}
-          className="ml-auto flex items-center gap-1 text-[10px] font-semibold"
-          style={{ color: dt.text3 }}
+          className="ml-auto flex items-center gap-1 text-[10px] font-semibold text-driver-text3"
         >
           Détails <ChevronRight size={12} />
         </button>
@@ -47,16 +45,16 @@ export default function ActiveMissionCard({ order, onAction }: ActiveMissionCard
 
       <div className="p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="font-black text-white text-base">{order.orderNumber}</p>
+          <p className="font-black text-driver-text text-base">{order.orderNumber}</p>
           <div className="flex items-center gap-2">
             <DStatusBadge status={order.status} />
             {order.estimatedDelivery && <Countdown estimatedDelivery={order.estimatedDelivery} />}
           </div>
         </div>
 
-        <div className="flex items-start gap-2.5 rounded-xl p-3" style={{ background: dt.surface2 }}>
+        <div className="flex items-start gap-2.5 rounded-xl p-3 bg-driver-s2">
           <MapPin size={16} style={{ color: dt.red }} className="mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-white font-medium leading-snug">{order.deliveryAddress}</p>
+          <p className="text-sm text-driver-text font-medium leading-snug">{order.deliveryAddress}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
@@ -69,8 +67,8 @@ export default function ActiveMissionCard({ order, onAction }: ActiveMissionCard
             >
               <Phone size={16} style={{ color: dt.green }} />
               <div className="min-w-0">
-                <p className="text-[10px] font-semibold" style={{ color: dt.text3 }}>Client</p>
-                <p className="text-xs font-black text-white truncate">{order.orderName || order.orderPhone}</p>
+                <p className="text-[10px] font-semibold text-driver-text3">Client</p>
+                <p className="text-xs font-black text-driver-text truncate">{order.orderName || order.orderPhone}</p>
               </div>
             </a>
           )}
@@ -80,7 +78,7 @@ export default function ActiveMissionCard({ order, onAction }: ActiveMissionCard
           >
             {isCash ? <Banknote size={16} style={{ color: dt.green }} /> : <span className="text-base">📱</span>}
             <div>
-              <p className="text-[10px] font-semibold" style={{ color: dt.text3 }}>Paiement</p>
+              <p className="text-[10px] font-semibold text-driver-text3">Paiement</p>
               <p className="text-xs font-black" style={{ color: isCash ? dt.green : dt.blue }}>
                 {isCash ? "CASH" : "Mobile"}
               </p>
@@ -88,8 +86,8 @@ export default function ActiveMissionCard({ order, onAction }: ActiveMissionCard
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl px-3 py-2.5" style={{ background: dt.surface3 }}>
-          <span className="text-xs font-semibold" style={{ color: dt.text2 }}>Votre gain</span>
+        <div className="flex items-center justify-between rounded-xl px-3 py-2.5 bg-driver-s3">
+          <span className="text-xs font-semibold text-driver-text2">Votre gain</span>
           <span className="text-lg font-black" style={{ color: dt.green }}>+{formatPrice(order.deliveryFee)}</span>
         </div>
 

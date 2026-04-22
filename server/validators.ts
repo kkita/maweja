@@ -219,17 +219,17 @@ const orderCreate = z.object({
   taxAmount: z.coerce.number().nonnegative().optional(),
   deliveryFee: z.coerce.number().nonnegative().optional(),
   promoDiscount: z.coerce.number().nonnegative().optional(),
-  promoCode: z.string().max(30).optional(),
-  notes: z.string().max(500).optional(),
-  orderName: z.string().max(100).optional(),
-  orderPhone: z.string().max(30).optional(),
+  promoCode: z.string().max(30).nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+  orderName: z.string().max(100).nullable().optional(),
+  orderPhone: z.string().max(30).nullable().optional(),
   loyaltyPointsUsed: z.coerce.number().int().nonnegative().optional(),
   // Admin overrides
   adminOverride: z.boolean().optional(),
   zoneId: z.coerce.number().int().positive().optional(),
   clientId: z.coerce.number().int().positive().optional(),
   commission: z.coerce.number().nonnegative().optional(),
-  deliveryZone: z.string().optional(),
+  deliveryZone: z.string().nullable().optional(),
 }).passthrough();
 
 const orderUpdate = z.object({

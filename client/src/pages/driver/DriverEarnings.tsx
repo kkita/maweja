@@ -68,7 +68,7 @@ export default function DriverEarnings() {
 
   if (feesHidden) {
     return (
-      <div className="min-h-screen pb-28" style={{ background: dt.bg }}>
+      <div className="min-h-screen pb-28 bg-driver-bg">
         <DriverNav />
         <div className="max-w-lg mx-auto px-4 py-8">
           <DEmptyState
@@ -82,20 +82,19 @@ export default function DriverEarnings() {
   }
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: dt.bg }}>
+    <div className="min-h-screen pb-28 bg-driver-bg">
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-black text-white" data-testid="text-earnings-title">Mes revenus</h2>
-            <p className="text-xs mt-0.5" style={{ color: dt.text3 }}>Suivi de vos gains</p>
+            <h2 className="text-xl font-black text-driver-text" data-testid="text-earnings-title">Mes revenus</h2>
+            <p className="text-xs mt-0.5 text-driver-text3">Suivi de vos gains</p>
           </div>
           <button
             onClick={() => navigate("/driver/rapport")}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:opacity-70"
-            style={{ background: dt.surface, border: `1px solid ${dt.border}`, color: dt.text2 }}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all active:opacity-70 bg-driver-surface border border-driver-border text-driver-text2"
             data-testid="button-view-rapport"
           >
             Rapport
@@ -112,9 +111,9 @@ export default function DriverEarnings() {
               data-testid={`earnings-period-${p}`}
               className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex-shrink-0"
               style={{
-                background: period === p ? dt.accent : dt.surface,
-                color: period === p ? "white" : dt.text2,
-                border: `1px solid ${period === p ? "transparent" : dt.border}`,
+                background: period === p ? dt.accent : "var(--driver-surface)",
+                color: period === p ? "white" : "var(--driver-text2)",
+                border: `1px solid ${period === p ? "transparent" : "var(--driver-border)"}`,
                 boxShadow: period === p ? "0 4px 12px rgba(225,0,0,0.3)" : "none",
               }}
             >
@@ -131,14 +130,13 @@ export default function DriverEarnings() {
               { label: "Au", value: customTo,   set: setCustomTo,   testId: "input-earnings-to" },
             ].map(({ label, value, set, testId }) => (
               <div key={label} className="flex-1">
-                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5" style={{ color: dt.text3 }}>{label}</label>
+                <label className="text-[10px] font-semibold uppercase tracking-wide block mb-1.5 text-driver-text3">{label}</label>
                 <input
                   type="date"
                   value={value}
                   onChange={e => set(e.target.value)}
                   data-testid={testId}
-                  className="w-full px-3 py-2.5 rounded-xl text-sm text-white focus:outline-none"
-                  style={{ background: dt.surface, border: `1px solid ${dt.border}`, colorScheme: "dark" }}
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-driver-text focus:outline-none bg-driver-surface border border-driver-border"
                 />
               </div>
             ))}
@@ -147,12 +145,12 @@ export default function DriverEarnings() {
 
         {/* Hero card */}
         <div
-          className="rounded-3xl p-6 relative overflow-hidden"
-          style={{ background: "linear-gradient(135deg, #1a0000 0%, #220000 100%)", border: "1px solid rgba(225,0,0,0.2)", boxShadow: "0 8px 32px rgba(225,0,0,0.12)" }}
+          className="driver-hero-gradient rounded-3xl p-6 relative overflow-hidden border border-driver-accent/20"
+          style={{ boxShadow: "0 8px 32px rgba(225,0,0,0.12)" }}
         >
           <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full" style={{ background: "rgba(225,0,0,0.08)" }} />
-          <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: dt.text3 }}>Revenus — {PERIOD_LABELS[period].toLowerCase()}</p>
-          <p className="text-4xl font-black text-white mt-1 relative z-10" data-testid="text-total-earnings">{formatPrice(totalEarnings)}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-driver-text3">Revenus — {PERIOD_LABELS[period].toLowerCase()}</p>
+          <p className="text-4xl font-black text-driver-text mt-1 relative z-10" data-testid="text-total-earnings">{formatPrice(totalEarnings)}</p>
           <div className="flex items-center gap-1.5 mt-2 relative z-10">
             <TrendingUp size={14} style={{ color: dt.green }} />
             <span className="text-sm font-semibold" style={{ color: dt.green }}>
@@ -164,29 +162,28 @@ export default function DriverEarnings() {
         {/* Stats grid */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: Package, label: "Livraisons",        value: filtered.length,                color: dt.blue  },
-            { icon: Clock,   label: "Moy. par livraison", value: formatPrice(avgPerDelivery),   color: dt.amber },
-            { icon: Banknote,label: "Reçu en cash",       value: formatPrice(cashTotal),         color: dt.green },
-            { icon: DollarSign,label:"Courses cash",      value: cashOrders,                    color: "#c084fc"},
+            { icon: Package,    label: "Livraisons",          value: filtered.length,              color: dt.blue  },
+            { icon: Clock,      label: "Moy. par livraison",  value: formatPrice(avgPerDelivery),  color: dt.amber },
+            { icon: Banknote,   label: "Reçu en cash",        value: formatPrice(cashTotal),       color: dt.green },
+            { icon: DollarSign, label: "Courses cash",        value: cashOrders,                   color: "#c084fc"},
           ].map(s => (
             <div
               key={s.label}
-              className="rounded-2xl p-4"
-              style={{ background: dt.surface, border: `1px solid ${dt.border}` }}
+              className="rounded-2xl p-4 bg-driver-surface border border-driver-border"
             >
               <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2.5" style={{ background: `${s.color}18` }}>
                 <s.icon size={17} style={{ color: s.color }} />
               </div>
-              <p className="text-xl font-black text-white">{s.value}</p>
-              <p className="text-xs font-semibold mt-0.5" style={{ color: dt.text3 }}>{s.label}</p>
+              <p className="text-xl font-black text-driver-text">{s.value}</p>
+              <p className="text-xs font-semibold mt-0.5 text-driver-text3">{s.label}</p>
             </div>
           ))}
         </div>
 
         {/* Earnings history */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: dt.surface, border: `1px solid ${dt.border}` }}>
-          <div className="px-4 py-3.5" style={{ borderBottom: `1px solid ${dt.border}` }}>
-            <p className="font-black text-sm text-white">Historique des gains</p>
+        <div className="rounded-2xl overflow-hidden bg-driver-surface border border-driver-border">
+          <div className="px-4 py-3.5 border-b border-driver-border">
+            <p className="font-black text-sm text-driver-text">Historique des gains</p>
           </div>
 
           {isLoading ? (
@@ -194,15 +191,15 @@ export default function DriverEarnings() {
               {[1, 2, 3].map(i => (
                 <div key={i} className="flex items-center justify-between animate-pulse">
                   <div>
-                    <div className="h-3 w-24 rounded mb-1.5" style={{ background: dt.surface2 }} />
-                    <div className="h-2.5 w-32 rounded" style={{ background: dt.surface3 }} />
+                    <div className="h-3 w-24 rounded mb-1.5 bg-driver-s2" />
+                    <div className="h-2.5 w-32 rounded bg-driver-s3" />
                   </div>
-                  <div className="h-4 w-16 rounded" style={{ background: dt.surface2 }} />
+                  <div className="h-4 w-16 rounded bg-driver-s2" />
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-sm" style={{ color: dt.text3 }}>Aucun gain pour cette période</div>
+            <div className="p-8 text-center text-sm text-driver-text3">Aucun gain pour cette période</div>
           ) : (
             <div>
               {filtered.map((o, i) => {
@@ -211,7 +208,7 @@ export default function DriverEarnings() {
                   <div
                     key={o.id}
                     className="px-4 py-3.5 flex items-center justify-between"
-                    style={{ borderBottom: i < filtered.length - 1 ? `1px solid ${dt.border}` : "none" }}
+                    style={{ borderBottom: i < filtered.length - 1 ? `1px solid var(--driver-border)` : "none" }}
                     data-testid={`earning-${o.id}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -222,9 +219,9 @@ export default function DriverEarnings() {
                         {isCash ? <Banknote size={14} style={{ color: dt.green }} /> : <Phone size={14} style={{ color: dt.blue }} />}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-sm text-white">{o.orderNumber}</p>
-                        <p className="text-[10px] truncate" style={{ color: dt.text3 }}>{o.deliveryAddress?.split(",")[0]}</p>
-                        <p className="text-[10px]" style={{ color: dt.text3 }}>
+                        <p className="font-bold text-sm text-driver-text">{o.orderNumber}</p>
+                        <p className="text-[10px] truncate text-driver-text3">{o.deliveryAddress?.split(",")[0]}</p>
+                        <p className="text-[10px] text-driver-text3">
                           {new Date(o.createdAt!).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
                         </p>
                       </div>

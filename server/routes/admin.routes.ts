@@ -156,6 +156,63 @@ export function registerAdminRoutes(app: Express): void {
     res.json(safeUser);
   });
 
+  // ─── Client management (advanced admin actions) ───────────────────
+  app.post("/api/admin/clients/:id/wallet-adjust", requireAdmin, async (req, res) => {
+    const targetId = Number(req.params.id);
+    const delta = Number(req.body.delta);
+    const reason = String(req.body.reason || "Ajustement administrateur").slice(0, 300);
+    if (!isFinite(delta) || delta === 0) return res.status(400).json({ message: "Montant invalide" });
+    const user = await storage.getUser(targetId);
+    if (!user) return res.status(404).json({ message: "Client non trouvé" });
+    if (user.role !== "client") return res.status(400).json({ message: "Cible non-cliente" });
+    const newBalance = Math.max(0, (user.walletBalance || 0) + delta);
+    await storage.updateUser(targetId, { walletBalance: newBalance });
+    await storage.createWalletTransaction({
+      userId: targetId,
+      amount: delta,
+      type: delta > 0 ? "topup" : "withdrawal",
+      description: `[Admin] ${reason}`,
+      reference: `ADM-${Date.now()}`,
+    });
+    await storage.createFinance({
+      type: delta > 0 ? "expense" : "revenue",
+      category: delta > 0 ? "wallet_credit_admin" : "wallet_debit_admin",
+      amount: Math.abs(delta),
+      description: `Ajustement wallet ${user.name} — ${reason}`,
+      userId: targetId,
+    });
+    res.json({ ok: true, newBalance });
+  });
+
+  app.post("/api/admin/clients/:id/points-adjust", requireAdmin, async (req, res) => {
+    const targetId = Number(req.params.id);
+    const delta = Math.trunc(Number(req.body.delta));
+    const reason = String(req.body.reason || "Ajustement administrateur").slice(0, 300);
+    if (!isFinite(delta) || delta === 0) return res.status(400).json({ message: "Montant invalide" });
+    const user = await storage.getUser(targetId);
+    if (!user) return res.status(404).json({ message: "Client non trouvé" });
+    if (user.role !== "client") return res.status(400).json({ message: "Cible non-cliente" });
+    const newPoints = Math.max(0, (user.loyaltyPoints || 0) + delta);
+    await storage.updateUser(targetId, { loyaltyPoints: newPoints });
+    res.json({ ok: true, newPoints });
+  });
+
+  app.delete("/api/admin/clients/:id", requireAdmin, async (req, res) => {
+    const targetId = Number(req.params.id);
+    const user = await storage.getUser(targetId);
+    if (!user) return res.status(404).json({ message: "Client non trouvé" });
+    if (user.role !== "client") return res.status(400).json({ message: "Cible non-cliente" });
+    // Soft-delete: anonymise + bloque (préserve l'intégrité des commandes)
+    await storage.updateUser(targetId, {
+      isBlocked: true,
+      email: `deleted_${targetId}_${Date.now()}@maweja.deleted`,
+      phone: `DEL-${targetId}`,
+      name: `Compte supprimé #${targetId}`,
+      avatar: null,
+    });
+    res.json({ ok: true });
+  });
+
   app.get("/api/admin/accounts", requireAdmin, async (_req, res) => {
     const allUsers = await storage.getAllUsers();
     const admins = allUsers.filter(u => u.role === "admin");

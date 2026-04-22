@@ -102,7 +102,7 @@ export default function DriverNav() {
       <header
         className="sticky top-0 z-50 px-4 py-3"
         style={{
-          background: "rgba(14,14,14,0.97)",
+          background: "var(--driver-nav-bg)",
           borderBottom: `1px solid ${dt.border}`,
           backdropFilter: "blur(20px)",
         }}
@@ -111,7 +111,7 @@ export default function DriverNav() {
           {/* Brand */}
           <div className="flex flex-col leading-none">
             <div className="flex items-center gap-2">
-              <span className="text-white font-black text-xl tracking-tight">MAWEJA</span>
+              <span className="text-driver-text font-black text-xl tracking-tight">MAWEJA</span>
               <span
                 className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide text-black"
                 style={{ background: dt.blue }}
@@ -166,7 +166,7 @@ export default function DriverNav() {
       <nav
         className="fixed bottom-0 left-0 right-0 z-50"
         style={{
-          background: "rgba(14,14,14,0.97)",
+          background: "var(--driver-nav-bg)",
           borderTop: `1px solid ${dt.border}`,
           backdropFilter: "blur(24px)",
           paddingBottom: "max(12px, env(safe-area-inset-bottom))",
