@@ -169,9 +169,9 @@ function DetailSheet({ order, onClose }: { order: Order; onClose: () => void }) 
           <div className="rounded-2xl p-4 bg-driver-green/[0.06] border border-driver-green/15">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wide text-driver-green">Votre commission</p>
-                <p className="text-2xl font-black text-driver-green">{formatPrice(commission)}</p>
-                <p className="text-[10px] mt-0.5 text-driver-subtle">15% du total commande</p>
+                <p className="text-[10px] font-bold uppercase tracking-wide text-driver-green">Votre gain</p>
+                <p className="text-2xl font-black text-driver-green">{formatPrice(Math.round(order.deliveryFee * 0.8 * 100) / 100)}</p>
+                <p className="text-[10px] mt-0.5 text-driver-subtle">80% des frais de livraison</p>
               </div>
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-driver-green">
                 <Receipt size={22} className="text-black" />

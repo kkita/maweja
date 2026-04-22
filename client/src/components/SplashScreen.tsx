@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n, type Lang } from "../lib/i18n";
+import { applySplashBars, syncNativeStatusBar } from "../lib/theme";
 
 // ─── Détection native (évaluée une seule fois, jamais rejouée) ───────────────
 const IS_NATIVE: boolean =
@@ -65,6 +66,7 @@ function MobileSplashAnim({ withFadeOut, onEnd }: MobileSplashAnimProps) {
   useEffect(() => {
     ensureKeyframes();
     alive.current = true;
+    applySplashBars();
 
     const schedule = (fn: () => void, ms: number) =>
       setTimeout(() => { if (alive.current) fn(); }, ms);
@@ -151,50 +153,26 @@ function MobileSplashAnim({ withFadeOut, onEnd }: MobileSplashAnimProps) {
           transform: "translateZ(0)",
         }}
       >
-        {/* Lettre "M" ─────────────────────────────────────────────────────── */}
+        {/* Logo M MAWEJA (vrai logo, pas une lettre) ───────────────────── */}
         <div style={mStyle}>
-          <span
+          <img
+            src="/maweja-splash-logo.png"
+            alt="MAWEJA"
+            draggable={false}
             style={{
               display: "block",
-              // Stack de polices système premium : SF Pro sur iOS, Roboto sur Android
-              fontFamily:
-                "-apple-system, 'SF Pro Display', 'Helvetica Neue', Helvetica, 'Roboto', Arial, sans-serif",
-              fontSize: 112,
-              fontWeight: 900,
-              lineHeight: 1,
-              color: "#ffffff",
-              letterSpacing: -7,
-              // Rendu sous-pixel antialiased sur tous les OS mobiles
-              WebkitFontSmoothing: "antialiased",
-              MozOsxFontSmoothing: "grayscale",
-              textRendering: "optimizeLegibility",
-            } as React.CSSProperties}
-          >
-            M
-          </span>
+              width: 168,
+              height: 168,
+              objectFit: "contain",
+              filter: "drop-shadow(0 12px 28px rgba(0,0,0,0.28))",
+              userSelect: "none",
+              WebkitUserSelect: "none",
+              pointerEvents: "none",
+            }}
+          />
         </div>
 
-        {/* Wordmark "MAWEJA" ───────────────────────────────────────────────── */}
-        <div style={wStyle}>
-          <span
-            style={{
-              display: "block",
-              fontFamily:
-                "-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, 'Roboto', Arial, sans-serif",
-              fontSize: 20,
-              fontWeight: 600,
-              color: "#ffffff",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              // Légère transparence → contraste doux sous le "M" dominant
-              opacity: 0.92,
-              WebkitFontSmoothing: "antialiased",
-              MozOsxFontSmoothing: "grayscale",
-            } as React.CSSProperties}
-          >
-            MAWEJA
-          </span>
-        </div>
+        {/* Wordmark retiré — le logo contient déjà "Maweja" */}
       </div>
 
       {/* ── Tagline bas — respecte la safe area iOS ─────────────────────────── */}

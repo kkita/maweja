@@ -199,6 +199,62 @@ export function playNotifSound() {
   playRingtone();
 }
 
+/* ─── Device platform detection (Capacitor + UA fallback) ─── */
+export type DevicePlatform = "ios" | "android" | "web";
+
+export function getDevicePlatform(): DevicePlatform {
+  try {
+    const cap = (window as any).Capacitor;
+    if (cap?.getPlatform) {
+      const p = String(cap.getPlatform()).toLowerCase();
+      if (p === "ios" || p === "android") return p;
+    }
+    if (cap?.isNativePlatform?.()) {
+      const ua = navigator.userAgent || "";
+      if (/android/i.test(ua)) return "android";
+      if (/iphone|ipad|ipod/i.test(ua)) return "ios";
+    }
+  } catch {}
+  return "web";
+}
+
+/* ─── Audio autoplay unlock (browser policy) ───────────────── */
+let audioUnlocked = false;
+export function unlockAudioPlayback() {
+  if (audioUnlocked) return;
+  try {
+    const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (Ctx) {
+      const ctx = new Ctx();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      ctx.resume?.();
+    }
+    // Also nudge HTMLAudio: muted play+pause unlocks future Audio() instances on iOS Safari
+    const a = new Audio();
+    a.muted = true;
+    a.src = "/sounds/maweja.mp3";
+    a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+    audioUnlocked = true;
+  } catch {}
+}
+
+export function installAudioUnlockOnce() {
+  if (typeof window === "undefined" || audioUnlocked) return;
+  const handler = () => {
+    unlockAudioPlayback();
+    window.removeEventListener("click", handler, true);
+    window.removeEventListener("touchstart", handler, true);
+    window.removeEventListener("keydown", handler, true);
+  };
+  window.addEventListener("click", handler, true);
+  window.addEventListener("touchstart", handler, true);
+  window.addEventListener("keydown", handler, true);
+}
+
 /* ─── French status labels ─────────────────────────────────── */
 const STATUS_FR: Record<string, string> = {
   pending: "En attente",

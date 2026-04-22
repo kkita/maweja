@@ -61,10 +61,10 @@ export default function DriverEarnings() {
 
   const feesHidden = hideSetting?.value === "true";
   const filtered = useMemo(() => filterByPeriod(orders, period, customFrom, customTo), [orders, period, customFrom, customTo]);
-  const totalEarnings = filtered.reduce((s, o) => s + o.deliveryFee, 0);
+  const totalEarnings = Math.round(filtered.reduce((s, o) => s + o.deliveryFee * 0.8, 0) * 100) / 100;
   const avgPerDelivery = filtered.length > 0 ? totalEarnings / filtered.length : 0;
   const cashOrders = filtered.filter(o => o.paymentMethod === "cash").length;
-  const cashTotal = filtered.filter(o => o.paymentMethod === "cash").reduce((s, o) => s + o.deliveryFee, 0);
+  const cashTotal = Math.round(filtered.filter(o => o.paymentMethod === "cash").reduce((s, o) => s + o.deliveryFee * 0.8, 0) * 100) / 100;
 
   if (feesHidden) {
     return (
@@ -228,7 +228,7 @@ export default function DriverEarnings() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       <ArrowUpRight size={13} style={{ color: dt.green }} />
-                      <span className="font-black text-sm" style={{ color: dt.green }}>+{formatPrice(o.deliveryFee)}</span>
+                      <span className="font-black text-sm" style={{ color: dt.green }}>+{formatPrice(Math.round(o.deliveryFee * 0.8 * 100) / 100)}</span>
                     </div>
                   </div>
                 );

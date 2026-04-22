@@ -383,8 +383,8 @@ export default function DriverOrderDetail() {
               </div>
               <div className="pt-3 border-t border-driver-green/20">
                 <p className="text-[10px] uppercase tracking-wider text-driver-green">Votre gain</p>
-                <p className="text-3xl font-black text-driver-text" data-testid="text-driver-earning">{formatPrice(order.deliveryFee)}</p>
-                <p className="text-[9px] mt-0.5 text-driver-subtle">(= frais de livraison)</p>
+                <p className="text-3xl font-black text-driver-text" data-testid="text-driver-earning">{formatPrice(Math.round(order.deliveryFee * 0.8 * 100) / 100)}</p>
+                <p className="text-[9px] mt-0.5 text-driver-subtle">80% des frais de livraison ({formatPrice(order.deliveryFee)})</p>
               </div>
             </div>
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-driver-green/20">

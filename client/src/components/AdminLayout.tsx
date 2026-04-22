@@ -214,7 +214,7 @@ export default function AdminLayout({ children, title, subtitle }: {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
       <AdminSidebar />
 
-      <main className="flex-1 ml-60 flex flex-col min-h-screen">
+      <main className="flex-1 ml-60 flex flex-col min-h-screen min-w-0 overflow-x-hidden bg-zinc-50 dark:bg-zinc-950">
 
         {/* ── TopBar ── */}
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-[#0E0E10]/80 backdrop-blur-xl border-b border-zinc-200/70 dark:border-zinc-800/60">

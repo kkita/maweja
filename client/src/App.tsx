@@ -7,7 +7,8 @@ import { ThemeProvider } from "./lib/theme";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { connectWS, disconnectWS } from "./lib/websocket";
-import { requestNotifPermission } from "./lib/notify";
+import { requestNotifPermission, installAudioUnlockOnce } from "./lib/notify";
+import { syncNativeStatusBar, useTheme } from "./lib/theme";
 import { Toaster } from "./components/Toaster";
 import { useDynamicFavicon } from "./hooks/use-dynamic-favicon";
 import SplashScreen from "./components/SplashScreen";
@@ -98,6 +99,19 @@ function AppRoutes() {
   const [showSplash, setShowSplash] = useState(true);
 
   useDynamicFavicon();
+
+  const { resolvedTheme } = useTheme();
+
+  useEffect(() => {
+    installAudioUnlockOnce();
+  }, []);
+
+  // Restaurer les barres système (blanc / noir) dès la fin du splash
+  useEffect(() => {
+    if (!showSplash) {
+      syncNativeStatusBar(resolvedTheme);
+    }
+  }, [showSplash, resolvedTheme]);
 
   useEffect(() => {
     if (user?.id) {

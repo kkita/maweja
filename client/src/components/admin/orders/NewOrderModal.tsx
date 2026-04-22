@@ -4,6 +4,7 @@ import { X, Plus, Minus } from "lucide-react";
 import { apiRequest, queryClient, authFetchJson } from "../../../lib/queryClient";
 import { useToast } from "../../../hooks/use-toast";
 import { formatPrice, statusLabels, paymentLabels } from "../../../lib/utils";
+import { getDevicePlatform } from "../../../lib/notify";
 import type { Restaurant, MenuItem } from "@shared/schema";
 
 type DeliveryZone = { id: number; name: string; fee: number; color: string; isActive: boolean };
@@ -152,7 +153,7 @@ export default function NewOrderModal({ isOpen, onClose, restaurants, deliveryZo
           deliveryZone: newOrderZoneId === "custom" ? "Personnalisé" : undefined,
           commission: 0,
           promoCode: null,
-          deviceType: "web",
+          deviceType: getDevicePlatform(),
         }),
       });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });

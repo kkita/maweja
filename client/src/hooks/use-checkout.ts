@@ -5,6 +5,7 @@ import { useCart } from "../lib/cart";
 import { useAuth } from "../lib/auth";
 import { useToast } from "./use-toast";
 import { authFetch, apiRequest, queryClient, authFetchJson, STALE } from "../lib/queryClient";
+import { getDevicePlatform } from "../lib/notify";
 import { detectZone, type DeliveryZoneData, type ZoneResult } from "@shared/deliveryZones";
 import { Banknote, Smartphone, Wallet, CreditCard } from "lucide-react";
 
@@ -145,6 +146,7 @@ export function useCheckout() {
           promoDiscount: effectivePromoDiscount + loyaltyCreditDiscount + pointsDiscount,
           loyaltyCreditId: useLoyaltyCredit && bestCredit ? bestCredit.id : null,
           loyaltyCreditDiscount, pointsUsed: usePoints ? Math.ceil(pointsDiscount / 0.001) : 0,
+          deviceType: getDevicePlatform(),
           status: "pending",
         }),
       });

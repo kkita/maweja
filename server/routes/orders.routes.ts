@@ -256,6 +256,17 @@ export function registerOrdersRoutes(app: Express): void {
       sendToUser(admin.id, { type: "new_order", order });
     }
 
+    // Notifier tous les agents en ligne pour qu'ils sachent qu'une nouvelle commande est disponible
+    try {
+      const onlineDrivers = await storage.getOnlineDrivers();
+      for (const drv of onlineDrivers) {
+        await storage.createNotification({ userId: drv.id, title: "Nouvelle commande disponible", message: `Commande ${orderNumber} en attente d'attribution`, type: "delivery", data: { orderId: order.id }, isRead: false });
+        sendToUser(drv.id, { type: "new_order", order });
+      }
+    } catch (e) {
+      console.error("[orders] notify online drivers failed:", e);
+    }
+
     await storage.createNotification({ userId: order.clientId, title: "Commande confirmee", message: `Votre commande ${orderNumber} a ete recue et sera traitee sous peu`, type: "order", data: { orderId: order.id }, isRead: false });
 
     if (req.body.paymentMethod === "wallet") {

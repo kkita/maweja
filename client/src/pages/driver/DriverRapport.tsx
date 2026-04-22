@@ -52,10 +52,10 @@ export default function DriverRapport() {
     });
   }, [orders, period, customFrom, customTo]);
 
-  const totalFees = filteredOrders.reduce((s, o) => s + o.deliveryFee, 0);
+  const totalFees = Math.round(filteredOrders.reduce((s, o) => s + o.deliveryFee * 0.8, 0) * 100) / 100;
   const totalOrders = filteredOrders.length;
   const avg = totalOrders > 0 ? totalFees / totalOrders : 0;
-  const cashTotal = filteredOrders.filter(o => o.paymentMethod === "cash").reduce((s, o) => s + o.deliveryFee, 0);
+  const cashTotal = Math.round(filteredOrders.filter(o => o.paymentMethod === "cash").reduce((s, o) => s + o.deliveryFee * 0.8, 0) * 100) / 100;
 
   const ordersByDay = useMemo(() => {
     const map: Record<string, { count: number; fees: number; orders: Order[] }> = {};
@@ -63,7 +63,7 @@ export default function DriverRapport() {
       const day = new Date(o.createdAt!).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
       if (!map[day]) map[day] = { count: 0, fees: 0, orders: [] };
       map[day].count++;
-      map[day].fees += o.deliveryFee;
+      map[day].fees += Math.round(o.deliveryFee * 0.8 * 100) / 100;
       map[day].orders.push(o);
     });
     return Object.entries(map).reverse();
@@ -202,7 +202,7 @@ export default function DriverRapport() {
                             </p>
                           </div>
                         </div>
-                        <span className="font-black text-sm flex-shrink-0" style={{ color: dt.green }}>+{formatPrice(o.deliveryFee)}</span>
+                        <span className="font-black text-sm flex-shrink-0" style={{ color: dt.green }}>+{formatPrice(Math.round(o.deliveryFee * 0.8 * 100) / 100)}</span>
                       </div>
                     );
                   })}

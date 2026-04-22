@@ -51,7 +51,7 @@ export default function DriverDashboard() {
 
   const activeOrders      = myOrders.filter(o => !["delivered", "cancelled"].includes(o.status));
   const deliveredToday    = myOrders.filter(o => o.status === "delivered");
-  const todayEarnings     = deliveredToday.reduce((s, o) => s + o.deliveryFee, 0);
+  const todayEarnings     = Math.round(deliveredToday.reduce((s, o) => s + o.deliveryFee * 0.8, 0) * 100) / 100;
   const lateOrders        = activeOrders.filter(o => o.estimatedDelivery && new Date(o.estimatedDelivery).getTime() < Date.now());
   const availablePending  = pendingOrders.filter(o => !o.driverId);
   const primaryActive     = activeOrders[0] ?? null;

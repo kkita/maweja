@@ -1007,7 +1007,7 @@ export default function AdminRestaurants({ storeType = "restaurant" }: { storeTy
                   dragIdx === idx ? "opacity-40 scale-[0.98]" : ""
                 } ${overIdx === idx && dragIdx !== idx ? "bg-red-50/50 dark:bg-red-950/30" : ""}`}
               >
-                <div className="p-4 flex items-center gap-3">
+                <div className="p-4 flex items-center gap-3 flex-wrap min-w-0">
                   {canDrag && (
                     <div className="flex flex-col items-center gap-0.5 text-zinc-300 dark:text-zinc-600 flex-shrink-0 select-none">
                       <GripVertical size={16} />
