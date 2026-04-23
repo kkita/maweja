@@ -185,3 +185,13 @@ The monolithic `server/routes.ts` (2888 lines) has been fully replaced by a modu
 - **Charting Library**: Recharts (for admin analytics).
 - **Geocoding**: Nominatim (for reverse geocoding).
 - **Payment Gateways**: Integration points for Mobile Money (M-Pesa/Orange Money/Airtel), Google Pay, POS systems, IllicoCash, and Credit Card processing.
+## Push Notifications (FCM/APNs)
+- **Backend**: `server/lib/push.ts` — Firebase Admin SDK lazy-initialized from one of: `FIREBASE_SERVICE_ACCOUNT_JSON` (raw JSON), `FIREBASE_SERVICE_ACCOUNT_BASE64`, or `GOOGLE_APPLICATION_CREDENTIALS` (file path). Silent no-op if not configured.
+- **DB**: `users.push_token` + `users.push_platform` columns store the device FCM/APNs token. Auto-cleaned on token-not-registered errors.
+- **Routes**: `POST /api/push/register-token`, `POST /api/push/unregister-token` (`server/routes/push.routes.ts`).
+- **Auto-fanout**: `storage.createNotification()` automatically calls `sendPushToUser()` (non-blocking). So every in-app notification (new order, chat message, status change, password reset, etc.) is also a native push if Firebase is configured + user has registered a token.
+- **Mobile init**: `client/src/lib/pushNotifs.ts` — dynamic import of `@capacitor/push-notifications` (hidden from Vite scanner). Called from `App.tsx` on user login. Requests permission, registers with FCM/APNs, posts token to backend. Tap-action navigates to `/tracking/:orderId` if `data.orderId` present.
+- **Required mobile config (per app)**:
+  - Android: place `google-services.json` (from Firebase console) at `mobile/{client,driver}/android/app/google-services.json`, then `npx cap sync android` from each mobile sub-project.
+  - iOS: enable Push Notifications + Background Modes (remote notifications) capability in Xcode; upload APNs auth key (.p8) to Firebase Cloud Messaging settings; `npx cap sync ios`.
+- **Required backend secret**: `FIREBASE_SERVICE_ACCOUNT_JSON` — paste the full service account JSON downloaded from Firebase Console > Project Settings > Service Accounts > Generate new private key.

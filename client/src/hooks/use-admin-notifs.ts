@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { onWSMessage } from "../lib/websocket";
 import { queryClient, apiRequest } from "../lib/queryClient";
-import { playAdminAlertSound } from "../lib/notify";
 import { useAuth } from "../lib/auth";
 import {
   type Notif, type NotifType,
@@ -41,7 +40,8 @@ export function useAdminNotifs() {
   function addNotif(n: Notif) {
     setNotifs(prev => [n, ...prev].slice(0, 60));
     showLiveToast(n);
-    playAdminAlertSound();
+    // Note: la sonnerie + vibration + notification système sont gérées globalement
+    // par handleWSEvent() enregistré une seule fois dans App.tsx (anti-doublon).
     setNotifRinging(true);
     if (ringTimerRef.current) clearTimeout(ringTimerRef.current);
     ringTimerRef.current = setTimeout(() => setNotifRinging(false), 5500);

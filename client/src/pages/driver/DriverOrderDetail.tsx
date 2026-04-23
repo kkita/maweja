@@ -282,6 +282,13 @@ export default function DriverOrderDetail() {
                 </button>
               </div>
             )}
+            <button
+              onClick={() => navigate(`/chat/order/${order.id}`)}
+              data-testid="button-chat-client"
+              className="w-full mb-2 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold active:scale-95 transition-all text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <MessageCircle size={14} /> Discuter avec le client
+            </button>
             {order.deliveryLat && order.deliveryLng && (
               <button
                 onClick={() => openNavigation(order.deliveryLat, order.deliveryLng)}

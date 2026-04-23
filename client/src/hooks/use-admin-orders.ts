@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient, authFetch, authFetchJson } from "../lib/queryClient";
 import { useToast } from "./use-toast";
-import { playAdminAlertSound } from "../lib/notify";
 import type { Order, User, Restaurant } from "@shared/schema";
 
 export type OrderFilterType = "all" | "pending" | "confirmed" | "picked_up" | "delivered" | "returned" | "cancelled";
@@ -46,7 +45,7 @@ export function useAdminOrders() {
 
   useEffect(() => {
     if (orders.length > 0 && prevCountRef.current > 0 && orders.length > prevCountRef.current) {
-      playAdminAlertSound();
+      // Sonnerie gérée globalement par handleWSEvent (App.tsx) — ici seulement le flash visuel
       setHeaderFlash(true);
       setTimeout(() => setHeaderFlash(false), 1500);
     }

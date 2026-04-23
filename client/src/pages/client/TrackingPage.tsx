@@ -255,9 +255,10 @@ export default function TrackingPage() {
                   </a>
                 )}
                 <button
-                  onClick={() => navigate(`/chat/driver`)}
+                  onClick={() => navigate(`/chat/order/${order.id}`)}
                   className="w-11 h-11 bg-blue-50 dark:bg-blue-950/30 rounded-full flex items-center justify-center active:scale-90 transition-transform"
                   data-testid="button-chat-driver"
+                  aria-label="Discuter avec l'agent"
                 >
                   <MessageCircle size={17} className="text-blue-600" />
                 </button>
@@ -281,12 +282,16 @@ export default function TrackingPage() {
               <span className="text-gray-400 dark:text-gray-500">Livraison</span>
               <span className="font-semibold text-gray-800 dark:text-gray-200">{formatPrice((order as any).deliveryFee || 0)}</span>
             </div>
-            {(order as any).serviceFee > 0 && (
-              <div className="flex justify-between items-center" style={{ fontSize: 13 }}>
-                <span className="text-gray-400 dark:text-gray-500">Frais de service</span>
-                <span className="font-semibold text-gray-800 dark:text-gray-200">{formatPrice((order as any).serviceFee)}</span>
-              </div>
-            )}
+            {(() => {
+              const fee = Number((order as any).taxAmount ?? (order as any).serviceFee ?? 0);
+              if (fee <= 0) return null;
+              return (
+                <div className="flex justify-between items-center" style={{ fontSize: 13 }}>
+                  <span className="text-gray-400 dark:text-gray-500">Frais de service</span>
+                  <span className="font-semibold text-gray-800 dark:text-gray-200" data-testid="text-service-fee">{formatPrice(fee)}</span>
+                </div>
+              );
+            })()}
             <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center">
               <span className="font-bold text-gray-900 dark:text-white">Total</span>
               <span className="font-black text-[#E10000] text-lg">

@@ -4,7 +4,6 @@ import { authFetchJson, apiRequest, queryClient } from "../lib/queryClient";
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { onWSMessage } from "../lib/websocket";
-import { handleWSEvent } from "../lib/notify";
 import type { Notification as Notif } from "@shared/schema";
 import { dt } from "./driver/DriverUI";
 import {
@@ -41,7 +40,7 @@ export default function DriverNav() {
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       }
-      handleWSEvent(data);
+      // Sonnerie + vibration + notif système : centralisées dans App.tsx
     });
   }, []);
 

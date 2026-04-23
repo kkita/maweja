@@ -13,7 +13,7 @@ import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/u
 import type { Order, Restaurant } from "@shared/schema";
 import AdminOrderDetailPopup from "../../components/AdminOrderDetailPopup";
 import {
-  AnimatedNumber, LiveDot, AdminProgressBar, KPICard, SectionCard,
+  AnimatedNumber, LiveDot, AdminProgressBar, SectionCard,
   AdminBadge, EmptyState,
 } from "../../components/admin/AdminUI";
 import NotifPanel from "../../components/admin/AdminNotifPanel";
@@ -21,6 +21,31 @@ import AdminLiveToast from "../../components/admin/AdminLiveToast";
 import { useAdminNotifs } from "../../hooks/use-admin-notifs";
 
 /* ─── Quick Actions ────────────────────────────────────────────────────────── */
+/* ── SoftKPI : carte plate, fond pastel léger, type "badge statut" ── */
+const SOFT_TONES: Record<string, { bg: string; ring: string; iconBg: string; icon: string; value: string }> = {
+  rose:    { bg: "bg-rose-50 dark:bg-rose-950/25",       ring: "border-rose-100 dark:border-rose-900/40",       iconBg: "bg-rose-100 dark:bg-rose-900/40",       icon: "text-rose-600 dark:text-rose-300",       value: "text-rose-900 dark:text-rose-50" },
+  emerald: { bg: "bg-emerald-50 dark:bg-emerald-950/25", ring: "border-emerald-100 dark:border-emerald-900/40", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", icon: "text-emerald-600 dark:text-emerald-300", value: "text-emerald-900 dark:text-emerald-50" },
+  sky:     { bg: "bg-sky-50 dark:bg-sky-950/25",         ring: "border-sky-100 dark:border-sky-900/40",         iconBg: "bg-sky-100 dark:bg-sky-900/40",         icon: "text-sky-600 dark:text-sky-300",         value: "text-sky-900 dark:text-sky-50" },
+  violet:  { bg: "bg-violet-50 dark:bg-violet-950/25",   ring: "border-violet-100 dark:border-violet-900/40",   iconBg: "bg-violet-100 dark:bg-violet-900/40",   icon: "text-violet-600 dark:text-violet-300",   value: "text-violet-900 dark:text-violet-50" },
+  amber:   { bg: "bg-amber-50 dark:bg-amber-950/25",     ring: "border-amber-100 dark:border-amber-900/40",     iconBg: "bg-amber-100 dark:bg-amber-900/40",     icon: "text-amber-600 dark:text-amber-300",     value: "text-amber-900 dark:text-amber-50" },
+};
+
+function SoftKPI({ tone, label, value, sub, icon: Icon, testId }: { tone: keyof typeof SOFT_TONES; label: string; value: string | number; sub?: string; icon: any; testId?: string }) {
+  const t = SOFT_TONES[tone];
+  return (
+    <div className={`rounded-2xl border ${t.bg} ${t.ring} p-4 transition-all hover:shadow-sm`} data-testid={testId}>
+      <div className="flex items-start justify-between mb-2.5">
+        <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wide leading-tight">{label}</span>
+        <div className={`w-8 h-8 rounded-xl ${t.iconBg} flex items-center justify-center flex-shrink-0`}>
+          <Icon size={15} className={t.icon} />
+        </div>
+      </div>
+      <p className={`font-black tracking-tight ${t.value}`} style={{ fontSize: 22 }}>{value}</p>
+      {sub && <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 truncate">{sub}</p>}
+    </div>
+  );
+}
+
 const QUICK_ACTIONS = [
   { label: "Commandes", icon: ShoppingBag, color: "bg-rose-600", href: "/admin/orders" },
   { label: "Restaurants", icon: Store, color: "bg-orange-500", href: "/admin/restaurants" },
@@ -152,12 +177,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ── KPI Grid ── */}
+        {/* ── KPI Grid (cartes pastel claires, style badges Commandes) ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KPICard label="Commandes aujourd'hui" value={todayOrders} icon={ShoppingBag} iconColor="text-rose-600" iconBg="bg-rose-50 dark:bg-rose-950/30" sub={`${totalOrders} au total`} testId="stat-commandes-du-jour" />
-          <KPICard label="Revenu du jour" value={formatPrice(todayRevenue)} icon={DollarSign} iconColor="text-emerald-600" iconBg="bg-emerald-50 dark:bg-emerald-950/30" sub={`${formatPrice(totalRevenue)} total`} animated={false} testId="stat-revenu-du-jour" />
-          <KPICard label="Agents en ligne" value={`${driversOnline}/${driversTotal}`} icon={Truck} iconColor="text-blue-600" iconBg="bg-blue-50 dark:bg-blue-950/30" sub={`${driversTotal} inscrits`} animated={false} testId="stat-agents-en-ligne" />
-          <KPICard label="Clients actifs" value={totalClients} icon={Users} iconColor="text-purple-600" iconBg="bg-purple-50 dark:bg-purple-950/30" sub={`${restaurantsActive} restaurants actifs`} testId="stat-clients-actifs" />
+          <SoftKPI tone="rose"    label="Commandes aujourd'hui" value={todayOrders}              sub={`${totalOrders} au total`}                 icon={ShoppingBag} testId="stat-commandes-du-jour" />
+          <SoftKPI tone="emerald" label="Revenu du jour"        value={formatPrice(todayRevenue)} sub={`${formatPrice(totalRevenue)} total`}      icon={DollarSign}  testId="stat-revenu-du-jour" />
+          <SoftKPI tone="sky"     label="Agents en ligne"       value={`${driversOnline}/${driversTotal}`} sub={`${driversTotal} inscrits`}        icon={Truck}       testId="stat-agents-en-ligne" />
+          <SoftKPI tone="violet"  label="Clients actifs"        value={totalClients}              sub={`${restaurantsActive} restaurants actifs`} icon={Users}       testId="stat-clients-actifs" />
         </div>
 
         {/* ── Quick Actions ── */}

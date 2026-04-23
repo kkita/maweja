@@ -8,6 +8,37 @@ import { uploadLimiter } from "../auth";
 import { validate, schemas } from "../validators";
 import { sendToUser } from "../websocket";
 
+/* ─── Helpers : permissions de chat ──────────────────────────
+   Règles MAWEJA :
+   • Admin ↔ Tout le monde : autorisé en permanence
+   • Client ↔ Driver : autorisé UNIQUEMENT s'il existe une commande
+     active entre eux (statut ≠ delivered / cancelled / returned).
+     Dès que la commande est livrée/annulée, le chat est verrouillé.
+   • Toute autre combinaison (client↔client, driver↔driver) : refusée
+*/
+const TERMINAL_STATUSES = ["delivered", "cancelled", "returned"];
+
+async function getActiveOrderBetween(
+  clientId: number,
+  driverId: number,
+): Promise<{ id: number; status: string } | null> {
+  const list = await storage.getOrders({ clientId, driverId });
+  const active = list.find(o => !TERMINAL_STATUSES.includes(o.status));
+  return active ? { id: active.id, status: active.status } : null;
+}
+
+async function canChatBetween(userAId: number, userBId: number): Promise<boolean> {
+  if (userAId === userBId) return false;
+  const [a, b] = await Promise.all([storage.getUser(userAId), storage.getUser(userBId)]);
+  if (!a || !b) return false;
+  if (a.role === "admin" || b.role === "admin") return true;
+  const client = a.role === "client" ? a : b.role === "client" ? b : null;
+  const driver = a.role === "driver" ? a : b.role === "driver" ? b : null;
+  if (!client || !driver) return false;
+  const active = await getActiveOrderBetween(client.id, driver.id);
+  return !!active;
+}
+
 export function registerChatRoutes(app: Express): void {
   app.get("/api/chat/contacts/:userId", requireAuth, async (req: any, res) => {
     const sessionUserId = (req.session as any)?.userId;
@@ -30,6 +61,43 @@ export function registerChatRoutes(app: Express): void {
     const all = await storage.getAllUsers();
     const filtered = all.filter(u => u.role === requestedRole).map(({ password: _, ...u }) => u);
     res.json(filtered);
+  });
+
+  /**
+   * Renvoie le partenaire de chat d'une commande (driver côté client,
+   * client côté driver) + l'état actif/verrouillé du chat.
+   * Utilisé par le bouton "Discuter" du suivi de commande / écran agent.
+   */
+  app.get("/api/chat/order-partner/:orderId", requireAuth, async (req, res) => {
+    const orderId = Number(req.params.orderId);
+    if (!orderId) return res.status(400).json({ message: "Identifiant de commande invalide" });
+    const order = await storage.getOrder(orderId);
+    if (!order) return res.status(404).json({ message: "Commande introuvable" });
+
+    const sessionUserId = (req.session as any)?.userId;
+    const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
+    if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
+
+    let partnerId: number | null = null;
+    if (sessionUser.role === "client" && order.clientId === sessionUser.id) {
+      partnerId = order.driverId ?? null;
+    } else if (sessionUser.role === "driver" && order.driverId === sessionUser.id) {
+      partnerId = order.clientId;
+    } else if (sessionUser.role === "admin") {
+      partnerId = order.driverId ?? order.clientId;
+    } else {
+      return res.status(403).json({ message: "Acces interdit" });
+    }
+
+    const active = !TERMINAL_STATUSES.includes(order.status);
+    if (!partnerId) {
+      return res.json({ partner: null, active, orderId, status: order.status });
+    }
+
+    const partner = await storage.getUser(partnerId);
+    if (!partner) return res.json({ partner: null, active, orderId, status: order.status });
+    const { password: _, ...safe } = partner as any;
+    res.json({ partner: safe, active, orderId, status: order.status });
   });
 
   app.get("/api/chat/unread/:userId", requireAuth, async (req, res) => {
@@ -65,10 +133,19 @@ export function registerChatRoutes(app: Express): void {
     const sessionUserId = (req.session as any)?.userId;
     const userId1 = Number(req.params.userId1);
     const userId2 = Number(req.params.userId2);
-    if (sessionUserId !== userId1 && sessionUserId !== userId2) {
-      const sessionUser = await storage.getUser(sessionUserId);
-      if (!sessionUser || sessionUser.role !== "admin") return res.status(403).json({ message: "Acces interdit" });
+    const sessionUser = await storage.getUser(sessionUserId);
+    if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
+
+    // L'admin lit tout. Sinon, l'utilisateur doit faire partie de la conversation
+    // ET être autorisé à discuter avec l'autre partie.
+    if (sessionUser.role !== "admin") {
+      if (sessionUserId !== userId1 && sessionUserId !== userId2) {
+        return res.status(403).json({ message: "Acces interdit" });
+      }
+      const allowed = await canChatBetween(userId1, userId2);
+      if (!allowed) return res.status(403).json({ message: "Conversation non autorisée — aucune commande active entre vous." });
     }
+
     const msgs = await storage.getChatMessages(userId1, userId2);
     res.json(msgs);
   });
@@ -84,7 +161,15 @@ export function registerChatRoutes(app: Express): void {
   app.post("/api/chat", requireAuth, validate(schemas.chatMessage), async (req, res) => {
     const sessionUserId = (req.session as any)?.userId;
     if (sessionUserId !== req.body.senderId) return res.status(403).json({ message: "Acces interdit" });
+
     const { senderId, receiverId, message = "", fileUrl, fileType, isRead } = req.body;
+
+    // Vérifie l'autorisation client↔driver / role↔admin
+    const allowed = await canChatBetween(senderId, receiverId);
+    if (!allowed) {
+      return res.status(403).json({ message: "Conversation non autorisée — aucune commande active entre vous." });
+    }
+
     const msg = await storage.createChatMessage({ senderId, receiverId, message, fileUrl: fileUrl || null, fileType: fileType || null, isRead: isRead ?? false });
     sendToUser(receiverId, { type: "chat_message", message: msg });
     const sender = await storage.getUser(senderId);

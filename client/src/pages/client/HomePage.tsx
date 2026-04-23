@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useI18n } from "../../lib/i18n";
-import { Tag, ShoppingBag, Store, Utensils, Flame, Search, TrendingUp } from "lucide-react";
+import { ShoppingBag, Store, Utensils, Flame, Search, TrendingUp } from "lucide-react";
 import ClientNav from "../../components/ClientNav";
 import AdBanner from "../../components/client/AdBanner";
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -12,7 +12,6 @@ import {
   RestaurantCardSkeleton,
   BoutiqueGridCard,
   FeaturedRestaurantCard,
-  PromoCard,
   MPill,
   MSectionHeader,
   MEmptyState,
@@ -38,8 +37,11 @@ export default function HomePage() {
   const [displayCount, setDisplayCount]               = useState(PAGE_SIZE);
 
   const { data: restaurants = [], isLoading } = useQuery<Restaurant[]>({ queryKey: ["/api/restaurants"] });
-  const { data: activeCategories = [] }       = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories/active"] });
-  const { data: catalogItems = [] }           = useQuery<CatalogItem[]>({ queryKey: ["/api/catalog-items"] });
+  const { data: allCategories = [] }          = useQuery<ServiceCategory[]>({ queryKey: ["/api/service-categories"] });
+  const activeCategories                       = allCategories
+    .filter(c => c.isActive)
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  const { data: catalogItems = [] }           = useQuery<CatalogItem[]>({ queryKey: ["/api/service-catalog"] });
   const { data: restCats = [] }               = useQuery<RestaurantCategory[]>({ queryKey: ["/api/restaurant-categories"] });
   const { data: boutiqueCats = [] }           = useQuery<BoutiqueCategory[]>({ queryKey: ["/api/boutique-categories"] });
 
@@ -236,29 +238,81 @@ export default function HomePage() {
               </section>
             )}
 
-            {/* ── Promotions en cours ── */}
-            {promoRestaurants.length > 0 && !activeCuisine && (
-              <section className="mb-7">
-                <div className="px-5 mb-1">
-                  <MSectionHeader
-                    title="Promotions en cours"
-                    icon={<Tag size={15} />}
-                    action={promoRestaurants.length > 3
-                      ? { label: "Tout voir", onClick: () => setActiveCuisine("Promos"), testId: "button-see-all-promos" }
-                      : undefined
-                    }
-                  />
+            {/* ── Services Express — showcase premium ── */}
+            {activeCategories.length > 0 && !activeCuisine && (
+              <section className="mb-8">
+                <div className="px-5 mb-3.5 flex items-end justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-[#E10000] to-[#a30000] text-white text-[10px] font-black tracking-wider uppercase shadow-sm">
+                        <Flame size={10} /> Express
+                      </span>
+                    </div>
+                    <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 19, letterSpacing: "-0.4px" }}>
+                      Nos services à Kinshasa
+                    </h2>
+                    <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">Livraison, courses, démarches — un agent en moins d'une heure.</p>
+                  </div>
+                  <button
+                    onClick={() => navigate("/services")}
+                    data-testid="button-view-all-services-premium"
+                    className="hidden sm:inline-flex text-brand font-semibold items-center gap-0.5 active:opacity-70 whitespace-nowrap"
+                    style={{ fontSize: 12 }}
+                  >
+                    Tout voir
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                  </button>
                 </div>
-                <div className="overflow-x-auto no-scrollbar px-5 pb-2">
-                  <div className="flex gap-3">
-                    {promoRestaurants.slice(0, 8).map(r => (
-                      <PromoCard
-                        key={r.id}
-                        r={r}
-                        promoLabel={getRestaurantPromoLabel(r)}
-                        onClick={() => navigate(`/restaurant/${r.id}`)}
-                      />
-                    ))}
+                <div className="overflow-x-auto no-scrollbar px-5 pb-3 -mx-0">
+                  <div className="flex gap-3.5">
+                    {activeCategories.slice(0, 10).map((cat, idx) => {
+                      const grads = [
+                        "from-[#E10000] via-[#b30000] to-[#7a0000]",
+                        "from-zinc-900 via-zinc-800 to-black",
+                        "from-amber-600 via-orange-700 to-rose-800",
+                        "from-indigo-700 via-violet-800 to-fuchsia-900",
+                        "from-emerald-700 via-teal-800 to-cyan-900",
+                        "from-blue-700 via-indigo-800 to-violet-900",
+                      ];
+                      const grad = grads[idx % grads.length];
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => handleServiceClick(cat)}
+                          data-testid={`card-service-premium-${cat.id}`}
+                          className="relative flex-shrink-0 w-[220px] h-[160px] rounded-2xl overflow-hidden group active:scale-[0.98] transition-transform shadow-md hover:shadow-xl"
+                        >
+                          {cat.imageUrl ? (
+                            <>
+                              <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                              <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/40 to-transparent" />
+                            </>
+                          ) : (
+                            <div className={`absolute inset-0 bg-gradient-to-br ${grad}`} />
+                          )}
+                          {/* Glass icon */}
+                          <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-lg">
+                            <Flame size={16} />
+                          </div>
+                          {/* Premium badge */}
+                          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 text-white text-[9px] font-bold tracking-wider uppercase">
+                            Premium
+                          </div>
+                          {/* Title bottom */}
+                          <div className="absolute inset-x-0 bottom-0 p-3.5 text-left">
+                            <p className="text-white font-black leading-tight drop-shadow" style={{ fontSize: 16, letterSpacing: "-0.3px" }}>
+                              {cat.name}
+                            </p>
+                            <div className="flex items-center gap-1 mt-1.5 text-white/90 text-[11px] font-semibold">
+                              <span>Réserver</span>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
+                            </div>
+                          </div>
+                          {/* Subtle highlight ring on hover */}
+                          <div className="absolute inset-0 ring-1 ring-inset ring-white/10 group-hover:ring-white/30 transition-all rounded-2xl" />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </section>

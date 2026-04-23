@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { apiRequest, queryClient, authFetch, authFetchJson, resolveImg } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
-import { handleWSEvent } from "../lib/notify";
 import { useToast } from "../hooks/use-toast";
 import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2, Download, FileText } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -102,7 +101,7 @@ export default function ClientContactBubble() {
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       }
-      handleWSEvent(data);
+      // Sonnerie + vibration + notif système : centralisées dans App.tsx
     });
   }, []);
 

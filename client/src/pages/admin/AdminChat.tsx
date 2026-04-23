@@ -4,7 +4,7 @@ import AdminLayout from "../../components/AdminLayout";
 import { useAuth } from "../../lib/auth";
 import { apiRequest, queryClient, authFetchJson, authFetch, resolveImg } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
-import { playRingtone } from "../../lib/notify";
+// Sonnerie chat centralisée dans App.tsx via handleWSEvent (anti-doublon).
 import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare, Phone, Info, Clock, Paperclip, Download, FileText, Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import type { ChatMessage, User as UserType } from "@shared/schema";
@@ -115,13 +115,7 @@ export default function AdminChat() {
         queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
         queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
         queryClient.invalidateQueries({ queryKey: ["/api/chat/contacts"] });
-        if (data.type === "chat_message") {
-          const senderId = data.message?.senderId;
-          if (!selectedContact || senderId !== selectedContact.id) {
-            playRingtone();
-            try { navigator.vibrate?.([180, 80, 180]); } catch {}
-          }
-        }
+        // Sonnerie & vibration gérées globalement (handleWSEvent)
       }
     });
   }, [selectedContact?.id]);

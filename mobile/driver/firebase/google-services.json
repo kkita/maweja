@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "231998182400",
+    "project_id": "maweja-9bf20",
+    "storage_bucket": "maweja-9bf20.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231998182400:android:61fb29d47e6475d50134e5",
+        "android_client_info": {
+          "package_name": "com.edcorp.maweja"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNCbhInae2cjZaCvfNXd8b2c4Kec4oxuI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231998182400:android:26d97abd14c49d740134e5",
+        "android_client_info": {
+          "package_name": "com.edcorp.maweja.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNCbhInae2cjZaCvfNXd8b2c4Kec4oxuI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:231998182400:android:2b87393fca6837c30134e5",
+        "android_client_info": {
+          "package_name": "com.maweja.client"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNCbhInae2cjZaCvfNXd8b2c4Kec4oxuI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

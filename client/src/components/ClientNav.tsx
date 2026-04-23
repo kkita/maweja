@@ -20,7 +20,7 @@ import { Bell, ShoppingBag, MapPin, Search, ChevronRight, ChevronDown } from "lu
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { onWSMessage } from "../lib/websocket";
-import { handleWSEvent, playNotifSound } from "../lib/notify";
+// Notifications gérées globalement dans App.tsx via handleWSEvent — ici seulement les invalidations.
 import SearchOverlay from "./SearchOverlay";
 import type { Notification as Notif } from "@shared/schema";
 
@@ -384,9 +384,7 @@ export default function ClientNav() {
       if (data.type === "service_update") {
         queryClient.invalidateQueries({ queryKey: ["/api/service-requests"] });
         queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
-        playNotifSound();
       }
-      handleWSEvent(data);
     });
   }, []);
 

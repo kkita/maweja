@@ -7,7 +7,9 @@ import { ThemeProvider } from "./lib/theme";
 import { Switch, Route, useLocation } from "wouter";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { connectWS, disconnectWS } from "./lib/websocket";
-import { requestNotifPermission, installAudioUnlockOnce } from "./lib/notify";
+import { onWSMessage } from "./lib/websocket";
+import { requestNotifPermission, installAudioUnlockOnce, handleWSEvent } from "./lib/notify";
+import { initPushNotifications, unregisterPushNotifications } from "./lib/pushNotifs";
 import { syncNativeStatusBar, useTheme } from "./lib/theme";
 import { Toaster } from "./components/Toaster";
 import { useDynamicFavicon } from "./hooks/use-dynamic-favicon";
@@ -38,6 +40,7 @@ const ServicesPage = lazy(() => import("./pages/client/ServicesPage"));
 const BoutiquesPage = lazy(() => import("./pages/client/BoutiquesPage"));
 const ServiceRequestPage = lazy(() => import("./pages/client/ServiceRequestPage"));
 const ClientContactBubble = lazy(() => import("./components/ClientContactBubble"));
+const OrderChatPage = lazy(() => import("./pages/OrderChatPage"));
 
 // ─── Driver pages ─────────────────────────────────────────────────────────────
 const DriverDashboard = lazy(() => import("./pages/driver/DriverDashboard"));
@@ -102,9 +105,44 @@ function AppRoutes() {
 
   const { resolvedTheme } = useTheme();
 
+  // Déverrouille l'audio + demande la permission au PREMIER geste utilisateur.
+  // Indispensable sur iOS Safari et WebView Capacitor.
   useEffect(() => {
-    installAudioUnlockOnce();
+    installAudioUnlockOnce({ askNotifPermission: true });
   }, []);
+
+  // Écouteur GLOBAL des événements WebSocket : sonnerie + vibration + notif système.
+  // Centralisé ici pour qu'aucun événement ne soit raté, peu importe la page affichée.
+  useEffect(() => {
+    return onWSMessage(handleWSEvent);
+  }, []);
+
+  // Reconnexion WS sur retour au premier plan (mobile natif + onglet web)
+  useEffect(() => {
+    if (!user?.id) return;
+    const reconnect = () => {
+      try { connectWS(user.id, getAuthToken() ?? undefined); } catch {}
+    };
+    const onVisibility = () => { if (document.visibilityState === "visible") reconnect(); };
+    window.addEventListener("focus", reconnect);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    let removeAppListener: (() => void) | null = null;
+    try {
+      const cap = (window as any).Capacitor;
+      const App = cap?.Plugins?.App;
+      if (App?.addListener) {
+        const sub = App.addListener("appStateChange", (s: any) => { if (s?.isActive) reconnect(); });
+        removeAppListener = () => { try { sub?.remove?.(); } catch {} };
+      }
+    } catch {}
+
+    return () => {
+      window.removeEventListener("focus", reconnect);
+      document.removeEventListener("visibilitychange", onVisibility);
+      removeAppListener?.();
+    };
+  }, [user?.id]);
 
   // Restaurer les barres système (blanc / noir) dès la fin du splash
   useEffect(() => {
@@ -117,8 +155,12 @@ function AppRoutes() {
     if (user?.id) {
       connectWS(user.id, getAuthToken() ?? undefined);
       requestNotifPermission().catch(() => {});
+      // Push natif (FCM/APNs) — enregistrement du device
+      (window as any).__MAWEJA_QC__ = queryClient;
+      initPushNotifications().catch(() => {});
     } else if (user === null) {
       disconnectWS();
+      unregisterPushNotifications().catch(() => {});
     }
   }, [user?.id]);
 
@@ -184,6 +226,7 @@ function AppRoutes() {
           <Route path="/driver/orders" component={DriverOrders} />
           <Route path="/driver/order/:id" component={DriverOrderDetail} />
           <Route path="/driver/chat" component={DriverChat} />
+          <Route path="/chat/order/:orderId" component={OrderChatPage} />
           <Route path="/driver/earnings" component={DriverEarnings} />
           <Route path="/driver/rapport" component={DriverRapport} />
           <Route path="/driver/settings" component={DriverSettings} />
@@ -220,6 +263,7 @@ function AppRoutes() {
             <Route path="/addresses" component={AddressPage} />
             <Route path="/boutiques" component={BoutiquesPage} />
             <Route path="/services" component={ServicesPage} />
+            <Route path="/chat/order/:orderId" component={OrderChatPage} />
             <Route path="/services/new" component={ServiceRequestPage} />
             <Route path="/services/request/:id" component={ServiceRequestPage} />
             <Route path="/settings" component={ClientSettings} />

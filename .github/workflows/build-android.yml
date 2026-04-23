@@ -67,6 +67,27 @@ jobs:
         working-directory: mobile/client
         run: npx cap sync android
 
+      - name: Configurer Firebase Cloud Messaging (Client)
+        run: |
+          # 1. Copier google-services.json (package com.edcorp.maweja)
+          cp mobile/client/firebase/google-services.json mobile/client/android/app/google-services.json
+          echo "✓ google-services.json copié"
+
+          # 2. Ajouter le classpath google-services dans le build.gradle racine
+          PROJECT_GRADLE="mobile/client/android/build.gradle"
+          if ! grep -q "com.google.gms:google-services" "$PROJECT_GRADLE"; then
+            sed -i "/classpath 'com.android.tools.build:gradle/a\\        classpath 'com.google.gms:google-services:4.4.2'" "$PROJECT_GRADLE"
+            echo "✓ Classpath google-services ajouté au build.gradle racine"
+          fi
+
+          # 3. Appliquer le plugin google-services dans app/build.gradle
+          APP_GRADLE="mobile/client/android/app/build.gradle"
+          if ! grep -q "com.google.gms.google-services" "$APP_GRADLE"; then
+            echo "" >> "$APP_GRADLE"
+            echo "apply plugin: 'com.google.gms.google-services'" >> "$APP_GRADLE"
+            echo "✓ Plugin google-services appliqué dans app/build.gradle"
+          fi
+
       - name: Copier les icônes launcher MAWEJA (Client)
         run: |
           ICON_SRC="android/client-icons"
@@ -219,6 +240,27 @@ jobs:
       - name: Synchroniser Capacitor Android (Driver)
         working-directory: mobile/driver
         run: npx cap sync android
+
+      - name: Configurer Firebase Cloud Messaging (Driver)
+        run: |
+          # 1. Copier google-services.json (package com.edcorp.maweja.driver)
+          cp mobile/driver/firebase/google-services.json mobile/driver/android/app/google-services.json
+          echo "✓ google-services.json copié"
+
+          # 2. Ajouter le classpath google-services dans le build.gradle racine
+          PROJECT_GRADLE="mobile/driver/android/build.gradle"
+          if ! grep -q "com.google.gms:google-services" "$PROJECT_GRADLE"; then
+            sed -i "/classpath 'com.android.tools.build:gradle/a\\        classpath 'com.google.gms:google-services:4.4.2'" "$PROJECT_GRADLE"
+            echo "✓ Classpath google-services ajouté au build.gradle racine"
+          fi
+
+          # 3. Appliquer le plugin google-services dans app/build.gradle
+          APP_GRADLE="mobile/driver/android/app/build.gradle"
+          if ! grep -q "com.google.gms.google-services" "$APP_GRADLE"; then
+            echo "" >> "$APP_GRADLE"
+            echo "apply plugin: 'com.google.gms.google-services'" >> "$APP_GRADLE"
+            echo "✓ Plugin google-services appliqué dans app/build.gradle"
+          fi
 
       - name: Copier les icônes launcher MAWEJA (Driver)
         run: |

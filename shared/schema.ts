@@ -31,6 +31,8 @@ export const users = pgTable("users", {
   adminRole: text("admin_role"),
   adminPermissions: jsonb("admin_permissions"),
   authToken: text("auth_token"),
+  pushToken: text("push_token"),
+  pushPlatform: text("push_platform"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

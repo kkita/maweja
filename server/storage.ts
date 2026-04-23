@@ -270,6 +270,15 @@ export class DatabaseStorage implements IStorage {
 
   async createNotification(n: InsertNotification) {
     const [created] = await db.insert(notifications).values(n).returning();
+    // Push natif (non bloquant) — silencieux si Firebase n'est pas configuré
+    try {
+      const { sendPushToUser } = await import("./lib/push");
+      sendPushToUser(n.userId, {
+        title: n.title || "MAWEJA",
+        body: n.message || "",
+        data: { type: String(n.type || "info"), notificationId: String(created.id) },
+      }).catch(() => {});
+    } catch {}
     return created;
   }
 

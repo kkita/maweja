@@ -12,7 +12,8 @@ async function main() {
   // 0. Migration du schéma de base de données
   console.log("[0/2] Synchronisation du schéma DB (drizzle-kit push)...");
   try {
-    execSync("npx drizzle-kit push --force", { stdio: "inherit" });
+    // --accept-data-loss avoids interactive prompts for constraint changes on existing data
+    execSync("npx drizzle-kit push --accept-data-loss", { stdio: "inherit" });
     console.log("   ✓ Schéma DB synchronisé\n");
   } catch (e) {
     console.warn("   ⚠ drizzle-kit push a échoué (ignoré en cas de DB non disponible):", (e as Error).message);

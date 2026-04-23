@@ -130,6 +130,8 @@ app.use((req: any, res, next) => {
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS vehicle_plate TEXT`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS driver_license TEXT`);
   await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS commission_rate INTEGER DEFAULT 15`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS push_token TEXT`);
+  await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS push_platform TEXT`);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS restaurants (
