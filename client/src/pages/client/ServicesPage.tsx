@@ -126,7 +126,7 @@ export default function ServicesPage() {
 
   if (previewItem) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-4">
@@ -179,7 +179,7 @@ export default function ServicesPage() {
 
   if (selectedCatalogCategory) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+      <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-24">
         <ClientNav />
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center gap-3 mb-2">
@@ -281,7 +281,7 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-24">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="mb-6">

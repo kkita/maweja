@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { authFetchJson } from "../../lib/queryClient";
 import { formatPrice } from "../../lib/utils";
 import AdminLayout from "../../components/AdminLayout";
+import { TabContent } from "../../components/admin/AdminUI";
+import { AppSkeleton } from "../../design-system/primitives";
+import { palette } from "../../design-system/tokens";
 import {
   TrendingUp, Clock, Star, DollarSign, CheckCircle, XCircle, ShoppingBag, Truck,
   Users, UserPlus, RotateCcw, Eye, Bell, ChevronDown
@@ -46,8 +49,12 @@ interface MarketingData {
   affinityMatrix: any[];
 }
 
-const PIE_COLORS = ["#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fecaca", "#b91c1c", "#991b1b", "#7f1d1d", "#450a0a", "#fee2e2"];
-const GRADIENT_COLORS = ["#dc2626", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
+const PIE_COLORS = palette.chart.brand;
+const GRADIENT_COLORS = palette.chart.spectrum;
+const AXIS = palette.chart.axis;
+const GRID = palette.chart.grid;
+const C_PRIMARY = palette.chart.primary;
+const C_SECONDARY = palette.chart.secondary;
 
 const paymentLabels: Record<string, string> = {
   mobile_money: "Mobile Money", cash: "Cash", illico_cash: "Illico Cash",
@@ -90,7 +97,7 @@ function ChartSelector({ value, onChange }: { value: ChartType; onChange: (v: Ch
   );
 }
 
-function FlexChart({ type, data, dataKey, nameKey, colors }: { type: ChartType; data: any[]; dataKey: string; nameKey: string; colors?: string[] }) {
+function FlexChart({ type, data, dataKey, nameKey, colors }: { type: ChartType; data: any[]; dataKey: string; nameKey: string; colors?: readonly string[] }) {
   const c = colors || PIE_COLORS;
   if (type === "pie") {
     const total = data.reduce((s, d) => s + (d[dataKey] || 0), 0);
@@ -111,12 +118,12 @@ function FlexChart({ type, data, dataKey, nameKey, colors }: { type: ChartType; 
     return (
       <ResponsiveContainer width="100%" height={300}>
         <AreaChart data={data}>
-          <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} /><stop offset="95%" stopColor="#dc2626" stopOpacity={0} /></linearGradient></defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-          <XAxis dataKey={nameKey} tick={{ fontSize: 11 }} stroke="#9ca3af" />
-          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+          <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={C_PRIMARY} stopOpacity={0.3} /><stop offset="95%" stopColor={C_PRIMARY} stopOpacity={0} /></linearGradient></defs>
+          <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+          <XAxis dataKey={nameKey} tick={{ fontSize: 11 }} stroke={AXIS} />
+          <YAxis tick={{ fontSize: 11 }} stroke={AXIS} />
           <Tooltip />
-          <Area type="monotone" dataKey={dataKey} stroke="#dc2626" fill="url(#areaGrad)" strokeWidth={2} />
+          <Area type="monotone" dataKey={dataKey} stroke={C_PRIMARY} fill="url(#areaGrad)" strokeWidth={2} />
         </AreaChart>
       </ResponsiveContainer>
     );
@@ -125,11 +132,11 @@ function FlexChart({ type, data, dataKey, nameKey, colors }: { type: ChartType; 
     return (
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-          <XAxis dataKey={nameKey} tick={{ fontSize: 11 }} stroke="#9ca3af" />
-          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+          <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+          <XAxis dataKey={nameKey} tick={{ fontSize: 11 }} stroke={AXIS} />
+          <YAxis tick={{ fontSize: 11 }} stroke={AXIS} />
           <Tooltip />
-          <Line type="monotone" dataKey={dataKey} stroke="#dc2626" strokeWidth={2} dot={{ r: 3 }} />
+          <Line type="monotone" dataKey={dataKey} stroke={C_PRIMARY} strokeWidth={2} dot={{ r: 3 }} />
         </LineChart>
       </ResponsiveContainer>
     );
@@ -137,11 +144,11 @@ function FlexChart({ type, data, dataKey, nameKey, colors }: { type: ChartType; 
   return (
     <ResponsiveContainer width="100%" height={300}>
       <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-        <XAxis dataKey={nameKey} tick={{ fontSize: 11 }} stroke="#9ca3af" />
-        <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+        <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+        <XAxis dataKey={nameKey} tick={{ fontSize: 11 }} stroke={AXIS} />
+        <YAxis tick={{ fontSize: 11 }} stroke={AXIS} />
         <Tooltip />
-        <Bar dataKey={dataKey} fill="#dc2626" radius={[6, 6, 0, 0]} />
+        <Bar dataKey={dataKey} fill={C_PRIMARY} radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -207,9 +214,9 @@ export default function AdminMarketing() {
     <div className="space-y-6" data-testid="loading-skeleton">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-5 animate-pulse">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-3" />
-            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+          <div key={i} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 p-5">
+            <AppSkeleton className="h-4 w-2/3 mb-3" shimmer />
+            <AppSkeleton className="h-8 w-1/2" shimmer />
           </div>
         ))}
       </div>
@@ -230,20 +237,20 @@ export default function AdminMarketing() {
     <AdminLayout title="Marketing & Analytics">
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-4" data-testid="date-filter">
-          <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Du</label>
+          <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Du</label>
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-            className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-xl px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             data-testid="input-date-from" />
-          <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Au</label>
+          <label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Au</label>
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-            className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-xl px-4 py-2 text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/40"
             data-testid="input-date-to" />
         </div>
 
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === t.key ? "bg-red-600 text-white" : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700"}`}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === t.key ? "bg-brand-500 text-white" : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"}`}
               data-testid={`tab-${t.key}`}
             >
               {t.label}
@@ -252,7 +259,7 @@ export default function AdminMarketing() {
         </div>
 
         {isLoading ? <Skeleton /> : (
-          <>
+          <TabContent tabKey={tab}>
             {/* ── KPIs ── */}
             {tab === "overview" && (
               <>
@@ -278,35 +285,35 @@ export default function AdminMarketing() {
                     ) : trendChart === "area" ? (
                       <ResponsiveContainer width="100%" height={300}>
                         <AreaChart data={data?.dailyTrend || []}>
-                          <defs><linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#dc2626" stopOpacity={0.3} /><stop offset="95%" stopColor="#dc2626" stopOpacity={0} /></linearGradient></defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                          <defs><linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={C_PRIMARY} stopOpacity={0.3} /><stop offset="95%" stopColor={C_PRIMARY} stopOpacity={0} /></linearGradient></defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke={AXIS} />
+                          <YAxis tick={{ fontSize: 11 }} stroke={AXIS} />
                           <Tooltip />
-                          <Area type="monotone" dataKey="orders" stroke="#dc2626" fill="url(#revGrad)" strokeWidth={2} name="Commandes" />
-                          <Area type="monotone" dataKey="revenue" stroke="#9ca3af" fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" name="Revenus" />
+                          <Area type="monotone" dataKey="orders" stroke={C_PRIMARY} fill="url(#revGrad)" strokeWidth={2} name="Commandes" />
+                          <Area type="monotone" dataKey="revenue" stroke={AXIS} fill="transparent" strokeWidth={1.5} strokeDasharray="4 4" name="Revenus" />
                         </AreaChart>
                       </ResponsiveContainer>
                     ) : trendChart === "line" ? (
                       <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={data?.dailyTrend || []}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                          <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke={AXIS} />
+                          <YAxis tick={{ fontSize: 11 }} stroke={AXIS} />
                           <Tooltip /><Legend />
-                          <Line type="monotone" dataKey="orders" stroke="#dc2626" strokeWidth={2} name="Commandes" />
-                          <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Revenus" />
+                          <Line type="monotone" dataKey="orders" stroke={C_PRIMARY} strokeWidth={2} name="Commandes" />
+                          <Line type="monotone" dataKey="revenue" stroke={C_SECONDARY} strokeWidth={2} name="Revenus" />
                         </LineChart>
                       </ResponsiveContainer>
                     ) : (
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={data?.dailyTrend || []}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                          <YAxis tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                          <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke={AXIS} />
+                          <YAxis tick={{ fontSize: 11 }} stroke={AXIS} />
                           <Tooltip />
-                          <Bar dataKey="orders" fill="#dc2626" radius={[6, 6, 0, 0]} name="Commandes" />
-                          <Bar dataKey="revenue" fill="#9ca3af" radius={[6, 6, 0, 0]} name="Revenus" />
+                          <Bar dataKey="orders" fill={C_PRIMARY} radius={[6, 6, 0, 0]} name="Commandes" />
+                          <Bar dataKey="revenue" fill={AXIS} radius={[6, 6, 0, 0]} name="Revenus" />
                         </BarChart>
                       </ResponsiveContainer>
                     )}
@@ -328,11 +335,11 @@ export default function AdminMarketing() {
                     {productChart === "bar" ? (
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={(data?.topProducts || []).slice(0, 10)} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                          <XAxis type="number" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                          <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                          <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                          <XAxis type="number" tick={{ fontSize: 11 }} stroke={AXIS} />
+                          <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} stroke={AXIS} />
                           <Tooltip />
-                          <Bar dataKey="count" fill="#dc2626" radius={[0, 6, 6, 0]} name="Quantité" />
+                          <Bar dataKey="count" fill={C_PRIMARY} radius={[0, 6, 6, 0]} name="Quantité" />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
@@ -358,11 +365,11 @@ export default function AdminMarketing() {
                   <ChartCard title="Volume de Commandes par Restaurant">
                     <ResponsiveContainer width="100%" height={300}>
                       <BarChart data={(data?.marketShare || []).slice(0, 10)} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
-                        <XAxis type="number" tick={{ fontSize: 11 }} stroke="#9ca3af" />
-                        <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} stroke="#9ca3af" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
+                        <XAxis type="number" tick={{ fontSize: 11 }} stroke={AXIS} />
+                        <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 11 }} stroke={AXIS} />
                         <Tooltip />
-                        <Bar dataKey="orderCount" fill="#3b82f6" radius={[0, 6, 6, 0]} name="Commandes" />
+                        <Bar dataKey="orderCount" fill={C_SECONDARY} radius={[0, 6, 6, 0]} name="Commandes" />
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartCard>
@@ -704,7 +711,7 @@ export default function AdminMarketing() {
                 </div>
               </>
             )}
-          </>
+          </TabContent>
         )}
       </div>
     </AdminLayout>

@@ -161,7 +161,7 @@ The monolithic `server/routes.ts` (2888 lines) has been fully replaced by a modu
   - `delivery-zones.routes.ts` — GET /api/delivery-zones (public), POST/PATCH/DELETE (admin-only) — full dynamic zone CRUD
   - `orders.routes.ts` — full order lifecycle: create (zone detect, finance entries, loyalty), update (driver payout, loyalty credit, audit log), accept/refuse, status-override, cancel, modify, remarks, rate, export CSV
   - `chat.routes.ts` — messages, contacts, unread counts, file upload
-  - `wallet.routes.ts` — loyalty credits, wallet history, top-up
+  - `wallet.routes.ts` — loyalty credits, wallet history. **Top-up admin-only** (`POST /api/wallet/topup` retourne `403 WALLET_TOPUP_DISABLED` pour tout non-admin) car il créditait jusqu'ici instantanément sans vérification de paiement (faille de self-credit). En attendant l'intégration d'un vrai gateway Mobile Money, seul un admin peut créditer un wallet manuellement après vérification du paiement. Les points de fidélité continuent de s'accumuler automatiquement à chaque commande. Côté UI client (`WalletPage`/`WalletHero`) : bouton « Recharger » remplacé par un badge « Bientôt » qui affiche un toast informatif ; `TopupSheet` n'est plus monté.
   - `notifications.routes.ts` — per-user, mark-read, broadcast with segmentation
   - `services.routes.ts` — service categories, catalog items, service requests CRUD
   - `marketing.routes.ts` — analytics, client segments, advertisements, promo banner, finance, restaurant payouts
@@ -170,12 +170,132 @@ The monolithic `server/routes.ts` (2888 lines) has been fully replaced by a modu
 ## Security Architecture
 - **Password Hashing**: All passwords hashed with bcrypt (12 rounds) via `bcryptjs`. Login uses `verifyPassword()` with transparent migration: plaintext passwords auto-rehashed on first login. `server/auth.ts` centralizes all auth utilities.
 - **On-startup migration**: At boot, any remaining plaintext passwords (stored before the refactor) are detected (`NOT LIKE '$2%'`) and bulk-rehashed automatically.
-- **SESSION_SECRET**: Required in production (`NODE_ENV=production`); process exits with FATAL error if missing. Dev uses a non-secret fallback.
+- **SESSION_SECRET**: Required in production (`NODE_ENV=production`) **and must be at least 32 characters**; process exits with FATAL error if missing or too short. Dev uses a non-secret fallback.
 - **WebSocket Auth**: All WS connections require `?token=BEARER_TOKEN` validated against DB `authToken`. Connections without a valid token are closed with code 1008. Client sends token from `getAuthToken()` stored in `queryClient.ts`.
 - **Logout token revocation**: `/api/auth/logout` nulls `authToken` in DB for both session-based and Bearer-token-based sessions.
-- **Rate limiting** (`express-rate-limit`): Login (10/15 min), Register (10/15 min), Forgot-password (5/15 min), Upload endpoints (30/10 min), Wallet topup (20/10 min).
+- **Rate limiting** (`express-rate-limit`): **Global** `apiGlobalLimiter` (200 req/min/IP) on every `/api/*` route, applied in `server/index.ts` after session middleware. Per-endpoint limiters stack on top: Login (10/15 min), Register (10/15 min), Forgot-password (5/15 min), Upload endpoints (30/10 min), Wallet topup (20/10 min). All return HTTP 429 with FR message and standard `RateLimit-*` headers.
 - **Route ownership checks**: `PATCH /api/users/:id` enforces self-only or admin access and always hashes password changes. `GET /api/chat/contacts/:userId` enforces self-only or admin. `GET /api/wallet/:userId` enforces self-only or admin.
 - **Zod Validation (COMPLETE)**: All mutating routes (POST/PATCH/PUT) are guarded by Zod middleware from `server/validators.ts`. Three middlewares: `validate(schema)` for body (replaces `req.body` with coerced data, returns HTTP 422 `{errors:[{field,message}]}`), `validateParams(schema)` for URL params, `validateQuery(schema)` for query strings. All domain schemas centralized in `server/validators.ts` under `schemas.*` namespace. Raw `req.body` is never passed directly to DB — every write route parses through a named schema first. POST `/api/drivers` now also hashes the password via bcrypt (was plaintext before). POST `/api/auth/driver-register` also has `registerLimiter` rate limit applied.
+- **Unified server logging**: All server runtime modules — `server/routes/*`, `server/replit_integrations/object_storage/*`, `server/middleware/upload.middleware.ts`, `server/lib/cloudSync.ts`, `server/index.ts`, `server/websocket.ts` — route errors and informational messages through the central `logger` from `server/lib/logger.ts`. **Zero `console.log/warn/error/info` direct calls** remain in those modules. Only three exceptions are intentionally kept on `console.*`: `server/lib/logger.ts` (the logger's own implementation), `server/vite.ts` (it implements Vite's `Logger` interface signature), and `server/seed.ts` (one-off CLI seed script).
+- **WebSocket cleanup + heartbeat observability**: `setupWebSocket()` schedules a 60s `setInterval` that walks `wsClients`, removes entries whose `readyState` is no longer `OPEN`/`CONNECTING` (prevents the map growing unbounded when clients drop without firing `close`), and **always** logs `[ws] heartbeat: N active connection(s)` via `logger.info` — even when no removals happen — for steady production visibility. Note: `logger.info` was updated to emit in both dev and prod (previously dev-only) so operational/heartbeat lines stay visible in production logs.
+
+## Phase 2 Security Hardening (April 27, 2026)
+- `npm audit fix` (non-breaking) applied; then two targeted package changes:
+  - `drizzle-orm` upgraded `^0.39.3 → ^0.45.2` to fix high-severity SQL injection CVE GHSA-gpj5-g38j-94v9. Fully backward-compatible with our typed query builder usage; `npm run check` passes.
+  - `xlsx` removed entirely (was declared in `package.json` but had **0 imports** in the codebase). This eliminates two high-severity SheetJS CVEs (GHSA-4r6h-8v6p-xvw6 prototype pollution + GHSA-5pgg-2g8v-p4x9 ReDoS) for which no upstream fix exists.
+- **Final audit state: 0 critical, 0 high, 9 moderate, 2 low** (all moderate/low are transitive deps — `@google-cloud/firestore/storage`, `firebase-admin`, `exceljs`, `gaxios`, `google-gax`, `retry-request`, `teeny-request`, `uuid`, `@tootallnate/once`, `http-proxy-agent` — all blocked behind semver-major upgrades of `firebase-admin`/`@google-cloud/storage`/`exceljs`. None affect our request handling and are deferred to a future dependency sweep).
+- **DB password audit**: SQL `SELECT id, email, role FROM users WHERE password NOT LIKE '$2%' OR password IS NULL` returned **0 rows** at the start of Phase 2 — startup auto-migration (`server/index.ts`) had already converted any legacy plaintext to bcrypt on prior boots.
+
+## Tests (Vitest)
+Phase 5 ajoute une couverture minimale automatisée pour bloquer les régressions critiques sans alourdir la maintenance.
+
+**Stack** : `vitest` + `supertest` (devDeps installées). Aucun script `npm test` dédié — lancer avec `npx vitest run` (ou `npx vitest` en mode watch). Config dans `vitest.config.ts` (alias `@`, `@shared`, `@assets`, env Node, pool fork). CI : `.github/workflows/test.yml` exécute `npx vitest run` sur chaque push/PR `main`.
+
+**Structure du dossier `tests/`** :
+- `tests/storage.mock.ts` — `MemoryStorage` qui implémente `IStorage` en mémoire (réinitialisable via `.reset()`). Sert de double pour les routes sans toucher à PostgreSQL.
+- `tests/validators.test.ts` — pour chaque entrée de `schemas` (50 schémas + 4 sous-schémas `params`) : 1 test "happy path" + 1 test "rejet". Un test global vérifie qu'aucun schéma n'est ajouté sans fixture (lock-step avec `server/validators.ts`).
+- `tests/routes.integration.test.ts` — couverture des endpoints critiques : `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/orders`, `POST /api/wallet/topup`, `POST /api/push/register-token`. Chaque endpoint testé pour : auth manquante (401), body invalide (422), erreur métier (400/403/404), succès (200). Tous les modules à effets de bord (`storage`, `db`, `websocket`, `cloudSync`) sont mockés via `vi.mock`.
+
+**Ajouter un nouveau test de schéma** : éditer `tests/validators.test.ts` et ajouter une entrée dans `happyFixtures` + `rejectFixtures` avec la même clé que dans `schemas`. Le test global "every schema key has both a happy and a reject fixture" échouera si vous oubliez l'un des deux.
+
+**Ajouter un test de route** : copier l'un des `describe` de `tests/routes.integration.test.ts`, seeder l'état nécessaire via `memoryStorage.createUser/createRestaurant/...` puis utiliser `request(app).post(...).set("Authorization", "Bearer <TOKEN>")`. Le `beforeEach` réinitialise déjà le mock entre chaque test.
+
+**Hors scope** (à faire séparément si besoin) : E2E (Playwright/Cypress), tests UI React (RTL), couverture exhaustive des 143 endpoints, tests WebSocket temps réel.
+
+## TypeScript Build Configuration
+`tsconfig.json` now has `noEmit: true` (with `declaration/declarationMap/sourceMap: false`). The previous setup regenerated thousands of `.js`/`.d.ts`/`.map` files inside `client/src`, `server/`, and `shared/` every time `npm run check` ran (or the LSP/vite triggered tsc). The build pipeline uses **vite** for the client and **esbuild** for the server (see `npm run build`), so tsc only needs to type-check, not emit. This keeps the working tree clean.
+
+## Repo Hygiene (Phase 1 — April 27, 2026)
+The codebase previously contained a hybrid setup (a legacy Expo prototype layered on top of the current MAWEJA Capacitor app). Phase 1 cleaned the repo:
+
+**Removed legacy Expo vestiges (root):**
+- `app.json`, `eas.json`, `capacitor.config.ts` (root duplicate — only `mobile/{client,driver}/capacitor.config.ts` are used by CI)
+- `assets/`, `.expo/`, `ios/` (root)
+- All Expo/React Native npm dependencies (15 packages: `expo`, `expo-router`, `react-native`, `@react-navigation/native-stack`, etc.)
+
+**Removed unused npm packages (48 total):**
+- All 27 `@radix-ui/*` packages (0 imports — shadcn was never wired)
+- `cmdk`, `class-variance-authority`, `embla-carousel-react`, `vaul`, `next-themes`, `input-otp`, `react-day-picker`, `react-resizable-panels`, `tw-animate-css`
+- `@hookform/resolvers`, `react-hook-form`, `@uppy/dashboard`
+- `passport`, `passport-local`, `memorystore`, `puppeteer`, `@babel/core`, `@octokit/rest`, `sharp`, `zod-validation-error`
+- Type packages: `@types/passport`, `@types/passport-local`
+
+**Removed heavy/binary artifacts (>320 MB freed):**
+- `attached_assets/*` (179 MB of Replit chat drafts), `exports/` (79 MB), `dist/` (26 MB)
+- `maweja-mobile.zip` (72 MB), `maweja-code.zip` (13 MB)
+- Obsolete splash assets: `client/{public,src/assets}/maweja-splash.{gif,mp4}`, `splash.mov`, `image_1772833363714.png` (Lottie `maweja-splash.json` is the only splash used)
+- Marketing PDFs/PNGs at root (`MAWEJA_Presentation.*`, `dashboard_*.png`, `Facture-*.pdf`)
+- Standalone docs: `MOBILE_BUILD.md`, `GITHUB_ACTIONS_BUILD.md`, `ANDROID_SPLASH_SETUP.md` (their content is consolidated into the sections below)
+
+**`.gitignore` enriched:** new entries for `uploads/`, `attached_assets/*`, `exports/`, `*.zip`, `*.rar`, `.expo/`, root `app.json`/`eas.json`/`capacitor.config.ts`, marketing binaries — to prevent these from coming back.
+
+**Kept (used by CI / runtime):**
+- `mobile/{client,driver}/capacitor.config.ts` — used by `.github/workflows/build-{android,ios}.yml`
+- `android/{app,client-icons,driver-icons}/` — referenced by build-android.yml for icon injection
+- `client/src/assets/{maweja-splash.json,maweja-icon-512.png,logo.png}` — actively imported
+- `guide-dashboard-maweja.html` — served by `server/routes/auth.routes.ts`
+- `uploads/` — still served at `/uploads/*` for legacy order images (cloud-migrated images use `/cloud/*`)
+
+## Mobile Build (Capacitor — Android & iOS)
+Two mobile sub-projects share the web frontend through `vite.mobile.config.ts`:
+
+| App | Package ID | Capacitor config | Android | iOS |
+|-----|-----------|------------------|:-------:|:---:|
+| MAWEJA (Clients) | `com.edcorp.maweja` | `mobile/client/capacitor.config.ts` | ✅ | ✅ |
+| MAWEJA Driver (Livreurs) | `com.edcorp.maweja.driver` | `mobile/driver/capacitor.config.ts` | ✅ | ❌ |
+| Admin Dashboard | — | (web only) | ❌ | ❌ |
+
+**Local build prerequisites:** Node.js 20+, Java JDK 17, Android Studio (SDK 34 + build-tools 34) for Android; macOS + Xcode 15+ + CocoaPods for iOS.
+
+**Local build flow (one-time init):**
+```bash
+cd mobile/client && npm install && npx cap add android && npx cap add ios
+cd mobile/driver && npm install && npx cap add android   # iOS skipped — Driver = Android only
+```
+
+**Per-build:**
+```bash
+VITE_API_BASE_URL=https://maweja.net bash mobile/build-client.sh
+VITE_API_BASE_URL=https://maweja.net bash mobile/build-driver.sh
+# then: cd mobile/{client,driver} && npx cap open android   (or ios for client)
+```
+
+**Mobile env vars:** `VITE_MOBILE_MODE=client|driver`, `VITE_API_BASE_URL=https://maweja.net`.
+
+**Keystores (Android signing) — never commit, never lose:**
+```bash
+keytool -genkey -v -keystore keystore/maweja-client.jks -alias maweja-client -keyalg RSA -keysize 2048 -validity 10000
+keytool -genkey -v -keystore keystore/maweja-driver.jks -alias maweja-driver -keyalg RSA -keysize 2048 -validity 10000
+```
+`keystore/`, `*.jks`, `*.p12`, `*.mobileprovision`, `*.b64` are gitignored.
+
+## Cloud Build (GitHub Actions)
+Two workflows produce APK/IPA without local Android Studio / Xcode:
+- **`.github/workflows/build-android.yml`** — Ubuntu runner, builds both Client and Driver APK/AAB (debug or release), injects icons from `android/{client,driver}-icons/` and Firebase `google-services.json` from `mobile/{client,driver}/firebase/`.
+- **`.github/workflows/build-ios.yml`** — macOS runner, builds Client IPA only.
+
+**Required GitHub Secrets:**
+- All builds: `API_BASE_URL` (e.g. `https://maweja.net`).
+- Android release: `CLIENT_KEYSTORE_BASE64`, `CLIENT_KEYSTORE_PASSWORD`, `CLIENT_KEY_ALIAS`, `CLIENT_KEY_PASSWORD` and equivalents `DRIVER_*` (encode `.jks` via `base64 -i file.jks -o file.b64`).
+- iOS release: `IOS_CERTIFICATE_BASE64`, `IOS_CERTIFICATE_PASSWORD`, `IOS_PROVISION_PROFILE_BASE64`, `IOS_PROVISION_PROFILE_NAME`, `IOS_TEAM_ID`.
+
+**Trigger:** GitHub → Actions → select workflow → Run workflow → choose `debug` or `release` → download artifact (~15-25 min Android, ~20-40 min iOS).
+
+**Cost note:** GitHub Free = 2000 min/month Linux + 200 min/month macOS (macOS counts 10x).
+
+## Android Splash Architecture (single splash)
+- **Android 12+ (API 31+)**: native `windowSplashScreen` API with `splash_logo.png` on `#EC0000` red background (`values-v31/styles.xml`).
+- **Android < 12**: `splash_screen.xml` layer-list drawable (red bg + centered logo) referenced by `AppTheme.Splash` in `values/styles.xml`.
+- **Capacitor SplashScreen plugin**: `launchShowDuration: 0` → no second splash, no flicker.
+- **Web splash**: Lottie `client/src/assets/maweja-splash.json` rendered by `client/src/components/SplashScreen.tsx`, plays inside the WebView on the same red background.
+
+Resource layout per mobile project (`android/app/src/main/res/`): `values/{colors,styles}.xml`, `values-v31/styles.xml`, `drawable/{splash_screen.xml,splash_logo.png}`, `drawable-v31/splash_logo.png`, plus density-specific `drawable-{m,h,xh,xxh,xxxh}dpi/splash_logo.png`. Source assets live in `android/{client,driver}-icons/` and are injected by `build-android.yml`.
+
+In `MainActivity.java/kt`, switch from splash theme to normal theme **before** `super.onCreate`:
+```java
+@Override protected void onCreate(Bundle s) { setTheme(R.style.AppTheme); super.onCreate(s); }
+```
+Set `android:theme="@style/AppTheme.Splash"` on the activity in `AndroidManifest.xml`.
 
 ## External Dependencies
 - **Mapping Service**: OpenStreetMap (via Leaflet and react-leaflet).
@@ -191,7 +311,23 @@ The monolithic `server/routes.ts` (2888 lines) has been fully replaced by a modu
 - **Routes**: `POST /api/push/register-token`, `POST /api/push/unregister-token` (`server/routes/push.routes.ts`).
 - **Auto-fanout**: `storage.createNotification()` automatically calls `sendPushToUser()` (non-blocking). So every in-app notification (new order, chat message, status change, password reset, etc.) is also a native push if Firebase is configured + user has registered a token.
 - **Mobile init**: `client/src/lib/pushNotifs.ts` — dynamic import of `@capacitor/push-notifications` (hidden from Vite scanner). Called from `App.tsx` on user login. Requests permission, registers with FCM/APNs, posts token to backend. Tap-action navigates to `/tracking/:orderId` if `data.orderId` present.
+- **Web init (admin dashboard)**: same `pushNotifs.ts` — when `!isCapacitor()` and Firebase Web is configured, calls `initWebPush()` which uses Firebase JS SDK (`firebase/messaging`). Registers `/firebase-messaging-sw.js` (in `client/public/`) with the config passed in query string (SW has no access to Vite env). Calls `getToken({ vapidKey })`, posts it with `platform: "web"` to `/api/push/register-token`. Foreground messages (`onMessage`) are shown via `registration.showNotification(...)`. Background/closed-tab messages are handled by the SW's `onBackgroundMessage` handler.
+- **Firebase Web init module**: `client/src/lib/firebaseWeb.ts` — lazy `initializeApp` + `getMessaging`, returns `null` silently on Capacitor / unsupported browsers / missing config.
 - **Required mobile config (per app)**:
   - Android: place `google-services.json` (from Firebase console) at `mobile/{client,driver}/android/app/google-services.json`, then `npx cap sync android` from each mobile sub-project.
   - iOS: enable Push Notifications + Background Modes (remote notifications) capability in Xcode; upload APNs auth key (.p8) to Firebase Cloud Messaging settings; `npx cap sync ios`.
 - **Required backend secret**: `FIREBASE_SERVICE_ACCOUNT_JSON` — paste the full service account JSON downloaded from Firebase Console > Project Settings > Service Accounts > Generate new private key.
+- **Required web env vars (admin push)**: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`, `VITE_FIREBASE_MEASUREMENT_ID` (optional), and `VITE_FIREBASE_VAPID_KEY` (Firebase Console > Project Settings > Cloud Messaging > Web push certificates). Public values exposed to the browser — store as env vars (not secrets).
+
+## Production Hardening — Orders & Wallet (server/routes/orders.routes.ts)
+Quatre garde-fous critiques côté backend, tous couverts par `tests/routes.integration.test.ts` :
+1. **Wallet insuffisant** : `POST /api/orders` refuse en `400 INSUFFICIENT_WALLET_BALANCE` (avec `balance` + `required`) si `paymentMethod === "wallet"` et `walletBalance < total`. Le check précède la création de la commande — aucun débit ni écriture finance n'a lieu en cas de refus. Plus de soldes négatifs masqués via `Math.max(0, ...)`.
+2. **Anti double-remboursement** : tous les chemins de refund (`PATCH /api/orders/:id` admin → cancelled/returned, `PATCH /api/orders/:id/cancel` client) utilisent le marqueur `paymentStatus === "refunded"` comme garde unique. Le snapshot `prevStatus` / `prevPaymentStatus` est capturé avant `storage.updateOrder(...)` pour garantir la décision sur l'état d'origine (immune aux mocks par référence et aux re-renders). Une seule transaction `walletTransactions(type=refund, orderId=...)` par commande. `paymentStatus` est mis à `"refunded"` immédiatement après le crédit.
+3. **OrderNumber unique sous concurrence** : helper `createOrderWithUniqueNumber()` — boucle de retry (5 tentatives) qui combine (a) lecture du dernier numéro via `db.execute(SELECT…ORDER BY DESC LIMIT 1)`, (b) pré-check `storage.getOrderByNumber()` pour anticiper la collision en mémoire, et (c) catch des violations `UNIQUE` Postgres (code `23505`/`/unique|duplicate/i`) avec incrément + retry. La colonne `order_number` a déjà un `.unique()` constraint en base. En cas d'épuisement des retries : `500 ORDER_NUMBER_GENERATION_FAILED`.
+4. **Transitions de statut cohérentes** : `canTransitionStatus()` durci — (a) bloque `currentStatus === newStatus` (defense in depth), (b) bloque toute mutation depuis un statut terminal (`delivered`/`cancelled`/`returned`) sauf via `/status-override` avec code d'accès, (c) interdit aux livreurs de poser `cancelled`/`returned` et leur impose une progression strictement linéaire `pending→confirmed→picked_up→delivered`, (d) admin restreint reste limité à la progression directe sans recul, (e) admin général garde la liberté hors statut terminal.
+
+Tests Vitest correspondants (143 verts au total) :
+- `POST /api/orders — wallet hardening` (refus solde insuffisant + débit correct si suffisant)
+- `POST /api/orders — orderNumber unique sous concurrence`
+- `PATCH /api/orders/:id — anti double-remboursement` (admin double cancel + client double cancel)
+- `PATCH /api/orders/:id — transitions de statut` (driver bloqué sur cancelled + admin bloqué sur statut terminal)

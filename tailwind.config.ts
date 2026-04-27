@@ -55,6 +55,20 @@ export default {
           900: "#6c0000",
           950: "#3f0000",
         },
+        /* ── MAWEJA display surfaces (dark scaffolds & overlay panels) ──
+         * Source unique pour les fonds décoratifs sombres utilisés par les
+         * pages métier (client, driver, admin) et les overlays modaux.
+         * Usage: dark:bg-display-page, dark:bg-display-panel, etc.
+         */
+        display: {
+          page:      "#0d0d0d",
+          "page-alt":"#0a0a0a",
+          panel:     "#141417",
+          "panel-alt":"#141414",
+          overlay:   "#18181f",
+          "overlay-2":"#1a1a22",
+          light:     "#f4f4f4",
+        },
         /* ── Driver UI palette — adaptatif light/dark via CSS variables ──
          * Les tokens neutres (bg, surface, border, text…) référencent des
          * variables CSS définies dans index.css pour :root et .dark.

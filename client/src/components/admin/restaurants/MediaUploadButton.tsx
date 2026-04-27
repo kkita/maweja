@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Loader2, X, GalleryHorizontal } from "lucide-react";
 import { authFetch } from "../../../lib/queryClient";
 import GalleryPicker from "../../GalleryPicker";
@@ -13,7 +14,7 @@ interface Props {
   accept: string;
   onUploaded: (url: string) => void;
   current?: string | null;
-  icon: any;
+  icon: LucideIcon;
   testId: string;
   onError?: (msg: string) => void;
   aspectRatio?: number;

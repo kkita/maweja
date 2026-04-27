@@ -7,6 +7,7 @@ import { chatUpload } from "../middleware/upload.middleware";
 import { uploadLimiter } from "../auth";
 import { validate, schemas } from "../validators";
 import { sendToUser } from "../websocket";
+import { logger } from "../lib/logger";
 
 /* ─── Helpers : permissions de chat ──────────────────────────
    Règles MAWEJA :
@@ -173,13 +174,14 @@ export function registerChatRoutes(app: Express): void {
     const msg = await storage.createChatMessage({ senderId, receiverId, message, fileUrl: fileUrl || null, fileType: fileType || null, isRead: isRead ?? false });
     sendToUser(receiverId, { type: "chat_message", message: msg });
     const sender = await storage.getUser(senderId);
+    const receiver = await storage.getUser(receiverId);
     if (sender) {
       const notifText = fileType === "pdf"
         ? `📎 ${sender.name}: Document partagé`
         : fileType === "image"
         ? `🖼️ ${sender.name}: Image partagée`
         : `${sender.name}: ${(message || "").substring(0, 50)}${(message || "").length > 50 ? "..." : ""}`;
-      await storage.createNotification({
+      const createdNotif = await storage.createNotification({
         userId: receiverId,
         title: "Nouveau message",
         message: notifText,
@@ -188,8 +190,26 @@ export function registerChatRoutes(app: Express): void {
       });
       sendToUser(receiverId, {
         type: "notification",
-        notification: { title: "Nouveau message", message: notifText },
+        notification: { id: createdNotif.id, title: "Nouveau message", message: notifText, type: "chat" },
       });
+
+      // Fanout temps-réel vers les admins (Dashboard) — sauf si l'expéditeur ou
+      // le destinataire est déjà admin (évite l'auto-notification)
+      const senderIsAdmin = sender.role === "admin";
+      const receiverIsAdmin = receiver?.role === "admin";
+      if (!senderIsAdmin && !receiverIsAdmin) {
+        try {
+          const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
+          const adminMsg = `${sender.name} → ${receiver?.name || "destinataire"}: ${notifText.replace(`${sender.name}: `, "")}`;
+          for (const admin of admins) {
+            sendToUser(admin.id, {
+              type: "chat_message",
+              message: msg,
+              meta: { adminPreview: true, senderName: sender.name, receiverName: receiver?.name },
+            });
+          }
+        } catch (e) { logger.error("[chat] admin fanout failed", e); }
+      }
     }
     res.json(msg);
   });

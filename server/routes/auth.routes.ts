@@ -57,7 +57,7 @@ export function registerAuthRoutes(app: Express): void {
     const responseData = { ...safeUser, authToken: token };
     req.session.save((err) => {
       if (err) {
-        console.error("Session save error:", err);
+        logger.error("Session save error", err);
         return res.status(500).json({ message: "Erreur de session" });
       }
       res.json(responseData);
@@ -128,7 +128,7 @@ export function registerAuthRoutes(app: Express): void {
       } catch (err) { logger.warn("Logout: failed to clear bearer token", err); }
     }
     req.session.destroy((err) => {
-      if (err) console.error("Session destroy error:", err);
+      if (err) logger.error("Session destroy error", err);
       res.json({ ok: true });
     });
   });
@@ -222,7 +222,7 @@ export function registerAuthRoutes(app: Express): void {
       if (metadata.size) res.set("Content-Length", String(metadata.size));
       file.createReadStream().pipe(res);
     } catch (err: any) {
-      console.error("Cloud serve error:", err);
+      logger.error("Cloud serve error", err);
       res.status(500).json({ message: "Erreur de lecture fichier" });
     }
   });

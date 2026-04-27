@@ -33,8 +33,8 @@ function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
   }
 
   return (
-    <div className={`mt-1 flex items-center gap-2 px-2.5 py-1.5 rounded-xl ${isMe ? "bg-red-700" : "bg-gray-100 dark:bg-gray-700"}`}>
-      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800" : "bg-blue-100 dark:bg-blue-900/40"}`}>
+    <div className={`mt-1 flex items-center gap-2 px-2.5 py-1.5 rounded-xl ${isMe ? "bg-red-600" : "bg-gray-100 dark:bg-gray-700"}`}>
+      <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-700/80" : "bg-sky-50 dark:bg-sky-900/40"}`}>
         <FileText size={13} className={isMe ? "text-red-200" : "text-blue-600"} />
       </div>
       <div className="flex-1 min-w-0">
@@ -42,7 +42,7 @@ function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
         <p className={`text-[8px] truncate ${isMe ? "text-red-200" : "text-gray-400"}`}>{fileName}</p>
       </div>
       <a href={resolvedUrl} download target="_blank" rel="noreferrer"
-        className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800 text-red-100" : "bg-blue-50 dark:bg-blue-900/40 text-blue-600"} transition-colors`}>
+        className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-700/80 text-red-50" : "bg-sky-50 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300"} transition-colors`}>
         <Download size={11} />
       </a>
     </div>

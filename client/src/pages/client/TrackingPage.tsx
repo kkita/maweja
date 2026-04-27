@@ -8,6 +8,7 @@ import { CheckCircle2, Truck, MapPin, Clock, Phone, MessageCircle, ChevronLeft, 
 import { formatPrice, statusLabels } from "../../lib/utils";
 import type { Order, User } from "@shared/schema";
 import { MCard, MBadge, ORDER_STATUS } from "../../components/client/ClientUI";
+import { palette, brand } from "../../design-system/tokens";
 
 const STATUS_STEP: Record<string, string> = {
   pending: "pending", confirmed: "confirmed",
@@ -23,10 +24,10 @@ const STEPS = [
 ];
 
 const STEP_COLORS: Record<string, string> = {
-  pending: "#F59E0B",
-  confirmed: "#3B82F6",
-  picked_up: "#06B6D4",
-  delivered: "#E10000",
+  pending:   palette.step.pending,
+  confirmed: palette.step.confirmed,
+  picked_up: palette.step.picked_up,
+  delivered: palette.step.delivered,
 };
 
 export default function TrackingPage() {
@@ -56,8 +57,8 @@ export default function TrackingPage() {
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#0a0a0a] flex items-center justify-center">
-        <div className="w-12 h-12 border-[3px] border-gray-200 border-t-[#E10000] rounded-full animate-spin" />
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
+        <div className="w-12 h-12 border-[3px] border-gray-200 border-t-brand-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -71,11 +72,11 @@ export default function TrackingPage() {
   const itemCount = (items as any[]).reduce((s: number, i: any) => s + (i.qty || 1), 0);
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#0a0a0a] pb-28" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-28" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
 
       {/* ── Custom header ─────────────────────────────────────────── */}
-      <div className="sticky top-0 z-40 bg-white dark:bg-[#0a0a0a] border-b border-black/[0.04] dark:border-white/[0.05]">
+      <div className="sticky top-0 z-40 bg-white dark:bg-zinc-950 border-b border-black/[0.04] dark:border-white/[0.05]">
         <div className="max-w-lg mx-auto px-4 flex items-center gap-3" style={{ height: 56 }}>
           <button
             onClick={() => navigate("/orders")}
@@ -100,7 +101,7 @@ export default function TrackingPage() {
         {!isDelivered && (
           <div
             className="relative overflow-hidden rounded-[22px] p-5 text-white"
-            style={{ background: "linear-gradient(135deg, #E10000 0%, #9B0000 100%)" }}
+            style={{ background: `linear-gradient(135deg, ${brand[500]} 0%, ${brand[700]} 100%)` }}
           >
             <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 rounded-full" />
             <div className="absolute -bottom-8 -left-4 w-28 h-28 bg-white/5 rounded-full" />
@@ -125,12 +126,12 @@ export default function TrackingPage() {
         )}
 
         {isDelivered && (
-          <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800/40 rounded-[18px] p-5 text-center">
-            <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
-              <CheckCircle2 size={28} color="white" />
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 rounded-[18px] p-5 text-center">
+            <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 size={28} className="text-emerald-600 dark:text-emerald-300" />
             </div>
-            <p className="font-black text-green-800 dark:text-green-400 text-lg">Commande livrée !</p>
-            <p className="text-green-600 dark:text-green-500 text-sm mt-1">Merci pour votre confiance chez MAWEJA</p>
+            <p className="font-black text-emerald-800 dark:text-emerald-300 text-lg">Commande livrée !</p>
+            <p className="text-emerald-700/80 dark:text-emerald-400/80 text-sm mt-1">Merci pour votre confiance chez MAWEJA</p>
           </div>
         )}
 
@@ -145,7 +146,7 @@ export default function TrackingPage() {
               const isCurrent = idx === currentStepIdx;
               const isPending = idx > currentStepIdx;
               const Icon = step.icon;
-              const color = isCurrent ? STEP_COLORS[step.key] : isDone ? "#10B981" : "#D1D5DB";
+              const color = isCurrent ? STEP_COLORS[step.key] : isDone ? palette.step.done : palette.step.idle;
 
               return (
                 <div
@@ -159,10 +160,10 @@ export default function TrackingPage() {
                       className="absolute top-[18px] left-1/2 right-[-50%] h-0.5 rounded-full transition-all duration-700 -z-0"
                       style={{
                         background: isDone
-                          ? "#10B981"
+                          ? palette.step.done
                           : isCurrent
                           ? `linear-gradient(90deg, ${color} 0%, ${color}40 100%)`
-                          : "#E5E7EB",
+                          : palette.step.border,
                       }}
                     />
                   )}
@@ -174,13 +175,13 @@ export default function TrackingPage() {
                     } ${isCurrent ? "scale-110" : ""}`}
                     style={{
                       background: isPending ? undefined : `${color}20`,
-                      border: `2px solid ${isPending ? "#E5E7EB" : color}`,
+                      border: `2px solid ${isPending ? palette.step.border : color}`,
                       boxShadow: isCurrent ? `0 0 0 4px ${color}15` : "none",
                     }}
                   >
                     <Icon
                       size={15}
-                      style={{ color: isPending ? "#D1D5DB" : color }}
+                      style={{ color: isPending ? palette.step.idle : color }}
                       strokeWidth={isCurrent ? 2.5 : 2}
                     />
                   </div>
@@ -239,7 +240,7 @@ export default function TrackingPage() {
                 <p className="text-gray-400 text-xs mt-0.5">Agent MAWEJA</p>
                 <div className="flex items-center gap-1 mt-1">
                   {[1,2,3,4,5].map(s => (
-                    <div key={s} className="w-2.5 h-2.5 rounded-full" style={{ background: s <= 4 ? "#F59E0B" : "#E5E7EB" }} />
+                    <div key={s} className="w-2.5 h-2.5 rounded-full" style={{ background: s <= 4 ? palette.step.pending : palette.step.border }} />
                   ))}
                   <span className="text-xs text-gray-400 ml-1">4.0</span>
                 </div>
@@ -270,7 +271,7 @@ export default function TrackingPage() {
         {/* ── Order summary ────────────────────────────────────────── */}
         <MCard>
           <div className="flex items-center gap-2 px-4 py-3.5 border-b border-gray-50 dark:border-zinc-800">
-            <Navigation size={15} className="text-[#E10000]" />
+            <Navigation size={15} className="text-brand-500" />
             <p className="font-bold text-gray-900 dark:text-white text-sm">Récapitulatif</p>
           </div>
           <div className="px-4 py-4 space-y-3">
@@ -294,7 +295,7 @@ export default function TrackingPage() {
             })()}
             <div className="border-t border-gray-100 dark:border-zinc-800 pt-3 flex justify-between items-center">
               <span className="font-bold text-gray-900 dark:text-white">Total</span>
-              <span className="font-black text-[#E10000] text-lg">
+              <span className="font-black text-brand-500 text-lg">
                 {formatPrice(typeof order.total === "string" ? parseFloat(order.total) : order.total)}
               </span>
             </div>
@@ -305,8 +306,7 @@ export default function TrackingPage() {
         {isDelivered && (
           <button
             onClick={() => navigate(`/orders/${order.id}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-[18px] text-white font-bold text-sm active:scale-[0.98] transition-transform"
-            style={{ background: "linear-gradient(90deg, #E10000, #cc0000)", boxShadow: "0 6px 20px rgba(225,0,0,0.3)" }}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-[18px] text-white font-bold text-sm active:scale-[0.98] transition-transform brand-cta-gradient brand-shadow-cta"
             data-testid="button-rate-order"
           >
             <CheckCircle2 size={17} />

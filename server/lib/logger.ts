@@ -20,7 +20,10 @@ function log(level: LogLevel, message: string, context?: unknown): void {
   } else if (level === "warn") {
     console.warn(`${prefix} ${message}`, context !== undefined ? context : "");
   } else {
-    if (isDev) console.log(`${prefix} ${message}`, context !== undefined ? context : "");
+    // info-level logs are emitted in BOTH dev and prod so that operational
+    // events (heartbeat, lifecycle, security observability) remain visible
+    // in production logs. Use logger.debug() for dev-only verbose output.
+    console.log(`${prefix} ${message}`, context !== undefined ? context : "");
   }
 }
 

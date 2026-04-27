@@ -81,3 +81,12 @@ export const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+/** Global API limiter — 200 requests / minute / IP, applied to all /api/* routes */
+export const apiGlobalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  message: { message: "Trop de requêtes. Réessayez dans une minute." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

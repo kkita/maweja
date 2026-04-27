@@ -1,4 +1,6 @@
 import { Bell, Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import { backdropVariants, scaleInVariants } from "../../../lib/motion";
 
 interface Props {
   driver: { id: number; name: string };
@@ -10,8 +12,22 @@ interface Props {
 
 export default function AlarmModal({ driver, reason, onReasonChange, onSend, onClose }: Props) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={onClose}>
-      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-5 w-full max-w-md" style={{ zIndex: 10000 }} onClick={e => e.stopPropagation()}>
+    <motion.div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
+      style={{ zIndex: 9999 }}
+      onClick={onClose}
+      variants={backdropVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-5 w-full max-w-md"
+        style={{ zIndex: 10000 }}
+        onClick={e => e.stopPropagation()}
+        variants={scaleInVariants}
+        initial="hidden"
+        animate="visible"
+      >
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
             <Bell size={18} className="text-red-600" />
@@ -52,7 +68,7 @@ export default function AlarmModal({ driver, reason, onReasonChange, onSend, onC
           </button>
           <button onClick={onClose} className="px-5 py-3 bg-zinc-100 rounded-xl text-sm font-semibold text-zinc-600">Annuler</button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

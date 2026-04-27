@@ -40,7 +40,7 @@ export default function ClientSettings() {
     : "?";
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#0a0a0a] pb-28">
+    <div className="min-h-screen bg-display-light dark:bg-display-page-alt pb-28">
       <ClientNav />
 
       {modal === "notifications" && <NotificationsModal onClose={() => setModal(null)} />}

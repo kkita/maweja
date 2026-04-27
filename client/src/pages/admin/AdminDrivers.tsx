@@ -2,20 +2,23 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
 import { useAuth } from "../../lib/auth";
-import { apiRequest, queryClient, authFetch , authFetchJson} from "../../lib/queryClient";
+import { apiRequest, queryClient, authFetchJson } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
 import { useToast } from "../../hooks/use-toast";
 import {
-  Truck, MapPin, Phone, Circle, Plus, X, Edit, Trash2, Ban, CheckCircle2,
-  Bell, Clock, Navigation, Package, DollarSign, Search, ChevronRight,
-  Timer, Zap, Send, Star, Power, ChevronLeft, Menu, AlertTriangle,
-  User, Settings, ChevronDown, ChevronUp
+  Truck, MapPin, Phone, Circle, Plus, Edit, Trash2, Ban, CheckCircle2,
+  Clock, Navigation, Package, Search, Menu,
 } from "lucide-react";
-import { formatPrice, formatDate, statusLabels, statusColors, formatPaymentMethod } from "../../lib/utils";
 import type { Order } from "@shared/schema";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import { KPICard, KPIGrid, TabContent, FilterChip, EmptyState, AdminBtn } from "../../components/admin/AdminUI";
+import { KPICard, KPIGrid, TabContent, FilterChip, EmptyState } from "../../components/admin/AdminUI";
+import { tints, palette, brand, neutralSurface } from "../../design-system/tokens";
+import AlarmModal from "../../components/admin/drivers/AlarmModal";
+import DriverDetailPanel from "../../components/admin/drivers/DriverDetailPanel";
+import DriverFormModal from "../../components/admin/drivers/DriverFormModal";
+import DispatchPanels from "../../components/admin/drivers/DispatchPanels";
+import DriverListSidebar from "../../components/admin/drivers/DriverListSidebar";
 
 const KINSHASA_CENTER: [number, number] = [-4.3217, 15.3126];
 
@@ -46,74 +49,6 @@ function MapInvalidateSize() {
   return null;
 }
 
-function CountdownTimer({ estimatedDelivery, compact }: { estimatedDelivery: string | null; compact?: boolean }) {
-  const [remaining, setRemaining] = useState("");
-  const [isLate, setIsLate] = useState(false);
-  const [isUrgent, setIsUrgent] = useState(false);
-
-  useEffect(() => {
-    if (!estimatedDelivery) { setRemaining("--:--"); return; }
-    const update = () => {
-      const diff = new Date(estimatedDelivery).getTime() - Date.now();
-      if (diff <= 0) {
-        setRemaining(`-${Math.abs(Math.floor(diff / 60000))}min`);
-        setIsLate(true); setIsUrgent(true);
-      } else {
-        const min = Math.floor(diff / 60000);
-        const sec = Math.floor((diff % 60000) / 1000);
-        setRemaining(`${min}:${sec.toString().padStart(2, "0")}`);
-        setIsLate(false); setIsUrgent(min < 5);
-      }
-    };
-    update();
-    const i = setInterval(update, 1000);
-    return () => clearInterval(i);
-  }, [estimatedDelivery]);
-
-  if (compact) {
-    return (
-      <span className={`font-mono font-bold text-[10px] px-1.5 py-0.5 rounded-md ${isLate ? "bg-red-100 text-red-700 animate-pulse" : isUrgent ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"}`} data-testid="countdown-timer">
-        <Timer size={8} className="inline mr-0.5" />{remaining}
-      </span>
-    );
-  }
-
-  return (
-    <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg ${isLate ? "bg-red-50 border border-red-200" : isUrgent ? "bg-orange-50 border border-orange-200" : "bg-green-50 border border-green-200"}`}>
-      <Timer size={12} className={isLate ? "text-red-600 animate-pulse" : isUrgent ? "text-orange-600" : "text-green-600"} />
-      <span className={`font-mono font-bold text-xs ${isLate ? "text-red-700" : isUrgent ? "text-orange-700" : "text-green-700"}`}>{remaining}</span>
-      <span className={`text-[9px] ${isLate ? "text-red-500" : isUrgent ? "text-orange-500" : "text-green-500"}`}>
-        {isLate ? "RETARD" : isUrgent ? "URGENT" : "restant"}
-      </span>
-    </div>
-  );
-}
-
-function ElapsedTime({ createdAt }: { createdAt: string | Date | null }) {
-  const [elapsed, setElapsed] = useState("");
-  const [isUrgent, setIsUrgent] = useState(false);
-
-  useEffect(() => {
-    if (!createdAt) { setElapsed("--"); return; }
-    const update = () => {
-      const diff = Date.now() - new Date(createdAt).getTime();
-      const min = Math.floor(diff / 60000);
-      setElapsed(`${min} min`);
-      setIsUrgent(min >= 45);
-    };
-    update();
-    const i = setInterval(update, 30000);
-    return () => clearInterval(i);
-  }, [createdAt]);
-
-  return (
-    <span className={`text-[10px] font-semibold ${isUrgent ? "text-red-600" : "text-zinc-500 dark:text-zinc-400"}`} data-testid="elapsed-time">
-      <Clock size={9} className="inline mr-0.5" />{elapsed}
-      {isUrgent && <span className="ml-1 px-1 py-0.5 bg-red-600 text-white text-[8px] font-bold rounded">URGENT</span>}
-    </span>
-  );
-}
-
 type DispatchTab = "unassigned" | "assigned" | "completed" | "free" | "busy" | "offline" | "gestion";
 
 export default function AdminDrivers() {
@@ -129,8 +64,6 @@ export default function AdminDrivers() {
   const [showAlarmModal, setShowAlarmModal] = useState<any>(null);
   const [chatMessage, setChatMessage] = useState("");
   const [mobilePanel, setMobilePanel] = useState<"list" | "info" | "map">("list");
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", vehicleType: "moto", vehiclePlate: "", driverLicense: "", commissionRate: 15 });
-  const [expandedBusyDriver, setExpandedBusyDriver] = useState<number | null>(null);
   const [assigningOrderId, setAssigningOrderId] = useState<number | null>(null);
 
   const { data: hideFeeSetting } = useQuery<{ value: string | null }>({
@@ -224,30 +157,11 @@ export default function AdminDrivers() {
     return map;
   }, [assignedOrders]);
 
-  const completedOrders = useMemo(() =>
-    orders.filter(o => o.status === "delivered"),
-    [orders]
-  );
-
-  const freeDrivers = useMemo(() =>
-    drivers.filter((d: any) => d.isOnline && !d.isBlocked && getDriverActiveOrders(d.id).length === 0),
-    [drivers, activeOrders]
-  );
-
-  const busyDrivers = useMemo(() =>
-    drivers.filter((d: any) => d.isOnline && !d.isBlocked && getDriverActiveOrders(d.id).length > 0),
-    [drivers, activeOrders]
-  );
-
-  const offlineDrivers = useMemo(() =>
-    drivers.filter((d: any) => !d.isOnline),
-    [drivers]
-  );
-
-  const availableDriversForAssign = useMemo(() =>
-    drivers.filter((d: any) => d.isOnline && !d.isBlocked),
-    [drivers]
-  );
+  const completedOrders = useMemo(() => orders.filter(o => o.status === "delivered"), [orders]);
+  const freeDrivers = useMemo(() => drivers.filter((d: any) => d.isOnline && !d.isBlocked && getDriverActiveOrders(d.id).length === 0), [drivers, activeOrders]);
+  const busyDrivers = useMemo(() => drivers.filter((d: any) => d.isOnline && !d.isBlocked && getDriverActiveOrders(d.id).length > 0), [drivers, activeOrders]);
+  const offlineDrivers = useMemo(() => drivers.filter((d: any) => !d.isOnline), [drivers]);
+  const availableDriversForAssign = useMemo(() => drivers.filter((d: any) => d.isOnline && !d.isBlocked), [drivers]);
 
   const todayStart = useMemo(() => {
     const d = new Date();
@@ -267,27 +181,6 @@ export default function AdminDrivers() {
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       toast({ title: "Agent attribue" });
       setAssigningOrderId(null);
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
-    }
-  };
-
-  const handleSave = async () => {
-    try {
-      if (editingDriver) {
-        const { password, ...updateData } = form;
-        const payload = password ? { ...updateData, password } : updateData;
-        await apiRequest(`/api/drivers/${editingDriver.id}`, { method: "PATCH", body: JSON.stringify(payload) });
-        toast({ title: "Agent mis a jour" });
-      } else {
-        if (!form.password) { toast({ title: "Mot de passe requis", variant: "destructive" }); return; }
-        await apiRequest("/api/drivers", { method: "POST", body: JSON.stringify(form) });
-        toast({ title: "Agent ajoute!" });
-      }
-      queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
-      setShowForm(false);
-      setEditingDriver(null);
-      setForm({ name: "", email: "", phone: "", password: "", vehicleType: "moto", vehiclePlate: "", driverLicense: "", commissionRate: 15 });
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     }
@@ -317,15 +210,14 @@ export default function AdminDrivers() {
 
   const startEdit = (d: any) => {
     setEditingDriver(d);
-    setForm({ name: d.name, email: d.email, phone: d.phone, password: "", vehicleType: d.vehicleType || "moto", vehiclePlate: d.vehiclePlate || "", driverLicense: d.driverLicense || "", commissionRate: d.commissionRate || 15 });
     setShowForm(true);
   };
 
-  const sendAlarm = async (driverId: number) => {
+  const sendAlarm = async (driverId: number, reason: string) => {
     try {
       await apiRequest(`/api/drivers/${driverId}/alarm`, {
         method: "POST",
-        body: JSON.stringify({ reason: alarmReason || "Urgence - Contactez l'administration immediatement" }),
+        body: JSON.stringify({ reason: reason || "Urgence - Contactez l'administration immediatement" }),
       });
       toast({ title: "Alarme envoyee", description: "L'agent a ete alerte" });
       setShowAlarmModal(null);
@@ -376,340 +268,12 @@ export default function AdminDrivers() {
     { key: "offline", label: "Hors ligne", count: offlineDrivers.length },
   ];
 
-  const renderDriverCard = (d: any, showActiveOrder = true) => {
-    const status = getDriverStatus(d);
-    const active = getDriverActiveOrders(d.id);
-    const todayCount = getDriverTodayDeliveries(d.id);
-
-    return (
-      <div key={d.id} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4" data-testid={`dispatch-driver-card-${d.id}`}>
-        <div className="flex items-center gap-3">
-          <div className="relative shrink-0">
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-              status === "busy" ? "bg-orange-100" : status === "online" ? "bg-green-100" : status === "blocked" ? "bg-red-100" : "bg-zinc-100"
-            }`}>
-              <Truck size={18} className={
-                status === "busy" ? "text-orange-600" : status === "online" ? "text-green-600" : status === "blocked" ? "text-red-600" : "text-zinc-400"
-              } />
-            </div>
-            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white ${d.isOnline ? "bg-green-500" : "bg-zinc-400"}`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-bold text-sm text-zinc-900 truncate" data-testid={`driver-name-${d.id}`}>{d.name}</p>
-              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${d.isOnline ? "bg-green-100 text-green-700" : "bg-zinc-100 text-zinc-500 dark:text-zinc-400"}`}>
-                {d.isOnline ? "EN LIGNE" : "HORS LIGNE"}
-              </span>
-            </div>
-            <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-              <span className="text-[10px] text-zinc-500 flex items-center gap-1"><Phone size={9} />{d.phone}</span>
-              <span className="text-[10px] text-zinc-500 capitalize">{d.vehicleType || "Moto"}{d.vehiclePlate ? ` - ${d.vehiclePlate}` : ""}</span>
-            </div>
-            <div className="flex items-center gap-3 mt-1 flex-wrap">
-              <span className="text-[10px] text-zinc-400"><Package size={9} className="inline mr-0.5" />{todayCount} livr. aujourd'hui</span>
-              {active.length > 0 && (
-                <span className="text-[10px] text-orange-600 font-semibold">{active.length} en cours</span>
-              )}
-            </div>
-          </div>
-        </div>
-        {showActiveOrder && active.length > 0 && (
-          <div className="mt-3 space-y-2">
-            {active.map(order => (
-              <div key={order.id} className="bg-zinc-50 rounded-xl p-2.5 border border-zinc-100 dark:border-zinc-800" data-testid={`dispatch-driver-order-${order.id}`}>
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="font-bold text-[10px] text-zinc-900 dark:text-white">{order.orderNumber}</span>
-                  <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
-                </div>
-                <p className="text-[9px] text-zinc-500 mt-1 truncate"><MapPin size={8} className="inline mr-0.5" />{order.deliveryAddress}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderOrderCard = (order: Order, showAssign = false) => {
-    const elapsed = order.createdAt ? Math.floor((Date.now() - new Date(order.createdAt).getTime()) / 60000) : 0;
-    const isUrgent = elapsed >= 45;
-    const isApproaching = elapsed >= 30 && elapsed < 45;
-
-    return (
-      <div key={order.id} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4" data-testid={`dispatch-order-card-${order.id}`}>
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-sm text-zinc-900 dark:text-white" data-testid={`order-number-${order.id}`}>{order.orderNumber}</span>
-            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
-            {isUrgent && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-red-600 text-white animate-pulse" data-testid={`urgent-badge-${order.id}`}>URGENT</span>}
-            {isApproaching && !isUrgent && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-md bg-orange-100 text-orange-700">BIENTOT</span>}
-          </div>
-          <ElapsedTime createdAt={order.createdAt} />
-        </div>
-        <p className="text-xs text-zinc-600 mt-1.5">{getRestaurantName(order.restaurantId)}</p>
-        <p className="text-[10px] text-zinc-500 mt-1 flex items-center gap-1 truncate">
-          <MapPin size={9} />{order.deliveryAddress}
-        </p>
-        <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
-          <span className="text-xs font-bold text-red-600">{formatPrice(order.total)}</span>
-          {order.estimatedDelivery && <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />}
-        </div>
-        {showAssign && (
-          <div className="mt-3 border-t border-zinc-100 dark:border-zinc-800 pt-3">
-            {assigningOrderId === order.id ? (
-              <div className="space-y-1.5">
-                <p className="text-[10px] text-zinc-500 font-semibold">Attribuer a :</p>
-                <div className="max-h-32 overflow-y-auto space-y-1">
-                  {availableDriversForAssign.map((d: any) => (
-                    <button key={d.id} onClick={() => handleAssignDriver(order.id, d.id)}
-                      data-testid={`assign-driver-${d.id}-to-order-${order.id}`}
-                      className="w-full text-left px-3 py-2 bg-zinc-50 rounded-lg text-xs hover:bg-red-50 hover:text-red-700 transition-colors flex items-center justify-between gap-2">
-                      <span className="truncate">{d.name}</span>
-                      <span className="text-[9px] text-zinc-400 capitalize shrink-0">{d.vehicleType || "Moto"}</span>
-                    </button>
-                  ))}
-                  {availableDriversForAssign.length === 0 && (
-                    <p className="text-[10px] text-zinc-400 text-center py-2">Aucun agent disponible</p>
-                  )}
-                </div>
-                <button onClick={() => setAssigningOrderId(null)} className="text-[10px] text-zinc-500 hover:text-zinc-700">Annuler</button>
-              </div>
-            ) : (
-              <button onClick={() => setAssigningOrderId(order.id)} data-testid={`button-assign-order-${order.id}`}
-                className="w-full py-2 bg-red-600 text-white rounded-xl text-xs font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-1.5">
-                <User size={12} /> Attribuer un agent
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderDispatchContent = () => {
-    switch (dispatchTab) {
-      case "unassigned":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white" data-testid="tab-title-unassigned">Commandes non attribuees ({unassignedOrders.length})</h2>
-            </div>
-            {unassignedOrders.length === 0 ? (
-              <EmptyState icon={Package} title="Aucune commande non attribuée" description="Toutes les commandes ont été attribuées." />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {unassignedOrders.map(order => renderOrderCard(order, true))}
-              </div>
-            )}
-          </div>
-        );
-
-      case "assigned":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white" data-testid="tab-title-assigned">Commandes attribuees ({assignedOrders.length})</h2>
-            </div>
-            {assignedByDriver.size === 0 ? (
-              <EmptyState icon={Package} title="Aucune commande attribuée" description="Aucun agent n'a de commande en cours." />
-            ) : (
-              <div className="space-y-4">
-                {Array.from(assignedByDriver.entries()).map(([driverId, driverOrders]) => {
-                  const driver = drivers.find((d: any) => d.id === driverId);
-                  return (
-                    <div key={driverId} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden" data-testid={`assigned-driver-group-${driverId}`}>
-                      <div className="px-4 py-3 bg-zinc-50 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-3 flex-wrap">
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center bg-orange-100`}>
-                          <Truck size={14} className="text-orange-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-zinc-900 truncate">{driver?.name || `Agent #${driverId}`}</p>
-                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400">{driver?.phone} - {driver?.vehicleType || "Moto"}</p>
-                        </div>
-                        <span className="text-xs font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded-lg">{driverOrders.length} commande(s)</span>
-                      </div>
-                      <div className="p-3 grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {driverOrders.map(order => (
-                          <div key={order.id} className="bg-zinc-50 rounded-xl p-3 border border-zinc-100 dark:border-zinc-800" data-testid={`assigned-order-${order.id}`}>
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className="font-bold text-xs text-zinc-900 dark:text-white">{order.orderNumber}</span>
-                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
-                            </div>
-                            <p className="text-[10px] text-zinc-600 mt-1">{getRestaurantName(order.restaurantId)}</p>
-                            <p className="text-[9px] text-zinc-500 mt-0.5 truncate"><MapPin size={8} className="inline mr-0.5" />{order.deliveryAddress}</p>
-                            <div className="flex items-center justify-between mt-1.5 gap-2 flex-wrap">
-                              <span className="text-[10px] font-bold text-red-600">{formatPrice(order.total)}</span>
-                              {order.estimatedDelivery && <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />}
-                            </div>
-                            <p className="text-[9px] text-zinc-500 mt-0.5">{formatPaymentMethod(order.paymentMethod)}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-
-      case "completed":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white" data-testid="tab-title-completed">Commandes completees ({completedOrders.length})</h2>
-            </div>
-            {completedOrders.length === 0 ? (
-              <EmptyState icon={CheckCircle2} title="Aucune commande livrée" description="Les commandes livrées apparaîtront ici." />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {completedOrders.map(order => {
-                  const isOnTime = order.estimatedDelivery && order.updatedAt
-                    ? new Date(order.updatedAt).getTime() <= new Date(order.estimatedDelivery).getTime()
-                    : null;
-                  const driver = order.driverId ? drivers.find((d: any) => d.id === order.driverId) : null;
-
-                  return (
-                    <div key={order.id} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4" data-testid={`completed-order-${order.id}`}>
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="font-bold text-sm text-zinc-900 dark:text-white">{order.orderNumber}</span>
-                        {isOnTime === true && (
-                          <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-green-100 text-green-700" data-testid={`ontime-badge-${order.id}`}>A l'heure</span>
-                        )}
-                        {isOnTime === false && (
-                          <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-red-100 text-red-700" data-testid={`late-badge-${order.id}`}>En retard</span>
-                        )}
-                        {isOnTime === null && (
-                          <span className="text-[8px] font-bold px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-500 dark:text-zinc-400">--</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-zinc-600 mt-1.5">{getRestaurantName(order.restaurantId)}</p>
-                      <p className="text-[10px] text-zinc-500 mt-1 truncate"><MapPin size={9} className="inline mr-0.5" />{order.deliveryAddress}</p>
-                      <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
-                        <span className="text-xs font-bold text-red-600">{formatPrice(order.total)}</span>
-                        {driver && <span className="text-[10px] text-zinc-500 dark:text-zinc-400"><Truck size={9} className="inline mr-0.5" />{driver.name}</span>}
-                      </div>
-                      <p className="text-[9px] text-zinc-500 mt-1" data-testid={`payment-method-${order.id}`}>{formatPaymentMethod(order.paymentMethod)}</p>
-                      {order.updatedAt && <p className="text-[9px] text-zinc-400 mt-1.5">{formatDate(order.updatedAt)}</p>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-
-      case "free":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white" data-testid="tab-title-free">Agents disponibles ({freeDrivers.length})</h2>
-            </div>
-            {freeDrivers.length === 0 ? (
-              <EmptyState icon={Truck} title="Aucun agent disponible" description="Tous les agents sont occupés ou hors ligne." />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {freeDrivers.map((d: any) => renderDriverCard(d, false))}
-              </div>
-            )}
-          </div>
-        );
-
-      case "busy":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white" data-testid="tab-title-busy">Agents occupes ({busyDrivers.length})</h2>
-            </div>
-            {busyDrivers.length === 0 ? (
-              <EmptyState icon={Truck} title="Aucun agent occupé" description="Aucun agent n'est en livraison actuellement." />
-            ) : (
-              <div className="space-y-3">
-                {busyDrivers.map((d: any) => {
-                  const active = getDriverActiveOrders(d.id);
-                  const todayCount = getDriverTodayDeliveries(d.id);
-                  const isExpanded = expandedBusyDriver === d.id;
-
-                  return (
-                    <div key={d.id} className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden" data-testid={`busy-driver-card-${d.id}`}>
-                      <button onClick={() => setExpandedBusyDriver(isExpanded ? null : d.id)}
-                        data-testid={`toggle-busy-driver-${d.id}`}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-left">
-                        <div className={`w-11 h-11 rounded-xl flex items-center justify-center bg-orange-100 shrink-0`}>
-                          <Truck size={18} className="text-orange-600" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-bold text-sm text-zinc-900 truncate">{d.name}</p>
-                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">({active.length} commandes)</span>
-                          </div>
-                          <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                            <span className="text-[10px] text-zinc-500 dark:text-zinc-400"><Phone size={9} className="inline mr-0.5" />{d.phone}</span>
-                            <span className="text-[10px] text-zinc-500 capitalize">{d.vehicleType || "Moto"}</span>
-                            <span className="text-[10px] text-zinc-400">{todayCount} livr. aujourd'hui</span>
-                          </div>
-                        </div>
-                        {isExpanded ? <ChevronUp size={16} className="text-zinc-400 shrink-0" /> : <ChevronDown size={16} className="text-zinc-400 shrink-0" />}
-                      </button>
-                      {isExpanded && (
-                        <div className="px-4 pb-3 border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-2">
-                          {active.map(order => (
-                            <div key={order.id} className="bg-zinc-50 rounded-xl p-3 border border-zinc-100 dark:border-zinc-800" data-testid={`busy-driver-order-${order.id}`}>
-                              <div className="flex items-center justify-between gap-2 flex-wrap">
-                                <span className="font-bold text-xs text-zinc-900 dark:text-white">{order.orderNumber}</span>
-                                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
-                              </div>
-                              <p className="text-[10px] text-zinc-600 mt-1">{getRestaurantName(order.restaurantId)}</p>
-                              <p className="text-[9px] text-zinc-500 mt-0.5 truncate"><MapPin size={8} className="inline mr-0.5" />{order.deliveryAddress}</p>
-                              <div className="flex items-center justify-between mt-1.5 gap-2 flex-wrap">
-                                <span className="text-[10px] font-bold text-red-600">{formatPrice(order.total)}</span>
-                                {order.estimatedDelivery && <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        );
-
-      case "offline":
-        return (
-          <div>
-            <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
-              <h2 className="text-lg font-bold text-zinc-900 dark:text-white" data-testid="tab-title-offline">Agents hors ligne ({offlineDrivers.length})</h2>
-            </div>
-            {offlineDrivers.length === 0 ? (
-              <EmptyState icon={Truck} title="Tous les agents sont en ligne" description="Aucun agent hors ligne pour le moment." />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                {offlineDrivers.map((d: any) => renderDriverCard(d, false))}
-              </div>
-            )}
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
     <AdminLayout title="Gestion des agents">
       <div className="mb-4 overflow-x-auto scrollbar-none">
         <div className="flex gap-1.5 min-w-max">
           {dispatchTabs.map(tab => (
-            <FilterChip
-              key={tab.key}
-              label={tab.label}
-              count={tab.count}
-              active={dispatchTab === tab.key}
-              onClick={() => setDispatchTab(tab.key)}
-            />
+            <FilterChip key={tab.key} label={tab.label} count={tab.count} active={dispatchTab === tab.key} onClick={() => setDispatchTab(tab.key)} />
           ))}
         </div>
       </div>
@@ -719,426 +283,160 @@ export default function AdminDrivers() {
           <p className="text-sm font-bold text-zinc-900 dark:text-white">Masquer frais de livraison</p>
           <p className="text-[10px] text-zinc-500">Les agents ne verront pas leurs gains</p>
         </div>
-        <button
-          onClick={toggleHideFees}
-          data-testid="toggle-hide-fees"
-          className={`relative w-12 h-7 rounded-full transition-colors ${hideFeesFromDrivers ? "bg-red-600" : "bg-zinc-300"}`}
-        >
+        <button onClick={toggleHideFees} data-testid="toggle-hide-fees"
+          className={`relative w-12 h-7 rounded-full transition-colors ${hideFeesFromDrivers ? "bg-red-600" : "bg-zinc-300"}`}>
           <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${hideFeesFromDrivers ? "translate-x-5" : "translate-x-0.5"}`} />
         </button>
       </div>
 
       <TabContent tabKey={dispatchTab}>
-      {dispatchTab !== "gestion" ? (
-        renderDispatchContent()
-      ) : (
-        <>
-          <KPIGrid cols={5} className="mb-4">
-            <KPICard label="Total agents" value={drivers.length} icon={Truck} iconColor="#3b82f6" iconBg="rgba(59,130,246,0.08)" testId="stat-total" />
-            <KPICard label="Disponibles" value={statusCounts.online} icon={CheckCircle2} iconColor="#10b981" iconBg="rgba(16,185,129,0.08)" testId="stat-disponibles" />
-            <KPICard label="En livraison" value={statusCounts.busy} icon={Package} iconColor="#f97316" iconBg="rgba(249,115,22,0.08)" testId="stat-busy" />
-            <KPICard label="Hors ligne" value={statusCounts.offline} icon={Circle} iconColor="#71717a" iconBg="rgba(113,113,122,0.08)" testId="stat-offline" />
-            <KPICard label="Bloqués" value={statusCounts.blocked} icon={Ban} iconColor="#E10000" iconBg="rgba(225,0,0,0.08)" testId="stat-blocked" />
-          </KPIGrid>
+        {dispatchTab !== "gestion" ? (
+          <DispatchPanels
+            dispatchTab={dispatchTab}
+            drivers={drivers}
+            unassignedOrders={unassignedOrders}
+            assignedOrders={assignedOrders}
+            assignedByDriver={assignedByDriver}
+            completedOrders={completedOrders}
+            freeDrivers={freeDrivers}
+            busyDrivers={busyDrivers}
+            offlineDrivers={offlineDrivers}
+            availableDriversForAssign={availableDriversForAssign}
+            assigningOrderId={assigningOrderId}
+            setAssigningOrderId={setAssigningOrderId}
+            handleAssignDriver={handleAssignDriver}
+            getRestaurantName={getRestaurantName}
+            getDriverActiveOrders={getDriverActiveOrders}
+            getDriverStatus={getDriverStatus}
+            getDriverTodayDeliveries={getDriverTodayDeliveries}
+          />
+        ) : (
+          <>
+            <KPIGrid cols={5} className="mb-4">
+              <KPICard label="Total agents" value={drivers.length} icon={Truck} iconColor={palette.semantic.info} iconBg={tints.info(0.08)} testId="stat-total" />
+              <KPICard label="Disponibles" value={statusCounts.online} icon={CheckCircle2} iconColor={palette.semantic.success} iconBg={tints.success(0.08)} testId="stat-disponibles" />
+              <KPICard label="En livraison" value={statusCounts.busy} icon={Package} iconColor={neutralSurface.dangerWarm} iconBg={tints.orange(0.08)} testId="stat-busy" />
+              <KPICard label="Hors ligne" value={statusCounts.offline} icon={Circle} iconColor={palette.semantic.neutralStrong} iconBg={tints.mutedGray(0.08)} testId="stat-offline" />
+              <KPICard label="Bloqués" value={statusCounts.blocked} icon={Ban} iconColor={brand[500]} iconBg={tints.brand(0.08)} testId="stat-blocked" />
+            </KPIGrid>
 
-          <div className="flex lg:hidden gap-1 mb-3 bg-white rounded-xl p-1 border border-zinc-100 dark:border-zinc-800">
-            {([
-              { key: "list" as const, label: "Liste", icon: Menu },
-              { key: "info" as const, label: "Details", icon: Truck },
-              { key: "map" as const, label: "Carte", icon: Navigation },
-            ]).map(tab => (
-              <button key={tab.key} onClick={() => setMobilePanel(tab.key)} data-testid={`tab-${tab.key}`}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${mobilePanel === tab.key ? "bg-red-600 text-white shadow-sm" : "text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}>
-                <tab.icon size={14} />{tab.label}
-              </button>
-            ))}
-          </div>
-
-          {showForm && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onClick={() => { setShowForm(false); setEditingDriver(null); }}>
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-5 w-full max-w-lg max-h-[90vh] overflow-y-auto" style={{ zIndex: 10000 }} onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-base">{editingDriver ? "Modifier l'agent" : "Nouvel agent"}</h3>
-                  <button onClick={() => { setShowForm(false); setEditingDriver(null); }} className="text-zinc-400 hover:text-zinc-600"><X size={18} /></button>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    { label: "Nom complet *", key: "name", type: "text", testid: "input-driver-name" },
-                    { label: "Email (optionnel)", key: "email", type: "email", testid: "input-driver-email" },
-                    { label: "Telephone *", key: "phone", type: "tel", testid: "input-driver-phone" },
-                    ...(!editingDriver ? [{ label: "Mot de passe *", key: "password", type: "password", testid: "input-driver-password" }] : []),
-                    { label: "Plaque", key: "vehiclePlate", type: "text", testid: "input-vehicle-plate" },
-                    { label: "N° pièce d'identité", key: "driverLicense", type: "text", testid: "input-license" },
-                  ].map(f => (
-                    <div key={f.key}>
-                      <label className="text-[10px] font-semibold text-zinc-500 mb-1 block">{f.label}</label>
-                      <input type={f.type} value={(form as any)[f.key]} onChange={e => setForm({ ...form, [f.key]: e.target.value })}
-                        data-testid={f.testid} className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-rose-500/30 focus:outline-none" />
-                    </div>
-                  ))}
-                  <div>
-                    <label className="text-[10px] font-semibold text-zinc-500 mb-1 block">Vehicule</label>
-                    <select value={form.vehicleType} onChange={e => setForm({ ...form, vehicleType: e.target.value })}
-                      data-testid="select-vehicle-type" className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white">
-                      <option value="moto">Moto</option><option value="velo">Velo</option><option value="voiture">Voiture</option><option value="scooter">Scooter</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-semibold text-zinc-500 mb-1 block">Commission (%)</label>
-                    <input type="number" value={form.commissionRate} onChange={e => setForm({ ...form, commissionRate: Number(e.target.value) })}
-                      data-testid="input-commission" className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white focus:ring-2 focus:ring-rose-500/30 focus:outline-none" />
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-5">
-                  <button onClick={handleSave} data-testid="button-save-driver"
-                    className="flex-1 bg-red-600 text-white py-2.5 rounded-xl text-sm font-bold hover:bg-red-700 shadow-lg shadow-red-200">
-                    {editingDriver ? "Mettre a jour" : "Creer l'agent"}
-                  </button>
-                  <button onClick={() => { setShowForm(false); setEditingDriver(null); }} className="px-5 py-2.5 bg-zinc-100 rounded-xl text-sm font-semibold text-zinc-600">Annuler</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {showAlarmModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-              <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-5 w-full max-w-md" style={{ zIndex: 10000 }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center"><Bell size={18} className="text-red-600" /></div>
-                  <div>
-                    <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Envoyer une alarme</h3>
-                    <p className="text-[10px] text-zinc-500 dark:text-zinc-400">a {showAlarmModal.name}</p>
-                  </div>
-                </div>
-                <select value={alarmReason} onChange={e => setAlarmReason(e.target.value)}
-                  data-testid="alarm-reason-select" className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white mb-2">
-                  <option value="">Choisir un motif...</option>
-                  <option value="Retard de livraison detecte - Accelerez votre course">Retard de livraison</option>
-                  <option value="Client en attente - Merci de vous depecher">Client en attente</option>
-                  <option value="Changement d'adresse de livraison - Verifiez vos commandes">Changement d'adresse</option>
-                  <option value="Contactez l'administration immediatement">Contact urgent</option>
-                  <option value="Votre position GPS n'est plus visible - Reactiver la localisation">GPS perdu</option>
-                </select>
-                <input type="text" value={alarmReason} onChange={e => setAlarmReason(e.target.value)}
-                  placeholder="Ou tapez un message personnalise..." data-testid="alarm-reason-input"
-                  className="w-full px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm dark:text-white mb-4 focus:outline-none focus:ring-2 focus:ring-rose-500/30" />
-                <div className="flex gap-2">
-                  <button onClick={() => sendAlarm(showAlarmModal.id)} data-testid="button-send-alarm"
-                    className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
-                    <Zap size={14} /> Envoyer l'alarme
-                  </button>
-                  <button onClick={() => { setShowAlarmModal(null); setAlarmReason(""); }}
-                    className="px-5 py-3 bg-zinc-100 rounded-xl text-sm font-semibold text-zinc-600">Annuler</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="flex gap-3" style={{ height: "calc(100vh - 340px)", minHeight: 400 }}>
-
-            <div className={`${mobilePanel === "info" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden`}>
-              {sd ? (
-                <div className="flex-1 overflow-y-auto">
-                  <div className="p-4 border-b border-zinc-100 dark:border-zinc-800">
-                    <button onClick={() => { setSelectedDriver(null); setMobilePanel("list"); }}
-                      className="lg:hidden flex items-center gap-1 text-xs text-zinc-500 mb-3 hover:text-zinc-700" data-testid="back-to-list">
-                      <ChevronLeft size={14} /> Retour a la liste
-                    </button>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                          getDriverStatus(sd) === "busy" ? "bg-orange-100" :
-                          getDriverStatus(sd) === "online" ? "bg-green-100" :
-                          getDriverStatus(sd) === "blocked" ? "bg-red-100" : "bg-zinc-100"
-                        }`}>
-                          <Truck size={22} className={
-                            getDriverStatus(sd) === "busy" ? "text-orange-600" :
-                            getDriverStatus(sd) === "online" ? "text-green-600" :
-                            getDriverStatus(sd) === "blocked" ? "text-red-600" : "text-zinc-400"
-                          } />
-                        </div>
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-white ${sd.isOnline ? "bg-green-500" : "bg-zinc-400"}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-black text-sm text-zinc-900 truncate" data-testid="driver-detail-name">{sd.name}</h3>
-                        <p className="text-[10px] text-zinc-500 flex items-center gap-1 mt-0.5"><Phone size={9} />{sd.phone}</p>
-                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full mt-1 inline-block ${
-                          getDriverStatus(sd) === "busy" ? "bg-orange-100 text-orange-700" :
-                          getDriverStatus(sd) === "online" ? "bg-green-100 text-green-700" :
-                          getDriverStatus(sd) === "blocked" ? "bg-red-100 text-red-700" :
-                          "bg-zinc-100 text-zinc-500 dark:text-zinc-400"
-                        }`}>
-                          {getDriverStatus(sd) === "busy" ? "EN LIVRAISON" : getDriverStatus(sd) === "online" ? "DISPONIBLE" : getDriverStatus(sd) === "blocked" ? "BLOQUE" : "HORS LIGNE"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-0 border-b border-zinc-100 dark:border-zinc-800">
-                    <div className="p-3 text-center border-r border-zinc-100 dark:border-zinc-800">
-                      <p className="text-base font-black text-green-600">{formatPrice(sdDelivered.reduce((s, o) => s + o.deliveryFee, 0))}</p>
-                      <p className="text-[8px] text-zinc-400 dark:text-zinc-500 mt-0.5">GAINS</p>
-                    </div>
-                    <div className="p-3 text-center border-r border-zinc-100 dark:border-zinc-800">
-                      <p className="text-base font-black text-blue-600">{sdDelivered.length}</p>
-                      <p className="text-[8px] text-zinc-400 dark:text-zinc-500 mt-0.5">LIVREES</p>
-                    </div>
-                    <div className="p-3 text-center">
-                      <p className="text-base font-black text-orange-600">{sdOrders.length}</p>
-                      <p className="text-[8px] text-zinc-400 dark:text-zinc-500 mt-0.5">EN COURS</p>
-                    </div>
-                  </div>
-
-                  <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] text-zinc-500 mb-2 font-semibold">INFORMATIONS</p>
-                    <div className="space-y-1.5 text-xs text-zinc-700">
-                      <div className="flex items-center justify-between">
-                        <span className="text-zinc-400">Vehicule</span>
-                        <span className="font-semibold capitalize">{sd.vehicleType || "Moto"}</span>
-                      </div>
-                      {sd.vehiclePlate && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-400">Plaque</span>
-                          <span className="font-semibold">{sd.vehiclePlate}</span>
-                        </div>
-                      )}
-                      {sd.driverLicense && (/* N° pièce d'identité */
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-400">Pièce d'identité</span>
-                          <span className="font-semibold">{sd.driverLicense}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-zinc-400">Commission</span>
-                        <span className="font-semibold">{sd.commissionRate || 15}%</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-zinc-400">Email</span>
-                        <span className="font-semibold text-[10px] truncate ml-2">{sd.email}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] text-zinc-500 mb-2 font-semibold">ACTIONS RAPIDES</p>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      <button onClick={() => setShowAlarmModal(sd)} data-testid="button-alarm-driver"
-                        className="flex flex-col items-center gap-1 p-2 rounded-xl bg-red-50 hover:bg-red-100 transition-colors" title="Alarme">
-                        <Bell size={16} className="text-red-600" />
-                        <span className="text-[8px] text-red-600 font-semibold">Alarme</span>
-                      </button>
-                      <button onClick={() => startEdit(sd)} data-testid="button-edit-selected"
-                        className="flex flex-col items-center gap-1 p-2 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors" title="Modifier">
-                        <Edit size={16} className="text-blue-600" />
-                        <span className="text-[8px] text-blue-600 font-semibold">Modifier</span>
-                      </button>
-                      <button onClick={() => handleBlock(sd.id, sd.isBlocked)} data-testid="button-block-selected"
-                        className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${sd.isBlocked ? "bg-green-50 hover:bg-green-100" : "bg-orange-50 hover:bg-orange-100"}`}>
-                        {sd.isBlocked ? <CheckCircle2 size={16} className="text-green-600" /> : <Ban size={16} className="text-orange-600" />}
-                        <span className={`text-[8px] font-semibold ${sd.isBlocked ? "text-green-600" : "text-orange-600"}`}>{sd.isBlocked ? "Debloquer" : "Bloquer"}</span>
-                      </button>
-                      <button onClick={() => handleDelete(sd.id)} data-testid="button-delete-selected"
-                        className="flex flex-col items-center gap-1 p-2 rounded-xl bg-red-50 hover:bg-red-100 transition-colors" title="Supprimer">
-                        <Trash2 size={16} className="text-red-600" />
-                        <span className="text-[8px] text-red-600 font-semibold">Supprimer</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
-                    <p className="text-[10px] text-zinc-500 mb-2 font-semibold">MESSAGE RAPIDE</p>
-                    <div className="flex gap-1.5">
-                      <input type="text" value={chatMessage} onChange={e => setChatMessage(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && sendQuickMessage(sd.id)}
-                        placeholder={`Ecrire a ${sd.name?.split(" ")[0]}...`}
-                        data-testid="quick-chat-input"
-                        className="flex-1 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-rose-500/30" />
-                      <button onClick={() => sendQuickMessage(sd.id)} data-testid="quick-chat-send"
-                        className="w-9 h-9 bg-red-600 text-white rounded-xl flex items-center justify-center hover:bg-red-700 shrink-0">
-                        <Send size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {sdOrders.length > 0 && (
-                    <div className="p-3">
-                      <p className="text-[10px] text-zinc-500 mb-2 font-semibold flex items-center gap-1">
-                        <Package size={10} className="text-orange-600" /> LIVRAISONS EN COURS ({sdOrders.length})
-                      </p>
-                      <div className="space-y-2">
-                        {sdOrders.map(order => (
-                          <div key={order.id} className="bg-zinc-50 rounded-xl p-2.5 border border-zinc-100 dark:border-zinc-800" data-testid={`driver-order-${order.id}`}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-bold text-[10px] text-zinc-900 dark:text-white">{order.orderNumber}</span>
-                              <CountdownTimer estimatedDelivery={order.estimatedDelivery} compact />
-                            </div>
-                            <p className="text-[9px] text-zinc-500 flex items-center gap-1 truncate">
-                              <MapPin size={8} />{order.deliveryAddress}
-                            </p>
-                            <div className="flex items-center justify-between mt-1.5">
-                              <span className="text-[10px] font-bold text-red-600">{formatPrice(order.total)}</span>
-                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-md ${statusColors[order.status]}`}>{statusLabels[order.status]}</span>
-                            </div>
-                            <p className="text-[9px] text-zinc-500 mt-0.5">{formatPaymentMethod(order.paymentMethod)}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sd.lat && sd.lng && (
-                    <div className="p-3 border-t border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[9px] text-zinc-400 flex items-center gap-1">
-                        <Navigation size={9} /> GPS: {sd.lat.toFixed(4)}, {sd.lng.toFixed(4)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center p-6">
-                  <div className="text-center text-zinc-400">
-                    <Truck size={32} className="mx-auto mb-2 opacity-20" />
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Selectionnez un agent</p>
-                    <p className="text-[10px] mt-1">dans la liste pour voir ses details</p>
-                  </div>
-                </div>
-              )}
+            <div className="flex lg:hidden gap-1 mb-3 bg-white rounded-xl p-1 border border-zinc-100 dark:border-zinc-800">
+              {([
+                { key: "list" as const, label: "Liste", icon: Menu },
+                { key: "info" as const, label: "Details", icon: Truck },
+                { key: "map" as const, label: "Carte", icon: Navigation },
+              ]).map(tab => (
+                <button key={tab.key} onClick={() => setMobilePanel(tab.key)} data-testid={`tab-${tab.key}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${mobilePanel === tab.key ? "bg-red-600 text-white shadow-sm" : "text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}>
+                  <tab.icon size={14} />{tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className={`${mobilePanel === "map" ? "flex" : "hidden"} lg:flex flex-1 flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden`}>
-              <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
-                <h3 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
-                  <Navigation size={12} className="text-red-600" /> Carte en temps reel
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-zinc-400">{driversWithLocation.length} visible(s)</span>
-                  {sd?.lat && sd?.lng && (
-                    <span className="text-[9px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-semibold">{sd.name?.split(" ")[0]}</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex-1 relative" style={{ minHeight: 0 }}>
-                <MapContainer
-                  center={sd?.lat && sd?.lng ? [sd.lat, sd.lng] : KINSHASA_CENTER}
-                  zoom={sd?.lat ? 16 : 12}
-                  style={{ height: "100%", width: "100%", position: "absolute", inset: 0 }}
-                  scrollWheelZoom={true}
-                >
-                  <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-                  <MapInvalidateSize />
-                  {sd?.lat && sd?.lng && <MapFlyTo lat={sd.lat} lng={sd.lng} />}
-                  {driversWithLocation.map((d: any) => (
-                    <Marker
-                      key={d.id}
-                      position={[d.lat, d.lng]}
-                      icon={sd?.id === d.id ? driverIcon : onlineIcon}
-                      eventHandlers={{ click: () => selectDriver(d) }}
-                    >
-                      <Popup>
-                        <div className="text-xs min-w-[120px]">
-                          <p className="font-bold text-sm">{d.name}</p>
-                          <p className="text-zinc-500 dark:text-zinc-400">{d.phone}</p>
-                          <p className="capitalize text-zinc-400">{d.vehicleType || "Moto"}</p>
-                          {getDriverActiveOrders(d.id).length > 0 && (
-                            <p className="text-orange-600 font-semibold mt-1">{getDriverActiveOrders(d.id).length} livraison(s)</p>
-                          )}
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-                </MapContainer>
-              </div>
-            </div>
+            {showForm && (
+              <DriverFormModal
+                editingDriver={editingDriver}
+                onClose={() => { setShowForm(false); setEditingDriver(null); }}
+              />
+            )}
 
-            <div className={`${mobilePanel === "list" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden`}>
-              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 space-y-2 shrink-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-zinc-900 dark:text-white">Agents ({filteredDrivers.length})</h3>
-                  <button onClick={() => { setShowForm(true); setEditingDriver(null); setForm({ name: "", email: "", phone: "", password: "", vehicleType: "moto", vehiclePlate: "", driverLicense: "", commissionRate: 15 }); }}
-                    data-testid="button-add-driver" className="bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-700 shadow-lg shadow-red-200">
-                    <Plus size={14} />
-                  </button>
-                </div>
-                <div className="relative">
-                  <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                  <input type="text" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)}
-                    data-testid="search-drivers" className="w-full pl-8 pr-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-rose-500/30" />
-                </div>
-                <div className="flex gap-1 flex-wrap">
-                  {filterButtons.map(f => (
-                    <button key={f.key} onClick={() => setFilter(f.key)} data-testid={`filter-${f.key}`}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition-all ${filter === f.key ? f.active : f.idle}`}>
-                      {f.label} {statusCounts[f.key]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {filteredDrivers.map((d: any) => {
-                  const status = getDriverStatus(d);
-                  const active = getDriverActiveOrders(d.id);
-                  const isSelected = sd?.id === d.id;
+            {showAlarmModal && (
+              <AlarmModal
+                driver={showAlarmModal}
+                reason={alarmReason}
+                onReasonChange={setAlarmReason}
+                onSend={sendAlarm}
+                onClose={() => { setShowAlarmModal(null); setAlarmReason(""); }}
+              />
+            )}
 
-                  return (
-                    <div
-                      key={d.id}
-                      onClick={() => selectDriver(d)}
-                      data-testid={`driver-card-${d.id}`}
-                      className={`px-3 py-2.5 border-b border-gray-50 cursor-pointer transition-all hover:bg-zinc-50 ${isSelected ? "bg-red-50 border-l-[3px] border-l-red-600" : ""}`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="relative shrink-0">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            status === "busy" ? "bg-orange-100" : status === "online" ? "bg-green-100" : status === "blocked" ? "bg-red-100" : "bg-zinc-100"
-                          }`}>
-                            <Truck size={14} className={
-                              status === "busy" ? "text-orange-600" : status === "online" ? "text-green-600" : status === "blocked" ? "text-red-600" : "text-zinc-400"
-                            } />
-                          </div>
-                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-[1.5px] border-white ${
-                            status === "busy" ? "bg-orange-500" : status === "online" ? "bg-green-500" : status === "blocked" ? "bg-red-500" : "bg-zinc-400"
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <p className="font-bold text-xs text-zinc-900 truncate">{d.name}</p>
-                            <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
-                              status === "busy" ? "bg-orange-100 text-orange-700" :
-                              status === "online" ? "bg-green-100 text-green-700" :
-                              status === "blocked" ? "bg-red-100 text-red-700" :
-                              "bg-zinc-100 text-zinc-500 dark:text-zinc-400"
-                            }`}>
-                              {status === "busy" ? "OCCUPE" : status === "online" ? "DISPO" : status === "blocked" ? "BLOQUE" : "OFF"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-[9px] text-zinc-400 capitalize">{d.vehicleType || "Moto"}</span>
-                            <span className="text-[9px] text-zinc-400">{d.phone}</span>
-                          </div>
-                          {active.length > 0 && (
-                            <div className="flex items-center gap-1.5 mt-1">
-                              <span className="text-[9px] text-orange-600 font-semibold">{active.length} cmd</span>
-                              {active[0]?.estimatedDelivery && (
-                                <CountdownTimer estimatedDelivery={active[0].estimatedDelivery} compact />
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
+            <div className="flex gap-3" style={{ height: "calc(100vh - 340px)", minHeight: 400 }}>
+              <div className={`${mobilePanel === "info" ? "flex" : "hidden"} lg:flex w-full lg:w-[280px] xl:w-[300px] shrink-0 flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden`}>
+                {sd ? (
+                  <DriverDetailPanel
+                    driver={sd}
+                    activeOrders={sdOrders}
+                    deliveredOrders={sdDelivered}
+                    getDriverStatus={getDriverStatus}
+                    chatMessage={chatMessage}
+                    onChatChange={setChatMessage}
+                    onSendChat={() => sendQuickMessage(sd.id)}
+                    onAlarm={() => setShowAlarmModal(sd)}
+                    onEdit={() => startEdit(sd)}
+                    onBlock={() => handleBlock(sd.id, sd.isBlocked)}
+                    onDelete={() => handleDelete(sd.id)}
+                    onBack={() => { setSelectedDriver(null); setMobilePanel("list"); }}
+                  />
+                ) : (
+                  <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="text-center text-zinc-400">
+                      <Truck size={32} className="mx-auto mb-2 opacity-20" />
+                      <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Selectionnez un agent</p>
+                      <p className="text-[10px] mt-1">dans la liste pour voir ses details</p>
                     </div>
-                  );
-                })}
-                {filteredDrivers.length === 0 && (
-                  <div className="text-center py-12 text-zinc-400">
-                    <Truck size={28} className="mx-auto mb-2 opacity-20" />
-                    <p className="text-xs font-medium">Aucun agent trouve</p>
                   </div>
                 )}
               </div>
+
+              <div className={`${mobilePanel === "map" ? "flex" : "hidden"} lg:flex flex-1 flex-col bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden`}>
+                <div className="px-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between shrink-0">
+                  <h3 className="font-bold text-xs text-zinc-900 flex items-center gap-2">
+                    <Navigation size={12} className="text-red-600" /> Carte en temps reel
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-zinc-400">{driversWithLocation.length} visible(s)</span>
+                    {sd?.lat && sd?.lng && (
+                      <span className="text-[9px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-semibold">{sd.name?.split(" ")[0]}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 relative" style={{ minHeight: 0 }}>
+                  <MapContainer
+                    center={sd?.lat && sd?.lng ? [sd.lat, sd.lng] : KINSHASA_CENTER}
+                    zoom={sd?.lat ? 16 : 12}
+                    style={{ height: "100%", width: "100%", position: "absolute", inset: 0 }}
+                    scrollWheelZoom={true}
+                  >
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+                    <MapInvalidateSize />
+                    {sd?.lat && sd?.lng && <MapFlyTo lat={sd.lat} lng={sd.lng} />}
+                    {driversWithLocation.map((d: any) => (
+                      <Marker key={d.id} position={[d.lat, d.lng]} icon={sd?.id === d.id ? driverIcon : onlineIcon}
+                        eventHandlers={{ click: () => selectDriver(d) }}>
+                        <Popup>
+                          <div className="text-xs min-w-[120px]">
+                            <p className="font-bold text-sm">{d.name}</p>
+                            <p className="text-zinc-500 dark:text-zinc-400">{d.phone}</p>
+                            <p className="capitalize text-zinc-400">{d.vehicleType || "Moto"}</p>
+                            {getDriverActiveOrders(d.id).length > 0 && (
+                              <p className="text-orange-600 font-semibold mt-1">{getDriverActiveOrders(d.id).length} livraison(s)</p>
+                            )}
+                          </div>
+                        </Popup>
+                      </Marker>
+                    ))}
+                  </MapContainer>
+                </div>
+              </div>
+
+              <DriverListSidebar
+                visible={mobilePanel === "list"}
+                filteredDrivers={filteredDrivers}
+                selectedDriverId={sd?.id ?? null}
+                search={search}
+                onSearchChange={setSearch}
+                filter={filter}
+                onFilterChange={setFilter}
+                filterButtons={filterButtons}
+                statusCounts={statusCounts}
+                getDriverStatus={getDriverStatus}
+                getDriverActiveOrders={getDriverActiveOrders}
+                onSelect={selectDriver}
+                onAdd={() => { setShowForm(true); setEditingDriver(null); }}
+              />
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
       </TabContent>
     </AdminLayout>
   );

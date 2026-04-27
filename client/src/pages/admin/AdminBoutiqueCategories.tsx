@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "../../lib/queryClient";
 import AdminLayout from "../../components/AdminLayout";
-import { Plus, Pencil, Trash2, GripVertical, X } from "lucide-react";
+import { Plus, Pencil, Trash2, GripVertical, X, Tag } from "lucide-react";
+import { AppSkeleton } from "../../design-system/primitives";
+import { EmptyState } from "../../components/admin/AdminUI";
 
 interface BoutiqueCategory {
   id: number;
@@ -142,7 +144,7 @@ export default function AdminBoutiqueCategories() {
         </div>
 
         {showForm && (
-          <div className="bg-white dark:bg-[#141417] rounded-2xl p-6 mb-6 border border-gray-100 dark:border-gray-800/50 shadow-sm">
+          <div className="bg-white dark:bg-display-panel rounded-2xl p-6 mb-6 border border-gray-100 dark:border-gray-800/50 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-gray-900 dark:text-white">
                 {editing ? "Modifier la catégorie" : "Nouvelle catégorie"}
@@ -226,24 +228,27 @@ export default function AdminBoutiqueCategories() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white dark:bg-[#141417] rounded-2xl p-4 animate-pulse">
+              <div key={i} className="bg-white dark:bg-display-panel rounded-2xl p-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-800 rounded-xl" />
-                  <div className="flex-1"><div className="h-4 w-32 bg-gray-200 dark:bg-gray-800 rounded-full" /></div>
+                  <AppSkeleton className="w-12 h-12 rounded-xl" />
+                  <div className="flex-1"><AppSkeleton className="h-4 w-32 rounded-full" /></div>
                 </div>
               </div>
             ))}
           </div>
         ) : categories.length === 0 ? (
-          <div className="bg-white dark:bg-[#141417] rounded-2xl p-10 text-center border border-gray-100 dark:border-gray-800/50">
-            <p className="text-gray-400 text-sm">Aucune catégorie de boutique</p>
-            <p className="text-xs text-gray-300 dark:text-gray-600 mt-1">Ajoutez des catégories comme Supermarché, Pharmacie, Mode...</p>
+          <div className="bg-white dark:bg-display-panel rounded-2xl border border-gray-100 dark:border-gray-800/50">
+            <EmptyState
+              icon={Tag}
+              title="Aucune catégorie de boutique"
+              description="Ajoutez des catégories comme Supermarché, Pharmacie, Mode..."
+            />
           </div>
         ) : (
           <div className="space-y-2">
             {[...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)).map(cat => (
               <div key={cat.id}
-                className={`bg-white dark:bg-[#141417] rounded-2xl px-5 py-4 flex items-center gap-4 border transition-all ${cat.isActive ? "border-gray-100 dark:border-gray-800/50" : "border-gray-100 dark:border-gray-800/50 opacity-50"}`}
+                className={`bg-white dark:bg-display-panel rounded-2xl px-5 py-4 flex items-center gap-4 border transition-all ${cat.isActive ? "border-gray-100 dark:border-gray-800/50" : "border-gray-100 dark:border-gray-800/50 opacity-50"}`}
                 data-testid={`boutique-category-${cat.id}`}>
                 <GripVertical size={16} className="text-gray-300 dark:text-gray-600 flex-shrink-0" />
                 <div className="w-11 h-11 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">

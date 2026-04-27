@@ -20,25 +20,11 @@ function cx(...c: (string | undefined | false | null)[]): string {
   return c.filter(Boolean).join(" ");
 }
 
-/* ── Design tokens client (backward compat) ─────────────────────────────── */
-export const ct = {
-  red:            "#E10000",
-  redLight:       "#FEE2E2",
-  redDark:        "#B91C1C",
-  bg:             "#f4f4f4",
-  bgDark:         "#0a0a0a",
-  surface:        "#ffffff",
-  surfaceDark:    "#141414",
-  border:         "rgba(0,0,0,0.07)",
-  borderDark:     "rgba(255,255,255,0.08)",
-  textPrimary:    "#111111",
-  textPrimaryDark:"#f5f5f5",
-  textSecondary:  "#666666",
-  textSecondaryDark: "#999999",
-  textMuted:      "#aaaaaa",
-  textMutedDark:  "#555555",
-  radius: { xs: 8, sm: 12, md: 16, lg: 20, xl: 24, full: 9999 },
-} as const;
+/* ── Design tokens client ──────────────────────────────────────────────────
+ * Note : l'ancienne table `ct` (rouge/bg/textPrimary…) est dépréciée.
+ * Toutes les valeurs vivent désormais dans `design-system/tokens.ts`
+ * (palette, status, surface, text, brand) et dans tailwind.config.ts (`brand-*`).
+ * ────────────────────────────────────────────────────────────────────────── */
 
 /* ── MBadge variant → StatusVariant mapping ─────────────────────────────── */
 type MBadgeVariant = "red" | "green" | "amber" | "blue" | "gray" | "cyan";
@@ -249,15 +235,17 @@ export function RestaurantCard({ r, onClick, promoLabel }: RestaurantCardProps) 
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
           {(promoLabel || (r.discountPercent && r.discountPercent > 0)) && (
             <div
-              className="absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1"
-              style={{ fontSize: 10, fontWeight: 800, background: promoLabel ? "#E10000" : "#10b981", color: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
+              className={cx(
+                "absolute top-3 left-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-white text-[10px] font-extrabold shadow-[0_2px_8px_rgba(0,0,0,0.25)]",
+                promoLabel ? "bg-brand-500" : "bg-emerald-500",
+              )}
             >
               <Tag size={9} /> {promoLabel || `-${r.discountPercent}%`}
             </div>
           )}
           {r.isFeatured && !promoLabel && (
-            <div className="absolute top-3 right-3 flex items-center gap-1 bg-amber-500 text-white rounded-full px-2.5 py-1" style={{ fontSize: 9.5, fontWeight: 800, boxShadow: "0 2px 8px rgba(245,158,11,0.4)" }}>
-              <Star size={8} className="fill-white text-white" /> Partenaire
+            <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/90 text-amber-700 dark:text-amber-300 rounded-full px-2.5 py-1 backdrop-blur-sm border border-amber-200/70 dark:border-amber-800/40" style={{ fontSize: 9.5, fontWeight: 800, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+              <Star size={8} className="fill-amber-500 text-amber-500" /> Partenaire
             </div>
           )}
           {!r.isActive && (
@@ -316,7 +304,7 @@ export function BoutiqueCard({ b, onClick }: { b: Restaurant; onClick: () => voi
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       data-testid={`boutique-card-${b.id}`}
-      className="flex-shrink-0 bg-white dark:bg-[#141414] rounded-[18px] overflow-hidden text-left shadow-ds-xs"
+      className="flex-shrink-0 bg-white dark:bg-zinc-900 rounded-[18px] overflow-hidden text-left shadow-ds-xs"
       style={{ width: 148, border: "1px solid rgba(0,0,0,0.05)" }}
     >
       <div className="relative h-[108px]">
@@ -355,11 +343,11 @@ export function MPill({ active, onClick, children, testId }: {
         "flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full font-semibold transition-colors",
         active
           ? "bg-brand text-white shadow-ds-brand"
-          : "bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300",
+          : "bg-white dark:bg-zinc-900 text-gray-600 dark:text-gray-300",
       )}
       style={{
         fontSize: 12.5,
-        border: active ? "1.5px solid #E10000" : "1.5px solid transparent",
+        border: active ? "1.5px solid var(--brand-500)" : "1.5px solid transparent",
         boxShadow: active ? undefined : "0 1px 4px rgba(0,0,0,0.06)",
       }}
     >
@@ -376,7 +364,7 @@ export function MPageHeader({ title, onBack, action, subtitle, transparent }: {
 }) {
   return (
     <div
-      className={cx("sticky top-0 z-40 px-4", !transparent && "bg-white dark:bg-[#0a0a0a] border-b border-black/[0.04] dark:border-white/[0.06]")}
+      className={cx("sticky top-0 z-40 px-4", !transparent && "bg-white dark:bg-zinc-950 border-b border-black/[0.04] dark:border-white/[0.06]")}
       style={{ paddingTop: "max(env(safe-area-inset-top), 12px)", paddingBottom: 12 }}
     >
       <div className="max-w-lg mx-auto flex items-center gap-3">
@@ -417,7 +405,7 @@ export function MTabBar({ tabs, active, onSelect }: {
           className={cx(
             "flex-1 py-2 rounded-[11px] font-semibold transition-all duration-200",
             active === tab.key
-              ? "bg-white dark:bg-[#141414] text-gray-900 dark:text-white shadow-ds-xs"
+              ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-ds-xs"
               : "text-gray-400 dark:text-gray-500",
           )}
           style={{ fontSize: 12.5 }}
@@ -438,7 +426,7 @@ export function PromoCard({ r, promoLabel, onClick }: { r: Restaurant; promoLabe
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       data-testid={`promo-card-${r.id}`}
-      className="flex-shrink-0 bg-white dark:bg-[#141414] rounded-[20px] overflow-hidden text-left"
+      className="flex-shrink-0 bg-white dark:bg-zinc-900 rounded-[20px] overflow-hidden text-left"
       style={{ width: 176, boxShadow: "0 4px 20px rgba(0,0,0,0.10)", border: "1px solid rgba(0,0,0,0.05)" }}
     >
       <div className="relative h-[120px]">
@@ -471,7 +459,7 @@ export function BoutiqueGridCard({ b, onClick }: { b: Restaurant; onClick: () =>
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       data-testid={`boutique-grid-card-${b.id}`}
-      className="w-full bg-white dark:bg-[#141414] rounded-[20px] overflow-hidden text-left"
+      className="w-full bg-white dark:bg-zinc-900 rounded-[20px] overflow-hidden text-left"
       style={{ boxShadow: "0 2px 14px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.05)" }}
     >
       <div className="relative h-[110px]">
@@ -512,14 +500,14 @@ export function FeaturedRestaurantCard({ r, onClick }: { r: Restaurant; onClick:
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       data-testid={`featured-card-${r.id}`}
-      className="flex-shrink-0 bg-white dark:bg-[#141414] rounded-[22px] overflow-hidden text-left"
+      className="flex-shrink-0 bg-white dark:bg-zinc-900 rounded-[22px] overflow-hidden text-left"
       style={{ width: 210, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", border: "1px solid rgba(0,0,0,0.04)" }}
     >
       <div className="relative h-[136px]">
         <img src={resolveImg(r.image)} alt={r.name} className="w-full h-full object-cover" loading="lazy" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-amber-500 text-white font-black rounded-full px-2.5 py-1" style={{ fontSize: 9, boxShadow: "0 2px 8px rgba(245,158,11,0.5)" }}>
-          <Star size={8} className="fill-white text-white" /> Coup de cœur
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-white/95 dark:bg-zinc-900/90 text-amber-700 dark:text-amber-300 font-black rounded-full px-2.5 py-1 backdrop-blur-sm border border-amber-200/70 dark:border-amber-800/40" style={{ fontSize: 9, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
+          <Star size={8} className="fill-amber-500 text-amber-500" /> Coup de cœur
         </div>
         <div className="absolute bottom-0 left-0 right-0 px-3 pb-2.5 flex items-end justify-between">
           <div className="flex items-center gap-1.5 min-w-0">
@@ -597,10 +585,10 @@ export function ServiceCategoryItem({ name, imageUrl, emoji, active, onClick, te
       <div
         className={cx(
           "w-14 h-14 rounded-[18px] overflow-hidden flex items-center justify-center transition-all",
-          active && "ring-2 ring-brand ring-offset-2 ring-offset-white dark:ring-offset-[#0a0a0a]",
+          active && "ring-2 ring-brand ring-offset-2 ring-offset-white dark:ring-offset-zinc-950",
         )}
         style={{
-          background: imageUrl ? undefined : "linear-gradient(135deg, #f4f4f4, #e8e8e8)",
+          background: imageUrl ? undefined : "linear-gradient(135deg, rgb(244,244,244), rgb(232,232,232))",
           boxShadow: active ? "0 4px 16px rgba(225,0,0,0.2)" : "0 2px 8px rgba(0,0,0,0.08)",
         }}
       >
@@ -641,7 +629,7 @@ export function BottomSheet({ open, onClose, children, title }: {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 340 }}
-            className="w-full max-w-lg bg-white dark:bg-[#1a1a1a] rounded-t-[28px] overflow-hidden"
+            className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-t-[28px] overflow-hidden"
             style={{ boxShadow: "0 -8px 48px rgba(0,0,0,0.2)" }}
             onClick={e => e.stopPropagation()}
           >

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { X, Plus, Minus } from "lucide-react";
+import { motion } from "framer-motion";
 import { apiRequest, queryClient, authFetchJson } from "../../../lib/queryClient";
 import { useToast } from "../../../hooks/use-toast";
 import { formatPrice, statusLabels, paymentLabels } from "../../../lib/utils";
 import { getDevicePlatform } from "../../../lib/notify";
+import { backdropVariants, scaleInVariants } from "../../../lib/motion";
 import type { Restaurant, MenuItem } from "@shared/schema";
 
 type DeliveryZone = { id: number; name: string; fee: number; color: string; isActive: boolean };
@@ -169,9 +171,20 @@ export default function NewOrderModal({ isOpen, onClose, restaurants, deliveryZo
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" data-testid="modal-new-order">
-      <div className="bg-white dark:bg-[#18181f] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[96vh] overflow-y-auto mx-0 sm:mx-4">
-        <div className="sticky top-0 bg-white dark:bg-[#18181f] px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 rounded-t-3xl z-10">
+    <motion.div
+      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+      data-testid="modal-new-order"
+      variants={backdropVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div
+        className="bg-white dark:bg-display-overlay rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[96vh] overflow-y-auto mx-0 sm:mx-4"
+        variants={scaleInVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <div className="sticky top-0 bg-white dark:bg-display-overlay px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2 rounded-t-3xl z-10">
           <div>
             <h2 className="text-base font-black text-zinc-900 dark:text-white">Nouvelle commande admin</h2>
             <p className="text-xs text-zinc-400">Liberté totale — tous les champs sont éditables</p>
@@ -485,7 +498,7 @@ export default function NewOrderModal({ isOpen, onClose, restaurants, deliveryZo
             )}
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

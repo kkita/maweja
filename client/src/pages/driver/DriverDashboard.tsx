@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson } from "../../lib/queryClient";
 import DriverNav from "../../components/DriverNav";
-import { DSkeletonCard, DBtn } from "../../components/driver/DriverUI";
+import { DSkeletonCard, DBtn, DEmptyState } from "../../components/driver/DriverUI";
 import {
   Power, MapPin, Navigation, AlertCircle, ChevronRight,
   Package, CheckCircle2, DollarSign, Clock, Zap, Wifi, WifiOff, TrendingUp,
@@ -241,13 +241,11 @@ export default function DriverDashboard() {
 
         {/* ── Waiting state ─────────────────────────────────────────────── */}
         {isOnline && !isLoading && activeOrders.length === 0 && availablePending.length === 0 && (
-          <div className="rounded-3xl p-8 flex flex-col items-center text-center bg-driver-surface border border-driver-border">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-driver-green/12">
-              <Clock size={28} className="text-driver-green" />
-            </div>
-            <p className="font-black text-lg text-driver-text mb-2">En attente de commandes</p>
-            <p className="text-sm text-driver-muted">Vous serez notifié dès qu'une commande est disponible</p>
-          </div>
+          <DEmptyState
+            icon={Clock}
+            title="En attente de commandes"
+            description="Vous serez notifié dès qu'une commande est disponible"
+          />
         )}
 
         {/* ── Quick link to earnings ─────────────────────────────── */}

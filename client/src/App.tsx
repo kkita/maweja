@@ -117,6 +117,45 @@ function AppRoutes() {
     return onWSMessage(handleWSEvent);
   }, []);
 
+  // Invalidation temps-réel des caches admin (Dashboard, Orders, Chat, Customers)
+  // dès qu'un événement WS pertinent arrive — KPI et listes se mettent à jour
+  // sans rechargement.
+  useEffect(() => {
+    if (user?.role !== "admin") return;
+    return onWSMessage((data) => {
+      if (!data || typeof data !== "object") return;
+      switch (data.type) {
+        case "new_order":
+        case "order_updated":
+        case "order_status":
+        case "order_assigned":
+        case "order_picked_up":
+        case "order_cancelled":
+        case "driver_accepted_order":
+        case "driver_refused_order":
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/finance"] });
+          break;
+        case "chat_message":
+        case "notification":
+          queryClient.invalidateQueries({ queryKey: ["/api/chat"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+          break;
+        case "new_user":
+        case "driver_verification":
+          queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/drivers"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+          break;
+        case "new_service_request":
+        case "service_update":
+          queryClient.invalidateQueries({ queryKey: ["/api/service-requests"] });
+          break;
+      }
+    });
+  }, [user?.role]);
+
   // Reconnexion WS sur retour au premier plan (mobile natif + onglet web)
   useEffect(() => {
     if (!user?.id) return;

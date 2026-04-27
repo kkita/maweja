@@ -7,6 +7,7 @@ import { ArrowLeft, MapPin, Trash2, Star, Plus, Home, Briefcase, Church, MoreHor
 import { apiRequest, queryClient } from "../../lib/queryClient";
 import type { SavedAddress } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { AppEmptyState } from "../../design-system/primitives";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -259,9 +260,14 @@ export default function AddressPage() {
         )}
 
         {!isLoading && addresses.length === 0 && (
-          <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-6" data-testid="text-no-addresses">
-            Aucune adresse sauvegardee. Touchez la carte pour en ajouter.
-          </p>
+          <div data-testid="text-no-addresses">
+            <AppEmptyState
+              icon={MapPin}
+              title="Aucune adresse sauvegardee"
+              description="Touchez la carte pour en ajouter."
+              size="sm"
+            />
+          </div>
         )}
 
         {addresses.map((addr) => (

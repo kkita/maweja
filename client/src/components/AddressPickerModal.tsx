@@ -109,10 +109,10 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
         {/* ── Header ─────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#FEE2E2" }}>
-              <MapPin size={15} style={{ color: "#EC0000" }} />
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-brand-100 dark:bg-brand-500/15">
+              <MapPin size={15} className="text-brand-500" />
             </div>
-            <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 16 }}>
+            <p className="font-bold text-gray-900 dark:text-white text-base">
               Adresse de livraison
             </p>
           </div>
@@ -129,12 +129,12 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
         <div className="flex gap-2 px-5 pb-3 flex-shrink-0">
           <button
             onClick={() => setTab("map")}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            style={{
-              background: tab === "map" ? "#EC0000" : "transparent",
-              color: tab === "map" ? "white" : "#6B7280",
-              border: tab === "map" ? "none" : "1.5px solid #E5E7EB",
-            }}
+            className={[
+              "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+              tab === "map"
+                ? "bg-brand-500 text-white border-transparent"
+                : "bg-transparent text-gray-500 dark:text-gray-400 border-[1.5px] border-gray-200 dark:border-zinc-700",
+            ].join(" ")}
             data-testid="tab-map"
           >
             <Navigation size={14} />
@@ -142,12 +142,12 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
           </button>
           <button
             onClick={() => setTab("text")}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all"
-            style={{
-              background: tab === "text" ? "#EC0000" : "transparent",
-              color: tab === "text" ? "white" : "#6B7280",
-              border: tab === "text" ? "none" : "1.5px solid #E5E7EB",
-            }}
+            className={[
+              "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all",
+              tab === "text"
+                ? "bg-brand-500 text-white border-transparent"
+                : "bg-transparent text-gray-500 dark:text-gray-400 border-[1.5px] border-gray-200 dark:border-zinc-700",
+            ].join(" ")}
             data-testid="tab-text"
           >
             <Keyboard size={14} />
@@ -201,8 +201,7 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
               onChange={e => setAddressText(e.target.value)}
               placeholder="Ex: Avenue Kasa-Vubu, Gombe, Kinshasa&#10;Quartier Matonge, Commune de Kalamu..."
               rows={4}
-              className="w-full px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 resize-none"
-              style={{ caretColor: "#EC0000" }}
+              className="w-full px-4 py-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 resize-none caret-brand-500"
               data-testid="input-address-text-modal"
             />
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
@@ -214,11 +213,8 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
         {/* ── Address detected bar (shown on map tab) ─────────────────── */}
         {tab === "map" && (
           <div className="flex-shrink-0 px-5 pt-3">
-            <div
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl"
-              style={{ background: "#F9FAFB", border: "1.5px solid #E5E7EB" }}
-            >
-              <MapPin size={16} style={{ color: "#EC0000", flexShrink: 0 }} />
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gray-50 dark:bg-zinc-800/60 border-[1.5px] border-gray-200 dark:border-zinc-700">
+              <MapPin size={16} className="text-brand-500 flex-shrink-0" />
               {loading ? (
                 <span className="text-xs text-gray-400 animate-pulse flex-1">Détection de l'adresse…</span>
               ) : (
@@ -235,8 +231,7 @@ export default function AddressPickerModal({ initialAddress = "", onConfirm, onC
           <button
             onClick={handleConfirm}
             disabled={!addressText.trim() || loading}
-            className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 active:scale-[0.98]"
-            style={{ background: "#EC0000" }}
+            className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 active:scale-[0.98] bg-brand-500 shadow-[0_4px_16px_rgba(225,0,0,0.3)]"
             data-testid="button-confirm-address-map"
           >
             <Check size={16} />

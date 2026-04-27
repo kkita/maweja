@@ -1,8 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import Lottie from "lottie-react";
 import { useI18n, type Lang } from "../lib/i18n";
-import { applySplashBars, syncNativeStatusBar } from "../lib/theme";
+import { applySplashBars } from "../lib/theme";
 
-// ─── Détection native (évaluée une seule fois, jamais rejouée) ───────────────
+// JSON de l'animation Maweja (~575 KB, 150 frames @ 30 fps = 5 s) — bundlé une
+// seule fois, partagé par les deux apps mobiles (client + driver) via le webDir
+// Capacitor. Import relatif : alias TS et alias Vite divergent sur `@assets`.
+import lottieData from "../assets/maweja-splash.json";
+
+// ─── Détection native (évaluée une seule fois) ───────────────────────────────
 const IS_NATIVE: boolean =
   typeof window !== "undefined" &&
   !!(window as any).Capacitor?.isNativePlatform?.();
@@ -16,106 +22,57 @@ function removeHtmlSplash() {
   }
   const el = document.getElementById("maweja-native-splash");
   if (el) {
-    el.style.transition = "opacity 0.25s ease";
+    el.style.transition = "opacity 0.20s ease";
     el.style.opacity = "0";
-    setTimeout(() => el.remove(), 280);
+    setTimeout(() => el.remove(), 230);
   }
 }
 
-// ─── Keyframes CSS — injectés une seule fois dans le <head> ─────────────────
-const KEYFRAMES = `
-  @keyframes mwM {
-    0%   { opacity: 0; transform: scale(0.76) translateY(22px); }
-    56%  { opacity: 1; transform: scale(1.045) translateY(-4px); }
-    76%  { transform: scale(0.985) translateY(1px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  @keyframes mwWord {
-    0%   { opacity: 0; transform: translateY(11px) scaleX(0.96); }
-    38%  { opacity: 1; }
-    100% { opacity: 1; transform: translateY(0) scaleX(1); }
-  }
-  @keyframes mwTag {
-    0%   { opacity: 0; }
-    100% { opacity: 1; }
-  }
-`;
-
-let keyframesInjected = false;
-function ensureKeyframes() {
-  if (keyframesInjected) return;
-  keyframesInjected = true;
-  const style = document.createElement("style");
-  style.textContent = KEYFRAMES;
-  document.head.appendChild(style);
-}
-
-// ─── Composant animation premium ─────────────────────────────────────────────
+// ─── Composant animation Lottie plein écran ──────────────────────────────────
 interface MobileSplashAnimProps {
   withFadeOut: boolean;
   onEnd: () => void;
 }
 
 function MobileSplashAnim({ withFadeOut, onEnd }: MobileSplashAnimProps) {
-  const [mIn,  setMIn]  = useState(false);
-  const [wIn,  setWIn]  = useState(false);
-  const [tIn,  setTIn]  = useState(false);
-  const [fade, setFade] = useState(false);
-  const alive = useRef(true);
+  const [tagIn,  setTagIn]  = useState(false);
+  const [fade,   setFade]   = useState(false);
+  const alive    = useRef(true);
+  const ended    = useRef(false);
+
+  const finish = useCallback(() => {
+    if (!alive.current || ended.current) return;
+    ended.current = true;
+    if (withFadeOut) {
+      setFade(true);
+      setTimeout(() => onEnd(), 320);
+    } else {
+      onEnd();
+    }
+  }, [withFadeOut, onEnd]);
 
   useEffect(() => {
-    ensureKeyframes();
     alive.current = true;
     applySplashBars();
 
-    const schedule = (fn: () => void, ms: number) =>
-      setTimeout(() => { if (alive.current) fn(); }, ms);
+    // Tagline apparaît après 1.2 s (pendant que le Lottie joue)
+    const tagT = setTimeout(() => alive.current && setTagIn(true), 1200);
 
-    // ── Séquence précise ──────────────────────────────────────────────────
-    // t=0      : fond rouge affiché (même couleur que splash natif → aucun flash)
-    // t=150ms  : "M" entre — spring 700ms cubic-bezier(0.22,1,0.36,1)
-    // t=800ms  : "MAWEJA" entre — 600ms ease-out (léger overlap avec fin du M)
-    // t=1150ms : tagline entre — 500ms ease
-    // ── Returning user (withFadeOut=true) ────────────────────────────────
-    // t=2100ms : fondu-sortant commence (transition CSS 320ms)
-    // t=2430ms : onEnd() → app
-    // ── New user (withFadeOut=false) ─────────────────────────────────────
-    // t=2200ms : onEnd() → lang picker (fond rouge continu, transition invisible)
+    // ── Timer principal : 5.0 s (durée exacte du Lottie : 150 frames @ 30 fps).
+    // Indépendant de onComplete pour garantir une transition fiable même si la
+    // librairie ne déclenche pas le callback (rare mais constaté en dev/web).
+    const mainT = setTimeout(() => alive.current && finish(), 5000);
 
-    const t1 = schedule(() => setMIn(true),  150);
-    const t2 = schedule(() => setWIn(true),  800);
-    const t3 = schedule(() => setTIn(true),  1150);
-
-    let t4: ReturnType<typeof setTimeout>;
-    let t5: ReturnType<typeof setTimeout>;
-
-    if (withFadeOut) {
-      t4 = schedule(() => setFade(true), 2100);
-      t5 = schedule(onEnd, 2430);
-    } else {
-      t4 = schedule(onEnd, 2200);
-    }
+    // ── Filet de sécurité absolu : 7 s max, jamais d'écran bloqué.
+    const safetyT = setTimeout(() => alive.current && finish(), 7000);
 
     return () => {
       alive.current = false;
-      [t1, t2, t3, t4, t5].forEach(t => t && clearTimeout(t));
+      clearTimeout(tagT);
+      clearTimeout(mainT);
+      clearTimeout(safetyT);
     };
-  }, []); // intentionnellement vide — l'animation ne se rejoue jamais
-
-  // Styles dynamiques sans conflit opacity/animation
-  // fill-mode "both" → 0% du keyframe appliqué immédiatement (opacity:0)
-  // → aucun flash entre l'état caché et le début de l'animation
-  const mStyle: React.CSSProperties = mIn
-    ? { animation: "mwM 0.70s cubic-bezier(0.22, 1, 0.36, 1) both", willChange: "transform, opacity" }
-    : { opacity: 0 };
-
-  const wStyle: React.CSSProperties = wIn
-    ? { animation: "mwWord 0.60s cubic-bezier(0.25, 0.46, 0.45, 0.94) both", willChange: "transform, opacity" }
-    : { opacity: 0 };
-
-  const tStyle: React.CSSProperties = tIn
-    ? { animation: "mwTag 0.50s ease both", willChange: "opacity" }
-    : { opacity: 0 };
+  }, [finish]);
 
   return (
     <div
@@ -126,66 +83,59 @@ function MobileSplashAnim({ withFadeOut, onEnd }: MobileSplashAnimProps) {
         inset: 0,
         backgroundColor: "#EC0000",
         zIndex: 9999,
-        // Centrage géométrique parfait — indépendant des safe areas
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        // Fondu sortant global
         opacity: fade ? 0 : 1,
         transition: fade ? "opacity 0.32s ease" : "none",
         willChange: "opacity",
-        // Blocage des interactions
         userSelect: "none",
         WebkitUserSelect: "none",
         WebkitTapHighlightColor: "transparent",
-        // Pas de padding ici → centrage au cœur exact de l'écran
+        overflow: "hidden",
       }}
     >
-      {/* ── Centre : M + MAWEJA ────────────────────────────────────────────── */}
+      {/* ── Lottie Maweja centré, plein cadre carré responsive ─────────────── */}
       <div
         style={{
+          width:  "min(78vw, 380px)",
+          height: "min(78vw, 380px)",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          gap: 16,
-          // translateZ force la couche GPU dès le départ — zéro jank au premier frame
+          justifyContent: "center",
           transform: "translateZ(0)",
         }}
       >
-        {/* Logo M MAWEJA (vrai logo, pas une lettre) ───────────────────── */}
-        <div style={mStyle}>
-          <img
-            src="/maweja-splash-logo.png"
-            alt="MAWEJA"
-            draggable={false}
-            style={{
-              display: "block",
-              width: 168,
-              height: 168,
-              objectFit: "contain",
-              filter: "drop-shadow(0 12px 28px rgba(0,0,0,0.28))",
-              userSelect: "none",
-              WebkitUserSelect: "none",
-              pointerEvents: "none",
-            }}
-          />
-        </div>
-
-        {/* Wordmark retiré — le logo contient déjà "Maweja" */}
+        <Lottie
+          animationData={lottieData}
+          loop={false}
+          autoplay
+          onComplete={finish}
+          rendererSettings={{
+            preserveAspectRatio: "xMidYMid meet",
+            progressiveLoad: true,
+          }}
+          style={{
+            width:  "100%",
+            height: "100%",
+            filter: "drop-shadow(0 12px 28px rgba(0,0,0,0.22))",
+            pointerEvents: "none",
+          }}
+        />
       </div>
 
-      {/* ── Tagline bas — respecte la safe area iOS ─────────────────────────── */}
+      {/* ── Tagline bas, respecte la safe area iOS ─────────────────────────── */}
       <div
         style={{
           position: "absolute",
-          // max() entre la valeur fixe et la safe area iOS (Dynamic Island, etc.)
           bottom: "max(24px, env(safe-area-inset-bottom, 24px))",
           left: 0,
           right: 0,
           display: "flex",
           justifyContent: "center",
-          ...tStyle,
+          opacity: tagIn ? 1 : 0,
+          transition: "opacity 0.55s ease",
         }}
       >
         <span
@@ -238,34 +188,12 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
     }
   }, [hasChosenLanguage, onDone]);
 
-  // ── Timer web uniquement (natif géré par MobileSplashAnim) ───────────────
-  useEffect(() => {
-    if (phase !== "anim" || IS_NATIVE) return;
-    const delay = hasChosenLanguage ? 350 : 1500;
-    const t = setTimeout(() => {
-      if (mounted.current && !hasEnded.current) goNext();
-    }, delay);
-    return () => clearTimeout(t);
-  }, [phase, goNext, hasChosenLanguage]);
-
-  // ── Phase anim — mobile natif ─────────────────────────────────────────────
-  if (phase === "anim" && IS_NATIVE) {
+  // ── Phase anim — Lottie plein écran (mobile + web même expérience) ────────
+  if (phase === "anim") {
     return (
       <MobileSplashAnim
         withFadeOut={hasChosenLanguage}
         onEnd={goNext}
-      />
-    );
-  }
-
-  // ── Phase anim — web (fond rouge rapide, aucune animation) ───────────────
-  if (phase === "anim") {
-    return (
-      <div
-        className="fixed inset-0"
-        style={{ backgroundColor: "#EC0000", zIndex: 9998 }}
-        onClick={goNext}
-        data-testid="splash-root"
       />
     );
   }

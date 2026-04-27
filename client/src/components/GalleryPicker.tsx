@@ -162,7 +162,7 @@ export default function GalleryPicker({ open, onClose, onSelect, filter = "all" 
                   </div>
 
                   <div className="absolute top-1 left-1">
-                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded-full ${file.type === "video" ? "bg-purple-600 text-white" : "bg-blue-600 text-white"}`}>
+                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded-full border ${file.type === "video" ? "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900/40" : "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/40"}`}>
                       {file.type === "video" ? "VID" : "IMG"}
                     </span>
                   </div>

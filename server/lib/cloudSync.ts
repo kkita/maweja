@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { objectStorageClient } from "../replit_integrations/object_storage";
+import { logger } from "./logger";
 
 const uploadsDir = path.join(process.cwd(), "uploads");
 
@@ -31,16 +32,16 @@ export async function normalizeUploadUrls(): Promise<void> {
       fixed += r.rowCount || 0;
     }
     await pool.end();
-    if (fixed > 0) console.log(`🔧 Normalized ${fixed} absolute upload URLs → relative paths`);
+    if (fixed > 0) logger.info(`🔧 Normalized ${fixed} absolute upload URLs → relative paths`);
   } catch (err) {
-    console.error("URL normalization error:", err);
+    logger.error("URL normalization error", err);
   }
 }
 
 export async function syncLocalUploadsToCloud(): Promise<void> {
   const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
   if (!bucketId) {
-    console.log("⚠️ Object Storage non configuré, images locales uniquement");
+    logger.warn("Object Storage non configuré, images locales uniquement");
     return;
   }
   try {
@@ -65,11 +66,11 @@ export async function syncLocalUploadsToCloud(): Promise<void> {
         await bucket.upload(filePath, { destination: destPath, metadata: { contentType: mimeMap[ext] || 'application/octet-stream' } });
         uploaded++;
       } catch (err) {
-        console.error(`❌ Sync failed for ${filename}:`, err);
+        logger.error(`Sync failed for ${filename}`, err);
       }
     }
 
-    if (uploaded > 0) console.log(`☁️ ${uploaded} images synchronisées vers le cloud`);
+    if (uploaded > 0) logger.info(`☁️ ${uploaded} images synchronisées vers le cloud`);
 
     const { Pool } = await import("pg");
     const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -97,8 +98,8 @@ export async function syncLocalUploadsToCloud(): Promise<void> {
       }
     }
     await pool.end();
-    if (updated > 0) console.log(`🔗 ${updated} URLs mises à jour vers le cloud`);
+    if (updated > 0) logger.info(`🔗 ${updated} URLs mises à jour vers le cloud`);
   } catch (err) {
-    console.error("❌ Cloud sync error:", err);
+    logger.error("Cloud sync error", err);
   }
 }

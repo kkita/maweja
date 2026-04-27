@@ -25,6 +25,15 @@
     --ring: 0 84% 50%;
     --radius: 0.75rem;
 
+    /* ── MAWEJA brand ── */
+    --brand:        #E10000;  /* canonique */
+    --brand-50:     #fef2f2;
+    --brand-100:    #fee2e2;
+    --brand-500:    #E10000;
+    --brand-600:    #cc0000;
+    --brand-700:    #B91C1C;
+    --brand-shadow: rgba(225,0,0,0.30);
+
     /* ── Driver UI — mode clair ── */
     --driver-bg:       #f4f5f7;
     --driver-surface:  #ffffff;
@@ -75,6 +84,17 @@
     --driver-text3:    #6b7280;
     --driver-nav-bg:   rgba(14,14,14,0.97);
   }
+}
+
+/* ── Brand utilities ── */
+.brand-cta-gradient {
+  background: linear-gradient(90deg, var(--brand-500), var(--brand-600));
+}
+.brand-shadow-cta {
+  box-shadow: 0 6px 20px var(--brand-shadow);
+}
+.brand-shadow-md {
+  box-shadow: 0 4px 16px var(--brand-shadow);
 }
 
 /* ── Driver gradient utilities (light/dark) ── */

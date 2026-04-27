@@ -9,14 +9,15 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["client/src/*"],
       "@shared/*": ["shared/*"],
-      "@assets/*": ["attached_assets/*"]
+      "@assets/*": ["client/src/assets/*"]
     }
   },
   "include": ["client/src/**/*", "shared/**/*", "server/**/*"],

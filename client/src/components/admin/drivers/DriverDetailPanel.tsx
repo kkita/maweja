@@ -2,12 +2,13 @@ import { Truck, Phone, Bell, Edit, Ban, CheckCircle2, Trash2, Send, Package, Map
 import { formatPrice, statusColors, statusLabels, formatPaymentMethod } from "../../../lib/utils";
 import type { Order } from "@shared/schema";
 import { CountdownTimer } from "./DriverTimers";
+import type { DispatchDriver } from "./types";
 
 interface Props {
-  driver: any;
+  driver: DispatchDriver;
   activeOrders: Order[];
   deliveredOrders: Order[];
-  getDriverStatus: (d: any) => string;
+  getDriverStatus: (d: DispatchDriver) => string;
   chatMessage: string;
   onChatChange: (v: string) => void;
   onSendChat: () => void;

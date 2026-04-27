@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { requireAdmin } from "../middleware/auth.middleware";
 import { uploadMedia, buildUploadUrl } from "../middleware/upload.middleware";
 import { validate, schemas } from "../validators";
+import { logger } from "../lib/logger";
 
 export function registerMarketingRoutes(app: Express): void {
   app.get("/api/dashboard/stats", requireAdmin, async (_req, res) => {
@@ -262,7 +263,7 @@ export function registerMarketingRoutes(app: Express): void {
       });
       res.json(ad);
     } catch (err: any) {
-      console.error("Erreur creation publicite:", err);
+      logger.error("Erreur creation publicite", err);
       res.status(500).json({ message: err?.message || "Erreur lors de la creation de la publicite" });
     }
   });

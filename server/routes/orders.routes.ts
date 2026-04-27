@@ -6,6 +6,7 @@ import { detectZone, type DeliveryZoneData } from "@shared/deliveryZones";
 import { requireAuth, requireAdmin } from "../middleware/auth.middleware";
 import { validate, schemas } from "../validators";
 import { broadcast, sendToUser } from "../websocket";
+import { logger } from "../lib/logger";
 
 const ORDER_STATUS_SEQUENCE = ["pending", "confirmed", "picked_up", "delivered"];
 const TERMINAL_STATUSES = ["delivered", "cancelled", "returned"];
@@ -16,8 +17,23 @@ function isGeneralAdmin(user: any): boolean {
 }
 
 function canTransitionStatus(currentStatus: string, newStatus: string, user: any): { allowed: boolean; message?: string } {
+  if (currentStatus === newStatus) {
+    return { allowed: false, message: "Le statut est déjà à cette valeur" };
+  }
   if (TERMINAL_STATUSES.includes(currentStatus)) {
     return { allowed: false, message: `Statut final — utilisez le code d'accès pour modifier ce statut` };
+  }
+  // Drivers : aucune annulation/retour possible et progression strictement linéaire
+  if (user.role === "driver") {
+    if (newStatus === "cancelled" || newStatus === "returned") {
+      return { allowed: false, message: "Un livreur ne peut pas annuler ou marquer comme retournée une commande" };
+    }
+    const cIdx = ORDER_STATUS_SEQUENCE.indexOf(currentStatus);
+    const nIdx = ORDER_STATUS_SEQUENCE.indexOf(newStatus);
+    if (cIdx === -1 || nIdx === -1 || nIdx !== cIdx + 1) {
+      return { allowed: false, message: "Transition non autorisée pour un livreur" };
+    }
+    return { allowed: true };
   }
   if (newStatus === "cancelled" || newStatus === "returned") return { allowed: true };
   if (isGeneralAdmin(user)) return { allowed: true };
@@ -28,6 +44,42 @@ function canTransitionStatus(currentStatus: string, newStatus: string, user: any
     return { allowed: false, message: "Impossible de revenir en arrière dans le processus de commande" };
   }
   return { allowed: true };
+}
+
+// Génération du numéro de commande robuste : pré-check + retry sur conflit
+// (la colonne order_number a déjà une contrainte UNIQUE en base — code 23505)
+async function createOrderWithUniqueNumber(orderData: any, maxAttempts = 5): Promise<any> {
+  let lastErr: any = null;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    let baseNum = 1;
+    try {
+      const r = await db.execute(
+        `SELECT order_number FROM orders WHERE order_number LIKE 'M%' AND LENGTH(order_number) = 9 ORDER BY order_number DESC LIMIT 1`
+      );
+      if (r.rows.length > 0) {
+        const lastNum = parseInt((r.rows[0] as any).order_number.substring(1), 10);
+        if (!isNaN(lastNum)) baseNum = lastNum + 1;
+      }
+    } catch (e) {
+      logger.error("[orders] failed to read last order_number", e);
+    }
+    const orderNumber = `M${(baseNum + attempt).toString().padStart(8, "0")}`;
+
+    // Pré-check via storage : couvre le cas in-memory et réduit les conflits réels
+    const existing = await storage.getOrderByNumber(orderNumber);
+    if (existing) continue;
+
+    try {
+      return await storage.createOrder({ ...orderData, orderNumber });
+    } catch (err: any) {
+      lastErr = err;
+      const msg = String(err?.message || "");
+      const isDup = err?.code === "23505" || /unique|duplicate/i.test(msg);
+      if (isDup && attempt < maxAttempts - 1) continue;
+      throw err;
+    }
+  }
+  throw lastErr || new Error("ORDER_NUMBER_GENERATION_FAILED");
 }
 
 export function registerOrdersRoutes(app: Express): void {
@@ -223,15 +275,20 @@ export function registerOrdersRoutes(app: Express): void {
     );
     if (req.body.total < 0) req.body.total = 0;
 
-    const lastOrder = await db.execute(
-      `SELECT order_number FROM orders WHERE order_number LIKE 'M%' AND LENGTH(order_number) = 9 ORDER BY order_number DESC LIMIT 1`
-    );
-    let nextNum = 1;
-    if (lastOrder.rows.length > 0) {
-      const lastNum = parseInt((lastOrder.rows[0] as any).order_number.substring(1), 10);
-      if (!isNaN(lastNum)) nextNum = lastNum + 1;
+    // SÉCURITÉ : refus paiement wallet si solde insuffisant (évite les soldes négatifs masqués)
+    if (req.body.paymentMethod === "wallet") {
+      const payer = await storage.getUser(clientId);
+      const balance = Number(payer?.walletBalance || 0);
+      if (!payer || balance < req.body.total) {
+        return res.status(400).json({
+          message: "Solde du portefeuille insuffisant pour cette commande",
+          code: "INSUFFICIENT_WALLET_BALANCE",
+          balance,
+          required: req.body.total,
+        });
+      }
     }
-    const orderNumber = `M${nextNum.toString().padStart(8, "0")}`;
+
     const restaurant = await storage.getRestaurant(req.body.restaurantId);
     const commissionRate = restaurant?.restaurantCommissionRate ?? 20;
     const commission = req.body.adminOverride && req.body.commission !== undefined
@@ -244,7 +301,17 @@ export function registerOrdersRoutes(app: Express): void {
     if (_cn && !orderBody.orderName) orderBody.orderName = _cn;
     if (_cp && !orderBody.orderPhone) orderBody.orderPhone = _cp;
 
-    const order = await storage.createOrder({ ...orderBody, clientId, orderNumber, commission, estimatedDelivery });
+    let order: any;
+    try {
+      order = await createOrderWithUniqueNumber({ ...orderBody, clientId, commission, estimatedDelivery });
+    } catch (err) {
+      logger.error("[orders] createOrderWithUniqueNumber failed", err);
+      return res.status(500).json({
+        message: "Impossible de générer un numéro de commande unique. Veuillez réessayer.",
+        code: "ORDER_NUMBER_GENERATION_FAILED",
+      });
+    }
+    const orderNumber = order.orderNumber;
 
     await storage.createFinance({ type: "revenue", category: "order", amount: order.total, description: `Commande ${orderNumber}`, orderId: order.id, userId: order.clientId });
     await storage.createFinance({ type: "revenue", category: "delivery_fee", amount: order.deliveryFee, description: `Frais livraison ${orderNumber}`, orderId: order.id });
@@ -264,7 +331,7 @@ export function registerOrdersRoutes(app: Express): void {
         sendToUser(drv.id, { type: "new_order", order });
       }
     } catch (e) {
-      console.error("[orders] notify online drivers failed:", e);
+      logger.error("[orders] notify online drivers failed", e);
     }
 
     await storage.createNotification({ userId: order.clientId, title: "Commande confirmee", message: `Votre commande ${orderNumber} a ete recue et sera traitee sous peu`, type: "order", data: { orderId: order.id }, isRead: false });
@@ -304,6 +371,9 @@ export function registerOrdersRoutes(app: Express): void {
     }
     const existingOrder = await storage.getOrder(Number(req.params.id));
     if (!existingOrder) return res.status(404).json({ message: "Commande non trouvee" });
+    // Snapshot des champs sensibles AVANT toute mutation (les refunds doivent se baser sur l'état d'origine)
+    const prevStatus = existingOrder.status;
+    const prevPaymentStatus = existingOrder.paymentStatus;
 
     if (req.body.status && req.body.status !== existingOrder.status) {
       const transition = canTransitionStatus(existingOrder.status, req.body.status, user);
@@ -404,23 +474,37 @@ export function registerOrdersRoutes(app: Express): void {
         }
       }
 
-      if (req.body.status === "returned" && order.status !== "returned") {
+      // SÉCURITÉ : remboursement retour — protégé contre les doubles via paymentStatus="refunded"
+      // et contre la transition "returned"→"returned" via le snapshot prevStatus
+      if (
+        req.body.status === "returned" &&
+        prevStatus !== "returned" &&
+        prevPaymentStatus !== "refunded"
+      ) {
         await storage.createFinance({ type: "expense", category: "return", amount: order.total, description: `Retour commande ${order.orderNumber}`, orderId: order.id, userId: order.clientId });
         if (order.paymentMethod === "wallet") {
           const client = await storage.getUser(order.clientId);
           if (client) {
             await storage.updateUser(client.id, { walletBalance: (client.walletBalance || 0) + order.total });
             await storage.createWalletTransaction({ userId: client.id, amount: order.total, type: "refund", description: `Remboursement retour ${order.orderNumber}`, orderId: order.id });
+            await storage.updateOrder(order.id, { paymentStatus: "refunded" });
           }
         }
       }
 
-      if (req.body.status === "cancelled" && order.paymentMethod === "wallet") {
+      // SÉCURITÉ : remboursement annulation — mêmes garde-fous
+      if (
+        req.body.status === "cancelled" &&
+        prevStatus !== "cancelled" &&
+        order.paymentMethod === "wallet" &&
+        prevPaymentStatus !== "refunded"
+      ) {
         const client = await storage.getUser(order.clientId);
         if (client) {
           await storage.updateUser(client.id, { walletBalance: (client.walletBalance || 0) + order.total });
           await storage.createWalletTransaction({ userId: client.id, amount: order.total, type: "refund", description: `Remboursement commande ${order.orderNumber}`, orderId: order.id });
           await storage.createFinance({ type: "expense", category: "refund", amount: order.total, description: `Remboursement ${order.orderNumber}`, orderId: order.id, userId: client.id });
+          await storage.updateOrder(order.id, { paymentStatus: "refunded" });
         }
       }
     }
@@ -513,11 +597,16 @@ export function registerOrdersRoutes(app: Express): void {
     }
     const { reason } = req.body;
     if (!reason) return res.status(400).json({ message: "Raison requise" });
-    const updated = await storage.updateOrder(order.id, { status: "cancelled", cancelReason: reason });
-    if (order.paymentMethod === "wallet" || order.paymentStatus === "paid") {
-      await storage.updateUser(order.clientId, { walletBalance: (await storage.getUser(order.clientId))!.walletBalance + order.total });
-      await storage.createWalletTransaction({ userId: order.clientId, amount: order.total, type: "refund", description: `Remboursement commande ${order.orderNumber}` });
+    let updated = await storage.updateOrder(order.id, { status: "cancelled", cancelReason: reason });
+    // SÉCURITÉ : un seul remboursement par commande, marqué via paymentStatus="refunded"
+    if (order.paymentStatus !== "refunded" && (order.paymentMethod === "wallet" || order.paymentStatus === "paid")) {
+      const fresh = await storage.getUser(order.clientId);
+      if (fresh) {
+        await storage.updateUser(order.clientId, { walletBalance: (fresh.walletBalance || 0) + order.total });
+      }
+      await storage.createWalletTransaction({ userId: order.clientId, amount: order.total, type: "refund", description: `Remboursement commande ${order.orderNumber}`, orderId: order.id });
       await storage.createFinance({ type: "expense", category: "refund", amount: order.total, description: `Remboursement ${order.orderNumber}`, orderId: order.id });
+      updated = await storage.updateOrder(order.id, { paymentStatus: "refunded" });
     }
     broadcast({ type: "order_cancelled", order: updated });
     res.json(updated);

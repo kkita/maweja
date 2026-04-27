@@ -117,7 +117,7 @@ export default function HomePage() {
   const hasSearch = !!localSearch;
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0c0c0c] pb-28">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-28">
       <ClientNav />
 
       <div className="max-w-lg mx-auto">
@@ -134,7 +134,7 @@ export default function HomePage() {
               onChange={e => { setLocalSearch(e.target.value); if (!e.target.value) { setActiveCuisine(null); } }}
               placeholder="Plat, restaurant, boutique, service…"
               data-testid="input-home-search"
-              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-[#181818] rounded-[18px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 dark:focus:ring-brand/30 transition-all"
+              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 rounded-[18px] text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/20 dark:focus:ring-brand/30 transition-all"
               style={{ boxShadow: "0 2px 16px rgba(0,0,0,0.08)", border: "1px solid rgba(0,0,0,0.06)" }}
             />
           </div>
@@ -152,7 +152,7 @@ export default function HomePage() {
                       key={cat.id}
                       onClick={() => { setLocalSearch(""); navigate(`/services?cat=${cat.id}`); }}
                       data-testid={`search-service-${cat.id}`}
-                      className="flex items-center gap-2 bg-white dark:bg-[#181818] rounded-[14px] px-4 py-2.5 active:scale-95 transition-transform"
+                      className="flex items-center gap-2 bg-white dark:bg-zinc-900 rounded-[14px] px-4 py-2.5 active:scale-95 transition-transform"
                       style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.07)", border: "1px solid rgba(225,0,0,0.1)" }}
                     >
                       {cat.imageUrl && <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="w-6 h-6 rounded-lg object-cover" />}
@@ -238,86 +238,6 @@ export default function HomePage() {
               </section>
             )}
 
-            {/* ── Services Express — showcase premium ── */}
-            {activeCategories.length > 0 && !activeCuisine && (
-              <section className="mb-8">
-                <div className="px-5 mb-3.5 flex items-end justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-[#E10000] to-[#a30000] text-white text-[10px] font-black tracking-wider uppercase shadow-sm">
-                        <Flame size={10} /> Express
-                      </span>
-                    </div>
-                    <h2 className="font-black text-gray-900 dark:text-white" style={{ fontSize: 19, letterSpacing: "-0.4px" }}>
-                      Nos services à Kinshasa
-                    </h2>
-                    <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">Livraison, courses, démarches — un agent en moins d'une heure.</p>
-                  </div>
-                  <button
-                    onClick={() => navigate("/services")}
-                    data-testid="button-view-all-services-premium"
-                    className="hidden sm:inline-flex text-brand font-semibold items-center gap-0.5 active:opacity-70 whitespace-nowrap"
-                    style={{ fontSize: 12 }}
-                  >
-                    Tout voir
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                  </button>
-                </div>
-                <div className="overflow-x-auto no-scrollbar px-5 pb-3 -mx-0">
-                  <div className="flex gap-3.5">
-                    {activeCategories.slice(0, 10).map((cat, idx) => {
-                      const grads = [
-                        "from-[#E10000] via-[#b30000] to-[#7a0000]",
-                        "from-zinc-900 via-zinc-800 to-black",
-                        "from-amber-600 via-orange-700 to-rose-800",
-                        "from-indigo-700 via-violet-800 to-fuchsia-900",
-                        "from-emerald-700 via-teal-800 to-cyan-900",
-                        "from-blue-700 via-indigo-800 to-violet-900",
-                      ];
-                      const grad = grads[idx % grads.length];
-                      return (
-                        <button
-                          key={cat.id}
-                          onClick={() => handleServiceClick(cat)}
-                          data-testid={`card-service-premium-${cat.id}`}
-                          className="relative flex-shrink-0 w-[220px] h-[160px] rounded-2xl overflow-hidden group active:scale-[0.98] transition-transform shadow-md hover:shadow-xl"
-                        >
-                          {cat.imageUrl ? (
-                            <>
-                              <img src={resolveImg(cat.imageUrl)} alt={cat.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
-                              <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/40 to-transparent" />
-                            </>
-                          ) : (
-                            <div className={`absolute inset-0 bg-gradient-to-br ${grad}`} />
-                          )}
-                          {/* Glass icon */}
-                          <div className="absolute top-3 left-3 w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-lg">
-                            <Flame size={16} />
-                          </div>
-                          {/* Premium badge */}
-                          <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 text-white text-[9px] font-bold tracking-wider uppercase">
-                            Premium
-                          </div>
-                          {/* Title bottom */}
-                          <div className="absolute inset-x-0 bottom-0 p-3.5 text-left">
-                            <p className="text-white font-black leading-tight drop-shadow" style={{ fontSize: 16, letterSpacing: "-0.3px" }}>
-                              {cat.name}
-                            </p>
-                            <div className="flex items-center gap-1 mt-1.5 text-white/90 text-[11px] font-semibold">
-                              <span>Réserver</span>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                            </div>
-                          </div>
-                          {/* Subtle highlight ring on hover */}
-                          <div className="absolute inset-0 ring-1 ring-inset ring-white/10 group-hover:ring-white/30 transition-all rounded-2xl" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </section>
-            )}
-
             {/* ── Boutiques & Commerces (grille 2 colonnes) ── */}
             {boutiques.length > 0 && !activeCuisine && (
               <section className="mb-7 px-5">
@@ -360,7 +280,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white dark:bg-[#181818] rounded-[18px] p-6 text-center" style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.05)" }}>
+                  <div className="bg-white dark:bg-zinc-900 rounded-[18px] p-6 text-center" style={{ boxShadow: "0 1px 8px rgba(0,0,0,0.05)" }}>
                     <p className="text-gray-400 text-xs">
                       {activeBoutiqueCatId ? "Aucune boutique dans cette catégorie" : "Bientôt disponible dans votre zone"}
                     </p>
@@ -377,7 +297,7 @@ export default function HomePage() {
             {/* ── Séparateur ── */}
             {boutiques.length > 0 && !activeCuisine && (
               <div className="flex items-center gap-3 mb-6 px-5">
-                <div className="flex-1 h-px bg-gray-200/70 dark:bg-[#222]" />
+                <div className="flex-1 h-px bg-gray-200/70 dark:bg-zinc-800" />
                 <div
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
                   style={{ background: "rgba(0,0,0,0.045)", border: "1px solid rgba(0,0,0,0.07)" }}
@@ -385,7 +305,7 @@ export default function HomePage() {
                   <Utensils size={10} className="text-gray-400 dark:text-gray-600" />
                   <span className="text-[10px] font-black text-gray-400 dark:text-gray-600 tracking-widest uppercase">Restaurants</span>
                 </div>
-                <div className="flex-1 h-px bg-gray-200/70 dark:bg-[#222]" />
+                <div className="flex-1 h-px bg-gray-200/70 dark:bg-zinc-800" />
               </div>
             )}
 

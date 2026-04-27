@@ -151,7 +151,7 @@ export default function OrderDetailPage() {
               <div className="flex items-center gap-1.5">
                 <span className="text-gray-500 dark:text-gray-400">Frais de livraison</span>
                 {(order as any).deliveryZone && (
-                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full text-white bg-blue-500">{(order as any).deliveryZone}</span>
+                  <span className="text-[8px] font-black px-1.5 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/30 dark:text-sky-300 dark:border-sky-900/40">{(order as any).deliveryZone}</span>
                 )}
               </div>
               <span className="font-medium dark:text-white">{formatPrice(order.deliveryFee)}</span>

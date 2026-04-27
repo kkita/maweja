@@ -8,6 +8,7 @@ import { onWSMessage } from "../../lib/websocket";
 import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare, Phone, Info, Clock, Paperclip, Download, FileText, Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import type { ChatMessage, User as UserType } from "@shared/schema";
+import { AppEmptyState } from "../../design-system/primitives";
 
 type SafeUser = Omit<UserType, "password">;
 
@@ -238,10 +239,11 @@ export default function AdminChat() {
 
           <div className="flex-1 overflow-y-auto">
             {filteredList.length === 0 && !(tab === "clients" && clientContacts.length === 0) && (
-              <div className="text-center py-12 text-gray-400">
-                {tab === "drivers" ? <Truck size={24} className="mx-auto mb-2 opacity-20" /> : <User size={24} className="mx-auto mb-2 opacity-20" />}
-                <p className="text-xs">{search ? "Aucun resultat" : tab === "clients" ? "Aucun client n'a encore ecrit" : "Aucun agent trouve"}</p>
-              </div>
+              <AppEmptyState
+                icon={tab === "drivers" ? Truck : User}
+                title={search ? "Aucun resultat" : tab === "clients" ? "Aucun client n'a encore ecrit" : "Aucun agent trouve"}
+                size="sm"
+              />
             )}
             {filteredList.map((c: any) => {
               const isSelected = selectedContact?.id === c.id;
@@ -298,12 +300,12 @@ export default function AdminChat() {
 
               <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50/50 dark:bg-gray-950/50">
                 {messages.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-3">
-                      <MessageCircle size={28} className="opacity-40" />
-                    </div>
-                    <p className="font-semibold text-sm">Aucun message</p>
-                    <p className="text-xs mt-1">Commencez la conversation</p>
+                  <div className="flex flex-1 items-center justify-center">
+                    <AppEmptyState
+                      icon={MessageCircle}
+                      title="Aucun message"
+                      description="Commencez la conversation"
+                    />
                   </div>
                 )}
                 {messages.map((msg, idx) => {

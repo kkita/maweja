@@ -64,8 +64,18 @@ function tryInit(): admin.app.App | null {
 export interface PushPayload {
   title: string;
   body: string;
+  /** URL absolue d'une image à afficher dans la notification (Android tray + iOS si NSE installé) */
+  imageUrl?: string;
   /** Données additionnelles passées au handler côté app (orderId, type, etc.) */
   data?: Record<string, string>;
+}
+
+/** Convertit une URL relative (/uploads/…) en URL publique absolue */
+function toAbsoluteImageUrl(url?: string): string | undefined {
+  if (!url) return undefined;
+  if (/^https?:\/\//i.test(url)) return url;
+  const base = (process.env.PUBLIC_BASE_URL || "https://maweja.net").replace(/\/$/, "");
+  return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 /**
@@ -80,11 +90,22 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
   if (!user || !(user as any).pushToken) return;
   const token: string = (user as any).pushToken;
 
+  const absImg = toAbsoluteImageUrl(payload.imageUrl);
+
   try {
     await a.messaging().send({
       token,
-      notification: { title: payload.title, body: payload.body },
-      data: payload.data || {},
+      // Champ TOP-LEVEL `notification` : indispensable pour que la notif
+      // s'affiche dans la barre système quand l'app est en arrière-plan/fermée.
+      notification: {
+        title: payload.title,
+        body: payload.body,
+        ...(absImg ? { imageUrl: absImg } : {}),
+      },
+      // Les `data` doivent être des strings — sinon FCM rejette l'envoi.
+      data: Object.fromEntries(
+        Object.entries(payload.data || {}).map(([k, v]) => [k, String(v ?? "")]),
+      ),
       android: {
         priority: "high",
         notification: {
@@ -92,12 +113,29 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
           sound: "default",
           defaultSound: true,
           defaultVibrateTimings: true,
+          // Image affichée dans la zone de notification Android (style WhatsApp)
+          ...(absImg ? { imageUrl: absImg } : {}),
         },
       },
       apns: {
-        payload: {
-          aps: { sound: "default", badge: 1, contentAvailable: true },
+        headers: {
+          // Force l'affichage immédiat (sinon iOS peut différer en mode "low priority")
+          "apns-priority": "10",
+          "apns-push-type": "alert",
         },
+        payload: {
+          aps: {
+            alert: { title: payload.title, body: payload.body },
+            sound: "default",
+            badge: 1,
+            // mutableContent permet à la Notification Service Extension iOS
+            // de télécharger l'image (nécessite l'extension côté app iOS).
+            "mutable-content": 1 as any,
+          },
+        },
+        // FCM iOS image (nécessite NSE) — sans NSE, l'image est ignorée
+        // mais la notif s'affiche quand même avec titre + corps.
+        ...(absImg ? { fcmOptions: { imageUrl: absImg } as any } : {}),
       },
     });
   } catch (e: any) {

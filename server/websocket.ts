@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { Server } from "http";
 import { storage } from "./storage";
+import { logger } from "./lib/logger";
 
 export const wsClients = new Map<number, WebSocket>();
 
@@ -20,6 +21,25 @@ export function sendToUser(userId: number, data: any): void {
 
 export function setupWebSocket(httpServer: Server): void {
   const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+
+  // Periodic cleanup + observability of WebSocket clients (every 60s).
+  // - Removes sockets whose readyState is no longer OPEN/CONNECTING
+  //   (prevents wsClients map growing unbounded after silent network drops).
+  // - Always logs the active connection count so we have steady visibility,
+  //   not only when removals happen.
+  setInterval(() => {
+    let removed = 0;
+    for (const [userId, ws] of wsClients.entries()) {
+      if (ws.readyState !== WebSocket.OPEN && ws.readyState !== WebSocket.CONNECTING) {
+        wsClients.delete(userId);
+        removed++;
+      }
+    }
+    logger.info(
+      `[ws] heartbeat: ${wsClients.size} active connection(s)` +
+        (removed > 0 ? `, removed ${removed} dead socket(s)` : ""),
+    );
+  }, 60 * 1000);
 
   wss.on("connection", async (ws, req) => {
     const url = new URL(req.url || "", `http://${req.headers.host}`);

@@ -10,6 +10,7 @@ import {
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { AppSkeleton } from "../../design-system/primitives";
 
 interface DeliveryZone {
   id: number;
@@ -333,9 +334,9 @@ export default function AdminDeliveryZones() {
       <AdminLayout title="Zones de livraison" subtitle="Gestion des zones et tarifs de livraison">
         <div className="max-w-4xl space-y-4">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6 animate-pulse">
-              <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-3" />
-              <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-48" />
+            <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 p-6">
+              <AppSkeleton className="h-5 w-32 mb-3" />
+              <AppSkeleton className="h-4 w-48" />
             </div>
           ))}
         </div>

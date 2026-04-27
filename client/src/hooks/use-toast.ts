@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 interface Toast {
   id: string;
@@ -6,6 +6,8 @@ interface Toast {
   description?: string;
   variant?: "default" | "destructive";
 }
+
+export type ToastFn = (opts: Omit<Toast, "id">) => void;
 
 let toastState: Toast[] = [];
 let listeners: (() => void)[] = [];
@@ -17,13 +19,13 @@ function notify() {
 export function useToast() {
   const [, setTick] = useState(0);
 
-  useState(() => {
+  useEffect(() => {
     const listener = () => setTick((t) => t + 1);
     listeners.push(listener);
     return () => {
       listeners = listeners.filter((l) => l !== listener);
     };
-  });
+  }, []);
 
   const toast = useCallback(({ title, description, variant }: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).slice(2);

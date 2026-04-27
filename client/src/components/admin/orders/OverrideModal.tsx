@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { ShieldAlert, Lock, Unlock, Eye, EyeOff, X } from "lucide-react";
+import { motion } from "framer-motion";
 import { apiRequest, queryClient } from "../../../lib/queryClient";
 import { useToast } from "../../../hooks/use-toast";
 import { statusLabels } from "../../../lib/utils";
+import { backdropVariants, scaleInVariants } from "../../../lib/motion";
 import type { Order } from "@shared/schema";
 
 interface Props {
@@ -51,14 +53,20 @@ export default function OverrideModal({ orderId, orders, onClose }: Props) {
   };
 
   return (
-    <div
+    <motion.div
       className="fixed inset-0 z-[300] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
       onClick={handleClose}
+      variants={backdropVariants}
+      initial="hidden"
+      animate="visible"
     >
-      <div
-        className="w-full max-w-md bg-white dark:bg-[#1a1a22] rounded-3xl shadow-2xl border border-zinc-100 dark:border-zinc-800 overflow-hidden"
+      <motion.div
+        className="w-full max-w-md bg-white dark:bg-display-overlay-2 rounded-3xl shadow-2xl border border-zinc-100 dark:border-zinc-800 overflow-hidden"
         onClick={e => e.stopPropagation()}
+        variants={scaleInVariants}
+        initial="hidden"
+        animate="visible"
       >
         <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-5">
           <div className="flex items-center gap-3">
@@ -148,7 +156,7 @@ export default function OverrideModal({ orderId, orders, onClose }: Props) {
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

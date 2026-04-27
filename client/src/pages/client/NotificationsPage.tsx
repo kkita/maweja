@@ -138,7 +138,7 @@ export default function NotificationsPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-display-page flex flex-col">
         <ClientNav />
         <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
           <Bell size={48} className="text-gray-300 mb-4" />
@@ -157,7 +157,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-28" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-28" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
 
       <div className="max-w-lg mx-auto px-4 pt-5">

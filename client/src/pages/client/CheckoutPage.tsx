@@ -154,7 +154,7 @@ export default function CheckoutPage() {
                 </p>
               </div>
               <div
-                className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${useLoyaltyCredit ? "bg-yellow-500" : "bg-gray-300 dark:bg-gray-600"}`}
+                className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${useLoyaltyCredit ? "bg-amber-400 dark:bg-amber-500" : "bg-gray-300 dark:bg-gray-600"}`}
                 onClick={() => setUseLoyaltyCredit(!useLoyaltyCredit)}
                 data-testid="toggle-loyalty-credit"
               >

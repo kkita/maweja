@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { objectStorageClient } from "../replit_integrations/object_storage";
+import { logger } from "../lib/logger";
 
 export const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -65,7 +66,7 @@ export function buildUploadUrl(req: any, filename: string): string {
 export async function uploadToCloudStorage(localFilePath: string, filename: string, contentType: string): Promise<string> {
   const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID;
   if (!bucketId) {
-    console.warn("⚠️ Object Storage non configuré, fallback vers /uploads/");
+    logger.warn("Object Storage non configuré, fallback vers /uploads/");
     return `/uploads/${filename}`;
   }
   try {
@@ -78,7 +79,7 @@ export async function uploadToCloudStorage(localFilePath: string, filename: stri
     try { fs.unlinkSync(localFilePath); } catch {}
     return `/cloud/${destPath}`;
   } catch (err) {
-    console.error("❌ Cloud upload failed, keeping local:", err);
+    logger.error("Cloud upload failed, keeping local", err);
     return `/uploads/${filename}`;
   }
 }
@@ -100,8 +101,8 @@ export function cleanupChatFiles(): void {
         }
       } catch {}
     }
-    if (deleted > 0) console.log(`🗑️ Chat cleanup: ${deleted} fichier(s) supprimé(s)`);
+    if (deleted > 0) logger.info(`🗑️ Chat cleanup: ${deleted} fichier(s) supprimé(s)`);
   } catch (e) {
-    console.warn("Chat cleanup error:", e);
+    logger.warn("Chat cleanup error", e);
   }
 }

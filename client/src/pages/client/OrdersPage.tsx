@@ -95,7 +95,7 @@ export default function OrdersPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#0a0a0a] pb-28">
+      <div className="min-h-screen bg-display-light dark:bg-display-page-alt pb-28">
         <ClientNav />
         <MEmptyState
           icon={<ShoppingBag size={36} />}
@@ -108,7 +108,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f4f4] dark:bg-[#0a0a0a] pb-28" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
+    <div className="min-h-screen bg-display-light dark:bg-display-page-alt pb-28" style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}>
       <ClientNav />
       <MPageHeader title="Mes commandes" subtitle={orders.length > 0 ? `${orders.length} commande${orders.length > 1 ? "s" : ""}` : undefined} />
 
@@ -117,17 +117,17 @@ export default function OrdersPage() {
         {/* Active order count banner */}
         {activeOrders.length > 0 && (
           <div
-            className="flex items-center gap-3 bg-[#E10000]/10 dark:bg-[#E10000]/15 rounded-[16px] px-4 py-3 mb-4 border border-[#E10000]/15"
+            className="flex items-center gap-3 bg-brand/10 dark:bg-brand/15 rounded-[16px] px-4 py-3 mb-4 border border-brand/15"
             data-testid="active-orders-banner"
           >
-            <div className="w-8 h-8 bg-[#E10000] rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 bg-brand rounded-full flex items-center justify-center flex-shrink-0">
               <Bike size={16} color="white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-[#E10000] text-sm">
+              <p className="font-bold text-brand text-sm">
                 {activeOrders.length} commande{activeOrders.length > 1 ? "s" : ""} en cours
               </p>
-              <p className="text-[#E10000]/70 text-xs mt-0.5">Suivez vos livraisons en temps réel</p>
+              <p className="text-brand/70 text-xs mt-0.5">Suivez vos livraisons en temps réel</p>
             </div>
           </div>
         )}
@@ -148,7 +148,7 @@ export default function OrdersPage() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map(i => (
-              <div key={i} className="bg-white dark:bg-[#141414] rounded-[20px] p-4" style={{ boxShadow: "0 1px 12px rgba(0,0,0,0.06)" }}>
+              <div key={i} className="bg-white dark:bg-display-panel-alt rounded-[20px] p-4" style={{ boxShadow: "0 1px 12px rgba(0,0,0,0.06)" }}>
                 <div className="flex justify-between mb-3">
                   <div className="space-y-2">
                     <SkeletonPulse className="h-4 w-36" />

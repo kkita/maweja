@@ -306,7 +306,7 @@ export function registerAdminRoutes(app: Express): void {
           });
         }
       } catch (err) {
-        console.error("Cloud gallery list error:", err);
+        logger.error("Cloud gallery list error", err);
       }
     }
 
@@ -379,7 +379,7 @@ export function registerAdminRoutes(app: Express): void {
         const [exists] = await file.exists();
         if (exists) { await file.delete(); deleted = true; }
       } catch (err) {
-        console.error("Cloud delete error:", err);
+        logger.error("Cloud delete error", err);
       }
     }
 

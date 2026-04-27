@@ -1,7 +1,10 @@
 const logoPath = "/maweja-icon.png";
 import { useEffect, useRef } from "react";
+import { palette, tints } from "../design-system/tokens";
 
 const APP_URL = window.location.origin;
+const M = palette.mockup;
+const T = tints;
 
 function PhoneMockup({ src, title }: { src: string; title: string }) {
   return (
@@ -11,9 +14,9 @@ function PhoneMockup({ src, title }: { src: string; title: string }) {
         style={{
           width: "240px",
           height: "500px",
-          background: "#111",
-          border: "8px solid #333",
-          boxShadow: "0 0 0 2px #555, 0 30px 80px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.03)",
+          background: M.phoneBezel,
+          border: `8px solid ${M.phoneFrame}`,
+          boxShadow: `0 0 0 2px ${M.phoneEdge}, 0 30px 80px ${T.black(0.8)}, inset 0 0 20px ${T.white(0.03)}`,
         }}
       >
         <div
@@ -21,7 +24,7 @@ function PhoneMockup({ src, title }: { src: string; title: string }) {
           style={{
             width: "80px",
             height: "22px",
-            background: "#111",
+            background: M.phoneBezel,
             borderRadius: "0 0 14px 14px",
           }}
         />
@@ -45,16 +48,16 @@ function LaptopMockup({ src }: { src: string }) {
         style={{
           width: "600px",
           height: "375px",
-          background: "#1a1a1a",
-          border: "10px solid #2d2d2d",
+          background: M.laptopScreen,
+          border: `10px solid ${M.laptopBezel}`,
           borderBottom: "none",
           borderRadius: "16px 16px 0 0",
-          boxShadow: "0 -20px 60px rgba(0,0,0,0.5)",
+          boxShadow: `0 -20px 60px ${T.black(0.5)}`,
         }}
       >
         <div
           className="absolute top-0 left-0 right-0 flex items-center gap-2 px-3"
-          style={{ height: "28px", background: "#2d2d2d" }}
+          style={{ height: "28px", background: M.laptopBezel }}
         >
           <div className="w-3 h-3 rounded-full bg-red-500 opacity-80" />
           <div className="w-3 h-3 rounded-full bg-yellow-400 opacity-80" />
@@ -71,7 +74,7 @@ function LaptopMockup({ src }: { src: string }) {
         style={{
           width: "640px",
           height: "14px",
-          background: "#2d2d2d",
+          background: M.laptopBezel,
           borderRadius: "0 0 8px 8px",
           margin: "0 auto",
         }}
@@ -80,7 +83,7 @@ function LaptopMockup({ src }: { src: string }) {
         style={{
           width: "700px",
           height: "8px",
-          background: "#222",
+          background: M.laptopBase,
           borderRadius: "0 0 16px 16px",
           margin: "0 auto",
         }}
@@ -93,7 +96,7 @@ function FeatureBadge({ icon, text }: { icon: string; text: string }) {
   return (
     <div
       className="flex items-center gap-3 rounded-xl px-4 py-3"
-      style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.2)" }}
+      style={{ background: T.brand(0.08), border: `1px solid ${T.brand(0.2)}` }}
     >
       <span className="text-xl">{icon}</span>
       <span className="text-gray-200 text-sm font-medium">{text}</span>
@@ -105,7 +108,7 @@ function SectionDivider({ number, label }: { number: string; label: string }) {
   return (
     <div
       className="w-full flex items-center gap-6 py-16 px-12"
-      style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.15) 0%, transparent 100%)" }}
+      style={{ background: `linear-gradient(90deg, ${T.brand(0.15)} 0%, transparent 100%)` }}
     >
       <span className="font-black text-red-600" style={{ fontSize: "5vw", lineHeight: 1 }}>{number}</span>
       <div className="w-px h-16 bg-red-700 opacity-40" />
@@ -126,8 +129,8 @@ export default function PresentationPage() {
       ref={scrollRef}
       className="min-h-screen overflow-y-auto"
       style={{
-        background: "#0a0a0a",
-        color: "#fff",
+        background: M.pageBg1,
+        color: M.textOn,
         fontFamily: "'Inter', sans-serif",
         scrollBehavior: "smooth",
       }}
@@ -141,11 +144,11 @@ export default function PresentationPage() {
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 70% 60% at 50% 0%, rgba(220,38,38,0.18) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, rgba(220,38,38,0.08) 0%, transparent 70%)",
+              `radial-gradient(ellipse 70% 60% at 50% 0%, ${T.brand(0.18)} 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 80% 80%, ${T.brand(0.08)} 0%, transparent 70%)`,
           }}
         />
         <div className="absolute inset-0 opacity-5"
-          style={{ backgroundImage: "linear-gradient(rgba(220,38,38,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(220,38,38,0.3) 1px, transparent 1px)", backgroundSize: "60px 60px" }}
+          style={{ backgroundImage: `linear-gradient(${T.brand(0.3)} 1px, transparent 1px), linear-gradient(90deg, ${T.brand(0.3)} 1px, transparent 1px)`, backgroundSize: "60px 60px" }}
         />
 
         <div className="relative z-10 flex flex-col items-center gap-8">
@@ -159,13 +162,13 @@ export default function PresentationPage() {
           <div>
             <h1
               className="font-black tracking-tighter leading-none"
-              style={{ fontSize: "clamp(4rem, 10vw, 9rem)", color: "#fff" }}
+              style={{ fontSize: "clamp(4rem, 10vw, 9rem)", color: M.textOn }}
             >
               MAWEJA
             </h1>
             <p
               className="font-light tracking-[0.4em] uppercase mt-2"
-              style={{ fontSize: "clamp(0.8rem, 1.5vw, 1.2rem)", color: "rgba(220,38,38,0.9)" }}
+              style={{ fontSize: "clamp(0.8rem, 1.5vw, 1.2rem)", color: T.brand(0.9) }}
             >
               L'Écosystème de Livraison & Services de Kinshasa
             </p>
@@ -179,9 +182,9 @@ export default function PresentationPage() {
                 key={i}
                 className="px-5 py-2 rounded-full text-sm font-semibold tracking-wide"
                 style={{
-                  background: i === 0 ? "rgba(220,38,38,0.15)" : i === 1 ? "rgba(0,0,0,0.6)" : "rgba(220,38,38,0.25)",
-                  border: `1px solid ${i === 1 ? "rgba(255,255,255,0.15)" : "rgba(220,38,38,0.4)"}`,
-                  color: i === 1 ? "rgba(255,255,255,0.7)" : "#fff",
+                  background: i === 0 ? T.brand(0.15) : i === 1 ? T.black(0.6) : T.brand(0.25),
+                  border: `1px solid ${i === 1 ? T.white(0.15) : T.brand(0.4)}`,
+                  color: i === 1 ? T.white(0.7) : M.textOn,
                 }}
               >
                 {app}
@@ -191,7 +194,7 @@ export default function PresentationPage() {
 
           <p
             className="max-w-xl leading-relaxed"
-            style={{ color: "rgba(255,255,255,0.55)", fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)" }}
+            style={{ color: T.white(0.55), fontSize: "clamp(0.9rem, 1.4vw, 1.1rem)" }}
           >
             Une plateforme production-grade complète — commandes de repas, services à domicile,
             gestion d'agents et tableau de bord analytique en temps réel.
@@ -221,7 +224,7 @@ export default function PresentationPage() {
       </section>
 
       {/* ─── OVERVIEW ─────────────────────────────────────────────────────── */}
-      <section className="py-20 px-8 text-center" style={{ background: "#0d0d0d" }}>
+      <section className="py-20 px-8 text-center" style={{ background: M.pageBg2 }}>
         <h2
           className="font-black mb-4 tracking-tight"
           style={{ fontSize: "clamp(2rem, 5vw, 4rem)" }}
@@ -237,22 +240,22 @@ export default function PresentationPage() {
             {
               icon: "📱",
               title: "App Client",
-              color: "#dc2626",
+              color: palette.chart.primary,
               desc: "Commander des repas et services depuis son mobile en quelques secondes.",
               features: ["Restaurants & menus", "Services à domicile", "Suivi en temps réel", "Paiement & promos"],
             },
             {
               icon: "🛵",
               title: "App Agent",
-              color: "#1a1a1a",
-              border: "#555",
+              color: M.laptopScreen,
+              border: M.phoneEdge,
               desc: "Interface optimisée pour les agents — accepter, naviguer, livrer.",
               features: ["Tableau de bord online/offline", "Gestion des livraisons", "Revenus & historique", "Chat intégré"],
             },
             {
               icon: "⚙️",
               title: "Admin Dashboard",
-              color: "#7f1d1d",
+              color: M.brandDeep,
               desc: "Contrôle total sur la plateforme — commandes, drivers, analytics.",
               features: ["Gestion des commandes", "Gestion des agents", "Analytics & rapports", "Marketing & promos"],
             },
@@ -284,7 +287,7 @@ export default function PresentationPage() {
       {/* ─── APP CLIENT ───────────────────────────────────────────────────── */}
       <SectionDivider number="01" label="Application Client" />
 
-      <section className="py-16 px-8" style={{ background: "#0a0a0a" }}>
+      <section className="py-16 px-8" style={{ background: M.pageBg1 }}>
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
           <div className="flex-1 flex flex-col gap-8">
             <div>
@@ -327,7 +330,7 @@ export default function PresentationPage() {
       {/* ─── APP DRIVER ───────────────────────────────────────────────────── */}
       <SectionDivider number="02" label="Application Agent" />
 
-      <section className="py-16 px-8" style={{ background: "#0d0d0d" }}>
+      <section className="py-16 px-8" style={{ background: M.pageBg2 }}>
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row-reverse gap-16 items-center">
           <div className="flex-1 flex flex-col gap-8">
             <div>
@@ -338,7 +341,7 @@ export default function PresentationPage() {
               >
                 Maximisez vos
                 <br />
-                <span style={{ color: "#888" }}>revenus</span>
+                <span style={{ color: M.textMuted }}>revenus</span>
               </h2>
               <p className="text-gray-400 dark:text-gray-500 mt-4 leading-relaxed" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
                 Interface conçue pour les agents Maweja. Simple, rapide et efficace.
@@ -367,7 +370,7 @@ export default function PresentationPage() {
       {/* ─── ADMIN ────────────────────────────────────────────────────────── */}
       <SectionDivider number="03" label="Admin Dashboard" />
 
-      <section className="py-16 px-8" style={{ background: "#0a0a0a" }}>
+      <section className="py-16 px-8" style={{ background: M.pageBg1 }}>
         <div className="max-w-6xl mx-auto flex flex-col gap-12 items-center">
           <div className="text-center max-w-3xl">
             <span className="text-red-500 text-xs font-bold tracking-widest uppercase">Admin Dashboard</span>
@@ -406,7 +409,7 @@ export default function PresentationPage() {
       </section>
 
       {/* ─── STACK TECHNIQUE ─────────────────────────────────────────────── */}
-      <section className="py-20 px-8" style={{ background: "#0d0d0d" }}>
+      <section className="py-20 px-8" style={{ background: M.pageBg2 }}>
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-red-500 text-xs font-bold tracking-widest uppercase">Stack Technique</span>
           <h2
@@ -426,7 +429,7 @@ export default function PresentationPage() {
               <div
                 key={cat}
                 className="rounded-2xl p-6 text-left"
-                style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.15)" }}
+                style={{ background: T.brand(0.06), border: `1px solid ${T.brand(0.15)}` }}
               >
                 <h4 className="text-red-400 font-bold text-sm uppercase tracking-widest mb-4">{cat}</h4>
                 <ul className="flex flex-col gap-2">
@@ -444,7 +447,7 @@ export default function PresentationPage() {
       </section>
 
       {/* ─── CODES PROMO & FONCTIONNALITÉS CLÉS ─────────────────────────── */}
-      <section className="py-20 px-8" style={{ background: "#080808" }}>
+      <section className="py-20 px-8" style={{ background: M.pageBg3 }}>
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
             <div>
@@ -457,10 +460,10 @@ export default function PresentationPage() {
               </h2>
               <div className="flex flex-col gap-4">
                 {[
-                  { code: "MAWEJA10", desc: "Réduction de 10% sur la commande", color: "#dc2626" },
-                  { code: "MAWEJA20", desc: "Réduction de 20% sur la commande", color: "#dc2626" },
-                  { code: "LIVRAISON", desc: "Livraison gratuite offerte", color: "#16a34a" },
-                  { code: "BIENVENUE", desc: "$2000 de réduction à l'inscription", color: "#d97706" },
+                  { code: "MAWEJA10", desc: "Réduction de 10% sur la commande", color: palette.chart.primary },
+                  { code: "MAWEJA20", desc: "Réduction de 20% sur la commande", color: palette.chart.primary },
+                  { code: "LIVRAISON", desc: "Livraison gratuite offerte",       color: M.successCode },
+                  { code: "BIENVENUE", desc: "$2000 de réduction à l'inscription", color: M.warningCode },
                 ].map(({ code, desc, color }) => (
                   <div
                     key={code}
@@ -497,7 +500,7 @@ export default function PresentationPage() {
                   <div
                     key={name}
                     className="flex items-center gap-4 rounded-xl p-4"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                    style={{ background: T.white(0.04), border: `1px solid ${T.white(0.08)}` }}
                   >
                     <span className="text-2xl">{icon}</span>
                     <div>
@@ -513,7 +516,7 @@ export default function PresentationPage() {
       </section>
 
       {/* ─── SERVICES ─────────────────────────────────────────────────────── */}
-      <section className="py-20 px-8" style={{ background: "#0d0d0d" }}>
+      <section className="py-20 px-8" style={{ background: M.pageBg2 }}>
         <div className="max-w-5xl mx-auto text-center">
           <span className="text-red-500 text-xs font-bold tracking-widest uppercase">Services à domicile</span>
           <h2
@@ -536,7 +539,7 @@ export default function PresentationPage() {
               <div
                 key={name}
                 className="rounded-2xl p-6 flex flex-col items-center gap-3 text-center"
-                style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.12)" }}
+                style={{ background: T.brand(0.06), border: `1px solid ${T.brand(0.12)}` }}
               >
                 <span className="text-3xl">{icon}</span>
                 <p className="text-white font-semibold text-sm">{name}</p>
@@ -550,13 +553,13 @@ export default function PresentationPage() {
       {/* ─── SIGNATURE ────────────────────────────────────────────────────── */}
       <section
         className="relative flex flex-col items-center justify-center text-center overflow-hidden py-24 px-8"
-        style={{ background: "#080808" }}
+        style={{ background: M.pageBg3 }}
       >
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 50% 100%, rgba(220,38,38,0.12) 0%, transparent 70%)",
+              `radial-gradient(ellipse 60% 50% at 50% 100%, ${T.brand(0.12)} 0%, transparent 70%)`,
           }}
         />
 
@@ -570,14 +573,14 @@ export default function PresentationPage() {
 
           <h2
             className="font-black tracking-tighter"
-            style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", color: "#fff" }}
+            style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)", color: M.textOn }}
           >
             MAWEJA
           </h2>
 
           <div
             className="w-24 h-px"
-            style={{ background: "linear-gradient(90deg, transparent, #dc2626, transparent)" }}
+            style={{ background: `linear-gradient(90deg, transparent, ${palette.chart.primary}, transparent)` }}
           />
 
           <p className="text-gray-400 dark:text-gray-500 max-w-lg" style={{ fontSize: "clamp(0.85rem, 1.3vw, 1rem)" }}>
@@ -586,7 +589,7 @@ export default function PresentationPage() {
 
           <div
             className="mt-6 flex flex-col items-center gap-2 rounded-2xl px-10 py-6"
-            style={{ background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.25)" }}
+            style={{ background: T.brand(0.08), border: `1px solid ${T.brand(0.25)}` }}
           >
             <p className="text-white font-black" style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)" }}>
               Khevin Andrew Kita

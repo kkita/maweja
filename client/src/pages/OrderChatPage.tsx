@@ -6,6 +6,7 @@ import { apiRequest, queryClient, authFetchJson } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
 import { ArrowLeft, Send, Lock, MessageCircle, User as UserIcon, Truck } from "lucide-react";
 import type { ChatMessage, User } from "@shared/schema";
+import { AppEmptyState } from "../design-system/primitives";
 
 interface OrderPartnerInfo {
   partner: User | null;
@@ -130,9 +131,12 @@ export default function OrderChatPage() {
       {!!info?.partner && (
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2" data-testid="messages-list">
           {messages.length === 0 && !isLoading && (
-            <div className="text-center text-xs text-gray-400 py-8">
-              Aucun message. Écrivez le premier !
-            </div>
+            <AppEmptyState
+              icon={MessageCircle}
+              title="Aucun message"
+              description="Écrivez le premier !"
+              size="sm"
+            />
           )}
           {messages.map(m => {
             const mine = m.senderId === user?.id;
@@ -141,7 +145,7 @@ export default function OrderChatPage() {
                 <div
                   className={`max-w-[75%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap break-words ${
                     mine
-                      ? "bg-[#E10000] text-white rounded-br-md"
+                      ? "bg-brand text-white rounded-br-md"
                       : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 rounded-bl-md border border-gray-100 dark:border-zinc-700"
                   }`}
                   data-testid={`message-${m.id}`}
@@ -182,7 +186,7 @@ export default function OrderChatPage() {
             disabled={!text.trim() || sending}
             data-testid="button-send"
             aria-label="Envoyer"
-            className="w-11 h-11 rounded-full bg-[#E10000] text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform shadow-md"
+            className="w-11 h-11 rounded-full bg-brand text-white flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform shadow-md"
           >
             <Send size={17} />
           </button>

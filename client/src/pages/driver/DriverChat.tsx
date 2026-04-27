@@ -7,6 +7,7 @@ import { onWSMessage } from "../../lib/websocket";
 import { handleWSEvent } from "../../lib/notify";
 import { Send, MessageCircle, Shield, Circle, ArrowLeft, Download, FileText } from "lucide-react";
 import type { ChatMessage, User as UserType } from "@shared/schema";
+import { DEmptyState } from "../../components/driver/DriverUI";
 
 type SafeUser = Omit<UserType, "password">;
 
@@ -32,7 +33,7 @@ function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
           download
           target="_blank"
           rel="noreferrer"
-          className={`flex items-center gap-1 mt-1 text-[10px] font-semibold underline ${isMe ? "text-red-200" : "text-blue-500"}`}
+          className={`flex items-center gap-1 mt-1 text-[10px] font-semibold underline ${isMe ? "text-red-100" : "text-sky-600 dark:text-sky-300"}`}
         >
           <Download size={10} /> Télécharger
         </a>
@@ -41,20 +42,20 @@ function FileAttachment({ msg, isMe }: { msg: ChatMessage; isMe: boolean }) {
   }
 
   return (
-    <div className={`mt-1.5 flex items-center gap-2 px-3 py-2 rounded-xl ${isMe ? "bg-red-700" : "bg-gray-100 dark:bg-gray-700"}`}>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800" : "bg-blue-100 dark:bg-blue-900/40"}`}>
-        <FileText size={16} className={isMe ? "text-red-200" : "text-blue-600"} />
+    <div className={`mt-1.5 flex items-center gap-2 px-3 py-2 rounded-xl ${isMe ? "bg-red-600" : "bg-gray-100 dark:bg-gray-700"}`}>
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-700/80" : "bg-sky-50 dark:bg-sky-900/40"}`}>
+        <FileText size={16} className={isMe ? "text-red-50" : "text-sky-600 dark:text-sky-300"} />
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-[11px] font-bold truncate ${isMe ? "text-white" : "text-gray-800 dark:text-white"}`}>Document PDF</p>
-        <p className={`text-[9px] truncate ${isMe ? "text-red-200" : "text-gray-400"}`}>{fileName}</p>
+        <p className={`text-[9px] truncate ${isMe ? "text-red-100" : "text-gray-400"}`}>{fileName}</p>
       </div>
       <a
         href={resolvedUrl}
         download
         target="_blank"
         rel="noreferrer"
-        className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-800 text-red-100 hover:bg-red-900" : "bg-blue-50 dark:bg-blue-900/40 text-blue-600 hover:bg-blue-100"} transition-colors`}
+        className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isMe ? "bg-red-700/80 text-red-50 hover:bg-red-700" : "bg-sky-50 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300 hover:bg-sky-100"} transition-colors`}
         title="Télécharger"
       >
         <Download size={13} />
@@ -134,7 +135,7 @@ export default function DriverChat() {
 
   if (selectedAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-20">
+      <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-20">
         <DriverNav />
         <div className="max-w-lg mx-auto flex flex-col" style={{ height: "calc(100vh - 130px)" }}>
           <div className="bg-white px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
@@ -159,11 +160,11 @@ export default function DriverChat() {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-800/60">
             {messages.length === 0 && (
-              <div className="text-center pt-16 text-gray-400 dark:text-gray-500">
-                <MessageCircle size={36} className="mx-auto mb-3 opacity-30" />
-                <p className="text-sm font-medium">Aucun message</p>
-                <p className="text-xs mt-1">Envoyez votre premier message a l'administration</p>
-              </div>
+              <DEmptyState
+                icon={MessageCircle}
+                title="Aucun message"
+                description="Envoyez votre premier message a l'administration"
+              />
             )}
             {messages.map((msg) => {
               const isMe = msg.senderId === user?.id;
@@ -210,7 +211,7 @@ export default function DriverChat() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-24">
+    <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-24">
       <DriverNav />
       <div className="max-w-lg mx-auto px-4 py-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Messagerie</h2>
@@ -247,10 +248,10 @@ export default function DriverChat() {
           ))}
 
           {admins.length === 0 && (
-            <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 border border-gray-100 dark:border-gray-800 shadow-sm text-center">
-              <Shield size={36} className="text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Aucun administrateur disponible</p>
-            </div>
+            <DEmptyState
+              icon={Shield}
+              title="Aucun administrateur disponible"
+            />
           )}
         </div>
       </div>

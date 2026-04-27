@@ -276,7 +276,14 @@ export class DatabaseStorage implements IStorage {
       sendPushToUser(n.userId, {
         title: n.title || "MAWEJA",
         body: n.message || "",
-        data: { type: String(n.type || "info"), notificationId: String(created.id) },
+        imageUrl: (n as any).imageUrl || undefined,
+        data: {
+          type: String(n.type || "info"),
+          notificationId: String(created.id),
+          ...((n as any).data && typeof (n as any).data === "object"
+            ? Object.fromEntries(Object.entries((n as any).data).map(([k, v]) => [k, String(v ?? "")]))
+            : {}),
+        },
       }).catch(() => {});
     } catch {}
     return created;

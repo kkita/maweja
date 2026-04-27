@@ -8,10 +8,17 @@ vite.config.ts.*
 # TypeScript compilation outputs — ne jamais commiter ces artefacts
 **/*.js.map
 **/*.d.ts.map
-server/*.js
-server/*.d.ts
-shared/*.js
-shared/*.d.ts
+client/src/**/*.js
+client/src/**/*.d.ts
+server/**/*.js
+server/**/*.d.ts
+shared/**/*.js
+shared/**/*.d.ts
+*.tsbuildinfo
+
+# Exception : vite-env.d.ts est une déclaration de types source (non générée),
+# nécessaire pour que TypeScript connaisse import.meta.env et les modules d'assets.
+!client/src/vite-env.d.ts
 
 # Logs
 *.log
@@ -36,3 +43,40 @@ mobile/client/www/
 mobile/driver/android/
 mobile/driver/ios/
 mobile/driver/www/
+
+# Vestiges Expo legacy au root — ne jamais re-créer (root-scoped only)
+/.expo/
+/ios/
+/assets/
+/app.json
+/eas.json
+/capacitor.config.ts
+
+# Uploads utilisateur (servis localement + miroir cloud)
+/uploads/
+
+# Drafts Replit (chat assets, jamais utilisés par le code)
+/attached_assets/*
+!/attached_assets/.gitkeep
+
+# Exports / archives lourdes
+/exports/
+*.zip
+*.rar
+*.7z
+
+# Marketing / docs binaires au root (root-scoped only)
+/MAWEJA_Presentation.*
+/maweja_Presentation.*
+/maweja-presentation.*
+/maweja-code.zip
+/maweja-mobile.zip
+/dashboard_*.png
+/DASHBOARD_*.png
+/[Dd]ashboard*.png
+/[Ff]acture*.pdf
+/[Ff]acture*.html
+/facture-ed-corporation*
+/[Ff]acture-[Ee]d-[Cc]orporation*
+/splash-verified.png
+/guide-*.pdf

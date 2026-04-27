@@ -22,9 +22,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   </head>
   <body style="margin:0;padding:0;background:#EC0000;min-height:100vh;">
-    <div id="maweja-native-splash" onclick="window.__mawejaKillSplash&&window.__mawejaKillSplash()" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#EC0000;display:flex;align-items:center;justify-content:center;z-index:99999;transition:opacity 0.3s ease;cursor:pointer;">
-      <img src="/maweja-splash.gif" alt="" onerror="this.style.display='none'" style="width:100vw;height:100vh;object-fit:cover;pointer-events:none;" />
-    </div>
+    <div id="maweja-native-splash" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#EC0000;z-index:99999;transition:opacity 0.2s ease;pointer-events:none;"></div>
     <div id="root" style="background:#EC0000;min-height:100vh;"></div>
     <script>
       // Centralized splash killer — usable from anywhere
@@ -36,8 +34,8 @@
           setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
         }
       };
-      // Hard safety net: 3s max — even if React never mounts (JS error, slow network)
-      window.__MAWEJA_SPLASH_TIMER__ = setTimeout(window.__mawejaKillSplash, 3000);
+      // Hard safety net: 9s max — laisse au Lottie (5s) + React le temps de prendre la main
+      window.__MAWEJA_SPLASH_TIMER__ = setTimeout(window.__mawejaKillSplash, 9000);
       // Surface any uncaught errors visibly so the user reports something useful instead of a blank screen
       window.addEventListener('error', function(ev) {
         try {

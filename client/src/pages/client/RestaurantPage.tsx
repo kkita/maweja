@@ -122,7 +122,7 @@ export default function RestaurantPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] pb-32">
+    <div className="min-h-screen bg-gray-50 dark:bg-display-page pb-32">
       {headerSection}
 
       {!selectedCategory ? (
@@ -140,7 +140,7 @@ export default function RestaurantPage() {
                   <p className="text-green-600 dark:text-green-500 text-xs mt-0.5">{(restaurant as any).discountLabel}</p>
                 )}
               </div>
-              <span className="bg-green-500 text-white font-black rounded-full px-3 py-1 text-xs">
+              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 font-black rounded-full px-3 py-1 text-xs">
                 -{(restaurant as any).discountPercent}%
               </span>
             </div>

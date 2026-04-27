@@ -31,7 +31,7 @@ export default function BoutiquesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d]">
+    <div className="min-h-screen bg-gray-50 dark:bg-display-page">
       <ClientNav />
       <div className="max-w-lg mx-auto px-4 pb-24" style={{ paddingTop: 70 }}>
         <div className="flex items-center gap-3 mb-4">

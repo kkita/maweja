@@ -75,7 +75,7 @@ export function registerNotificationsRoutes(app: Express): void {
     }
     let sent = 0;
     for (const u of targetUsers) {
-      await storage.createNotification({
+      const created = await storage.createNotification({
         userId: u.id,
         title: title || "Notification MAWEJA",
         message: message || "",
@@ -86,7 +86,11 @@ export function registerNotificationsRoutes(app: Express): void {
       });
       const ws = wsClients.get(u.id);
       if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "notification", data: { title, message, imageUrl: imageUrl || null } }));
+        // Inclure l'ID pour permettre la dé-duplication WS ↔ FCM côté client
+        ws.send(JSON.stringify({
+          type: "notification",
+          data: { id: created.id, title, message, imageUrl: imageUrl || null, type: type || "promo" },
+        }));
       }
       sent++;
     }

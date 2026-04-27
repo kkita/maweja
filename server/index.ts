@@ -6,7 +6,7 @@ import { setupVite, serveStatic } from "./vite";
 import { seedDatabase } from "./seed";
 import { db, pool } from "./db";
 import { sql } from "drizzle-orm";
-import { hashPassword } from "./auth";
+import { hashPassword, apiGlobalLimiter } from "./auth";
 import { logger } from "./lib/logger";
 
 const app = express();
@@ -62,9 +62,18 @@ const pgStore = new PgSession({
   createTableIfMissing: true,
 });
 
-if (IS_PROD && !process.env.SESSION_SECRET) {
-  console.error("FATAL: SESSION_SECRET is not set. Refusing to start in production without it.");
-  process.exit(1);
+if (IS_PROD) {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret) {
+    logger.error("FATAL: SESSION_SECRET is not set. Refusing to start in production without it.");
+    process.exit(1);
+  }
+  if (secret.length < 32) {
+    logger.error(
+      `FATAL: SESSION_SECRET is too short (${secret.length} chars). Must be at least 32 characters in production.`,
+    );
+    process.exit(1);
+  }
 }
 
 const sessionOpts = {
@@ -99,6 +108,10 @@ app.use((req: any, res, next) => {
 
   return clientSession(req, res, next);
 });
+
+// Global rate-limiter: 200 req/min/IP on every /api/* route (defense in depth;
+// stricter per-endpoint limiters in server/auth.ts still apply on top of this).
+app.use("/api", apiGlobalLimiter);
 
 (async () => {
   await db.execute(sql`
@@ -418,10 +431,10 @@ app.use((req: any, res, next) => {
       await db.execute(sql`UPDATE users SET password = ${hashed} WHERE id = ${row.id}`);
     }
     if (plainUsers.rows.length > 0) {
-      console.log(`[security] Migrated ${plainUsers.rows.length} plaintext password(s) to bcrypt.`);
+      logger.info(`[security] Migrated ${plainUsers.rows.length} plaintext password(s) to bcrypt.`);
     }
   } catch (e) {
-    console.warn("[security] Password migration skipped:", e);
+    logger.warn("[security] Password migration skipped", e);
   }
 
   // Seed default service categories
