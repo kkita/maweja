@@ -16,7 +16,7 @@
  *   – tap sur la notif → deep-link /tracking/:orderId si data.orderId présent
  */
 import { apiRequest } from "./queryClient";
-import { markNotifHandled, wasNotifHandled } from "./notify";
+import { markNotifHandled, wasNotifHandled } from "./notify/notifyAudio";
 import { getMessagingIfSupported, isFirebaseWebConfigured, getVapidKey } from "./firebaseWeb";
 
 let initialized = false;
