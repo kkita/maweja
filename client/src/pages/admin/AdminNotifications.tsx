@@ -5,7 +5,8 @@ import { apiRequest, resolveImg } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   Bell, Send, Users, TrendingUp, ShoppingBag, Clock, Megaphone,
-  Target, CheckCircle, Loader2, Zap, UserCheck, ImagePlus, X, Image as ImageIcon
+  Target, CheckCircle, Loader2, Zap, UserCheck, ImagePlus, X, Image as ImageIcon,
+  Beaker,
 } from "lucide-react";
 
 type Segment = {
@@ -21,6 +22,7 @@ export default function AdminNotifications() {
   const [notifType, setNotifType] = useState("promo");
   const [sent, setSent] = useState(false);
   const [sentCount, setSentCount] = useState(0);
+  const [pushStats, setPushStats] = useState<{ pushSent: number; pushFailed: number; pushSkipped: number } | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -37,16 +39,56 @@ export default function AdminNotifications() {
       const data = await res.json();
       setSent(true);
       setSentCount(data.sent || 0);
+      setPushStats({
+        pushSent: Number(data.pushSent || 0),
+        pushFailed: Number(data.pushFailed || 0),
+        pushSkipped: Number(data.pushSkipped || 0),
+      });
       setTimeout(() => {
         setSent(false);
+        setPushStats(null);
         setTitle("");
         setMessage("");
         setImageUrl("");
         setImagePreview("");
-      }, 5000);
+      }, 8000);
     },
     onError: () => {
       toast({ title: "Erreur", description: "Impossible d'envoyer les notifications", variant: "destructive" });
+    },
+  });
+
+  /**
+   * Envoi d'une notification de test à l'admin connecté.
+   * Vérifie en un clic toute la chaîne : DB → WebSocket → Push FCM → image.
+   */
+  const testMutation = useMutation({
+    mutationFn: () => apiRequest("/api/admin/notifications/test", {
+      method: "POST",
+      body: JSON.stringify({
+        title: title?.trim() || undefined,
+        message: message?.trim() || undefined,
+        imageUrl: imageUrl || undefined,
+      }),
+    }),
+    onSuccess: async (res) => {
+      const data = await res.json();
+      const ps = data?.push?.status;
+      const reason = data?.push?.reason;
+      if (ps === "sent") {
+        toast({ title: "Test envoye", description: `Push FCM livre. Notif #${data.notificationId} creee.` });
+      } else if (ps === "skipped") {
+        toast({
+          title: "Notif creee, push ignore",
+          description: reason === "no-firebase" ? "Firebase non configure cote serveur." : reason === "no-token" ? "Cet utilisateur n'a aucun token push enregistre." : "Push ignore.",
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Push echoue", description: reason || "Erreur Firebase inconnue", variant: "destructive" });
+      }
+    },
+    onError: () => {
+      toast({ title: "Erreur", description: "Impossible d'envoyer le test", variant: "destructive" });
     },
   });
 
@@ -237,20 +279,47 @@ export default function AdminNotifications() {
               </div>
 
               {sent ? (
-                <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3" data-testid="notif-sent-success">
-                  <CheckCircle size={24} className="text-green-600" />
-                  <div>
-                    <p className="font-bold text-sm text-green-800">Notification envoyee !</p>
-                    <p className="text-xs text-green-600">{sentCount} client{sentCount !== 1 ? "s" : ""} notifie{sentCount !== 1 ? "s" : ""}</p>
+                <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4" data-testid="notif-sent-success">
+                  <div className="flex items-center gap-3 mb-2">
+                    <CheckCircle size={24} className="text-green-600" />
+                    <div>
+                      <p className="font-bold text-sm text-green-800">Notification envoyee !</p>
+                      <p className="text-xs text-green-600">{sentCount} client{sentCount !== 1 ? "s" : ""} notifie{sentCount !== 1 ? "s" : ""} en DB</p>
+                    </div>
                   </div>
+                  {pushStats && (
+                    <div className="grid grid-cols-3 gap-2 mt-3 text-center" data-testid="notif-push-stats">
+                      <div className="bg-white/70 rounded-lg p-2 border border-green-200">
+                        <p className="text-[10px] text-gray-500 uppercase font-semibold">Push livres</p>
+                        <p className="font-black text-green-700 text-lg" data-testid="text-push-sent">{pushStats.pushSent}</p>
+                      </div>
+                      <div className="bg-white/70 rounded-lg p-2 border border-amber-200">
+                        <p className="text-[10px] text-gray-500 uppercase font-semibold">Sans token</p>
+                        <p className="font-black text-amber-700 text-lg" data-testid="text-push-skipped">{pushStats.pushSkipped}</p>
+                      </div>
+                      <div className="bg-white/70 rounded-lg p-2 border border-red-200">
+                        <p className="text-[10px] text-gray-500 uppercase font-semibold">Echoues</p>
+                        <p className="font-black text-red-700 text-lg" data-testid="text-push-failed">{pushStats.pushFailed}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <button onClick={handleSend} disabled={broadcastMutation.isPending || uploading}
-                  data-testid="button-send-broadcast"
-                  className="mt-4 w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
-                  {broadcastMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                  {broadcastMutation.isPending ? "Envoi en cours..." : imageUrl ? "Envoyer avec image" : "Envoyer la notification"}
-                </button>
+                <div className="mt-4 space-y-2">
+                  <button onClick={handleSend} disabled={broadcastMutation.isPending || uploading || testMutation.isPending}
+                    data-testid="button-send-broadcast"
+                    className="w-full bg-red-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-red-700 disabled:opacity-50 shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                    {broadcastMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    {broadcastMutation.isPending ? "Envoi en cours..." : imageUrl ? "Envoyer avec image" : "Envoyer la notification"}
+                  </button>
+                  <button onClick={() => testMutation.mutate()} disabled={testMutation.isPending || broadcastMutation.isPending}
+                    data-testid="button-send-test-self"
+                    title="Cree une notif + envoie le push FCM a votre propre compte pour verifier toute la chaine"
+                    className="w-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 py-2.5 rounded-xl text-xs font-semibold hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 border border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2">
+                    {testMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Beaker size={14} />}
+                    {testMutation.isPending ? "Test en cours..." : "Envoyer un test a moi-meme"}
+                  </button>
+                </div>
               )}
             </div>
 

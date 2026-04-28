@@ -7,6 +7,7 @@ import { requireAuth, requireAdmin } from "../middleware/auth.middleware";
 import { validate, schemas } from "../validators";
 import { broadcast, sendToUser } from "../websocket";
 import { logger } from "../lib/logger";
+import { computeEta, statusTextFromContext } from "../lib/eta";
 
 const ORDER_STATUS_SEQUENCE = ["pending", "confirmed", "picked_up", "delivered"];
 const TERMINAL_STATUSES = ["delivered", "cancelled", "returned"];
@@ -158,6 +159,92 @@ export function registerOrdersRoutes(app: Express): void {
     if (user?.role === "client" && order.clientId !== userId) return res.status(403).json({ message: "Acces refuse" });
     if (user?.role === "driver" && order.driverId !== userId) return res.status(403).json({ message: "Acces refuse" });
     res.json(order);
+  });
+
+  /**
+   * PARTIE 4 — Tracking live d'une commande.
+   *
+   * Endpoint lecture utilisé par la carte de suivi côté client et la fiche
+   * commande côté admin. Renvoie en un seul appel :
+   * - le statut courant de la commande,
+   * - la dernière position connue du livreur (table driver_locations),
+   * - l'ETA calculée localement (haversine + vitesse moyenne),
+   * - les infos publiques du livreur (sans password ni token),
+   * - les canaux de contact ouverts (chat, téléphone, support).
+   *
+   * Sécurité : seul le client propriétaire, le livreur assigné ou un admin
+   * peut lire le tracking. Tout autre utilisateur reçoit 403.
+   */
+  app.get("/api/orders/:id/tracking", requireAuth, async (req, res) => {
+    const userId = (req.session as any).userId;
+    const user = await storage.getUser(userId);
+    if (!user) return res.status(401).json({ message: "Non authentifié" });
+    const order = await storage.getOrder(Number(req.params.id));
+    if (!order) return res.status(404).json({ message: "Commande non trouvée" });
+
+    const isOwner = user.role === "client" && order.clientId === userId;
+    const isAssignedDriver = user.role === "driver" && order.driverId === userId;
+    const isAdmin = user.role === "admin";
+    if (!isOwner && !isAssignedDriver && !isAdmin) {
+      return res.status(403).json({ message: "Accès refusé" });
+    }
+
+    const lastLocation = await storage.getLatestDriverLocationForOrder(order.id);
+    const driverPos =
+      lastLocation && Number.isFinite(lastLocation.latitude) && Number.isFinite(lastLocation.longitude)
+        ? { latitude: lastLocation.latitude, longitude: lastLocation.longitude }
+        : null;
+    const dest =
+      order.deliveryLat != null && order.deliveryLng != null
+        ? { latitude: order.deliveryLat, longitude: order.deliveryLng }
+        : null;
+    const eta = computeEta(driverPos, dest);
+
+    let driverPublic: {
+      id: number; name: string; phone: string; vehicleType: string | null; vehiclePlate: string | null; profilePhotoUrl: string | null; rating: number | null;
+    } | null = null;
+    if (order.driverId) {
+      const driver = await storage.getUser(order.driverId);
+      if (driver) {
+        driverPublic = {
+          id: driver.id,
+          name: driver.name,
+          phone: driver.phone,
+          vehicleType: driver.vehicleType ?? null,
+          vehiclePlate: driver.vehiclePlate ?? null,
+          profilePhotoUrl: driver.profilePhotoUrl ?? null,
+          // Note volontairement à null : la note des livreurs n'est pas
+          // encore agrégée. Un futur sprint pourra brancher une moyenne.
+          rating: null,
+        };
+      }
+    }
+
+    res.json({
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      statusText: statusTextFromContext(order.status, eta?.distanceKm ?? null),
+      destination: dest,
+      deliveryAddress: order.deliveryAddress,
+      driver: driverPublic,
+      driverLocation: driverPos
+        ? {
+            latitude: driverPos.latitude,
+            longitude: driverPos.longitude,
+            heading: lastLocation?.heading ?? null,
+            speed: lastLocation?.speed ?? null,
+            accuracy: lastLocation?.accuracy ?? null,
+            recordedAt: lastLocation?.recordedAt ?? null,
+          }
+        : null,
+      eta,
+      channels: {
+        canCall: !!driverPublic?.phone,
+        canChat: !!order.driverId && !["cancelled"].includes(order.status),
+        canOpenSupport: true,
+      },
+    });
   });
 
   app.post("/api/orders/:id/remarks", requireAdmin, validate(schemas.orderRemark), async (req, res) => {
@@ -374,11 +461,17 @@ export function registerOrdersRoutes(app: Express): void {
     // Snapshot des champs sensibles AVANT toute mutation (les refunds doivent se baser sur l'état d'origine)
     const prevStatus = existingOrder.status;
     const prevPaymentStatus = existingOrder.paymentStatus;
+    const previousDriverId = existingOrder.driverId ?? null;
 
     if (req.body.status && req.body.status !== existingOrder.status) {
       const transition = canTransitionStatus(existingOrder.status, req.body.status, user);
       if (!transition.allowed) {
         return res.status(400).json({ message: transition.message });
+      }
+      // Horodate la livraison effective (utilisé pour la fenêtre de chat
+      // post-livraison). N'écrase pas une valeur déjà présente.
+      if (req.body.status === "delivered" && !existingOrder.deliveredAt && req.body.deliveredAt === undefined) {
+        req.body.deliveredAt = new Date();
       }
     }
 
@@ -398,11 +491,67 @@ export function registerOrdersRoutes(app: Express): void {
 
     broadcast({ type: "order_updated", order });
 
-    if (req.body.driverId && !req.body.status) {
-      await storage.createNotification({ userId: req.body.driverId, title: "Nouvelle livraison assignee", message: `Commande ${order.orderNumber} vous a ete assignee`, type: "delivery", data: { orderId: order.id }, isRead: false });
-      sendToUser(req.body.driverId, { type: "order_assigned", order });
-      await storage.createNotification({ userId: order.clientId, title: `Commande ${order.orderNumber}`, message: "Un livreur a ete assigne a votre commande", type: "order", data: { orderId: order.id }, isRead: false });
+    // ─────────────────────────────────────────────────────────────────────────
+    // Détection robuste d'une vraie assignation livreur :
+    //  • req.body.driverId présent ET différent du livreur déjà assigné
+    //  • indépendamment de la présence d'un changement de statut
+    // Évite les doublons (même driverId renvoyé) et le faux-positif d'un
+    // simple changement de statut où req.body.driverId n'est pas envoyé.
+    // (previousDriverId est capturé plus haut, AVANT updateOrder.)
+    // ─────────────────────────────────────────────────────────────────────────
+    const newDriverId =
+      req.body.driverId !== undefined && req.body.driverId !== null
+        ? Number(req.body.driverId)
+        : null;
+    const isDriverAssigned =
+      newDriverId !== null && newDriverId !== previousDriverId;
+
+    if (isDriverAssigned) {
+      // 1) Notification DB livreur — payload enrichi pour deep-link push & UI agent
+      const driverNotif = await storage.createNotification({
+        userId: newDriverId!,
+        title: "Nouvelle livraison assignee",
+        message: `Commande ${order.orderNumber} vous a ete assignee`,
+        type: "delivery",
+        data: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          eventType: "driver_assigned",
+        },
+        isRead: false,
+      });
+
+      // 2) WebSocket livreur — notificationId pour la dédup côté front
+      sendToUser(newDriverId!, {
+        type: "order_assigned",
+        order,
+        notificationId: driverNotif.id,
+      });
+
+      // 3) Notification client UNIQUEMENT pour une nouvelle assignation
+      await storage.createNotification({
+        userId: order.clientId,
+        title: `Commande ${order.orderNumber}`,
+        message: "Un livreur a ete assigne a votre commande",
+        type: "order",
+        data: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          eventType: "driver_assigned",
+        },
+        isRead: false,
+      });
       sendToUser(order.clientId, { type: "order_assigned", order });
+
+      logger.info?.(
+        `[order-assign] orderId=${order.id} previousDriverId=${previousDriverId ?? "null"} newDriverId=${newDriverId} notificationSent=true notificationId=${driverNotif.id}`,
+      );
+    } else if (newDriverId !== null && newDriverId === previousDriverId) {
+      // Même livreur renvoyé (souvent lors d'un changement de statut admin)
+      // → on log explicitement qu'aucune notification n'a été émise (pas de doublon).
+      logger.info?.(
+        `[order-assign] orderId=${order.id} previousDriverId=${previousDriverId} newDriverId=${newDriverId} notificationSent=false reason=same-driver`,
+      );
     }
 
     if (req.body.status) {

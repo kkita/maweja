@@ -3,12 +3,15 @@ import { useRoute, useLocation } from "wouter";
 import { useToast } from "../../hooks/use-toast";
 import { formatPrice, formatDate, statusLabels, paymentLabels } from "../../lib/utils";
 import ClientNav from "../../components/ClientNav";
-import { ArrowLeft, Truck, Phone, Ban, AlertTriangle, Star, MessageSquare } from "lucide-react";
+import { ArrowLeft, Truck, Phone, Ban, AlertTriangle, Star, MessageSquare, LifeBuoy } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { StatusStepper } from "../../components/client/order-detail/StatusStepper";
-import { CancelModal, RateModal } from "../../components/client/order-detail/OrderModals";
+import { CancelModal } from "../../components/client/order-detail/OrderModals";
+import { ReviewModal } from "../../components/client/order-detail/ReviewModal";
 import { useOrderDetail } from "../../hooks/use-order-detail";
-import type { Order } from "@shared/schema";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "../../lib/queryClient";
+import type { Order, Review } from "@shared/schema";
 
 export default function OrderDetailPage() {
   const [, params]   = useRoute("/order/:id");
@@ -19,7 +22,38 @@ export default function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRateModal,   setShowRateModal]   = useState(false);
 
-  const { order, isLoading, restaurant, driver, whatsappNumber, cancelMutation, rateMutation } = useOrderDetail(id);
+  const { order, isLoading, restaurant, driver, whatsappNumber, cancelMutation } = useOrderDetail(id);
+
+  // Avis (PARTIE 6)
+  const reviewQuery = useQuery<{ review: Review | null }>({
+    queryKey: ["/api/orders", id, "review"],
+    enabled: Number.isFinite(id),
+  });
+  const existingReview = reviewQuery.data?.review ?? null;
+
+  const reviewMutation = useMutation({
+    mutationFn: async (payload: {
+      restaurantRating: number | null;
+      driverRating: number | null;
+      comment: string;
+      tags: string[];
+    }) => {
+      const res = await apiRequest(`/api/orders/${id}/review`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders", id, "review"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders", id] });
+      toast({ title: "Merci !", description: "Votre avis a été enregistré." });
+      setShowRateModal(false);
+    },
+    onError: (e: any) => {
+      toast({ title: "Erreur", description: e?.message ?? "Impossible d'enregistrer l'avis.", variant: "destructive" });
+    },
+  });
 
   if (isLoading || !order) {
     return (
@@ -31,7 +65,7 @@ export default function OrderDetailPage() {
 
   const isCancelled = order.status === "cancelled";
   const canCancel   = order.status === "pending" || order.status === "confirmed";
-  const canRate     = order.status === "delivered" && order.rating == null;
+  const canRate     = order.status === "delivered" && existingReview == null;
   const items: any[] = (() => { try { return typeof order.items === "string" ? JSON.parse(order.items) : (order.items as any[]); } catch { return []; } })();
 
   const handleCancel = (reason: string) => {
@@ -42,13 +76,6 @@ export default function OrderDetailPage() {
     cancelMutation.mutate(reason, { onSuccess: () => setShowCancelModal(false) });
   };
 
-  const handleRate = (rating: number, feedback: string) => {
-    if (rating === 0) {
-      toast({ title: "Erreur", description: "Veuillez donner une note.", variant: "destructive" });
-      return;
-    }
-    rateMutation.mutate({ rating, feedback }, { onSuccess: () => setShowRateModal(false) });
-  };
 
   const openWhatsApp = () => {
     const dateStr  = new Date(order.createdAt!).toLocaleDateString("fr-CD", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -81,10 +108,12 @@ export default function OrderDetailPage() {
         />
       )}
       {showRateModal && (
-        <RateModal
-          isPending={rateMutation.isPending}
+        <ReviewModal
+          isPending={reviewMutation.isPending}
+          hasRestaurant={Boolean(order.restaurantId)}
+          hasDriver={Boolean(order.driverId)}
           onClose={() => setShowRateModal(false)}
-          onSubmit={handleRate}
+          onSubmit={(p) => reviewMutation.mutate(p)}
         />
       )}
 
@@ -238,6 +267,15 @@ export default function OrderDetailPage() {
             </div>
           </div>
         )}
+
+        <button
+          onClick={() => navigate(`/support/new?orderId=${order.id}`)}
+          data-testid="button-report-problem"
+          className="w-full py-3.5 rounded-2xl bg-amber-500 text-white font-bold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-amber-200 mt-4 hover:bg-amber-600 transition-all"
+        >
+          <LifeBuoy size={18} />
+          Signaler un problème
+        </button>
 
         <button
           onClick={openWhatsApp}

@@ -202,8 +202,8 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
     { label: "Plateforme", value: "Livraison & Services — Kinshasa, RDC" },
     { label: "Développeur", value: "Khevin Andrew Kita" },
     { label: "Entreprise",  value: "Ed Corporation" },
-    { label: "Contact",     value: "0802540138" },
-    { label: "Email",       value: "support@maweja.cd" },
+    { label: "Contact",     value: "+243819994041" },
+    { label: "Email",       value: "edcorporation9@gmail.com" },
   ];
   return (
     <ModalShell onClose={onClose}>

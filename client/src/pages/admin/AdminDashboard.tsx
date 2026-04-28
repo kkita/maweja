@@ -7,7 +7,7 @@ import { useI18n } from "../../lib/i18n";
 import {
   Package, Truck, Users, DollarSign, Store, TrendingUp, UtensilsCrossed,
   ShoppingBag, Layers, AlertCircle, ArrowRight, Wallet, Tag, Bell, BellRing,
-  Activity, CircleDot,
+  Activity, CircleDot, Radar,
 } from "lucide-react";
 import { formatPrice, statusLabels, statusColors, formatDate } from "../../lib/utils";
 import type { Order, Restaurant } from "@shared/schema";
@@ -47,10 +47,10 @@ function SoftKPI({ tone, label, value, sub, icon: Icon, testId }: { tone: keyof 
 }
 
 const QUICK_ACTIONS = [
+  { label: "Opérations", icon: Radar, color: "bg-indigo-600", href: "/admin/operations" },
   { label: "Commandes", icon: ShoppingBag, color: "bg-rose-600", href: "/admin/orders" },
   { label: "Restaurants", icon: Store, color: "bg-orange-500", href: "/admin/restaurants" },
   { label: "Agents", icon: Truck, color: "bg-rose-700", href: "/admin/drivers" },
-  { label: "Services", icon: Layers, color: "bg-indigo-500", href: "/admin/services" },
   { label: "Finance", icon: Wallet, color: "bg-emerald-600", href: "/admin/finance" },
   { label: "Promotions", icon: Tag, color: "bg-amber-500", href: "/admin/promotions" },
 ];

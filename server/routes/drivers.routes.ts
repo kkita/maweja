@@ -5,6 +5,8 @@ import { requireAuth, requireAdmin } from "../middleware/auth.middleware";
 import { hashPassword, registerLimiter } from "../auth";
 import { validate, validateParams, schemas } from "../validators";
 import { sendToUser, broadcast } from "../websocket";
+import { computeEta, statusTextFromContext } from "../lib/eta";
+import { logger } from "../lib/logger";
 
 function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
@@ -188,6 +190,104 @@ export function registerDriversRoutes(app: Express): void {
     await storage.updateUser(targetId, { isOnline });
     broadcast({ type: "driver_status", driverId: targetId, isOnline });
     res.json({ ok: true });
+  });
+
+  /**
+   * PARTIE 4 — Tracking live livreur.
+   *
+   * Le livreur authentifié envoie sa position pendant une livraison active.
+   * - Si `orderId` est fourni, on vérifie que la commande lui est bien
+   *   assignée (sinon 403). Cela empêche un livreur d'injecter une fausse
+   *   position pour une commande appartenant à un autre.
+   * - On enregistre toujours dans `driver_locations` pour l'historique.
+   * - On met aussi à jour `users.lat/lng` pour rester compatible avec les
+   *   pages admin existantes qui lisent ces deux colonnes.
+   * - Diffusion WebSocket :
+   *     * "driver_location" (ancien format) à tous, pour rétro-compat.
+   *     * "driver_location_update" ciblé client (orderId.clientId) + admins
+   *       avec ETA et statusText déjà calculés.
+   */
+  app.post("/api/driver/location", requireAuth, validate(schemas.driverLocationPing), async (req, res) => {
+    const userId = (req.session as any).userId;
+    const driver = await storage.getUser(userId);
+    if (!driver || driver.role !== "driver") {
+      return res.status(403).json({ message: "Réservé aux livreurs" });
+    }
+    if (driver.isBlocked) {
+      return res.status(403).json({ message: "Compte bloqué" });
+    }
+
+    const { latitude, longitude, heading, speed, accuracy, batteryLevel, orderId } = req.body;
+
+    let order = null as Awaited<ReturnType<typeof storage.getOrder>> | null;
+    if (orderId) {
+      order = (await storage.getOrder(Number(orderId))) || null;
+      if (!order) {
+        return res.status(404).json({ message: "Commande introuvable" });
+      }
+      if (order.driverId !== userId) {
+        return res.status(403).json({ message: "Cette commande ne vous est pas assignée" });
+      }
+    }
+
+    const recorded = await storage.recordDriverLocation({
+      driverId: userId,
+      orderId: orderId ?? null,
+      latitude,
+      longitude,
+      heading: heading ?? null,
+      speed: speed ?? null,
+      accuracy: accuracy ?? null,
+      batteryLevel: batteryLevel ?? null,
+      recordedAt: new Date(),
+    });
+
+    // Maintenir users.lat/lng pour les vues admin existantes (carte des
+    // livreurs en ligne) sans casser les flux qui s'appuient déjà dessus.
+    try {
+      await storage.updateUser(userId, { lat: latitude, lng: longitude });
+    } catch (err) {
+      logger.warn(`[tracking] could not update user lat/lng: ${(err as Error).message}`);
+    }
+
+    // Diffusion WebSocket : ancien format conservé (rétro-compat).
+    broadcast({ type: "driver_location", driverId: userId, lat: latitude, lng: longitude });
+
+    // Format riche dédié au tracking de commande.
+    if (order) {
+      const dest =
+        order.deliveryLat != null && order.deliveryLng != null
+          ? { latitude: order.deliveryLat, longitude: order.deliveryLng }
+          : null;
+      const eta = computeEta({ latitude, longitude }, dest);
+      const payload = {
+        type: "driver_location_update" as const,
+        orderId: order.id,
+        driverLocation: {
+          latitude,
+          longitude,
+          heading: heading ?? null,
+          speed: speed ?? null,
+          accuracy: accuracy ?? null,
+          recordedAt: recorded.recordedAt,
+        },
+        eta,
+        statusText: statusTextFromContext(order.status, eta?.distanceKm ?? null),
+      };
+      sendToUser(order.clientId, payload);
+      const admins = (await storage.getAllUsers()).filter((u) => u.role === "admin");
+      for (const admin of admins) sendToUser(admin.id, payload);
+    }
+
+    res.json({
+      ok: true,
+      location: {
+        id: recorded.id,
+        latitude: recorded.latitude,
+        longitude: recorded.longitude,
+        recordedAt: recorded.recordedAt,
+      },
+    });
   });
 
   app.post("/api/drivers/:id/alarm", requireAdmin, async (req, res) => {

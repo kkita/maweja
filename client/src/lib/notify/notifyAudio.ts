@@ -369,7 +369,31 @@ export async function getNotifPermission(): Promise<"granted" | "denied" | "defa
 
 export const NOTIF_LOGO = "/maweja-logo-red.png";
 
-export async function showNotif(title: string, body: string, icon = NOTIF_LOGO) {
+/**
+ * Résout une URL d'image en URL absolue HTTPS quand on tourne en natif
+ * (les LocalNotifications mobiles refusent les chemins relatifs).
+ */
+function absolutizeImageUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (/^(https?:|data:|file:)/i.test(url)) return url;
+  try {
+    if (typeof window !== "undefined" && window.location?.origin) {
+      return `${window.location.origin}${url.startsWith("/") ? "" : "/"}${url}`;
+    }
+  } catch {}
+  return url;
+}
+
+export async function showNotif(
+  title: string,
+  body: string,
+  iconOrImage: string = NOTIF_LOGO,
+  imageUrl?: string | null,
+) {
+  // Compat : ancien appel showNotif(title, body, iconUrl) reste valable.
+  // Nouveau 4ᵉ argument facultatif : grande image attachée à la notif.
+  const absImg = absolutizeImageUrl(imageUrl);
+
   if (isNative()) {
     try {
       const plugin = getLocalNotificationsPlugin();
@@ -389,6 +413,12 @@ export async function showNotif(title: string, body: string, icon = NOTIF_LOGO) 
           sound: "default",
           autoCancel: true,
           channelId: "maweja_orders",
+          ...(absImg
+            ? {
+                attachments: [{ id: "img", url: absImg, options: { typeHint: "image/jpeg" } }],
+                largeBody: body,
+              }
+            : {}),
         }],
       });
       return;
@@ -399,7 +429,13 @@ export async function showNotif(title: string, body: string, icon = NOTIF_LOGO) 
   if (typeof window === "undefined" || !("Notification" in window)) return;
   if (Notification.permission !== "granted") return;
   try {
-    new Notification(title, { body, icon, badge: icon, tag: `maweja-${Date.now()}` });
+    new Notification(title, {
+      body,
+      icon: iconOrImage,
+      badge: iconOrImage,
+      ...(absImg ? { image: absImg } as any : {}),
+      tag: `maweja-${Date.now()}`,
+    });
   } catch (e) {
     console.error("[MAWEJA] Browser Notification error:", e);
   }

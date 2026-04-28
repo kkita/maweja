@@ -8,16 +8,41 @@ import { uploadLimiter } from "../auth";
 import { validate, schemas } from "../validators";
 import { sendToUser } from "../websocket";
 import { logger } from "../lib/logger";
+import { POST_DELIVERY_CHAT_WINDOW_MINUTES } from "@shared/schema";
 
 /* ─── Helpers : permissions de chat ──────────────────────────
    Règles MAWEJA :
    • Admin ↔ Tout le monde : autorisé en permanence
-   • Client ↔ Driver : autorisé UNIQUEMENT s'il existe une commande
-     active entre eux (statut ≠ delivered / cancelled / returned).
-     Dès que la commande est livrée/annulée, le chat est verrouillé.
+   • Client ↔ Driver : autorisé si UNE des conditions ci-dessous est vraie
+       1) commande active entre eux (statut ≠ delivered / cancelled / returned)
+       2) commande livrée depuis moins de POST_DELIVERY_CHAT_WINDOW_MINUTES
+       3) ticket support "open" lié à une commande entre eux
+     Sinon, le chat avec le livreur est verrouillé (l'utilisateur est invité
+     à passer par le support — il n'est PAS déconnecté).
    • Toute autre combinaison (client↔client, driver↔driver) : refusée
 */
 const TERMINAL_STATUSES = ["delivered", "cancelled", "returned"];
+const POST_DELIVERY_WINDOW_MS = POST_DELIVERY_CHAT_WINDOW_MINUTES * 60 * 1000;
+
+export type ChatStatusReason =
+  | "active"
+  | "post_delivery_window"
+  | "support_open"
+  | "closed"
+  | "no_history"
+  | "admin"
+  | "not_allowed";
+
+export interface ChatStatus {
+  allowed: boolean;
+  reason: ChatStatusReason;
+  orderId: number | null;
+  orderStatus: string | null;
+  deliveredAt: Date | null;
+  /** Date d'expiration de la fenêtre post-livraison (si applicable). */
+  postDeliveryExpiresAt: Date | null;
+  supportTicketId: number | null;
+}
 
 async function getActiveOrderBetween(
   clientId: number,
@@ -28,21 +53,111 @@ async function getActiveOrderBetween(
   return active ? { id: active.id, status: active.status } : null;
 }
 
-async function canChatBetween(userAId: number, userBId: number): Promise<boolean> {
-  if (userAId === userBId) return false;
+/**
+ * Évalue l'état du chat entre deux utilisateurs (sans contexte de commande
+ * spécifique). Renvoie la raison détaillée pour permettre à l'UI d'afficher
+ * un message clair quand le chat est fermé.
+ */
+export async function getChatStatusBetween(
+  userAId: number,
+  userBId: number,
+): Promise<ChatStatus> {
+  const empty: ChatStatus = {
+    allowed: false,
+    reason: "not_allowed",
+    orderId: null,
+    orderStatus: null,
+    deliveredAt: null,
+    postDeliveryExpiresAt: null,
+    supportTicketId: null,
+  };
+  if (userAId === userBId) return empty;
   const [a, b] = await Promise.all([storage.getUser(userAId), storage.getUser(userBId)]);
-  if (!a || !b) return false;
-  if (a.role === "admin" || b.role === "admin") return true;
+  if (!a || !b) return empty;
+  if (a.role === "admin" || b.role === "admin") {
+    return { ...empty, allowed: true, reason: "admin" };
+  }
   const client = a.role === "client" ? a : b.role === "client" ? b : null;
   const driver = a.role === "driver" ? a : b.role === "driver" ? b : null;
-  if (!client || !driver) return false;
-  const active = await getActiveOrderBetween(client.id, driver.id);
-  return !!active;
+  if (!client || !driver) return empty;
+
+  const list = await storage.getOrders({ clientId: client.id, driverId: driver.id });
+
+  // 1) commande active
+  const active = list.find(o => !TERMINAL_STATUSES.includes(o.status));
+  if (active) {
+    return {
+      allowed: true,
+      reason: "active",
+      orderId: active.id,
+      orderStatus: active.status,
+      deliveredAt: null,
+      postDeliveryExpiresAt: null,
+      supportTicketId: null,
+    };
+  }
+
+  // 2) fenêtre post-livraison
+  const delivered = list
+    .filter(o => o.status === "delivered" && o.deliveredAt)
+    .sort((x, y) => +new Date(y.deliveredAt!) - +new Date(x.deliveredAt!));
+  const now = Date.now();
+  for (const ord of delivered) {
+    const dAt = new Date(ord.deliveredAt!);
+    const elapsed = now - dAt.getTime();
+    if (elapsed <= POST_DELIVERY_WINDOW_MS) {
+      return {
+        allowed: true,
+        reason: "post_delivery_window",
+        orderId: ord.id,
+        orderStatus: ord.status,
+        deliveredAt: dAt,
+        postDeliveryExpiresAt: new Date(dAt.getTime() + POST_DELIVERY_WINDOW_MS),
+        supportTicketId: null,
+      };
+    }
+  }
+
+  // 3) ticket support open lié à une de leurs commandes
+  for (const ord of list) {
+    const ticket = await storage.getOpenSupportTicketByOrder(ord.id);
+    if (ticket) {
+      return {
+        allowed: true,
+        reason: "support_open",
+        orderId: ord.id,
+        orderStatus: ord.status,
+        deliveredAt: ord.deliveredAt ? new Date(ord.deliveredAt) : null,
+        postDeliveryExpiresAt: null,
+        supportTicketId: ticket.id,
+      };
+    }
+  }
+
+  // chat fermé — on renvoie quand même la dernière commande connue pour
+  // que l'UI puisse présenter le bouton "Contacter le support" pour cet ordre.
+  const lastOrder =
+    delivered[0] ||
+    list.slice().sort((x, y) => +new Date(y.createdAt!) - +new Date(x.createdAt!))[0] ||
+    null;
+  return {
+    allowed: false,
+    reason: lastOrder ? "closed" : "no_history",
+    orderId: lastOrder?.id ?? null,
+    orderStatus: lastOrder?.status ?? null,
+    deliveredAt: lastOrder?.deliveredAt ? new Date(lastOrder.deliveredAt) : null,
+    postDeliveryExpiresAt: null,
+    supportTicketId: null,
+  };
+}
+
+async function canChatBetween(userAId: number, userBId: number): Promise<boolean> {
+  return (await getChatStatusBetween(userAId, userBId)).allowed;
 }
 
 export function registerChatRoutes(app: Express): void {
   app.get("/api/chat/contacts/:userId", requireAuth, async (req: any, res) => {
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = await resolveUserFromRequest(req);
     const targetId = Number(req.params.userId);
     if (sessionUserId !== targetId) {
       const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
@@ -75,34 +190,70 @@ export function registerChatRoutes(app: Express): void {
     const order = await storage.getOrder(orderId);
     if (!order) return res.status(404).json({ message: "Commande introuvable" });
 
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = await resolveUserFromRequest(req);
     const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
     if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
 
     let partnerId: number | null = null;
-    if (sessionUser.role === "client" && order.clientId === sessionUser.id) {
-      partnerId = order.driverId ?? null;
-    } else if (sessionUser.role === "driver" && order.driverId === sessionUser.id) {
-      partnerId = order.clientId;
-    } else if (sessionUser.role === "admin") {
+    if (sessionUser.role === "admin") {
       partnerId = order.driverId ?? order.clientId;
+    } else if (sessionUser.role === "driver") {
+      // L'agent doit être assigné à cette commande pour ouvrir le chat
+      if (order.driverId !== sessionUser.id) {
+        return res.status(403).json({ message: "Cette commande ne vous est pas assignée." });
+      }
+      partnerId = order.clientId;
+    } else if (sessionUser.role === "client") {
+      if (order.clientId !== sessionUser.id) {
+        return res.status(403).json({ message: "Cette commande ne vous appartient pas." });
+      }
+      partnerId = order.driverId ?? null;
     } else {
       return res.status(403).json({ message: "Acces interdit" });
     }
 
     const active = !TERMINAL_STATUSES.includes(order.status);
+
+    // État détaillé du chat (3 conditions cumulatives) — calculé seulement
+    // si on a un partenaire client/driver identifié.
+    let chatStatus: ChatStatus | null = null;
+    if (partnerId && sessionUser.role !== "admin") {
+      chatStatus = await getChatStatusBetween(sessionUser.id, partnerId);
+    }
+    // Pour l'admin on autorise toujours, pas besoin d'évaluer la fenêtre.
+    const chatAllowed =
+      sessionUser.role === "admin"
+        ? true
+        : chatStatus
+        ? chatStatus.allowed
+        : false;
+    const chatReason = sessionUser.role === "admin" ? "admin" : chatStatus?.reason ?? "no_history";
+    const supportTicketOpen = await storage.getOpenSupportTicketByOrder(order.id);
+
+    const basePayload = {
+      orderId,
+      status: order.status,
+      active,
+      deliveredAt: order.deliveredAt ?? null,
+      postDeliveryWindowMinutes: POST_DELIVERY_CHAT_WINDOW_MINUTES,
+      postDeliveryExpiresAt: chatStatus?.postDeliveryExpiresAt ?? null,
+      supportTicketId: supportTicketOpen?.id ?? null,
+      chatAllowed,
+      chatReason,
+    };
+
     if (!partnerId) {
-      return res.json({ partner: null, active, orderId, status: order.status });
+      return res.json({ partner: null, ...basePayload });
     }
 
     const partner = await storage.getUser(partnerId);
-    if (!partner) return res.json({ partner: null, active, orderId, status: order.status });
+    if (!partner) return res.json({ partner: null, ...basePayload });
     const { password: _, ...safe } = partner as any;
-    res.json({ partner: safe, active, orderId, status: order.status });
+    res.json({ partner: safe, ...basePayload });
   });
 
   app.get("/api/chat/unread/:userId", requireAuth, async (req, res) => {
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = await resolveUserFromRequest(req);
     const userId = Number(req.params.userId);
     if (sessionUserId !== userId) return res.status(403).json({ message: "Acces interdit" });
     const all = await storage.getAllUsers();
@@ -117,13 +268,15 @@ export function registerChatRoutes(app: Express): void {
   });
 
   app.patch("/api/chat/read/:senderId/:receiverId", requireAuth, async (req, res) => {
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = await resolveUserFromRequest(req);
     const receiverId = Number(req.params.receiverId);
     if (sessionUserId !== receiverId) return res.status(403).json({ message: "Acces interdit" });
     const senderId = Number(req.params.senderId);
+    // On charge UNIQUEMENT les messages du sender→receiver pour éviter
+    // d'altérer d'autres conversations (ex: messages d'un admin parallèles).
     const msgs = await storage.getChatMessages(senderId, receiverId);
     for (const m of msgs) {
-      if (m.receiverId === receiverId && !m.isRead) {
+      if (m.senderId === senderId && m.receiverId === receiverId && !m.isRead) {
         await storage.updateChatMessage(m.id, { isRead: true });
       }
     }
@@ -131,10 +284,10 @@ export function registerChatRoutes(app: Express): void {
   });
 
   app.get("/api/chat/:userId1/:userId2", requireAuth, async (req, res) => {
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = await resolveUserFromRequest(req);
     const userId1 = Number(req.params.userId1);
     const userId2 = Number(req.params.userId2);
-    const sessionUser = await storage.getUser(sessionUserId);
+    const sessionUser = sessionUserId ? await storage.getUser(sessionUserId) : null;
     if (!sessionUser) return res.status(401).json({ message: "Non authentifie" });
 
     // L'admin lit tout. Sinon, l'utilisateur doit faire partie de la conversation
@@ -160,7 +313,7 @@ export function registerChatRoutes(app: Express): void {
   });
 
   app.post("/api/chat", requireAuth, validate(schemas.chatMessage), async (req, res) => {
-    const sessionUserId = (req.session as any)?.userId;
+    const sessionUserId = await resolveUserFromRequest(req);
     if (sessionUserId !== req.body.senderId) return res.status(403).json({ message: "Acces interdit" });
 
     const { senderId, receiverId, message = "", fileUrl, fileType, isRead } = req.body;
@@ -172,26 +325,89 @@ export function registerChatRoutes(app: Express): void {
     }
 
     const msg = await storage.createChatMessage({ senderId, receiverId, message, fileUrl: fileUrl || null, fileType: fileType || null, isRead: isRead ?? false });
-    sendToUser(receiverId, { type: "chat_message", message: msg });
     const sender = await storage.getUser(senderId);
     const receiver = await storage.getUser(receiverId);
+
+    // Tente de retrouver une commande active entre Agent et Client pour enrichir la notif
+    let activeOrderId: number | undefined;
+    if (sender && receiver) {
+      const a = sender.role === "client" ? sender : receiver.role === "client" ? receiver : null;
+      const b = sender.role === "driver" ? sender : receiver.role === "driver" ? receiver : null;
+      if (a && b) {
+        const active = await getActiveOrderBetween(a.id, b.id);
+        if (active) activeOrderId = active.id;
+      }
+    }
+
+    sendToUser(receiverId, {
+      type: "chat_message",
+      message: msg,
+      data: { orderId: activeOrderId, senderId, type: "chat" },
+    });
+
     if (sender) {
+      // Titre orienté rôle pour deep-link clair côté UI
+      const receiverIsClient = receiver?.role === "client";
+      const receiverIsDriver = receiver?.role === "driver";
+      const notifTitle = receiverIsClient
+        ? "Message de votre agent MAWEJA"
+        : receiverIsDriver
+        ? "Message du client"
+        : "Nouveau message";
+
       const notifText = fileType === "pdf"
         ? `📎 ${sender.name}: Document partagé`
         : fileType === "image"
         ? `🖼️ ${sender.name}: Image partagée`
         : `${sender.name}: ${(message || "").substring(0, 50)}${(message || "").length > 50 ? "..." : ""}`;
+
+      const notifData = {
+        orderId: activeOrderId,
+        senderId,
+        type: "chat" as const,
+      };
+
       const createdNotif = await storage.createNotification({
         userId: receiverId,
-        title: "Nouveau message",
+        title: notifTitle,
         message: notifText,
         type: "chat",
+        data: notifData,
         isRead: false,
       });
       sendToUser(receiverId, {
         type: "notification",
-        notification: { id: createdNotif.id, title: "Nouveau message", message: notifText, type: "chat" },
+        notification: {
+          id: createdNotif.id,
+          title: notifTitle,
+          message: notifText,
+          type: "chat",
+          data: notifData,
+        },
       });
+
+      // Push notification (no-op si non configuré). PushPayload.data exige Record<string,string>.
+      try {
+        const { sendPushToUser } = await import("../lib/push");
+        const pushData: Record<string, string> = {
+          url:
+            receiverIsDriver && activeOrderId
+              ? `/driver/chat/order/${activeOrderId}`
+              : activeOrderId
+              ? `/chat/order/${activeOrderId}`
+              : "/notifications",
+          type: "chat",
+          senderId: String(senderId),
+        };
+        if (activeOrderId) pushData.orderId = String(activeOrderId);
+        await sendPushToUser(receiverId, {
+          title: notifTitle,
+          body: notifText,
+          data: pushData,
+        });
+      } catch (e) {
+        logger.error("[chat] push send failed", e);
+      }
 
       // Fanout temps-réel vers les admins (Dashboard) — sauf si l'expéditeur ou
       // le destinataire est déjà admin (évite l'auto-notification)

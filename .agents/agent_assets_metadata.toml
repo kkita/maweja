@@ -41,4 +41,10 @@ title = "MAWEJA — Source complet (Lottie + couleurs adoucies + workflows)"
 id = "WfnjVSCXjQdRrFmCdchPi"
 uri = "file://exports/maweja-source.zip"
 type = "unspecified"
-title = "MAWEJA — code source à jour (avec hardening) pour GitHub"
+title = "MAWEJA — source corrigé (build mobile vert) pour GitHub"
+
+[[outputs]]
+id = "Gh90DG8z9ddwj4hMR8u0v"
+uri = "file://exports/maweja-github.zip"
+type = "unspecified"
+title = "MAWEJA - Code source pour GitHub"

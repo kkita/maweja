@@ -285,23 +285,32 @@ export async function initPushNotifications(): Promise<void> {
       } catch {}
     });
 
-    // Tap sur la notif (système ou local)
+    // Tap sur la notif (système ou local) — deep-link intelligent :
+    //   • orderId → /tracking/:id (priorité)
+    //   • sinon notificationId → /notifications (page liste)
+    //   • sinon ouvrir / (home)
     PushNotifications.addListener("pushNotificationActionPerformed", (action: any) => {
       const data = action?.notification?.data || {};
-      if (data?.orderId) {
-        try { (window as any).location.assign(`/tracking/${data.orderId}`); } catch {}
-      }
+      const target = data?.orderId
+        ? `/tracking/${data.orderId}`
+        : data?.notificationId
+        ? "/notifications"
+        : "/";
+      try { (window as any).location.assign(target); } catch {}
     });
 
-    // Tap sur une LocalNotification (relais foreground)
+    // Tap sur une LocalNotification (relais foreground) — même logique
     try {
       const ln = await importPlugin("@capacitor/local-notifications");
       if (ln?.LocalNotifications?.addListener) {
         ln.LocalNotifications.addListener("localNotificationActionPerformed", (action: any) => {
           const extra = action?.notification?.extra || {};
-          if (extra?.orderId) {
-            try { (window as any).location.assign(`/tracking/${extra.orderId}`); } catch {}
-          }
+          const target = extra?.orderId
+            ? `/tracking/${extra.orderId}`
+            : extra?.notificationId
+            ? "/notifications"
+            : "/";
+          try { (window as any).location.assign(target); } catch {}
         });
       }
     } catch {}

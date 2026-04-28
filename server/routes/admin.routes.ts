@@ -10,6 +10,7 @@ import { hashPassword } from "../auth";
 import { validate, validateParams, schemas } from "../validators";
 import { sendToUser } from "../websocket";
 import { logger } from "../lib/logger";
+import { sendPushToUser } from "../lib/push";
 
 export function registerAdminRoutes(app: Express): void {
   app.get("/api/admin/password-reset-requests", requireAdmin, async (req, res) => {
@@ -472,5 +473,341 @@ export function registerAdminRoutes(app: Express): void {
     }
 
     res.json({ migrated, dbUpdated, errors: errors.length > 0 ? errors : undefined, message: `${migrated} fichiers migrés, ${dbUpdated} URLs DB mises à jour` });
+  });
+
+  /**
+   * Envoie une notification de test à l'admin connecté ou à un userId donné.
+   * Pratique pour vérifier rapidement la chaîne complète :
+   *   DB notif → WebSocket → Push FCM (notif système avec image).
+   *
+   * Body :
+   *   - userId?: number (cible — par défaut l'admin connecté)
+   *   - title?: string
+   *   - message?: string
+   *   - imageUrl?: string
+   */
+  app.post("/api/admin/notifications/test", requireAdmin, async (req: any, res) => {
+    const sessionUserId = (req.session as any)?.userId;
+    const targetUserId = Number(req.body?.userId) || sessionUserId;
+    if (!targetUserId) return res.status(400).json({ message: "userId requis" });
+
+    const target = await storage.getUser(targetUserId);
+    if (!target) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    const title = (req.body?.title as string) || "Test notification MAWEJA";
+    const message = (req.body?.message as string) || "Si vous voyez ceci, le système push fonctionne correctement.";
+    const imageUrl = (req.body?.imageUrl as string) || null;
+
+    // 1) Création DB (sans push auto — on veut le PushResult)
+    const created = await storage.createNotification({
+      userId: targetUserId,
+      title,
+      message,
+      type: "info",
+      imageUrl,
+      data: { test: true },
+      isRead: false,
+    }, { skipAutoPush: true });
+
+    // 2) WebSocket
+    try {
+      sendToUser(targetUserId, {
+        type: "notification",
+        data: {
+          id: created.id,
+          notificationId: created.id,
+          title,
+          message,
+          imageUrl,
+          type: "info",
+        },
+      });
+    } catch {}
+
+    // 3) Push natif — résultat collecté
+    const pushResult = await sendPushToUser(targetUserId, {
+      title,
+      body: message,
+      imageUrl: imageUrl || undefined,
+      data: {
+        type: "info",
+        notificationId: String(created.id),
+        eventType: "admin_test",
+        test: "true",
+      },
+    });
+
+    logger.info?.(`[admin/notif/test] target=${targetUserId} push=${pushResult.status}`);
+    res.json({
+      success: true,
+      notificationId: created.id,
+      target: { id: target.id, name: (target as any).name, role: target.role },
+      push: pushResult,
+    });
+  });
+
+  /**
+   * GET /api/admin/operations
+   *
+   * Vue agrégée du centre d'opérations MAWEJA. Tout-en-un pour limiter
+   * les allers-retours (la page se rafraîchit toutes les 15-30s côté UI).
+   *
+   * Query params (filtres optionnels) :
+   *  - period:        "today" | "7d"   (défaut "today")
+   *  - zone:          string           (filtre order.deliveryZone)
+   *  - status:        string           (filtre order.status)
+   *  - driverId:      number           (filtre order.driverId)
+   *  - restaurantId:  number           (filtre order.restaurantId)
+   */
+  app.get("/api/admin/operations", requireAdmin, async (req, res) => {
+    try {
+      const period = (req.query.period as string) === "7d" ? "7d" : "today";
+      const zoneFilter = typeof req.query.zone === "string" && req.query.zone ? req.query.zone : null;
+      const statusFilter = typeof req.query.status === "string" && req.query.status ? req.query.status : null;
+      const driverFilter = req.query.driverId ? Number(req.query.driverId) : null;
+      const restaurantFilter = req.query.restaurantId ? Number(req.query.restaurantId) : null;
+
+      const now = Date.now();
+      const startOfDay = new Date(); startOfDay.setHours(0, 0, 0, 0);
+      const periodFrom = period === "7d"
+        ? new Date(now - 7 * 24 * 60 * 60 * 1000)
+        : startOfDay;
+
+      // Données brutes
+      const [allOrders, allUsers, restaurants, zones, openTickets] = await Promise.all([
+        storage.getOrders(),
+        storage.getAllUsers(),
+        storage.getRestaurants(),
+        storage.getDeliveryZones(),
+        storage.listSupportTickets({ status: "open" }),
+      ]);
+
+      const drivers = allUsers.filter(u => u.role === "driver");
+      const restaurantNameById = new Map(restaurants.map(r => [r.id, r.name]));
+      const userNameById = new Map(allUsers.map(u => [u.id, u.name]));
+
+      // Application des filtres généraux à la liste de commandes
+      const matchesFilters = (o: any) => {
+        if (zoneFilter && (o.deliveryZone || "") !== zoneFilter) return false;
+        if (statusFilter && o.status !== statusFilter) return false;
+        if (driverFilter && o.driverId !== driverFilter) return false;
+        if (restaurantFilter && o.restaurantId !== restaurantFilter) return false;
+        return true;
+      };
+
+      const filteredOrders = allOrders.filter(matchesFilters);
+
+      // ── Statuts opérationnels ──
+      const ACTIVE_STATUSES = new Set(["pending", "confirmed", "preparing", "ready", "picked_up"]);
+      const activeOrders = filteredOrders.filter(o => ACTIVE_STATUSES.has(o.status));
+
+      // Commandes en retard : estimatedDelivery dépassé sans être livrées
+      const lateOrders = activeOrders.filter(o => {
+        if (!o.estimatedDelivery) return false;
+        const eta = new Date(o.estimatedDelivery).getTime();
+        return Number.isFinite(eta) && eta < now;
+      });
+
+      // ── Disponibilité des livreurs ──
+      const busyDriverIds = new Set(
+        activeOrders.filter(o => typeof o.driverId === "number").map(o => o.driverId as number)
+      );
+      const driversBusy = drivers.filter(d => busyDriverIds.has(d.id));
+      const driversOnlineFree = drivers.filter(d => d.isOnline && !busyDriverIds.has(d.id));
+      const driversOffline = drivers.filter(d => !d.isOnline);
+
+      // ── Remboursements en attente ──
+      // Commande annulée, payée (carte/wallet/mobile) mais pas encore "refunded"
+      const pendingRefunds = filteredOrders.filter(o =>
+        o.status === "cancelled" &&
+        o.paymentMethod !== "cash" &&
+        o.paymentStatus !== "refunded"
+      );
+
+      // ── Tickets support (filtrage par commande si filtre actif) ──
+      const ticketsScoped = openTickets.filter(t => {
+        if (!restaurantFilter && !driverFilter && !zoneFilter && !statusFilter) return true;
+        const order = allOrders.find(o => o.id === t.orderId);
+        return order ? matchesFilters(order) : false;
+      });
+
+      // ── Zones actives ──
+      const activeZones = zones.filter(z => z.isActive);
+
+      // ── KPIs (sur la période demandée + filtres) ──
+      const periodOrders = filteredOrders.filter(o => {
+        const d = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+        return d >= periodFrom.getTime();
+      });
+      const todayOrders = filteredOrders.filter(o => {
+        const d = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+        return d >= startOfDay.getTime();
+      });
+      const inProgress = activeOrders.length;
+
+      const deliveredInPeriod = periodOrders.filter(o => o.status === "delivered" && o.deliveredAt && o.createdAt);
+      const avgDeliveryMinutes = deliveredInPeriod.length > 0
+        ? Math.round(
+            deliveredInPeriod.reduce((s, o) =>
+              s + (new Date(o.deliveredAt!).getTime() - new Date(o.createdAt!).getTime()) / 60000, 0
+            ) / deliveredInPeriod.length
+          )
+        : null;
+
+      const cancelledInPeriod = periodOrders.filter(o => o.status === "cancelled").length;
+      const cancelRate = periodOrders.length > 0
+        ? Math.round((cancelledInPeriod / periodOrders.length) * 1000) / 10
+        : 0;
+
+      const driverRated = periodOrders.filter(o => o.driverId && typeof o.rating === "number");
+      const avgDriverRating = driverRated.length > 0
+        ? Math.round((driverRated.reduce((s, o) => s + (o.rating || 0), 0) / driverRated.length) * 10) / 10
+        : null;
+
+      // Rating restaurant : on agrège la moyenne pondérée des restaurants actifs
+      const ratedRestaurants = restaurants.filter(r => typeof r.rating === "number" && r.rating > 0);
+      const avgRestaurantRating = ratedRestaurants.length > 0
+        ? Math.round((ratedRestaurants.reduce((s, r) => s + (r.rating || 0), 0) / ratedRestaurants.length) * 10) / 10
+        : null;
+
+      // ── Actions urgentes ──
+      // Seuils opérationnels (minutes)
+      const NO_DRIVER_MIN = 5;
+      const BLOCKED_PENDING_MIN = 10;
+      const WAITING_CLIENT_MIN = 30;
+      const URGENT_TICKET_MIN = 30;
+
+      const minutesAgo = (d: Date | string | null | undefined) =>
+        d ? (now - new Date(d).getTime()) / 60000 : 0;
+
+      const noDriver = activeOrders
+        .filter(o => !o.driverId && minutesAgo(o.createdAt) >= NO_DRIVER_MIN)
+        .map(o => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          createdAt: o.createdAt,
+          minutesWaiting: Math.round(minutesAgo(o.createdAt)),
+          restaurantId: o.restaurantId,
+          restaurantName: restaurantNameById.get(o.restaurantId) ?? "—",
+          deliveryZone: o.deliveryZone ?? null,
+          total: o.total,
+        }));
+
+      const blocked = activeOrders
+        .filter(o => o.status === "pending" && minutesAgo(o.createdAt) >= BLOCKED_PENDING_MIN)
+        .map(o => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          createdAt: o.createdAt,
+          minutesBlocked: Math.round(minutesAgo(o.createdAt)),
+          restaurantId: o.restaurantId,
+          restaurantName: restaurantNameById.get(o.restaurantId) ?? "—",
+        }));
+
+      const waitingClients = activeOrders
+        .filter(o =>
+          (o.status === "ready" || o.status === "picked_up") &&
+          minutesAgo(o.updatedAt ?? o.createdAt) >= WAITING_CLIENT_MIN
+        )
+        .map(o => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          minutesWaiting: Math.round(minutesAgo(o.updatedAt ?? o.createdAt)),
+          driverId: o.driverId,
+          driverName: o.driverId ? userNameById.get(o.driverId) ?? "—" : null,
+        }));
+
+      const urgentSupport = ticketsScoped
+        .filter(t => minutesAgo(t.createdAt) >= URGENT_TICKET_MIN)
+        .map(t => ({
+          id: t.id,
+          orderId: t.orderId,
+          subject: t.subject,
+          message: t.message,
+          createdAt: t.createdAt,
+          minutesOpen: Math.round(minutesAgo(t.createdAt)),
+          userId: t.userId,
+          userName: userNameById.get(t.userId) ?? "—",
+        }));
+
+      const refundsToValidate = pendingRefunds.map(o => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        total: o.total,
+        paymentMethod: o.paymentMethod,
+        paymentStatus: o.paymentStatus,
+        cancelReason: o.cancelReason,
+        clientId: o.clientId,
+        clientName: userNameById.get(o.clientId) ?? "—",
+      }));
+
+      // ── Alertes critiques (compteur global sur le bandeau Live) ──
+      const criticalAlerts =
+        lateOrders.length +
+        noDriver.length +
+        blocked.length +
+        urgentSupport.length +
+        refundsToValidate.length;
+
+      // ── Listes pour les filtres (UI) ──
+      const filterMeta = {
+        zones: Array.from(new Set([
+          ...activeZones.map(z => z.name),
+          ...allOrders.map(o => o.deliveryZone).filter((x): x is string => !!x),
+        ])).sort(),
+        statuses: Array.from(new Set(allOrders.map(o => o.status))).sort(),
+        drivers: drivers.map(d => ({ id: d.id, name: d.name, isOnline: d.isOnline })),
+        restaurants: restaurants.map(r => ({ id: r.id, name: r.name, isActive: r.isActive })),
+      };
+
+      res.json({
+        period,
+        appliedFilters: {
+          zone: zoneFilter,
+          status: statusFilter,
+          driverId: driverFilter,
+          restaurantId: restaurantFilter,
+        },
+        live: {
+          activeOrders: activeOrders.length,
+          lateOrders: lateOrders.length,
+          driversOnline: driversOnlineFree.length,
+          driversBusy: driversBusy.length,
+          driversOffline: driversOffline.length,
+          openSupportTickets: ticketsScoped.length,
+          pendingRefunds: pendingRefunds.length,
+          activeZones: activeZones.length,
+          criticalAlerts,
+        },
+        kpis: {
+          todayOrders: todayOrders.length,
+          inProgressOrders: inProgress,
+          avgDeliveryMinutes,
+          cancelRate,
+          avgDriverRating,
+          avgRestaurantRating,
+          openTickets: ticketsScoped.length,
+        },
+        urgent: {
+          noDriver,
+          blocked,
+          waitingClients,
+          urgentSupport,
+          refundsToValidate,
+        },
+        filters: filterMeta,
+        thresholds: {
+          noDriverMinutes: NO_DRIVER_MIN,
+          blockedPendingMinutes: BLOCKED_PENDING_MIN,
+          waitingClientMinutes: WAITING_CLIENT_MIN,
+          urgentTicketMinutes: URGENT_TICKET_MIN,
+        },
+      });
+    } catch (e: any) {
+      logger.error?.(`[admin/operations] ${e?.message || e}`);
+      res.status(500).json({ message: "Erreur lors du chargement du centre d'opérations" });
+    }
   });
 }

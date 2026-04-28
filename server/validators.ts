@@ -17,6 +17,7 @@
 
 import { z, ZodError, ZodSchema } from "zod";
 import type { Request, Response, NextFunction } from "express";
+import { REVIEW_TAGS } from "@shared/schema";
 
 // ── Error helpers ─────────────────────────────────────────────────────────────
 
@@ -347,6 +348,20 @@ const driverLocation = z.object({
   lng: z.coerce.number({ message: "Longitude invalide" }),
 });
 
+/**
+ * Ping de tracking livreur (PARTIE 4) — payload envoyé par
+ * POST /api/driver/location pendant une livraison active.
+ */
+const driverLocationPing = z.object({
+  latitude: z.coerce.number({ message: "Latitude invalide" }).min(-90).max(90),
+  longitude: z.coerce.number({ message: "Longitude invalide" }).min(-180).max(180),
+  heading: z.coerce.number().min(0).max(360).optional().nullable(),
+  speed: z.coerce.number().min(0).optional().nullable(),
+  accuracy: z.coerce.number().min(0).optional().nullable(),
+  batteryLevel: z.coerce.number().int().min(0).max(100).optional().nullable(),
+  orderId: z.coerce.number().int().positive().optional().nullable(),
+});
+
 const driverStatus = z.object({
   isOnline: z.boolean({ message: "isOnline (boolean) requis" }),
 });
@@ -354,6 +369,72 @@ const driverStatus = z.object({
 const driverBlock = z.object({
   isBlocked: z.boolean({ message: "isBlocked (boolean) requis" }),
 });
+
+// ─── Support tickets (PARTIE 5) ───────────────────────────────────────────────
+
+const SUPPORT_CATEGORIES = [
+  "order_problem", "missing_item", "late_delivery", "refund_request",
+  "payment_problem", "driver_problem", "restaurant_problem", "other",
+] as const;
+const SUPPORT_PRIORITIES = ["low", "normal", "high", "urgent"] as const;
+const SUPPORT_STATUSES = ["open", "in_review", "waiting_customer", "resolved", "rejected"] as const;
+
+/**
+ * Création d'un ticket support par le client.
+ * `orderId` est optionnel (un client peut signaler un problème général
+ * sans commande associée). Le titre est court, la description peut être
+ * longue. `imageUrl` permet d'attacher une preuve.
+ */
+const supportTicketCreate = z.object({
+  orderId: z.coerce.number().int().positive().optional().nullable(),
+  category: z.enum(SUPPORT_CATEGORIES, { message: "Catégorie invalide" }),
+  title: z.string().trim().min(3, "Titre trop court").max(160),
+  description: z.string().trim().min(5, "Description trop courte").max(4000),
+  requestedRefundAmount: z.coerce.number().min(0).optional().nullable(),
+  imageUrl: z.string().trim().min(1).optional().nullable(),
+  priority: z.enum(SUPPORT_PRIORITIES).optional(),
+});
+
+/** Mise à jour admin (statut, priorité, assignation, note interne). */
+const supportTicketUpdate = z.object({
+  status: z.enum(SUPPORT_STATUSES).optional(),
+  priority: z.enum(SUPPORT_PRIORITIES).optional(),
+  assignedAdminId: z.coerce.number().int().positive().nullable().optional(),
+  resolutionNote: z.string().trim().max(4000).optional().nullable(),
+});
+
+/** Approbation d'un remboursement partiel. */
+const supportTicketRefund = z.object({
+  amount: z.coerce.number().positive("Montant requis"),
+  note: z.string().trim().max(2000).optional().nullable(),
+});
+
+/** Rejet d'un ticket. Le motif est obligatoire pour la traçabilité. */
+const supportTicketReject = z.object({
+  reason: z.string().trim().min(3, "Motif requis").max(2000),
+});
+
+/** Message dans la conversation d'un ticket. */
+const supportTicketMessage = z.object({
+  message: z.string().trim().min(1, "Message vide").max(4000),
+  imageUrl: z.string().trim().min(1).optional().nullable(),
+});
+
+/* ── PARTIE 6 — Reviews ────────────────────────────────────────────────── */
+/**
+ * Création d'un avis : au moins une note (restaurant ou livreur) doit être
+ * renseignée. Les tags doivent appartenir à la liste prédéfinie côté UI.
+ * `orderId` est récupéré dans l'URL côté route, pas dans le body.
+ */
+const reviewCreate = z.object({
+  restaurantRating: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  driverRating: z.coerce.number().int().min(1).max(5).optional().nullable(),
+  comment: z.string().trim().max(2000).optional().nullable(),
+  tags: z.array(z.enum(REVIEW_TAGS)).max(REVIEW_TAGS.length).optional().nullable(),
+}).refine(
+  (v) => v.restaurantRating != null || v.driverRating != null,
+  { message: "Au moins une note (restaurant ou livreur) est requise", path: ["restaurantRating"] },
+);
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
 
@@ -607,8 +688,19 @@ export const schemas = {
   driverCreate,
   driverUpdate,
   driverLocation,
+  driverLocationPing,
   driverStatus,
   driverBlock,
+
+  // Support tickets
+  supportTicketCreate,
+  supportTicketUpdate,
+  supportTicketRefund,
+  supportTicketReject,
+  supportTicketMessage,
+
+  // Reviews
+  reviewCreate,
 
   // Chat
   chatMessage,

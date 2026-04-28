@@ -26,6 +26,15 @@ import type {
   PromoBanner,
   RestaurantPayout,
   PasswordResetRequest,
+  PushToken,
+  SupportTicket,
+  InsertSupportTicket,
+  SupportTicketMessage,
+  InsertSupportTicketMessage,
+  DriverLocation,
+  InsertDriverLocation,
+  Review,
+  InsertReview,
 } from "@shared/schema";
 
 /** A partial entity used as test seed input. */
@@ -45,6 +54,11 @@ export class MemoryStorage {
   zones: DeliveryZone[] = [];
   promotions: Promotion[] = [];
   loyaltyCredits: LoyaltyCredit[] = [];
+  chatMessages: ChatMessage[] = [];
+  pushTokens: PushToken[] = [];
+  supportTickets: SupportTicket[] = [];
+  supportTicketMessages: SupportTicketMessage[] = [];
+  driverLocations: DriverLocation[] = [];
   settings: Record<string, string> = {};
   private nextId = 1;
 
@@ -57,7 +71,13 @@ export class MemoryStorage {
     this.restaurants = [];
     this.zones = [];
     this.promotions = [];
+    this.chatMessages = [];
+    this.pushTokens = [];
+    this.supportTickets = [];
+    this.supportTicketMessages = [];
+    this.driverLocations = [];
     this.loyaltyCredits = [];
+    this.reviews = [];
     this.settings = {};
     this.nextId = 1;
   }
@@ -177,7 +197,11 @@ export class MemoryStorage {
   async getNotifications(userId: number): Promise<Notification[]> {
     return this.notifications.filter((n) => n.userId === userId);
   }
-  async createNotification(n: Seed<Notification>): Promise<Notification> {
+  async getNotification(id: number): Promise<Notification | undefined> {
+    const n = this.notifications.find((x) => x.id === id);
+    return n ? clone(n) : undefined;
+  }
+  async createNotification(n: Seed<Notification>, _opts?: { skipAutoPush?: boolean }): Promise<Notification> {
     const x = { id: this.newId(), createdAt: new Date(), isRead: false, ...n } as Notification;
     this.notifications.push(x);
     return clone(x);
@@ -191,12 +215,25 @@ export class MemoryStorage {
   }
 
   // ── Chat ───────────────────────────────────────────────────────────────
-  async getChatMessages(_a: number, _b: number): Promise<ChatMessage[]> { return []; }
+  async getChatMessages(a: number, b: number): Promise<ChatMessage[]> {
+    return clone(
+      this.chatMessages.filter(
+        (m) =>
+          (m.senderId === a && m.receiverId === b) ||
+          (m.senderId === b && m.receiverId === a),
+      ),
+    );
+  }
   async getChatContacts(_userId: number): Promise<unknown[]> { return []; }
   async createChatMessage(msg: Seed<ChatMessage>): Promise<ChatMessage> {
-    return { id: this.newId(), createdAt: new Date(), ...msg } as ChatMessage;
+    const x = { id: this.newId(), createdAt: new Date(), ...msg } as ChatMessage;
+    this.chatMessages.push(x);
+    return clone(x);
   }
-  async updateChatMessage(_id: number, _data: Partial<ChatMessage>): Promise<void> { /* no-op */ }
+  async updateChatMessage(id: number, data: Partial<ChatMessage>): Promise<void> {
+    const m = this.chatMessages.find((x) => x.id === id);
+    if (m) Object.assign(m, data);
+  }
 
   // ── Wallet ─────────────────────────────────────────────────────────────
   async getWalletTransactions(userId: number): Promise<WalletTransaction[]> {
@@ -358,6 +395,271 @@ export class MemoryStorage {
       c.isUsed = true;
       c.usedOnOrderId = usedOnOrderId;
     }
+  }
+
+  // ── Push tokens (multi-device) ─────────────────────────────────────────
+  async getActivePushTokensByUser(userId: number): Promise<PushToken[]> {
+    return clone(
+      this.pushTokens
+        .filter((t) => t.userId === userId && t.isActive)
+        .sort((a, b) => +new Date(b.lastSeenAt!) - +new Date(a.lastSeenAt!)),
+    );
+  }
+  async upsertPushToken(data: {
+    userId: number;
+    token: string;
+    platform: string;
+    deviceId?: string | null;
+    appVersion?: string | null;
+  }): Promise<PushToken> {
+    const now = new Date();
+    const existing = this.pushTokens.find((t) => t.token === data.token);
+    if (existing) {
+      existing.userId = data.userId;
+      existing.platform = data.platform;
+      if (data.deviceId !== undefined) existing.deviceId = data.deviceId ?? null;
+      if (data.appVersion !== undefined) existing.appVersion = data.appVersion ?? null;
+      existing.isActive = true;
+      existing.lastSeenAt = now;
+      existing.updatedAt = now;
+      return clone(existing);
+    }
+    const x: PushToken = {
+      id: this.newId(),
+      userId: data.userId,
+      token: data.token,
+      platform: data.platform,
+      deviceId: data.deviceId ?? null,
+      appVersion: data.appVersion ?? null,
+      isActive: true,
+      lastSeenAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.pushTokens.push(x);
+    return clone(x);
+  }
+  async deactivatePushToken(token: string): Promise<void> {
+    const t = this.pushTokens.find((x) => x.token === token);
+    if (t) {
+      t.isActive = false;
+      t.updatedAt = new Date();
+    }
+  }
+  async deactivateAllPushTokensForUser(userId: number): Promise<void> {
+    for (const t of this.pushTokens) {
+      if (t.userId === userId) {
+        t.isActive = false;
+        t.updatedAt = new Date();
+      }
+    }
+  }
+
+  // ── Support tickets ────────────────────────────────────────────────────
+  async createSupportTicket(data: InsertSupportTicket): Promise<SupportTicket> {
+    const id = this.newId();
+    const now = new Date();
+    const t: SupportTicket = {
+      id,
+      orderId: data.orderId ?? null,
+      userId: data.userId,
+      ticketNumber: data.ticketNumber ?? `TKT-${String(id).padStart(6, "0")}`,
+      assignedAdminId: data.assignedAdminId ?? null,
+      category: data.category ?? null,
+      status: data.status ?? "open",
+      priority: data.priority ?? "normal",
+      title: data.title ?? null,
+      description: data.description ?? null,
+      requestedRefundAmount: data.requestedRefundAmount ?? null,
+      approvedRefundAmount: data.approvedRefundAmount ?? null,
+      resolutionNote: data.resolutionNote ?? null,
+      subject: data.subject ?? null,
+      message: data.message ?? null,
+      createdAt: now,
+      updatedAt: now,
+      resolvedAt: null,
+      closedAt: null,
+    };
+    this.supportTickets.push(t);
+    return clone(t);
+  }
+  async getOpenSupportTicketByOrder(orderId: number): Promise<SupportTicket | undefined> {
+    const found = this.supportTickets.find(
+      (t) => t.orderId === orderId && t.status === "open",
+    );
+    return found ? clone(found) : undefined;
+  }
+  async getSupportTicketsByOrder(orderId: number): Promise<SupportTicket[]> {
+    return clone(
+      this.supportTickets
+        .filter((t) => t.orderId === orderId)
+        .sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!)),
+    );
+  }
+  async listSupportTickets(filters?: { status?: string }): Promise<SupportTicket[]> {
+    let list = this.supportTickets.slice();
+    if (filters?.status) list = list.filter((t) => t.status === filters.status);
+    return clone(list.sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!)));
+  }
+  async closeSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    const t = this.supportTickets.find((x) => x.id === id);
+    if (!t) return undefined;
+    t.status = "closed";
+    t.closedAt = new Date();
+    t.updatedAt = new Date();
+    return clone(t);
+  }
+
+  // PARTIE 5 — Support Center
+  async getSupportTicket(id: number): Promise<SupportTicket | undefined> {
+    const t = this.supportTickets.find((x) => x.id === id);
+    return t ? clone(t) : undefined;
+  }
+  async getSupportTicketsForUser(userId: number): Promise<SupportTicket[]> {
+    return clone(
+      this.supportTickets
+        .filter((t) => t.userId === userId)
+        .sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!)),
+    );
+  }
+  async listSupportTicketsAdvanced(filters?: {
+    status?: string; priority?: string; category?: string; assignedAdminId?: number;
+  }): Promise<SupportTicket[]> {
+    let list = this.supportTickets.slice();
+    if (filters?.status) list = list.filter((t) => t.status === filters.status);
+    if (filters?.priority) list = list.filter((t) => t.priority === filters.priority);
+    if (filters?.category) list = list.filter((t) => t.category === filters.category);
+    if (filters?.assignedAdminId !== undefined) {
+      list = list.filter((t) => t.assignedAdminId === filters.assignedAdminId);
+    }
+    return clone(list.sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!)));
+  }
+  async updateSupportTicket(id: number, patch: Partial<SupportTicket>): Promise<SupportTicket | undefined> {
+    const t = this.supportTickets.find((x) => x.id === id);
+    if (!t) return undefined;
+    for (const k of Object.keys(patch) as (keyof SupportTicket)[]) {
+      if (k === "id" || k === "createdAt") continue;
+      (t as any)[k] = (patch as any)[k];
+    }
+    t.updatedAt = new Date();
+    return clone(t);
+  }
+  async addSupportTicketMessage(data: InsertSupportTicketMessage): Promise<SupportTicketMessage> {
+    const m: SupportTicketMessage = {
+      id: this.newId(),
+      ticketId: data.ticketId,
+      senderId: data.senderId,
+      message: data.message,
+      imageUrl: data.imageUrl ?? null,
+      createdAt: new Date(),
+    };
+    this.supportTicketMessages.push(m);
+    const t = this.supportTickets.find((x) => x.id === data.ticketId);
+    if (t) t.updatedAt = new Date();
+    return clone(m);
+  }
+  async listSupportTicketMessages(ticketId: number): Promise<SupportTicketMessage[]> {
+    return clone(
+      this.supportTicketMessages
+        .filter((m) => m.ticketId === ticketId)
+        .sort((a, b) => +new Date(a.createdAt!) - +new Date(b.createdAt!)),
+    );
+  }
+
+  // ── Driver tracking (PARTIE 4) ─────────────────────────────────────────
+  async recordDriverLocation(data: InsertDriverLocation): Promise<DriverLocation> {
+    const row: DriverLocation = {
+      id: this.newId(),
+      driverId: data.driverId,
+      orderId: data.orderId ?? null,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      heading: data.heading ?? null,
+      speed: data.speed ?? null,
+      accuracy: data.accuracy ?? null,
+      batteryLevel: data.batteryLevel ?? null,
+      recordedAt: data.recordedAt ?? new Date(),
+      createdAt: new Date(),
+    };
+    this.driverLocations.push(row);
+    return clone(row);
+  }
+  async getLatestDriverLocation(driverId: number): Promise<DriverLocation | undefined> {
+    const list = this.driverLocations
+      .filter((l) => l.driverId === driverId)
+      .sort((a, b) => +new Date(b.recordedAt!) - +new Date(a.recordedAt!));
+    return list[0] ? clone(list[0]) : undefined;
+  }
+  async getLatestDriverLocationForOrder(orderId: number): Promise<DriverLocation | undefined> {
+    const list = this.driverLocations
+      .filter((l) => l.orderId === orderId)
+      .sort((a, b) => +new Date(b.recordedAt!) - +new Date(a.recordedAt!));
+    return list[0] ? clone(list[0]) : undefined;
+  }
+
+  // ── Reviews (PARTIE 6) ────────────────────────────────────────────────
+  reviews: Review[] = [];
+
+  async createReview(data: InsertReview): Promise<Review> {
+    if (this.reviews.some((r) => r.orderId === data.orderId)) {
+      throw new Error("review_already_exists");
+    }
+    const r: Review = {
+      id: this.reviews.length + 1,
+      orderId: data.orderId,
+      userId: data.userId,
+      restaurantId: data.restaurantId ?? null,
+      driverId: data.driverId ?? null,
+      restaurantRating: data.restaurantRating ?? null,
+      driverRating: data.driverRating ?? null,
+      comment: data.comment ?? null,
+      tags: (data.tags as any) ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.reviews.push(r);
+    return clone(r);
+  }
+  async getReviewByOrder(orderId: number): Promise<Review | undefined> {
+    const r = this.reviews.find((x) => x.orderId === orderId);
+    return r ? clone(r) : undefined;
+  }
+  async getReviewsByRestaurant(restaurantId: number): Promise<Review[]> {
+    return this.reviews
+      .filter((r) => r.restaurantId === restaurantId)
+      .sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!))
+      .map(clone);
+  }
+  async getReviewsByDriver(driverId: number): Promise<Review[]> {
+    return this.reviews
+      .filter((r) => r.driverId === driverId)
+      .sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!))
+      .map(clone);
+  }
+  async listReviews(filters?: {
+    restaurantId?: number; driverId?: number; minRating?: number; maxRating?: number;
+  }): Promise<Review[]> {
+    let list = this.reviews.slice();
+    if (filters?.restaurantId != null) list = list.filter((r) => r.restaurantId === filters.restaurantId);
+    if (filters?.driverId != null) list = list.filter((r) => r.driverId === filters.driverId);
+    const maxOf = (r: Review) => Math.max(r.restaurantRating ?? 0, r.driverRating ?? 0);
+    if (filters?.minRating != null) list = list.filter((r) => maxOf(r) >= filters.minRating!);
+    if (filters?.maxRating != null) list = list.filter((r) => maxOf(r) <= filters.maxRating!);
+    return list
+      .sort((a, b) => +new Date(b.createdAt!) - +new Date(a.createdAt!))
+      .map(clone);
+  }
+  async getRestaurantRatingSummary(restaurantId: number): Promise<{ average: number; count: number }> {
+    const xs = this.reviews
+      .filter((r) => r.restaurantId === restaurantId && r.restaurantRating != null)
+      .map((r) => r.restaurantRating!);
+    return { average: xs.length ? xs.reduce((s, n) => s + n, 0) / xs.length : 0, count: xs.length };
+  }
+  async getDriverRatingSummary(driverId: number): Promise<{ average: number; count: number }> {
+    const xs = this.reviews
+      .filter((r) => r.driverId === driverId && r.driverRating != null)
+      .map((r) => r.driverRating!);
+    return { average: xs.length ? xs.reduce((s, n) => s + n, 0) / xs.length : 0, count: xs.length };
   }
 }
 

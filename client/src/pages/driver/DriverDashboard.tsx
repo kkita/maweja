@@ -6,7 +6,7 @@ import DriverNav from "../../components/DriverNav";
 import { DSkeletonCard, DBtn, DEmptyState } from "../../components/driver/DriverUI";
 import {
   Power, MapPin, Navigation, AlertCircle, ChevronRight,
-  Package, CheckCircle2, DollarSign, Clock, Zap, Wifi, WifiOff, TrendingUp,
+  Package, CheckCircle2, DollarSign, Clock, Zap, Wifi, WifiOff, TrendingUp, Star,
 } from "lucide-react";
 import { formatPrice } from "../../lib/utils";
 import type { Order } from "@shared/schema";
@@ -266,6 +266,22 @@ export default function DriverDashboard() {
             <ChevronRight size={16} className="text-driver-subtle" />
           </button>
         )}
+
+        {/* ── Quick link to feedback ────────────────────────────── */}
+        <button
+          onClick={() => navigate("/driver/feedback")}
+          className="w-full flex items-center gap-3 rounded-2xl p-4 transition-all active:opacity-80 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-900/30"
+          data-testid="button-view-feedback"
+        >
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/30">
+            <Star size={18} className="text-yellow-500" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-black text-driver-text">Mes évaluations</p>
+            <p className="text-xs text-driver-muted">Notes, tags et commentaires anonymisés</p>
+          </div>
+          <ChevronRight size={16} className="text-driver-subtle" />
+        </button>
       </div>
     </div>
   );

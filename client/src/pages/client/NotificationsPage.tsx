@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson, apiRequest, queryClient, resolveImg } from "../../lib/queryClient";
@@ -97,41 +97,72 @@ export default function NotificationsPage() {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
   const [selectedNotif, setSelectedNotif] = useState<Notif | null>(null);
 
+  const notifQueryKey = ["/api/notifications", user?.id] as const;
+
   const { data: notifications = [], isLoading } = useQuery<Notif[]>({
-    queryKey: ["/api/notifications", user?.id],
+    queryKey: notifQueryKey,
     queryFn: () => authFetchJson(`/api/notifications/${user?.id}`),
     enabled: !!user,
     refetchInterval: 15000,
   });
 
-  /* ── Fix: correct apiRequest signature (url, options) ── */
+  /**
+   * Mark UNE notification comme lue.
+   * — UI optimiste : la notif passe immédiatement en "lu" dans la liste.
+   * — Rollback automatique si l'API échoue.
+   * — Invalidation ciblée : on n'invalide QUE la liste de cet utilisateur,
+   *   jamais l'ensemble des caches notifications (évite les re-fetch parasites).
+   */
   const markRead = useMutation({
     mutationFn: (id: number) =>
       apiRequest(`/api/notifications/${id}/read`, { method: "PATCH" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    onMutate: async (id: number) => {
+      await queryClient.cancelQueries({ queryKey: notifQueryKey });
+      const previous = queryClient.getQueryData<Notif[]>(notifQueryKey);
+      if (previous) {
+        queryClient.setQueryData<Notif[]>(
+          notifQueryKey,
+          previous.map(n => (n.id === id ? { ...n, isRead: true } : n)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(notifQueryKey, ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: notifQueryKey });
     },
   });
 
+  /**
+   * Mark TOUT comme lu — UNIQUEMENT déclenché par le clic explicite sur le
+   * bouton "Tout lire". L'auto-mark-all-read au chargement de page (qui
+   * marquait silencieusement toutes les notifs en lu dès l'ouverture) a été
+   * retiré : c'était un comportement "anti-utilisateur" qui empêchait de
+   * relire tranquillement ses notifications.
+   */
   const markAllRead = useMutation({
     mutationFn: () =>
       apiRequest(`/api/notifications/read-all/${user?.id}`, { method: "PATCH" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: notifQueryKey });
+      const previous = queryClient.getQueryData<Notif[]>(notifQueryKey);
+      if (previous) {
+        queryClient.setQueryData<Notif[]>(
+          notifQueryKey,
+          previous.map(n => (n.type !== "chat" ? { ...n, isRead: true } : n)),
+        );
+      }
+      return { previous };
+    },
+    onError: (_err, _v, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(notifQueryKey, ctx.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: notifQueryKey });
     },
   });
-
-  /* ── Auto-mark-all-read when page opens with unread notifs ── */
-  useEffect(() => {
-    if (!user) return;
-    const unread = notifications.filter(n => !n.isRead && n.type !== "chat");
-    if (unread.length > 0 && !markAllRead.isPending) {
-      const t = setTimeout(() => {
-        markAllRead.mutate();
-      }, 1200);
-      return () => clearTimeout(t);
-    }
-  }, [user?.id, notifications.length]);
 
   const unreadCount = notifications.filter(n => !n.isRead && n.type !== "chat").length;
   const visibleNotifs = notifications.filter(n => n.type !== "chat");

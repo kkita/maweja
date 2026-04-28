@@ -5,13 +5,33 @@ import { playRingtone, vibrate, showNotif, markNotifHandled, wasNotifHandled } f
 
 export interface ChatEventData {
   type: string;
-  notification?: { id?: string | number; title?: string; message?: string } | null;
-  message?: { id?: string | number; message?: string } | null;
-  data?: { title?: string; message?: string } | null;
+  notification?: {
+    id?: string | number;
+    title?: string;
+    message?: string;
+    imageUrl?: string | null;
+  } | null;
+  message?: { id?: string | number; message?: string; imageUrl?: string | null } | null;
+  data?: { title?: string; message?: string; imageUrl?: string | null } | null;
   title?: string;
   message_text?: string;
+  imageUrl?: string | null;
   id?: string | number;
   [k: string]: unknown;
+}
+
+/** Extrait imageUrl en testant tous les emplacements possibles du payload WS. */
+function extractImageUrl(data: ChatEventData): string | undefined {
+  const candidates = [
+    data.notification?.imageUrl,
+    data.message?.imageUrl,
+    data.data?.imageUrl,
+    data.imageUrl,
+  ];
+  for (const c of candidates) {
+    if (c) return c;
+  }
+  return undefined;
 }
 
 /**
@@ -29,7 +49,8 @@ export function handleChatEvent(data: ChatEventData): boolean {
       if (wasNotifHandled(nid)) return true;
       markNotifHandled(nid);
       playRingtone(); vibrate("light");
-      showNotif(title, message);
+      const img = extractImageUrl(data);
+      showNotif(title, message, undefined, img);
       return true;
     }
     case "chat_message": {
@@ -38,7 +59,8 @@ export function handleChatEvent(data: ChatEventData): boolean {
       if (wasNotifHandled(nid)) return true;
       markNotifHandled(nid);
       playRingtone(); vibrate("double");
-      showNotif("💬 MAWEJA – Message", msg);
+      const img = extractImageUrl(data);
+      showNotif("💬 MAWEJA – Message", msg, undefined, img);
       return true;
     }
     default:

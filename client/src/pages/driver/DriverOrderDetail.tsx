@@ -13,6 +13,7 @@ import { useToast } from "../../hooks/use-toast";
 import { DBtn, DStatusBadge } from "../../components/driver/DriverUI";
 import { RefuseModal } from "../../components/driver/order-detail/RefuseModal";
 import { useDriverOrderDetail } from "../../hooks/use-driver-order-detail";
+import { useDriverLocationSharing } from "../../hooks/use-driver-location-sharing";
 import type { Order, Restaurant } from "@shared/schema";
 import "leaflet/dist/leaflet.css";
 import * as L from "leaflet";
@@ -123,6 +124,10 @@ export default function DriverOrderDetail() {
 
   const { order, isLoading, restaurant, client, updateStatus, acceptMutation, refuseMutation } = useDriverOrderDetail(orderId);
 
+  // PARTIE 4 — partage GPS pendant la livraison active uniquement
+  const isActiveDelivery = !!order && (order.status === "confirmed" || order.status === "picked_up");
+  const tracking = useDriverLocationSharing(orderId, isActiveDelivery, 15000);
+
   if (isLoading || !order) {
     return (
       <div className="min-h-screen pb-28 bg-driver-bg">
@@ -197,6 +202,24 @@ export default function DriverOrderDetail() {
             </div>
           </div>
           <StatusTimeline currentStatus={order.status} />
+
+          {isActiveDelivery && (
+            <div
+              className={`mt-3 flex items-center gap-2 px-3 py-2 rounded-xl border text-[11px] font-semibold ${
+                tracking.gpsActive
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-300"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-300"
+              }`}
+              data-testid="status-gps-sharing"
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${tracking.gpsActive ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`}
+              />
+              {tracking.gpsActive
+                ? `Position partagée${tracking.lastSentAt ? ` · ${new Date(tracking.lastSentAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}`
+                : tracking.lastError ?? "GPS indisponible — activez la localisation"}
+            </div>
+          )}
         </div>
 
         {order.notes && (
@@ -283,7 +306,7 @@ export default function DriverOrderDetail() {
               </div>
             )}
             <button
-              onClick={() => navigate(`/chat/order/${order.id}`)}
+              onClick={() => navigate(`/driver/chat/order/${order.id}`)}
               data-testid="button-chat-client"
               className="w-full mb-2 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold active:scale-95 transition-all text-white bg-blue-600 hover:bg-blue-700"
             >

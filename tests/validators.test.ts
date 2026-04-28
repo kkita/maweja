@@ -84,6 +84,7 @@ const happyFixtures: Record<string, Fixture | unknown> = {
   driverCreate: { name: "Bob", phone: "+243888111222", password: "secret123" },
   driverUpdate: { name: "Bob (modifié)" },
   driverLocation: { lat: -4.32, lng: 15.31 },
+  driverLocationPing: { latitude: -4.32, longitude: 15.31, heading: 90, speed: 18, accuracy: 12, batteryLevel: 80, orderId: 5 },
   driverStatus: { isOnline: true },
   driverBlock: { isBlocked: true },
 
@@ -128,6 +129,26 @@ const happyFixtures: Record<string, Fixture | unknown> = {
 
   // Settings
   settingValue: { value: "0.76" },
+
+  // Support tickets (PARTIE 5)
+  supportTicketCreate: {
+    orderId: 1,
+    category: "missing_item",
+    title: "Plat manquant",
+    description: "Il manque le riz dans ma commande.",
+  },
+  supportTicketUpdate: { status: "in_review", priority: "high", assignedAdminId: 2 },
+  supportTicketRefund: { amount: 5.5, note: "Compensation partielle" },
+  supportTicketReject: { reason: "Demande non recevable, fournisseur OK" },
+  supportTicketMessage: { message: "Je vous tiens au courant." },
+
+  // Reviews (PARTIE 6)
+  reviewCreate: {
+    restaurantRating: 5,
+    driverRating: 4,
+    comment: "Tout était parfait, livreur très poli.",
+    tags: ["rapide", "poli"],
+  },
 
   // Params (nested namespace — covered separately below)
   params: undefined,
@@ -185,6 +206,7 @@ const rejectFixtures: Record<string, Fixture | unknown> = {
   driverCreate: { name: "", phone: "x", password: "1" },
   driverUpdate: { phone: "x" },
   driverLocation: { lat: "north" },
+  driverLocationPing: { latitude: "north", longitude: null },
   driverStatus: { isOnline: "yes" },
   driverBlock: { isBlocked: "no" },
 
@@ -212,6 +234,16 @@ const rejectFixtures: Record<string, Fixture | unknown> = {
   restaurantPayoutCreate: { restaurantId: -1, grossAmount: -1, mawejaCommission: -1, netAmount: -1 },
 
   settingValue: { value: 123 },
+
+  // Support tickets (PARTIE 5)
+  supportTicketCreate: { category: "alien", title: "x", description: "y" },
+  supportTicketUpdate: { status: "alien" },
+  supportTicketRefund: { amount: -1 },
+  supportTicketReject: { reason: "" },
+  supportTicketMessage: { message: "" },
+
+  // Reviews (PARTIE 6) — aucune note, refusé par .refine()
+  reviewCreate: { comment: "Pas de note" },
 
   params: undefined, // covered separately below
 };

@@ -1,5 +1,5 @@
 /**
- * Push notifications via Firebase Admin SDK (FCM).
+ * Push notifications via Firebase Admin SDK (FCM) — multi-device.
  *
  * Configuration : définir l'une des variables d'environnement :
  *   • FIREBASE_SERVICE_ACCOUNT_JSON  — JSON brut du compte de service
@@ -8,6 +8,11 @@
  *
  * Si rien n'est configuré, sendPushToUser() est un no-op silencieux et
  * loggue un avertissement une seule fois.
+ *
+ * Multi-device : depuis avril 2026, on supporte plusieurs appareils par
+ * utilisateur via la table `push_tokens`. L'ancien champ `users.pushToken`
+ * reste maintenu pour la rétro-compatibilité (clients/installations qui ne
+ * sont pas encore passés à la nouvelle API).
  */
 import admin from "firebase-admin";
 import { storage } from "../storage";
@@ -32,7 +37,6 @@ function tryInit(): admin.app.App | null {
       serviceAccount = JSON.parse(decoded);
     } catch (e) { logger.warn?.("[push] FIREBASE_SERVICE_ACCOUNT_BASE64 invalide", e); }
   } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    // Le SDK lit automatiquement la variable
     try {
       app = admin.initializeApp();
       logger.info?.("[push] Firebase Admin initialisé via GOOGLE_APPLICATION_CREDENTIALS");
@@ -66,89 +70,259 @@ export interface PushPayload {
   body: string;
   /** URL absolue d'une image à afficher dans la notification (Android tray + iOS si NSE installé) */
   imageUrl?: string;
-  /** Données additionnelles passées au handler côté app (orderId, type, etc.) */
+  /**
+   * Données additionnelles passées au handler côté app.
+   *
+   * Champs standardisés (recommandés pour toute notif côté backend) :
+   *   - notificationId : id de la ligne notifications
+   *   - type           : "info" | "promo" | "order" | "chat" | …
+   *   - eventType      : sous-type métier ("order:assigned", "chat:new", …)
+   *   - orderId        : id de commande si pertinent
+   *   - clickAction    : route cible côté app (deep-link, ex: "/tracking/42")
+   */
   data?: Record<string, string>;
 }
 
-/** Convertit une URL relative (/uploads/…) en URL publique absolue */
-function toAbsoluteImageUrl(url?: string): string | undefined {
+/**
+ * Résultat agrégé d'un envoi multi-device.
+ *
+ * Reste rétro-compatible avec les anciens consommateurs qui ne lisent que
+ * `.status` ("sent" | "skipped" | "failed").
+ *   - status = "sent"    → au moins un appareil a reçu la notif
+ *   - status = "skipped" → aucun appareil cible (pas de token, pas de Firebase, user introuvable)
+ *   - status = "failed"  → tous les envois ont échoué
+ */
+export type PushResult = {
+  status: "sent" | "skipped" | "failed";
+  /** Nombre d'appareils ayant reçu la notif. */
+  sentCount: number;
+  /** Nombre d'envois en erreur (token invalide compris). */
+  failedCount: number;
+  /** Sous-ensemble de failedCount : tokens désinstallés, désactivés en DB. */
+  invalidTokenCount: number;
+  /** Raison du skip si status="skipped". */
+  skippedReason?: "no-firebase" | "no-user" | "no-token";
+  /** Détail par token (utile pour debug / monitoring). */
+  results?: Array<{ token: string; status: "sent" | "failed"; reason?: string; messageId?: string }>;
+  /** Legacy : id du dernier message FCM envoyé avec succès. */
+  messageId?: string;
+  /** Legacy : raison du dernier échec (premier code rencontré). */
+  reason?: string;
+  /** Legacy : true si au moins un token invalide a été nettoyé. */
+  cleaned?: boolean;
+};
+
+/** Convertit une URL relative (/uploads/…) en URL publique absolue HTTPS */
+export function toAbsoluteImageUrl(url?: string | null): string | undefined {
   if (!url) return undefined;
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url)) {
+    if (/localhost|127\.0\.0\.1/i.test(url)) return undefined;
+    return url;
+  }
   const base = (process.env.PUBLIC_BASE_URL || "https://maweja.net").replace(/\/$/, "");
+  if (/localhost|127\.0\.0\.1/i.test(base)) return undefined;
   return `${base}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
+function isInvalidTokenError(code: string): boolean {
+  return (
+    code.includes("registration-token-not-registered") ||
+    code.includes("invalid-argument") ||
+    code.includes("messaging/invalid-registration-token") ||
+    code.includes("invalid-registration-token") ||
+    code.includes("not-found") ||
+    code.includes("unregistered")
+  );
+}
+
 /**
- * Envoie un push à un utilisateur (silencieux s'il n'a pas de token ou si
- * Firebase n'est pas configuré).
+ * Récupère tous les tokens cibles d'un utilisateur en fusionnant :
+ *   1) la table push_tokens (multi-device, source de vérité)
+ *   2) le legacy users.pushToken (si pas déjà présent dans push_tokens)
+ *
+ * Cette fusion garantit qu'un appareil enregistré sur l'ancienne API
+ * continue à recevoir les notifications après la migration.
  */
-export async function sendPushToUser(userId: number, payload: PushPayload): Promise<void> {
+async function collectTargetTokens(
+  userId: number,
+): Promise<Array<{ token: string; platform: string; legacy: boolean }>> {
+  const tokens: Array<{ token: string; platform: string; legacy: boolean }> = [];
+  const seen = new Set<string>();
+
+  let active: Array<{ token: string; platform: string }> = [];
+  try {
+    active = await storage.getActivePushTokensByUser(userId);
+  } catch (e) {
+    logger.warn?.(`[push] getActivePushTokensByUser a échoué user=${userId}`, e);
+  }
+  for (const t of active) {
+    if (!t.token || seen.has(t.token)) continue;
+    seen.add(t.token);
+    tokens.push({ token: t.token, platform: t.platform || "android", legacy: false });
+  }
+
+  try {
+    const user = await storage.getUser(userId);
+    const legacyToken = (user as any)?.pushToken as string | null | undefined;
+    const legacyPlatform = (user as any)?.pushPlatform as string | null | undefined;
+    if (legacyToken && !seen.has(legacyToken)) {
+      seen.add(legacyToken);
+      tokens.push({ token: legacyToken, platform: legacyPlatform || "android", legacy: true });
+    }
+  } catch {
+    // ignore
+  }
+
+  return tokens;
+}
+
+/**
+ * Envoie un push à TOUS les appareils actifs d'un utilisateur.
+ *
+ * Renvoie un PushResult agrégé : sentCount / failedCount / invalidTokenCount.
+ * Les anciens appelants qui ne lisent que `result.status` continuent à
+ * fonctionner sans modification.
+ *
+ * Tokens invalides : automatiquement désactivés (push_tokens.isActive=false
+ * et users.pushToken nullé pour le legacy).
+ */
+export async function sendPushToUser(userId: number, payload: PushPayload): Promise<PushResult> {
   const a = tryInit();
-  if (!a) return;
+  if (!a) {
+    return { status: "skipped", sentCount: 0, failedCount: 0, invalidTokenCount: 0, skippedReason: "no-firebase" };
+  }
+
   let user;
-  try { user = await storage.getUser(userId); } catch { return; }
-  if (!user || !(user as any).pushToken) return;
-  const token: string = (user as any).pushToken;
+  try { user = await storage.getUser(userId); } catch {
+    return { status: "skipped", sentCount: 0, failedCount: 0, invalidTokenCount: 0, skippedReason: "no-user" };
+  }
+  if (!user) {
+    return { status: "skipped", sentCount: 0, failedCount: 0, invalidTokenCount: 0, skippedReason: "no-user" };
+  }
+
+  const targets = await collectTargetTokens(userId);
+  if (targets.length === 0) {
+    return { status: "skipped", sentCount: 0, failedCount: 0, invalidTokenCount: 0, skippedReason: "no-token" };
+  }
 
   const absImg = toAbsoluteImageUrl(payload.imageUrl);
 
-  try {
-    await a.messaging().send({
-      token,
-      // Champ TOP-LEVEL `notification` : indispensable pour que la notif
-      // s'affiche dans la barre système quand l'app est en arrière-plan/fermée.
-      notification: {
-        title: payload.title,
-        body: payload.body,
-        ...(absImg ? { imageUrl: absImg } : {}),
-      },
-      // Les `data` doivent être des strings — sinon FCM rejette l'envoi.
-      data: Object.fromEntries(
-        Object.entries(payload.data || {}).map(([k, v]) => [k, String(v ?? "")]),
-      ),
-      android: {
-        priority: "high",
+  const dataStr: Record<string, string> = Object.fromEntries(
+    Object.entries(payload.data || {}).map(([k, v]) => [k, String(v ?? "")]),
+  );
+  if (absImg) dataStr.imageUrl = absImg;
+
+  const results: NonNullable<PushResult["results"]> = [];
+  let sentCount = 0;
+  let failedCount = 0;
+  let invalidTokenCount = 0;
+  let lastMessageId: string | undefined;
+  let firstError: string | undefined;
+
+  await Promise.all(targets.map(async (t) => {
+    try {
+      const messageId = await a.messaging().send({
+        token: t.token,
         notification: {
-          channelId: "maweja_orders",
-          sound: "default",
-          defaultSound: true,
-          defaultVibrateTimings: true,
-          // Image affichée dans la zone de notification Android (style WhatsApp)
+          title: payload.title,
+          body: payload.body,
           ...(absImg ? { imageUrl: absImg } : {}),
         },
-      },
-      apns: {
-        headers: {
-          // Force l'affichage immédiat (sinon iOS peut différer en mode "low priority")
-          "apns-priority": "10",
-          "apns-push-type": "alert",
-        },
-        payload: {
-          aps: {
-            alert: { title: payload.title, body: payload.body },
+        data: dataStr,
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "maweja_orders",
             sound: "default",
-            badge: 1,
-            // mutableContent permet à la Notification Service Extension iOS
-            // de télécharger l'image (nécessite l'extension côté app iOS).
-            "mutable-content": 1 as any,
+            defaultSound: true,
+            defaultVibrateTimings: true,
+            ...(absImg ? { imageUrl: absImg } : {}),
           },
         },
-        // FCM iOS image (nécessite NSE) — sans NSE, l'image est ignorée
-        // mais la notif s'affiche quand même avec titre + corps.
-        ...(absImg ? { fcmOptions: { imageUrl: absImg } as any } : {}),
-      },
-    });
-  } catch (e: any) {
-    const code = e?.errorInfo?.code || e?.code || "";
-    // Token invalide / désinstallé — on nettoie côté DB
-    if (code.includes("registration-token-not-registered") || code.includes("invalid-argument")) {
-      try { await storage.updateUser(userId, { pushToken: null, pushPlatform: null } as any); } catch {}
-    } else {
-      logger.warn?.(`[push] envoi échoué user=${userId}: ${code || e?.message}`);
+        apns: {
+          headers: {
+            "apns-priority": "10",
+            "apns-push-type": "alert",
+          },
+          payload: {
+            aps: {
+              alert: { title: payload.title, body: payload.body },
+              sound: "default",
+              badge: 1,
+              "mutable-content": 1 as any,
+            },
+          },
+          ...(absImg ? { fcmOptions: { imageUrl: absImg } as any } : {}),
+        },
+        webpush: {
+          notification: {
+            title: payload.title,
+            body: payload.body,
+            icon: "/icon-192.png",
+            badge: "/icon-192.png",
+            ...(absImg ? { image: absImg } : {}),
+            ...(dataStr.notificationId ? { tag: dataStr.notificationId } : {}),
+          },
+          fcmOptions: dataStr.clickAction
+            ? { link: dataStr.clickAction }
+            : dataStr.orderId
+              ? { link: `/tracking/${dataStr.orderId}` }
+              : { link: "/notifications" },
+        },
+      });
+      sentCount++;
+      lastMessageId = messageId;
+      results.push({ token: t.token, status: "sent", messageId });
+    } catch (e: any) {
+      const code: string = e?.errorInfo?.code || e?.code || "";
+      const msg: string = e?.errorInfo?.message || e?.message || String(e);
+      failedCount++;
+      if (!firstError) firstError = code || msg || "unknown";
+      if (isInvalidTokenError(code)) {
+        invalidTokenCount++;
+        try {
+          await storage.deactivatePushToken(t.token);
+        } catch {}
+        if (t.legacy) {
+          try { await storage.updateUser(userId, { pushToken: null, pushPlatform: null } as any); } catch {}
+        }
+        logger.warn?.(`[push] token invalide désactivé user=${userId} legacy=${t.legacy} code=${code}`);
+      } else {
+        logger.warn?.(`[push] envoi échoué user=${userId} code=${code} msg=${msg}`);
+      }
+      results.push({ token: t.token, status: "failed", reason: code || msg || "unknown" });
     }
-  }
+  }));
+
+  let status: "sent" | "skipped" | "failed";
+  if (sentCount > 0) status = "sent";
+  else if (failedCount > 0) status = "failed";
+  else status = "skipped";
+
+  return {
+    status,
+    sentCount,
+    failedCount,
+    invalidTokenCount,
+    results,
+    ...(lastMessageId ? { messageId: lastMessageId } : {}),
+    ...(firstError ? { reason: firstError } : {}),
+    ...(invalidTokenCount > 0 ? { cleaned: true } : {}),
+  };
 }
 
-export async function sendPushToUsers(userIds: number[], payload: PushPayload): Promise<void> {
-  await Promise.all(userIds.map(id => sendPushToUser(id, payload).catch(() => {})));
+export async function sendPushToUsers(userIds: number[], payload: PushPayload): Promise<PushResult[]> {
+  return Promise.all(
+    userIds.map((id) =>
+      sendPushToUser(id, payload).catch(
+        (e): PushResult => ({
+          status: "failed",
+          sentCount: 0,
+          failedCount: 1,
+          invalidTokenCount: 0,
+          reason: String(e?.message || e),
+        }),
+      ),
+    ),
+  );
 }

@@ -36,6 +36,9 @@ const WalletPage = lazy(() => import("./pages/client/WalletPage"));
 const AddressPage = lazy(() => import("./pages/client/AddressPage"));
 const ClientSettings = lazy(() => import("./pages/client/ClientSettings"));
 const NotificationsPage = lazy(() => import("./pages/client/NotificationsPage"));
+const SupportPage = lazy(() => import("./pages/client/SupportPage"));
+const NewSupportTicketPage = lazy(() => import("./pages/client/SupportPage").then(m => ({ default: m.NewSupportTicketPage })));
+const SupportTicketPage = lazy(() => import("./pages/client/SupportPage").then(m => ({ default: m.SupportTicketPage })));
 const ServicesPage = lazy(() => import("./pages/client/ServicesPage"));
 const BoutiquesPage = lazy(() => import("./pages/client/BoutiquesPage"));
 const ServiceRequestPage = lazy(() => import("./pages/client/ServiceRequestPage"));
@@ -51,6 +54,8 @@ const DriverOnboarding = lazy(() => import("./pages/driver/DriverOnboarding"));
 const DriverSettings = lazy(() => import("./pages/driver/DriverSettings"));
 const DriverRapport = lazy(() => import("./pages/driver/DriverRapport"));
 const DriverOrderDetail = lazy(() => import("./pages/driver/DriverOrderDetail"));
+const DriverNotifications = lazy(() => import("./pages/driver/DriverNotifications"));
+const DriverFeedback = lazy(() => import("./pages/driver/DriverFeedback"));
 
 // ─── Admin pages (never loaded for client/driver users) ──────────────────────
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -75,6 +80,9 @@ const AdminDeliveryZones = lazy(() => import("./pages/admin/AdminDeliveryZones")
 const AdminMenuCategories = lazy(() => import("./pages/admin/AdminMenuCategories"));
 const AdminPasswordResets = lazy(() => import("./pages/admin/AdminPasswordResets"));
 const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
+const AdminSupport = lazy(() => import("./pages/admin/AdminSupport"));
+const AdminReviews = lazy(() => import("./pages/admin/AdminReviews"));
+const AdminOperations = lazy(() => import("./pages/admin/AdminOperations"));
 
 const MOBILE_MODE = import.meta.env.VITE_MOBILE_MODE as string | undefined;
 
@@ -222,6 +230,7 @@ function AppRoutes() {
       <Suspense fallback={<AdminPageSkeleton />}>
         <Switch>
           <Route path="/" component={AdminDashboard} />
+          <Route path="/admin/operations" component={AdminOperations} />
           <Route path="/admin/orders" component={AdminOrders} />
           <Route path="/admin/drivers" component={AdminDrivers} />
           <Route path="/admin/restaurants">{() => <AdminRestaurants />}</Route>
@@ -243,6 +252,8 @@ function AppRoutes() {
           <Route path="/admin/delivery-zones" component={AdminDeliveryZones} />
           <Route path="/admin/menu-categories" component={AdminMenuCategories} />
           <Route path="/admin/password-resets" component={AdminPasswordResets} />
+          <Route path="/admin/support" component={AdminSupport} />
+          <Route path="/admin/reviews" component={AdminReviews} />
           <Route component={AdminDashboard} />
         </Switch>
       </Suspense>
@@ -265,10 +276,15 @@ function AppRoutes() {
           <Route path="/driver/orders" component={DriverOrders} />
           <Route path="/driver/order/:id" component={DriverOrderDetail} />
           <Route path="/driver/chat" component={DriverChat} />
+          {/* Route Agent dédiée — évite la collision contextuelle mobile avec /chat/* */}
+          <Route path="/driver/chat/order/:orderId" component={OrderChatPage} />
+          {/* Compat : ancienne route conservée pour ne rien casser */}
           <Route path="/chat/order/:orderId" component={OrderChatPage} />
           <Route path="/driver/earnings" component={DriverEarnings} />
           <Route path="/driver/rapport" component={DriverRapport} />
           <Route path="/driver/settings" component={DriverSettings} />
+          <Route path="/driver/notifications" component={DriverNotifications} />
+          <Route path="/driver/feedback" component={DriverFeedback} />
           <Route component={DriverDashboard} />
         </Switch>
       </Suspense>
@@ -307,6 +323,9 @@ function AppRoutes() {
             <Route path="/services/request/:id" component={ServiceRequestPage} />
             <Route path="/settings" component={ClientSettings} />
             <Route path="/notifications" component={NotificationsPage} />
+            <Route path="/support" component={SupportPage} />
+            <Route path="/support/new" component={NewSupportTicketPage} />
+            <Route path="/support/:id" component={SupportTicketPage} />
             <Route component={ClientHome} />
           </Switch>
         </Suspense>

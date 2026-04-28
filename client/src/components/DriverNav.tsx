@@ -7,7 +7,7 @@ import { onWSMessage } from "../lib/websocket";
 import type { Notification as Notif } from "@shared/schema";
 import { dt } from "./driver/DriverUI";
 import {
-  Home, Package, MessageSquare, DollarSign, User, LogOut, MapPin
+  Home, Package, MessageSquare, DollarSign, User, LogOut, MapPin, Bell
 } from "lucide-react";
 
 export default function DriverNav() {
@@ -33,16 +33,31 @@ export default function DriverNav() {
   const unreadChat = Object.values(unreadChatCounts).reduce((s, n) => s + n, 0);
   const unreadNotif = notifications.filter(n => !n.isRead && n.type !== "chat").length;
 
+  // ─── Dédup WS : un id de notif vu n'est pas réinvalidé deux fois ─────────
+  const seenNotifIds = new Set<number>();
+
   useEffect(() => {
     return onWSMessage((data) => {
-      if (["chat_message", "notification", "order_assigned", "new_order", "order_cancelled", "order_status"].includes(data.type)) {
-        queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      // Notification ciblée → invalider uniquement le scope du user courant
+      if (data.type === "notification") {
+        const nid = Number(data?.data?.notificationId ?? data?.data?.id);
+        if (nid && seenNotifIds.has(nid)) return; // déjà traité (push + WS)
+        if (nid) seenNotifIds.add(nid);
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications", user?.id] });
+        return;
+      }
+      if (data.type === "chat_message") {
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/unread", user?.id] });
+        return;
+      }
+      if (["order_assigned", "new_order", "order_cancelled", "order_status"].includes(data.type)) {
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications", user?.id] });
       }
       // Sonnerie + vibration + notif système : centralisées dans App.tsx
     });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const toggleOnline = async () => {
     if (toggling) return;
@@ -62,11 +77,13 @@ export default function DriverNav() {
     }
   };
 
+  // Le badge des notifications a été déplacé sur la cloche dans le header
+  // pour éviter la confusion ("Accueil" ne contenait pas la liste des notifs).
   const tabs = [
     {
       path: "/",
       label: "Accueil",
-      badge: unreadNotif,
+      badge: 0,
       icon: Home,
     },
     {
@@ -126,6 +143,29 @@ export default function DriverNav() {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
+            {/* Cloche notifications avec badge — accès direct à la liste */}
+            <button
+              onClick={() => navigate("/driver/notifications")}
+              data-testid="button-header-notifications"
+              aria-label={unreadNotif > 0 ? `${unreadNotif} notifications non lues` : "Notifications"}
+              className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all active:scale-95"
+              style={{
+                background: location === "/driver/notifications" ? "rgba(225,0,0,0.12)" : dt.surface2,
+                color: location === "/driver/notifications" ? dt.accent : dt.text2,
+              }}
+            >
+              <Bell size={16} strokeWidth={2.2} />
+              {unreadNotif > 0 && (
+                <span
+                  data-testid="badge-header-notif-count"
+                  className="absolute -top-1 -right-1 text-white text-[9px] font-black min-w-4 h-4 px-1 rounded-full flex items-center justify-center"
+                  style={{ background: dt.accent, boxShadow: "0 0 0 2px var(--driver-nav-bg)" }}
+                >
+                  {unreadNotif > 99 ? "99+" : unreadNotif}
+                </span>
+              )}
+            </button>
+
             {/* Status toggle */}
             <button
               onClick={toggleOnline}

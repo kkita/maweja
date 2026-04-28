@@ -132,6 +132,122 @@ export const orders = pgTable("orders", {
   loyaltyCreditDiscount: doublePrecision("loyalty_credit_discount").notNull().default(0),
   adminRemarks: jsonb("admin_remarks"),
   orderModifications: jsonb("order_modifications"),
+  deliveredAt: timestamp("delivered_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+/**
+ * Multi-device push token registry.
+ *
+ * Permet à un même utilisateur d'avoir plusieurs appareils enregistrés
+ * (ex. téléphone Android + tablette iOS + dashboard web). L'ancien champ
+ * `users.pushToken` reste maintenu en sync avec le dernier token enregistré
+ * pour la rétro-compatibilité (clients/installations qui n'ont pas encore
+ * migré vers la nouvelle API).
+ */
+export const pushTokens = pgTable("push_tokens", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  platform: text("platform").notNull().default("android"),
+  deviceId: text("device_id"),
+  appVersion: text("app_version"),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+/**
+ * Tickets de support liés à une commande.
+ *
+ * Permet au client (ou à l'agent) d'ouvrir un canal d'aide après la livraison.
+ * Tant qu'un ticket "open" est lié à une commande, le chat client↔livreur
+ * reste autorisé même si la fenêtre post-livraison est expirée. L'admin
+ * peut clôturer le ticket via PATCH /api/support/tickets/:id/close.
+ */
+/**
+ * PARTIE 5 — Support Center.
+ *
+ * Tickets de support, étendus pour gérer après-livraison structuré :
+ * catégorisation (article manquant, retard, remboursement…), priorité,
+ * affectation admin, demande/approbation de remboursement partiel et
+ * conversation client↔admin via `supportTicketMessages`.
+ *
+ * NOTE de compatibilité : les colonnes `subject`, `message`, `closedAt`
+ * sont conservées pour ne rien casser des intégrations existantes
+ * (chat.routes.ts s'appuie sur le statut "open" pour rouvrir le chat
+ * client↔livreur). Les nouveaux flux utilisent `title`, `description`,
+ * `resolvedAt` qui sont la source de vérité métier.
+ */
+export const supportTickets = pgTable("support_tickets", {
+  id: serial("id").primaryKey(),
+  ticketNumber: text("ticket_number"),
+  orderId: integer("order_id"),
+  userId: integer("user_id").notNull(),
+  assignedAdminId: integer("assigned_admin_id"),
+  // Catégorie (free-form text en base, validé côté Zod) :
+  // order_problem | missing_item | late_delivery | refund_request |
+  // payment_problem | driver_problem | restaurant_problem | other
+  category: text("category"),
+  // Statut : open | in_review | waiting_customer | resolved | rejected
+  // (ancien défaut "open" conservé)
+  status: text("status").notNull().default("open"),
+  // Priorité : low | normal | high | urgent
+  priority: text("priority").notNull().default("normal"),
+  title: text("title"),
+  description: text("description"),
+  requestedRefundAmount: doublePrecision("requested_refund_amount"),
+  approvedRefundAmount: doublePrecision("approved_refund_amount"),
+  resolutionNote: text("resolution_note"),
+  // Champs hérités, conservés pour rétro-compat avec l'ancien flux :
+  subject: text("subject"),
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+  closedAt: timestamp("closed_at"),
+});
+
+/**
+ * PARTIE 5 — Conversation interne d'un ticket.
+ * Chaque message est lié à un ticket. Pas de "destinataire" : tous les
+ * intervenants (client + admins assignés) peuvent lire et écrire tant
+ * que le ticket n'est pas dans un statut terminal.
+ */
+export const supportTicketMessages = pgTable("support_ticket_messages", {
+  id: serial("id").primaryKey(),
+  ticketId: integer("ticket_id").notNull(),
+  senderId: integer("sender_id").notNull(),
+  message: text("message").notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+/**
+ * PARTIE 6 — Avis et notes (à la Uber Eats).
+ *
+ * Une seule ligne par commande : un client ne peut noter qu'une fois par
+ * commande, et uniquement après livraison. Les deux notes (restaurant et
+ * livreur) sont optionnelles individuellement (le client peut ne noter que
+ * l'un des deux), mais au moins une des deux doit être renseignée — règle
+ * appliquée côté validateur, pas en colonne.
+ *
+ * Les `tags` sont des étiquettes rapides pré-définies côté UI (rapide,
+ * poli, bon emballage, article manquant, retard, mauvaise communication).
+ * Stockées en text[] pour rester souple si la liste évolue.
+ */
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull().unique(),
+  userId: integer("user_id").notNull(),
+  restaurantId: integer("restaurant_id"),
+  driverId: integer("driver_id"),
+  restaurantRating: integer("restaurant_rating"),
+  driverRating: integer("driver_rating"),
+  comment: text("comment"),
+  tags: text("tags").array(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -297,6 +413,59 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).omit({ id: tru
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
+export const insertPushTokenSchema = createInsertSchema(pushTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  lastSeenAt: true,
+});
+export type PushToken = typeof pushTokens.$inferSelect;
+export type InsertPushToken = z.infer<typeof insertPushTokenSchema>;
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+  closedAt: true,
+});
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+
+export const insertSupportTicketMessageSchema = createInsertSchema(supportTicketMessages).omit({
+  id: true,
+  createdAt: true,
+});
+export type SupportTicketMessage = typeof supportTicketMessages.$inferSelect;
+export type InsertSupportTicketMessage = z.infer<typeof insertSupportTicketMessageSchema>;
+
+// PARTIE 6 — Reviews
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+
+/** Tags rapides proposés à l'UI client. Sert aussi de référence aux validateurs. */
+export const REVIEW_TAGS = [
+  "rapide",
+  "poli",
+  "bon emballage",
+  "article manquant",
+  "retard",
+  "mauvaise communication",
+] as const;
+export type ReviewTag = typeof REVIEW_TAGS[number];
+
+/**
+ * Politique de chat post-livraison.
+ *
+ * Le chat client↔livreur reste autorisé pendant cette fenêtre après la
+ * livraison effective de la commande (champ orders.deliveredAt). Au-delà,
+ * il faut ouvrir un ticket support pour ré-autoriser le chat.
+ */
+export const POST_DELIVERY_CHAT_WINDOW_MINUTES = 60;
 export const insertWalletTransactionSchema = createInsertSchema(walletTransactions).omit({ id: true, createdAt: true });
 export const insertFinanceSchema = createInsertSchema(finances).omit({ id: true, createdAt: true });
 
@@ -427,3 +596,37 @@ export const passwordResetRequests = pgTable("password_reset_requests", {
 export const insertPasswordResetRequestSchema = createInsertSchema(passwordResetRequests).omit({ id: true, createdAt: true, resolvedAt: true });
 export type PasswordResetRequest = typeof passwordResetRequests.$inferSelect;
 export type InsertPasswordResetRequest = z.infer<typeof insertPasswordResetRequestSchema>;
+
+/**
+ * Historique des positions GPS des livreurs (PARTIE 4 — tracking live).
+ *
+ * Chaque ping envoyé par l'app livreur pendant une livraison active est
+ * stocké ici. La dernière ligne pour un (driverId, orderId) sert à alimenter
+ * la carte de suivi côté client/admin et à calculer l'ETA.
+ *
+ * - `orderId` est nullable : un livreur peut partager sa position en dehors
+ *   d'une commande (ex. retour à base) — utilisé surtout par l'admin.
+ * - `recordedAt` est la timestamp côté appareil (peut différer de createdAt
+ *   en cas d'envoi groupé après reconnexion réseau).
+ * - `batteryLevel` est en pourcentage 0-100, optionnel.
+ */
+export const driverLocations = pgTable("driver_locations", {
+  id: serial("id").primaryKey(),
+  driverId: integer("driver_id").notNull(),
+  orderId: integer("order_id"),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  heading: doublePrecision("heading"),
+  speed: doublePrecision("speed"),
+  accuracy: doublePrecision("accuracy"),
+  batteryLevel: integer("battery_level"),
+  recordedAt: timestamp("recorded_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDriverLocationSchema = createInsertSchema(driverLocations).omit({
+  id: true,
+  createdAt: true,
+});
+export type DriverLocation = typeof driverLocations.$inferSelect;
+export type InsertDriverLocation = z.infer<typeof insertDriverLocationSchema>;

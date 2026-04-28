@@ -331,3 +331,92 @@ Tests Vitest correspondants (143 verts au total) :
 - `POST /api/orders — orderNumber unique sous concurrence`
 - `PATCH /api/orders/:id — anti double-remboursement` (admin double cancel + client double cancel)
 - `PATCH /api/orders/:id — transitions de statut` (driver bloqué sur cancelled + admin bloqué sur statut terminal)
+
+## PARTIE 4 — Tracking live livreur (server/lib/eta.ts, server/routes/drivers.routes.ts, server/routes/orders.routes.ts)
+Suivi en direct de la position du livreur pendant une livraison, depuis la commande client jusqu'à la fiche admin.
+
+### Schema & storage
+- **Table `driver_locations`** (`shared/schema.ts`) : historique des pings GPS (driverId, orderId nullable, latitude/longitude, heading/speed/accuracy/batteryLevel, recordedAt, createdAt) — index `(driver_id, recorded_at DESC)` et `(order_id, recorded_at DESC)`.
+- **IStorage** : `recordDriverLocation`, `getLatestDriverLocation(driverId)`, `getLatestDriverLocationForOrder(orderId)` — implémenté en `DatabaseStorage` (drizzle `orderBy desc(recordedAt) limit 1`) et `MemoryStorage` (tests).
+
+### ETA (server/lib/eta.ts)
+- `haversineKm(a, b)` distance grand cercle.
+- `computeEta(driverPos, dest, speed=22 km/h)` retourne `{distanceKm, minutes, avgSpeedKmh, arrivalAt}` ou `null` si l'un des deux points manque. Vitesse moyenne par défaut adaptée à Kinshasa (trafic urbain motos/voitures).
+- `statusTextFromContext(status, distKm)` — libellé contextuel : « Le livreur est à votre porte » <0.3 km, « tout proche » <1 km, « arrive bientôt » <3 km, etc. Préféré côté front à toute logique locale pour rester cohérent avec les notifications futures.
+- Module isolé prêt à être remplacé par Google Distance Matrix / Mapbox / OSRM (signature stable).
+
+### Endpoints
+- **`POST /api/driver/location`** (livreur authentifié) — enregistre un ping. Si `orderId` est fourni, vérifie `order.driverId === userId` (sinon 403). Stocke dans `driver_locations`, met à jour `users.lat/lng` (compat carte admin existante), broadcaste `driver_location` (ancien format) + `driver_location_update` ciblé client + admins avec `driverLocation`, `eta` et `statusText` déjà calculés. Validé par `schemas.driverLocationPing` (lat/lng required, autres optionnels).
+- **`GET /api/orders/:id/tracking`** (client propriétaire / livreur assigné / admin) — agrège en un appel : statut, dernière position livreur, ETA, infos publiques livreur (id, name, phone, vehicleType/Plate, profilePhotoUrl) sans password ni token, et `channels` (canCall / canChat / canOpenSupport).
+
+### Frontend
+- **`client/src/hooks/use-driver-location-sharing.ts`** — hook livreur. Activé seulement si `enabled` (statut `confirmed` ou `picked_up`). Push toutes les 15 s vers `POST /api/driver/location` avec orderId. Expose `gpsActive`, `lastSentAt`, `lastError`, `position`. Ne notifie jamais le serveur si la géolocalisation a échoué.
+- **`client/src/pages/driver/DriverOrderDetail.tsx`** — intègre le hook + affiche un badge « Position partagée HH:MM:SS » (vert pulsant) ou « GPS indisponible » (ambre) sous le timeline.
+- **`client/src/pages/client/TrackingPage.tsx`** — refonte : consomme `/api/orders/:id/tracking` (polling 12 s + invalidation WS sur `driver_location_update` ciblant l'orderId). Carte Leaflet (`LiveTrackingMap`) avec destination fixe + marker livreur live qui se déplace, hero ETA dynamique « Arrivée estimée : N min · HH:MM », statusText contextuel, et trois boutons d'action côté livreur : appeler (`tel:`), chat (`/chat/order/:id`), support (`/support?orderId=`). Fallback texte si pas encore de position GPS.
+
+### Tests (211 verts)
+- `tests/validators.test.ts` : fixtures `driverLocationPing` happy/reject.
+- `tests/routes.integration.test.ts` (PARTIE 4 — 6 tests) : refus client non livreur (403), ping sans orderId, refus commande non assignée (403), ping commande assignée + maj `users.lat/lng`, refus tracking pour client non propriétaire (403), tracking complet propriétaire (statut, position, ETA, infos livreur sans credentials, channels).
+
+## PARTIE 5 — Support Center après livraison (server/routes/support.routes.ts, client/src/pages/client/SupportPage.tsx, client/src/pages/admin/AdminSupport.tsx)
+Système complet de tickets après livraison avec chat client↔admin, remboursements partiels idempotents et notifications.
+
+### Schema & storage
+- **Table `support_tickets` étendue** : `ticketNumber` (TKT-XXXXXX unique), `category` (enum order_problem/missing_item/late_delivery/refund_request/payment_problem/driver_problem/restaurant_problem/other), `status` (open/in_review/waiting_customer/resolved/rejected/closed), `priority` (low/normal/high/urgent), `title`, `description`, `assignedAdminId`, `requestedRefundAmount`, `approvedRefundAmount`, `resolutionNote`, `updatedAt`, `resolvedAt`. `orderId` rendu **nullable** (un ticket peut être ouvert sans commande).
+- **Nouvelle table `support_ticket_messages`** : conversation bidirectionnelle (ticketId, senderId, message, imageUrl, isFromAdmin, createdAt).
+- **IStorage** : `getSupportTicket`, `getSupportTicketsForUser`, `listSupportTicketsAdvanced({status,priority,category,assignedAdminId})`, `updateSupportTicket`, `addSupportTicketMessage`, `listSupportTicketMessages`. Backfill automatique `ticketNumber` au démarrage.
+
+### Endpoints (`server/routes/support.routes.ts`)
+- **`POST /api/support/tickets`** — création moderne (catégorie, titre, description, montant souhaité, image) + **rétro-compat** legacy `{orderId, message}` mappé sur `category=other`. Notifie tous les admins.
+- **`GET /api/support/tickets/mine`** — tickets du client courant.
+- **`GET /api/support/tickets/by-order/:orderId`** — ticket ouvert lié à une commande (compat chat client↔driver).
+- **`GET /api/support/tickets`** (admin) — liste filtrable `?status&priority&category&assignedAdminId`.
+- **`GET /api/support/tickets/:id`** + **`GET/POST .../messages`** — détail + chat. Bascule auto du statut sur message : admin→`waiting_customer`, client→`in_review` si précédemment `waiting_customer`. Notifie l'autre partie.
+- **`PATCH /api/support/tickets/:id`** (admin) — assigner, changer statut/priorité/titre.
+- **`POST /api/support/tickets/:id/refund`** (admin) — **idempotent** : refus 409 si `approvedRefundAmount` déjà set ou statut terminal. Crédite `users.walletBalance` via `updateUser` + crée `walletTransaction` avec `reference="support_ticket:<id>"`. Notifie le client.
+- **`POST /api/support/tickets/:id/reject`** + **`/resolve`** (admin) — clôturent le ticket avec note. Notifient le client.
+
+### Frontend client (`client/src/pages/client/SupportPage.tsx`)
+- Trois vues exportées : liste `SupportPage` (default), formulaire `NewSupportTicketPage`, détail+chat `SupportTicketPage`. Routes `/support`, `/support/new` (avec `?orderId=` pré-rempli), `/support/:id`.
+- Bouton « Signaler un problème » ajouté à `OrderDetailPage` (icône LifeBuoy) → `navigate('/support/new?orderId=' + id)`.
+- Badges statuts colorés, chat scrollé auto, désactivation de la zone de saisie sur tickets clôturés.
+
+### Frontend admin (`client/src/pages/admin/AdminSupport.tsx`)
+- Liste filtrable (statut/priorité/catégorie) + détail latéral. Actions : changer statut/priorité, m'assigner, répondre, **approuver remboursement partiel** (montant + note), rejeter (motif requis), résoudre. Bouton remboursement désactivé si déjà crédité (idempotence reflétée côté UI). Entrée « Support » ajoutée à `AdminSidebar` (clé `support`).
+
+### Tests (234 verts)
+- `tests/validators.test.ts` : fixtures `supportTicketCreate/Update/Refund/Reject/Message`.
+- `tests/routes.integration.test.ts` (PARTIE 5 — 13 tests) : création moderne + legacy + sans orderId, chat bidirectionnel avec bascule de statut, filtres admin, remboursement idempotent (premier appel crédite wallet, second renvoie 409), rejet, résolution, ACL non-admin sur endpoints admin, isolation `/mine` entre clients.
+
+## PARTIE 6 — Avis et notes type Uber Eats (server/routes/reviews.routes.ts, client/src/pages/admin/AdminReviews.tsx, client/src/pages/driver/DriverFeedback.tsx)
+Système d'avis détaillé : note séparée restaurant + livreur, tags rapides, anti-doublon, anonymisation côté livreur, signalements admin.
+
+### Schema & storage
+- **Table `reviews`** : `orderId UNIQUE` (1 avis par commande), `userId` (auteur), `restaurantId`/`driverId` nullables, `restaurantRating`/`driverRating` (1-5 nullables), `comment` (text), `tags text[]`. Indices sur `restaurant_id`, `driver_id`, `user_id`.
+- **`REVIEW_TAGS`** exporté depuis `shared/schema.ts` : `["rapide", "poli", "bon emballage", "article manquant", "retard", "mauvaise communication"]`.
+- **IStorage** : `createReview`, `getReviewByOrder`, `getReviewsByRestaurant/ByDriver`, `listReviews({restaurantId,driverId,minRating,maxRating})`, `getRestaurantRatingSummary`, `getDriverRatingSummary` (AVG/COUNT en SQL via Drizzle, GREATEST pour la note max). `MemoryStorage.reviews` lance `review_already_exists` si doublon `orderId`. **Important** : `reset()` doit vider `this.reviews` aussi (sinon état leak entre tests).
+- **Validator `reviewCreate`** : restaurantRating/driverRating optionnels (1-5 entiers), comment max 2000, tags ⊆ REVIEW_TAGS. `.refine()` exige au moins une note. Renvoi 422 si invalide (cohérent avec tout le projet).
+
+### Endpoints (`server/routes/reviews.routes.ts`)
+| Verbe | URL | ACL | Comportement |
+|---|---|---|---|
+| POST | `/api/orders/:orderId/review` | Owner uniquement | Triple garde : owner (`order.clientId === userId`), `status==="delivered"`, pas d'avis existant. Notif livreur si `driverRating` renseigné. Notif admins si min(notes) ≤ 2 (alerte qualité). |
+| GET | `/api/orders/:orderId/review` | Owner | Renvoie l'avis du client courant (ou null). |
+| GET | `/api/restaurants/:id/reviews` | Public | Liste publique sans userId/driverId. |
+| GET | `/api/restaurants/:id/rating-summary` | Public | `{average, count}`. |
+| GET | `/api/drivers/:id/rating-summary` | Public | `{average, count}` chiffre seul. |
+| GET | `/api/drivers/:id/reviews` | Admin only | Détail avec commentaires (chiffres sensibles côté admin). |
+| GET | `/api/drivers/me/feedback` | Driver only | Anonymisé : `{summary, tagCounts, ratingHistogram, recentComments, lowRatingFlag}`. `sanitizeForDriverView` masque emails et numéros (regex). Aucun `userName`/`userEmail` renvoyé. |
+| GET | `/api/reviews?restaurantId&driverId&minRating&maxRating` | Admin | Liste filtrée. |
+| GET | `/api/reviews/low-rated?threshold&minCount` | Admin | Restaurants & livreurs sous le seuil (3.5 par défaut, ≥3 avis). |
+
+L'ancien endpoint `POST /api/orders/:id/rate` (champs `orders.rating/feedback`) reste actif — la table `reviews` est additive et plus riche.
+
+### Frontend
+- **`client/src/components/client/order-detail/ReviewModal.tsx`** : nouveau modal — étoiles séparées restaurant/livreur (affichage conditionnel selon `order.restaurantId`/`order.driverId`), tags rapides toggleables (REVIEW_TAGS), commentaire libre, bouton désactivé tant qu'aucune note n'est sélectionnée. Remplace l'ancien `RateModal` dans `OrderDetailPage`. Mutation vers `/api/orders/:id/review`, invalidation des queries `/api/orders/:id/review` et `/api/orders/:id`. `canRate` calculé sur `existingReview == null` (issu de la query GET).
+- **`client/src/pages/admin/AdminReviews.tsx`** (route `/admin/reviews`) : section signalements (restaurants & livreurs sous 3.5/5, ≥3 avis) en haut, liste paginée des avis avec filtre `maxRating` (≤2/≤3/≤4) en bas. Affiche étoiles séparées resto/livreur + tags + commentaire. Lien dans `AdminSidebar` (icône Star, sous "Clients & Com.", badgeKey `reviews`).
+- **`client/src/pages/driver/DriverFeedback.tsx`** (route `/driver/feedback`) : moyenne + nombre, histogramme des notes, top tags avec compte, derniers commentaires anonymisés. Encart pédagogique orange si `lowRatingFlag` (avg<3.5 et count≥5). Lien depuis `DriverDashboard` ("Mes évaluations", icône Star jaune).
+
+### Tests (245 verts)
+- `tests/validators.test.ts` : fixtures `reviewCreate` happy (restoRating+driverRating+comment+tags) et reject (aucune note → refine).
+- `tests/routes.integration.test.ts` (PARTIE 6 — 9 tests) : création complète, refus doublon (409), refus non-livré (409), refus non-owner (403), refus payload sans note (422), calcul moyennes resto+livreur, listing admin + low-rated, ACL admin (403 client), feedback livreur anonymisé (sans email `alice@example.com` ni numéro `+243999111222`, pas de `userName`/`userEmail`).

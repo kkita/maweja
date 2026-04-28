@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Package, Users, Truck, Store, MessageCircle, DollarSign,
   Settings, LogOut, Shield, BarChart3, Briefcase, Image, Megaphone, UserCog,
   GalleryHorizontal, Tag, UtensilsCrossed, ShoppingBag, MapPin, KeyRound,
+  LifeBuoy, Star,
 } from "lucide-react";
 
 function canAccess(user: any, badgeKey: string): boolean {
@@ -89,6 +90,8 @@ export default function AdminSidebar() {
       items: [
         { path: "/admin/customers", icon: Users, label: t.admin.customers, badgeKey: "customers" },
         { path: "/admin/chat", icon: MessageCircle, label: t.admin.chat, badgeKey: "chat" },
+        { path: "/admin/support", icon: LifeBuoy, label: "Support", badgeKey: "support" },
+        { path: "/admin/reviews", icon: Star, label: "Avis & notes", badgeKey: "reviews" },
         { path: "/admin/notifications", icon: Megaphone, label: t.admin.notifications, badgeKey: "notifications" },
       ],
     },

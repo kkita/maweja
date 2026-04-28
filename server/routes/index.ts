@@ -15,6 +15,8 @@ import { registerServicesRoutes } from "./services.routes";
 import { registerMarketingRoutes } from "./marketing.routes";
 import { registerDeliveryZonesRoutes } from "./delivery-zones.routes";
 import { registerPushRoutes } from "./push.routes";
+import { registerSupportRoutes } from "./support.routes";
+import { registerReviewsRoutes } from "./reviews.routes";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await normalizeUploadUrls();
@@ -35,6 +37,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerDeliveryZonesRoutes(app);
   registerAdminRoutes(app);
   registerPushRoutes(app);
+  registerSupportRoutes(app);
+  registerReviewsRoutes(app);
 
   const httpServer = createServer(app);
   setupWebSocket(httpServer);
