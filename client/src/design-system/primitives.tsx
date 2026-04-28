@@ -15,7 +15,7 @@
  * DriverDarkScope — wrapper dark forcé pour les pages driver
  */
 
-import { type ReactNode, useEffect, useState, type CSSProperties } from "react";
+import { type ReactNode, useEffect, useState, type CSSProperties, isValidElement } from "react";
 import { X, Inbox, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { border, elevation, focusRing, motion as motionTokens, radius, status, surface, text, type StatusVariant } from "./tokens";
@@ -193,9 +193,11 @@ export interface AppEmptyStateProps {
 }
 
 export function AppEmptyState({ icon, title, description, action, size = "md" }: AppEmptyStateProps) {
-  const isLucide = typeof icon === "function";
-  const Icon = isLucide ? (icon as LucideIcon) : null;
-  const iconNode = !isLucide ? (icon as ReactNode) : null;
+  // lucide-react icons sont des React.forwardRef ⇒ objets, pas fonctions.
+  // On considère "composant" tout ce qui n'est PAS un élément React déjà instancié.
+  const isElement = isValidElement(icon);
+  const Icon = !isElement && icon ? (icon as LucideIcon) : null;
+  const iconNode = isElement ? (icon as ReactNode) : null;
   const iconSize = { sm: 20, md: 24, lg: 32 }[size];
   const boxCls = { sm: "w-12 h-12 rounded-2xl", md: "w-16 h-16 rounded-2xl", lg: "w-20 h-20 rounded-3xl" }[size];
   const py = { sm: "py-10", md: "py-14", lg: "py-20" }[size];
