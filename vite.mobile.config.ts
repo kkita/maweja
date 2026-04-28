@@ -18,6 +18,7 @@ export default defineConfig({
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "client", "src", "assets"),
     },
+    extensions: [".ts", ".tsx", ".mts", ".mjs", ".js", ".jsx", ".json"],
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {

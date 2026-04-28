@@ -37,6 +37,13 @@ jobs:
       - name: Installer les dépendances racine
         run: npm install
 
+      - name: Nettoyer les artefacts TS compilés (shared/client/server)
+        run: |
+          find shared -type f \( -name "*.js" -o -name "*.d.ts" -o -name "*.js.map" \) ! -name "vite-env.d.ts" -delete || true
+          find client/src -type f \( -name "*.js" -o -name "*.d.ts" -o -name "*.js.map" \) ! -name "vite-env.d.ts" -delete || true
+          find server -type f \( -name "*.js" -o -name "*.d.ts" -o -name "*.js.map" \) -delete || true
+          rm -f *.tsbuildinfo **/*.tsbuildinfo || true
+
       - name: Build Vite — App Client (maweja.net)
         env:
           VITE_MOBILE_MODE: client
