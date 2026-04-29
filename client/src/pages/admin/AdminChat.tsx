@@ -4,6 +4,7 @@ import AdminLayout from "../../components/AdminLayout";
 import { useAuth } from "../../lib/auth";
 import { apiRequest, queryClient, authFetchJson, authFetch, resolveImg } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
+import { cancelChatNotifs } from "../../lib/notify";
 // Sonnerie chat centralisée dans App.tsx via handleWSEvent (anti-doublon).
 import { Send, User, Truck, MessageCircle, Search, Circle, MessageSquare, Phone, Info, Clock, Paperclip, Download, FileText, Image as ImageIcon, X, Loader2 } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
@@ -126,6 +127,8 @@ export default function AdminChat() {
       apiRequest(`/api/chat/read/${selectedContact.id}/${user.id}`, { method: "PATCH" })
         .then(() => queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] }))
         .catch(() => {});
+      // Efface la notif système persistante pour cette conversation
+      cancelChatNotifs(selectedContact.id);
     }
   }, [selectedContact, user, messages.length]);
 

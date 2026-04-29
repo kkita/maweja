@@ -54,12 +54,15 @@ function NotifDetailModal({ notif, onClose, navigate, onZoomImage }: { notif: No
           <button
             type="button"
             onClick={() => onZoomImage(resolveImg(imageUrl))}
-            className="block w-full bg-gray-100 dark:bg-gray-800 active:opacity-90"
-            style={{ height: 220 }}
+            className="block w-full bg-black active:opacity-90"
             data-testid="button-zoom-notif-image"
             aria-label="Agrandir l'image"
           >
-            <img src={resolveImg(imageUrl)} alt={notif.title || ""} className="w-full h-full object-cover" />
+            <img
+              src={resolveImg(imageUrl)}
+              alt={notif.title || ""}
+              className="w-full h-auto max-h-[60vh] object-contain bg-black"
+            />
           </button>
         )}
         <div className="p-6">

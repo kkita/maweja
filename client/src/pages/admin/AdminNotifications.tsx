@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AdminLayout from "../../components/AdminLayout";
-import { apiRequest, resolveImg } from "../../lib/queryClient";
+import { apiRequest, resolveImg, getAuthToken } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import {
   Bell, Send, Users, TrendingUp, ShoppingBag, Clock, Megaphone,
@@ -114,10 +114,12 @@ export default function AdminNotifications() {
       const formData = new FormData();
       // Multer côté serveur attend le champ "file" (cf. server/routes/auth.routes.ts → upload.single("file"))
       formData.append("file", file);
+      const token = getAuthToken();
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
         credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

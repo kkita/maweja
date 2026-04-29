@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { apiRequest, queryClient, authFetch, authFetchJson, resolveImg } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
+import { cancelChatNotifs } from "../lib/notify";
 import { useToast } from "../hooks/use-toast";
 import { MessageCircle, X, Send, ArrowLeft, Shield, Circle, AlertTriangle, CheckCircle2, Download, FileText } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -110,6 +111,8 @@ export default function ClientContactBubble() {
       apiRequest(`/api/chat/read/${selectedAdmin.id}/${user.id}`, { method: "PATCH" })
         .then(() => queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] }))
         .catch(() => {});
+      // Efface la notif système persistante pour cette conversation
+      cancelChatNotifs(selectedAdmin.id);
     }
   }, [selectedAdmin, user, messages.length]);
 

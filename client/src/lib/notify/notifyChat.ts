@@ -1,7 +1,7 @@
 /* ─────────────────────────────────────────────────────────────
    MAWEJA — Notify : événements chat & notifications génériques
    ───────────────────────────────────────────────────────────── */
-import { playRingtone, vibrate, showNotif, markNotifHandled, wasNotifHandled } from "./notifyAudio";
+import { playRingtone, vibrate, showNotif, markNotifHandled, wasNotifHandled, chatNotifTag } from "./notifyAudio";
 
 export interface ChatEventData {
   type: string;
@@ -109,12 +109,15 @@ export function handleChatEvent(data: ChatEventData): boolean {
       const title = n.title || data.title || "MAWEJA";
       const message = (n as { message?: string }).message || (data as { message?: string }).message || "";
       if (!message) return true;
+
+      // ── Toujours rafraîchir les listes (badge, page notifications), MÊME
+      // si l'event est dédupliqué ailleurs (push FCM en parallèle) — sinon
+      // le badge cloche peut rater une mise à jour.
+      invalidateChatCaches();
+
       const nid = (n as { id?: string | number }).id ?? data.id;
       if (wasNotifHandled(nid)) return true;
       markNotifHandled(nid);
-
-      // Toujours rafraîchir les listes (badge, page notifications)
-      invalidateChatCaches();
 
       // Filtre "écho de soi-même" : si la notif référence un sender qui est nous
       const me = currentUserId();
@@ -125,27 +128,36 @@ export function handleChatEvent(data: ChatEventData): boolean {
 
       playRingtone(); vibrate("light");
       const img = extractImageUrl(data);
-      showNotif(title, message, undefined, img);
+      // Coalescing : tag stable par "expéditeur" si on connaît le sender
+      const tag = senderId !== null ? chatNotifTag(senderId) : undefined;
+      showNotif(title, message, undefined, img, tag ? { tag } : undefined);
       return true;
     }
     case "chat_message": {
       const msg = data.notification?.message || data.message?.message || "Nouveau message reçu";
+
+      // ── Invalidation systématique (badge unread, liste chats, notifs)
+      invalidateChatCaches();
+
       const nid = data.notification?.id ?? data.message?.id;
       if (wasNotifHandled(nid)) return true;
       markNotifHandled(nid);
 
-      // Toujours rafraîchir le chat + le badge unread + la liste notifs
-      invalidateChatCaches();
-
-      // Filtre "écho de soi-même"
+      // Filtre "écho de soi-même" : si on est le sender, c'est notre propre msg
       const me = currentUserId();
       const { senderId, receiverId } = extractParties(data);
-      if (me !== null && senderId === me) return true;
+      if (me !== null && senderId !== null && senderId === me) return true;
+      // Si receiverId est explicite ET différent de nous → ignorer
+      // (on a relâché vs avant : si receiverId est NULL, on sonne quand même
+      //  car le serveur n'envoie déjà ce payload qu'au receiver direct.)
       if (me !== null && receiverId !== null && receiverId !== me) return true;
 
       playRingtone(); vibrate("double");
       const img = extractImageUrl(data);
-      showNotif("💬 MAWEJA – Message", msg, undefined, img);
+      // Coalescing : 1 notif système max par conversation (même expéditeur)
+      // → la nouvelle remplace l'ancienne au lieu d'empiler N notifs.
+      const tag = senderId !== null ? chatNotifTag(senderId) : undefined;
+      showNotif("💬 MAWEJA – Message", msg, undefined, img, tag ? { tag } : undefined);
       return true;
     }
     default:

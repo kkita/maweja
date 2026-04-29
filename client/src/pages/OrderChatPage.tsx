@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/auth";
 import { apiRequest, queryClient, authFetchJson } from "../lib/queryClient";
 import { onWSMessage } from "../lib/websocket";
+import { cancelChatNotifs } from "../lib/notify";
 import { ArrowLeft, Send, Lock, MessageCircle, User as UserIcon, Truck, AlertCircle, Loader2, LifeBuoy } from "lucide-react";
 import type { ChatMessage, User } from "@shared/schema";
 import { AppEmptyState } from "../design-system/primitives";
@@ -164,6 +165,8 @@ export default function OrderChatPage() {
     apiRequest(`/api/chat/read/${partnerId}/${user.id}`, { method: "PATCH" })
       .then(() => queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] }))
       .catch(() => {});
+    // Efface la notif système persistante pour cette conversation
+    cancelChatNotifs(partnerId);
   }, [user?.id, partnerId, messages.length]);
 
   const [sendError, setSendError] = useState<string | null>(null);

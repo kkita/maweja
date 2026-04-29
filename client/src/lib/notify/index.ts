@@ -19,7 +19,20 @@ export {
   ensureNotifChannel, requestNotifPermission, getNotifPermission,
   NOTIF_LOGO, showNotif,
   markNotifHandled, wasNotifHandled,
+  cancelNotifByTag, chatNotifTag, notifIdForKey,
 } from "./notifyAudio";
+
+import { cancelNotifByTag as _cancelNotifByTag, chatNotifTag as _chatNotifTag } from "./notifyAudio";
+
+/**
+ * Helper haut-niveau : annule la notif système liée à une conversation chat
+ * (ex: après markRead). À appeler côté UI quand l'utilisateur ouvre un fil
+ * de discussion → la notif persistante du tray Android/iOS disparaît.
+ */
+export function cancelChatNotifs(otherUserId: number | string | null | undefined): void {
+  if (otherUserId === null || otherUserId === undefined || otherUserId === "") return;
+  _cancelNotifByTag(_chatNotifTag(otherUserId)).catch(() => {});
+}
 
 import { handleOrderEvent, type OrderEventData } from "./notifyOrder";
 import { handleChatEvent, type ChatEventData } from "./notifyChat";

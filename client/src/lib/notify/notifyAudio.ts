@@ -24,6 +24,9 @@ interface LocalNotificationsPlugin {
   requestPermissions: () => Promise<{ display: string }>;
   checkPermissions: () => Promise<{ display: string }>;
   schedule: (cfg: { notifications: Array<Record<string, unknown>> }) => Promise<void>;
+  cancel?: (cfg: { notifications: Array<{ id: number }> }) => Promise<void>;
+  removeDeliveredNotifications?: (cfg: { notifications: Array<{ id: number }> }) => Promise<void>;
+  getDeliveredNotifications?: () => Promise<{ notifications: Array<{ id: number; tag?: string; extra?: any }> }>;
 }
 
 interface HapticsPlugin {
@@ -401,15 +404,32 @@ function absolutizeImageUrl(url: string | null | undefined): string | undefined 
   return url;
 }
 
+/**
+ * Convertit une clé arbitraire (ex: "chat-42") en id numérique 32-bit
+ * stable pour LocalNotifications (Android/iOS exigent un int).
+ * Deux notifs avec la même clé → même id → la nouvelle remplace l'ancienne.
+ */
+export function notifIdForKey(key: string): number {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) | 0;
+  // Toujours positif et < 2^31
+  return Math.abs(h) % 2147483647;
+}
+
 export async function showNotif(
   title: string,
   body: string,
   iconOrImage: string = NOTIF_LOGO,
   imageUrl?: string | null,
+  opts?: { tag?: string; groupKey?: string },
 ) {
   // Compat : ancien appel showNotif(title, body, iconUrl) reste valable.
   // Nouveau 4ᵉ argument facultatif : grande image attachée à la notif.
+  // Nouveau 5ᵉ argument facultatif : tag/groupKey pour coalescer les notifs
+  // d'une même conversation chat (la nouvelle remplace l'ancienne).
   const absImg = absolutizeImageUrl(imageUrl);
+  const tag = opts?.tag;
+  const stableId = tag ? notifIdForKey(tag) : notifId++;
 
   if (isNative()) {
     try {
@@ -423,13 +443,14 @@ export async function showNotif(
       }
       await plugin.schedule({
         notifications: [{
-          id: notifId++, title, body,
+          id: stableId, title, body,
           smallIcon: "ic_stat_notify",
           largeIcon: "ic_notif_large",
           iconColor: "#EC0000",
           sound: "default",
           autoCancel: true,
           channelId: "maweja_default",
+          ...(tag ? { tag, group: opts?.groupKey || tag, extra: { tag } } : {}),
           ...(absImg
             ? {
                 attachments: [{ id: "img", url: absImg, options: { typeHint: "image/jpeg" } }],
@@ -451,11 +472,48 @@ export async function showNotif(
       icon: iconOrImage,
       badge: iconOrImage,
       ...(absImg ? { image: absImg } as any : {}),
-      tag: `maweja-${Date.now()}`,
-    });
+      // tag stable → la nouvelle notif remplace l'ancienne pour la même conversation
+      tag: tag || `maweja-${Date.now()}`,
+      renotify: !!tag,
+    } as NotificationOptions);
   } catch (e) {
     console.error("[MAWEJA] Browser Notification error:", e);
   }
+}
+
+/**
+ * Annule (efface) toutes les notifs système liées à une clé donnée.
+ * Utilisé quand l'utilisateur lit une conversation chat : on retire
+ * la notif persistante du tray Android/iOS et on close la web Notification.
+ */
+export async function cancelNotifByTag(tag: string): Promise<void> {
+  const stableId = notifIdForKey(tag);
+  if (isNative()) {
+    try {
+      const plugin = getLocalNotificationsPlugin();
+      if (plugin?.removeDeliveredNotifications) {
+        await plugin.removeDeliveredNotifications({ notifications: [{ id: stableId }] });
+      }
+      if (plugin?.cancel) {
+        await plugin.cancel({ notifications: [{ id: stableId }] });
+      }
+    } catch {}
+    return;
+  }
+  // Web : crée une Notification éphémère avec le même tag puis la ferme aussitôt
+  // (l'API Notification ne permet pas de retrouver les notifs existantes,
+  // mais renotify=false + tag identique remplace silencieusement l'ancienne).
+  try {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      const n = new Notification("", { tag, silent: true } as NotificationOptions);
+      setTimeout(() => { try { n.close(); } catch {} }, 50);
+    }
+  } catch {}
+}
+
+/** Helper pratique : tag standardisé pour une conversation 1↔1. */
+export function chatNotifTag(otherUserId: number | string): string {
+  return `chat-${otherUserId}`;
 }
 
 /* ─── Dedupe (utilisé par les modules d'événements) ────────── */

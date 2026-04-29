@@ -585,16 +585,16 @@ export function ServiceCategoryItem({ name, imageUrl, emoji, active, onClick, te
       <div
         className={cx(
           "w-14 h-14 rounded-[18px] overflow-hidden flex items-center justify-center transition-all",
+          !imageUrl && "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900",
           active && "ring-2 ring-brand ring-offset-2 ring-offset-white dark:ring-offset-zinc-950",
         )}
         style={{
-          background: imageUrl ? undefined : "linear-gradient(135deg, rgb(244,244,244), rgb(232,232,232))",
           boxShadow: active ? "0 4px 16px rgba(225,0,0,0.2)" : "0 2px 8px rgba(0,0,0,0.08)",
         }}
       >
         {imageUrl
           ? <img src={resolveImg(imageUrl)} alt={name} className="w-full h-full object-cover" loading="lazy" />
-          : <span style={{ fontSize: 26 }}>{fallbackEmoji}</span>}
+          : <span className="text-gray-700 dark:text-gray-200" style={{ fontSize: 26 }}>{fallbackEmoji}</span>}
       </div>
       <span
         className={cx("text-center leading-tight font-medium", active ? "text-brand" : "text-gray-600 dark:text-gray-400")}

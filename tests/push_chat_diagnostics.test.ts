@@ -62,6 +62,14 @@ vi.mock("../client/src/lib/notify/notifyAudio", () => ({
   unlockAudioPlayback: () => {},
   isAudioUnlocked: () => true,
   installAudioUnlockOnce: () => {},
+  // Helpers de coalescing chat (notif unique par conversation + cancel au markRead)
+  chatNotifTag: (otherUserId: number | string) => `chat-${otherUserId}`,
+  cancelNotifByTag: async () => {},
+  notifIdForKey: (key: string) => {
+    let h = 5381;
+    for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) | 0;
+    return Math.abs(h) % 2147483647;
+  },
 }));
 
 vi.mock("../server/websocket", () => ({

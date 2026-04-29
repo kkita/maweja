@@ -233,7 +233,21 @@ async function showForegroundTrayNotif(notif: any): Promise<void> {
       undefined;
 
     const data = notif?.data || {};
-    const id = Math.floor(Date.now() % 2147483647);
+
+    // ── Coalescing par conversation chat : si le payload référence un
+    // expéditeur (senderId), on utilise un id stable hash(`chat-<senderId>`)
+    // → la nouvelle notif REMPLACE l'ancienne au lieu d'empiler N notifs.
+    const senderId = data?.senderId ?? data?.from ?? null;
+    const isChat = String(data?.type || data?.eventType || "").toLowerCase().includes("chat");
+    let id = Math.floor(Date.now() % 2147483647);
+    let tag: string | undefined;
+    if (isChat && senderId !== null && senderId !== undefined && senderId !== "") {
+      tag = `chat-${senderId}`;
+      // dbj2-like 32-bit hash → entier positif < 2^31
+      let h = 5381;
+      for (let i = 0; i < tag.length; i++) h = ((h << 5) + h + tag.charCodeAt(i)) | 0;
+      id = Math.abs(h) % 2147483647;
+    }
 
     await LN.schedule({
       notifications: [
@@ -241,18 +255,26 @@ async function showForegroundTrayNotif(notif: any): Promise<void> {
           id,
           title,
           body,
-          channelId: "maweja_orders",
+          // Doit correspondre EXACTEMENT au channel créé côté natif
+          // (cf. ensureAndroidChannel) et au channelId envoyé par le serveur
+          // dans server/lib/push.ts. Sinon Android ignore son/vibration.
+          channelId: "maweja_default",
           smallIcon: "ic_stat_notify",
-          largeIcon: "ic_notif_large",
+          // Sur Android, largeIcon accepte une URL distante (https://…) et
+          // affiche l'image à droite de la notification dans le tray, ainsi
+          // qu'en BigPictureStyle quand on étend la notif.
+          largeIcon: imageUrl || "ic_notif_large",
           iconColor: "#EC0000",
           sound: "default",
+          ...(tag ? { tag, group: tag } : {}),
           ...(imageUrl
             ? {
+                // iOS UNNotificationAttachment (image dans le banner étendu).
                 attachments: [{ id: "img", url: imageUrl, options: { typeHint: "image/jpeg" } }],
                 largeBody: body,
               }
             : {}),
-          extra: data,
+          extra: { ...data, ...(tag ? { tag } : {}) },
           schedule: { at: new Date(Date.now() + 100) },
         },
       ],

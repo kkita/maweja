@@ -4,7 +4,7 @@ import DriverNav from "../../components/DriverNav";
 import { useAuth } from "../../lib/auth";
 import { apiRequest, queryClient, authFetch, authFetchJson, resolveImg } from "../../lib/queryClient";
 import { onWSMessage } from "../../lib/websocket";
-import { handleWSEvent } from "../../lib/notify";
+import { handleWSEvent, cancelChatNotifs } from "../../lib/notify";
 import { Send, MessageCircle, Shield, Circle, ArrowLeft, Download, FileText } from "lucide-react";
 import type { ChatMessage, User as UserType } from "@shared/schema";
 import { DEmptyState } from "../../components/driver/DriverUI";
@@ -109,6 +109,8 @@ export default function DriverChat() {
       apiRequest(`/api/chat/read/${selectedAdmin.id}/${user.id}`, { method: "PATCH" })
         .then(() => queryClient.invalidateQueries({ queryKey: ["/api/chat/unread"] }))
         .catch(() => {});
+      // Efface la notif système persistante pour cette conversation
+      cancelChatNotifs(selectedAdmin.id);
     }
   }, [selectedAdmin, user, messages.length]);
 

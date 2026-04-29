@@ -55,10 +55,18 @@ export default function AdminOrders() {
     setOverrideOrderId(order.id);
   };
 
-  const parseItems = (items: any): any[] => {
-    if (!items) return [];
-    if (typeof items === "string") { try { return JSON.parse(items); } catch { return []; } }
-    return items as any[];
+  const parseItems = (items: any): Array<{ name: string; qty: number; price: number }> => {
+    let raw: any[] = [];
+    if (!items) raw = [];
+    else if (typeof items === "string") { try { raw = JSON.parse(items); } catch { raw = []; } }
+    else if (Array.isArray(items)) raw = items;
+    // Normalise les variations de schéma : `quantity` (panier client) vs `qty`
+    // (facture). `price` peut aussi arriver en string depuis certaines sources.
+    return raw.map((it: any) => ({
+      name: String(it?.name ?? it?.title ?? "Article"),
+      qty: Number(it?.qty ?? it?.quantity ?? 1) || 0,
+      price: Number(it?.price ?? it?.unitPrice ?? 0) || 0,
+    }));
   };
 
   return (

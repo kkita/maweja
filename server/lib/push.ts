@@ -231,6 +231,22 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
   let lastMessageId: string | undefined;
   let firstError: string | undefined;
 
+  // ── Coalescing chat : pour les notifs liées à un chat (type=chat ou
+  // eventType=chat:*), on regroupe les notifs d'un même expéditeur sous un
+  // tag stable `chat-<senderId>` (= collapse_key Android + tag webpush + tag
+  // iOS thread). La nouvelle notif remplace l'ancienne au lieu d'empiler.
+  const isChat =
+    String(dataStr.type || "").toLowerCase() === "chat" ||
+    String(dataStr.eventType || "").toLowerCase().startsWith("chat:");
+  const chatTag =
+    isChat && dataStr.senderId
+      ? `chat-${dataStr.senderId}`
+      : undefined;
+  // Tag final pour grouper côté plateformes :
+  //   • chat → tag stable par conversation (1 notif max par expéditeur)
+  //   • autre → notificationId (legacy : 1 tag = 1 notif unique)
+  const groupTag = chatTag || dataStr.notificationId || undefined;
+
   await Promise.all(targets.map(async (t) => {
     try {
       const messageId = await a.messaging().send({
@@ -243,6 +259,10 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
         data: dataStr,
         android: {
           priority: "high",
+          // collapseKey : si plusieurs notifs arrivent avec la même clé alors
+          // que le device est offline, FCM n'en livre qu'UNE seule à la
+          // reconnexion. Limite l'empilement pour les conversations chat.
+          ...(chatTag ? { collapseKey: chatTag } : {}),
           notification: {
             // ⚠️ DOIT correspondre au channel créé côté mobile
             // (cf. client/src/lib/pushNotifs.ts → ensureAndroidChannel).
@@ -253,6 +273,10 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
             visibility: "public",
             defaultSound: true,
             defaultVibrateTimings: true,
+            // tag Android : 2 notifs avec le même tag (et package) → la
+            // nouvelle remplace l'ancienne. Indispensable pour ne pas
+            // empiler N notifs d'une même conversation.
+            ...(chatTag ? { tag: chatTag } : {}),
             ...(absImg ? { imageUrl: absImg } : {}),
           },
         },
@@ -260,6 +284,8 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
           headers: {
             "apns-priority": "10",
             "apns-push-type": "alert",
+            // collapse-id : iOS regroupe/écrase les notifs d'un même chat
+            ...(chatTag ? { "apns-collapse-id": chatTag } : {}),
           },
           payload: {
             aps: {
@@ -267,6 +293,8 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
               sound: "default",
               badge: 1,
               "mutable-content": 1 as any,
+              // thread-id : groupe iOS (Notification Center les empile sous un même fil)
+              ...(chatTag ? { "thread-id": chatTag } : {}),
             },
           },
           ...(absImg ? { fcmOptions: { imageUrl: absImg } as any } : {}),
@@ -278,7 +306,9 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
             icon: "/icon-192.png",
             badge: "/icon-192.png",
             ...(absImg ? { image: absImg } : {}),
-            ...(dataStr.notificationId ? { tag: dataStr.notificationId } : {}),
+            // tag stable → la nouvelle notif remplace l'ancienne dans le
+            // tray du navigateur (renotify=true pour réveiller l'utilisateur).
+            ...(groupTag ? { tag: groupTag, renotify: !!chatTag } : {}),
           },
           fcmOptions: dataStr.clickAction
             ? { link: dataStr.clickAction }
