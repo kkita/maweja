@@ -322,9 +322,12 @@ export async function ensureNotifChannel() {
   try {
     const plugin = getLocalNotificationsPlugin();
     if (!plugin?.createChannel) return;
+    // ⚠️ id="maweja_default" : DOIT correspondre au channelId envoyé par
+    // le serveur dans les payloads FCM (cf. server/lib/push.ts) sinon
+    // Android utilise un canal "Misc" silencieux.
     await plugin.createChannel({
-      id: "maweja_orders",
-      name: "MAWEJA — Commandes & Messages",
+      id: "maweja_default",
+      name: "MAWEJA Notifications",
       description: "Nouvelles commandes, messages chat et alertes importantes",
       importance: 5,
       visibility: 1,
@@ -333,6 +336,20 @@ export async function ensureNotifChannel() {
       lights: true,
       lightColor: "#EC0000",
     });
+    // Compat : ancien id, conservé pour les payloads en transit
+    try {
+      await plugin.createChannel({
+        id: "maweja_orders",
+        name: "MAWEJA — Commandes & Messages (legacy)",
+        description: "Nouvelles commandes, messages chat et alertes importantes",
+        importance: 5,
+        visibility: 1,
+        sound: "default",
+        vibration: true,
+        lights: true,
+        lightColor: "#EC0000",
+      });
+    } catch {}
     channelCreated = true;
   } catch {}
 }
@@ -412,7 +429,7 @@ export async function showNotif(
           iconColor: "#EC0000",
           sound: "default",
           autoCancel: true,
-          channelId: "maweja_orders",
+          channelId: "maweja_default",
           ...(absImg
             ? {
                 attachments: [{ id: "img", url: absImg, options: { typeHint: "image/jpeg" } }],

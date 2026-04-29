@@ -429,11 +429,26 @@ export function registerChatRoutes(app: Express): void {
         pushResultLabel = "error";
       }
 
-      // Log final structuré pour debug bout-en-bout
-      logger.info?.(
-        `[chat] delivered receiverId=${receiverId} receiverRole=${receiver?.role ?? "?"} ` +
-        `wsDelivered=${wsDelivered} notificationId=${createdNotif.id} push=${pushResultLabel}`,
-      );
+      // Log final structuré bout-en-bout (1 ligne par champ pour grep facile)
+      // Utile pour debug Push Diagnostics + tracing erreurs FCM par message.
+      try {
+        // Recalcule sentCount/failedCount à partir du label parsé
+        const m = pushResultLabel.match(/sent=(\d+)\/failed=(\d+)/);
+        const pushSent = m ? Number(m[1]) : 0;
+        const pushFailed = m ? Number(m[2]) : 0;
+        logger.info?.(`[chat] senderId=${senderId}`);
+        logger.info?.(`[chat] receiverId=${receiverId} receiverRole=${receiver?.role ?? "?"}`);
+        logger.info?.(`[chat] orderId=${activeOrderId ?? "none"}`);
+        logger.info?.(`[chat] wsDelivered=${wsDelivered}`);
+        logger.info?.(`[chat] notificationId=${createdNotif.id}`);
+        logger.info?.(`[chat] push sentCount=${pushSent} failedCount=${pushFailed} status=${pushResultLabel}`);
+      } catch {
+        // Fallback ligne unique si parsing échoue
+        logger.info?.(
+          `[chat] delivered receiverId=${receiverId} receiverRole=${receiver?.role ?? "?"} ` +
+          `wsDelivered=${wsDelivered} notificationId=${createdNotif.id} push=${pushResultLabel}`,
+        );
+      }
 
       // ─── Fanout admin (Dashboard) ─────────────────────────────────────────
       // Important : on n'envoie PAS un type "chat_message" aux admins

@@ -146,6 +146,24 @@ export interface IStorage {
   // ── Push tokens (multi-device) ──────────────────────────────────────────
   /** Tokens FCM/APNs actifs d'un utilisateur (tous les appareils). */
   getActivePushTokensByUser(userId: number): Promise<PushToken[]>;
+  /** Récupère un token par son id primaire (admin diag). */
+  getPushTokenById(id: number): Promise<PushToken | undefined>;
+  /** Récupère un token par sa valeur FCM/APNs (admin diag). */
+  getPushTokenByValue(token: string): Promise<PushToken | undefined>;
+  /**
+   * Liste GLOBALE des push_tokens avec infos user enrichies (admin diag).
+   * Filtres optionnels : role (client/driver/admin), platform (android/ios/web),
+   * activeOnly (true → uniquement isActive=true).
+   */
+  getAllPushTokensWithUser(filters?: {
+    role?: string;
+    platform?: string;
+    activeOnly?: boolean;
+  }): Promise<Array<PushToken & {
+    userName: string;
+    userEmail: string;
+    userRole: string;
+  }>>;
   /**
    * Upsert : si le token existe déjà (UNIQUE), on met à jour platform/deviceId/
    * appVersion/lastSeenAt et on réactive la ligne. Sinon on l'insère.
@@ -844,6 +862,55 @@ export class DatabaseStorage implements IStorage {
     await db.update(pushTokens)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(pushTokens.userId, userId));
+  }
+
+  async getPushTokenById(id: number): Promise<PushToken | undefined> {
+    const [row] = await db.select().from(pushTokens).where(eq(pushTokens.id, id));
+    return row;
+  }
+
+  async getPushTokenByValue(token: string): Promise<PushToken | undefined> {
+    const [row] = await db.select().from(pushTokens).where(eq(pushTokens.token, token));
+    return row;
+  }
+
+  async getAllPushTokensWithUser(filters?: {
+    role?: string;
+    platform?: string;
+    activeOnly?: boolean;
+  }): Promise<Array<PushToken & { userName: string; userEmail: string; userRole: string }>> {
+    const conds: any[] = [];
+    if (filters?.activeOnly) conds.push(eq(pushTokens.isActive, true));
+    if (filters?.platform) conds.push(eq(pushTokens.platform, filters.platform));
+    if (filters?.role) conds.push(eq(users.role, filters.role));
+
+    const rows = await db
+      .select({
+        id: pushTokens.id,
+        userId: pushTokens.userId,
+        token: pushTokens.token,
+        platform: pushTokens.platform,
+        deviceId: pushTokens.deviceId,
+        appVersion: pushTokens.appVersion,
+        lastSeenAt: pushTokens.lastSeenAt,
+        isActive: pushTokens.isActive,
+        createdAt: pushTokens.createdAt,
+        updatedAt: pushTokens.updatedAt,
+        userName: users.name,
+        userEmail: users.email,
+        userRole: users.role,
+      })
+      .from(pushTokens)
+      .leftJoin(users, eq(pushTokens.userId, users.id))
+      .where(conds.length ? and(...conds) : undefined)
+      .orderBy(desc(pushTokens.lastSeenAt));
+
+    return rows.map((r: any) => ({
+      ...r,
+      userName: r.userName ?? `(user #${r.userId})`,
+      userEmail: r.userEmail ?? "",
+      userRole: r.userRole ?? "?",
+    }));
   }
 
   // ── Support tickets ────────────────────────────────────────────────────

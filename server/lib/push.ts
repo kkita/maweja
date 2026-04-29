@@ -244,8 +244,13 @@ export async function sendPushToUser(userId: number, payload: PushPayload): Prom
         android: {
           priority: "high",
           notification: {
-            channelId: "maweja_orders",
+            // ⚠️ DOIT correspondre au channel créé côté mobile
+            // (cf. client/src/lib/pushNotifs.ts → ensureAndroidChannel).
+            // Sinon Android utilise le canal "Misc" silencieux.
+            channelId: "maweja_default",
             sound: "default",
+            priority: "high",
+            visibility: "public",
             defaultSound: true,
             defaultVibrateTimings: true,
             ...(absImg ? { imageUrl: absImg } : {}),

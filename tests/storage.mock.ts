@@ -446,6 +446,31 @@ export class MemoryStorage {
       t.updatedAt = new Date();
     }
   }
+  async getPushTokenById(id: number): Promise<PushToken | undefined> {
+    const t = this.pushTokens.find((x) => x.id === id);
+    return t ? clone(t) : undefined;
+  }
+  async getPushTokenByValue(token: string): Promise<PushToken | undefined> {
+    const t = this.pushTokens.find((x) => x.token === token);
+    return t ? clone(t) : undefined;
+  }
+  async getAllPushTokensWithUser(filters?: {
+    role?: string;
+    platform?: string;
+    activeOnly?: boolean;
+  }): Promise<Array<PushToken & { user: { id: number; name: string | null; role: string; email: string | null } | null }>> {
+    let rows = this.pushTokens.slice();
+    if (filters?.activeOnly !== false) rows = rows.filter((t) => t.isActive);
+    if (filters?.platform) rows = rows.filter((t) => t.platform === filters.platform);
+    return rows.map((t) => {
+      const u = this.users.find((x) => x.id === t.userId) || null;
+      if (filters?.role && (!u || u.role !== filters.role)) return null;
+      return {
+        ...clone(t),
+        user: u ? { id: u.id, name: u.name ?? null, role: u.role, email: u.email ?? null } : null,
+      };
+    }).filter(Boolean) as any;
+  }
   async deactivateAllPushTokensForUser(userId: number): Promise<void> {
     for (const t of this.pushTokens) {
       if (t.userId === userId) {

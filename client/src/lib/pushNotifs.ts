@@ -262,25 +262,44 @@ async function showForegroundTrayNotif(notif: any): Promise<void> {
   }
 }
 
-/** Crée le canal Android "maweja_orders" si pas déjà fait (importance HIGH, son, vibration). */
+/**
+ * Crée le canal Android "maweja_default" si pas déjà fait (importance HIGH,
+ * son, vibration). Cet id DOIT correspondre EXACTEMENT au channelId envoyé
+ * par le serveur dans les payloads FCM (cf. server/lib/push.ts) sinon Android
+ * ignore les paramètres son/visibility et utilise le canal "Misc" silencieux.
+ *
+ * On crée AUSSI l'ancien canal "maweja_orders" pour éviter que les anciens
+ * payloads en transit (déjà envoyés vers FCM avant le déploiement) ne tombent
+ * dans un canal inconnu et soient silencieux.
+ */
 async function ensureAndroidChannel(PushNotifications: any): Promise<void> {
   if (detectPlatform() !== "android") return;
+  if (typeof PushNotifications.createChannel !== "function") return;
+
+  const baseChannelOpts = {
+    name: "MAWEJA Notifications",
+    description: "Nouvelles commandes, messages chat et alertes importantes",
+    importance: 5, // HIGH (= heads-up notification)
+    visibility: 1, // PUBLIC
+    sound: "default",
+    vibration: true,
+    lights: true,
+    lightColor: "#EC0000",
+  };
+
+  // Canal officiel utilisé par tous les nouveaux payloads serveur
   try {
-    if (typeof PushNotifications.createChannel !== "function") return;
+    await PushNotifications.createChannel({ id: "maweja_default", ...baseChannelOpts });
+  } catch { /* déjà créé */ }
+
+  // Compat : ancien id, conservé pour les payloads en transit
+  try {
     await PushNotifications.createChannel({
       id: "maweja_orders",
-      name: "MAWEJA — Commandes & Messages",
-      description: "Nouvelles commandes, messages chat et alertes importantes",
-      importance: 5, // HIGH (= heads-up notification)
-      visibility: 1, // PUBLIC
-      sound: "default",
-      vibration: true,
-      lights: true,
-      lightColor: "#EC0000",
+      ...baseChannelOpts,
+      name: "MAWEJA — Commandes & Messages (legacy)",
     });
-  } catch {
-    /* canal déjà créé */
-  }
+  } catch { /* déjà créé */ }
 }
 
 /**
@@ -300,7 +319,7 @@ export async function initPushNotifications(
   const r = typeof role === "string" ? role : null;
   const platform = detectPlatform();
 
-  console.info(`[push] init userId=${uid ?? "?"} role=${r ?? "?"} platform=${platform}`);
+  console.info(`[push] init start userId=${uid ?? "?"} role=${r ?? "?"} platform=${platform}`);
 
   // Skip uniquement si tout est aligné ET le dernier register a réussi
   if (
@@ -308,9 +327,10 @@ export async function initPushNotifications(
     initializedForRole === r &&
     lastRegisterStatus === "ok"
   ) {
-    console.info(`[push] init skipped (already registered for user=${uid} role=${r})`);
+    console.info(`[push] init skipped (already registered for user=${uid} role=${r}) — lastStatus=ok`);
     return;
   }
+  console.info(`[push] init proceeding — prevUser=${initializedForUserId ?? "null"} prevRole=${initializedForRole ?? "null"} lastStatus=${lastRegisterStatus ?? "null"}`);
 
   initializedForUserId = uid;
   initializedForRole = r;
@@ -336,15 +356,16 @@ export async function initPushNotifications(
     await ensureAndroidChannel(PushNotifications);
     if (platform === "android") console.info("[push] Android channel 'maweja_orders' ready");
 
-    // 2. Permission
+    // 2. Permission (sur Android 13+, requestPermissions() déclenche le prompt
+    // POST_NOTIFICATIONS au niveau OS via Capacitor)
     let perm = await PushNotifications.checkPermissions();
-    console.info(`[push] permission status (initial)=${perm?.receive}`);
+    console.info(`[push] permission result (initial)=${perm?.receive}`);
     if (perm.receive !== "granted") {
       perm = await PushNotifications.requestPermissions();
-      console.info(`[push] permission status (after request)=${perm?.receive}`);
+      console.info(`[push] permission result (after request)=${perm?.receive}`);
     }
     if (perm.receive !== "granted") {
-      console.warn(`[push] permission refusée → status=${perm.receive}`);
+      console.warn(`[push] permission refusée → status=${perm.receive} (POST_NOTIFICATIONS Android 13 ?)`);
       lastRegisterStatus = "no-permission";
       return;
     }
@@ -375,13 +396,13 @@ export async function initPushNotifications(
     PushNotifications.addListener("registration", async (t: any) => {
       const tok = t?.value;
       if (!tok) {
-        console.warn("[push] FCM registration → token vide");
+        console.warn("[push] registration token received → token vide");
         lastRegisterStatus = "no-token";
         return;
       }
       currentToken = tok;
       const preview = `${tok.substring(0, 12)}…${tok.substring(tok.length - 6)}`;
-      console.info(`[push] FCM token received platform=${platform} token=${preview}`);
+      console.info(`[push] registration token received platform=${platform} token=${preview}`);
       try {
         await apiRequest("/api/push/register-token", {
           method: "POST",
@@ -389,9 +410,9 @@ export async function initPushNotifications(
         });
         initializedForToken = tok;
         lastRegisterStatus = "ok";
-        console.info(`[push] register-token success userId=${initializedForUserId} role=${initializedForRole} platform=${platform}`);
+        console.info(`[push] token register backend success userId=${initializedForUserId} role=${initializedForRole} platform=${platform}`);
       } catch (e) {
-        console.warn(`[push] register-token failure userId=${initializedForUserId} platform=${platform}`, e);
+        console.warn(`[push] token register backend failed userId=${initializedForUserId} platform=${platform}`, e);
         // Échec marqué → le prochain init() relancera l'enregistrement
         lastRegisterStatus = "failed";
       }
@@ -406,8 +427,12 @@ export async function initPushNotifications(
     // App au premier plan : afficher dans la barre système (style WhatsApp)
     PushNotifications.addListener("pushNotificationReceived", async (notif: any) => {
       const nid = notif?.data?.notificationId;
+      const titlePreview = notif?.title ? String(notif.title).substring(0, 40) : "(no title)";
+      console.info(`[push] pushNotificationReceived nid=${nid ?? "?"} title="${titlePreview}" data=${JSON.stringify(notif?.data || {}).substring(0, 200)}`);
+
       // Si le WS a déjà géré cette notif (sonnerie + local-notif), on skip
       if (wasNotifHandled(nid)) {
+        console.info(`[push] pushNotificationReceived nid=${nid} → déjà géré par WS, skip relais foreground`);
         try {
           const qc = (window as any).__MAWEJA_QC__;
           qc?.invalidateQueries?.();
@@ -440,6 +465,7 @@ export async function initPushNotifications(
     PushNotifications.addListener("pushNotificationActionPerformed", (action: any) => {
       const data = action?.notification?.data || {};
       const target = resolveDeepLinkTarget(data);
+      console.info(`[push] pushNotificationActionPerformed → target=${target} data=${JSON.stringify(data).substring(0, 200)}`);
       try { (window as any).location.assign(target); } catch {}
     });
 
@@ -455,6 +481,7 @@ export async function initPushNotifications(
       }
     } catch {}
 
+    console.info(`[push] registering native push platform=${platform}`);
     await PushNotifications.register();
   } catch (e) {
     console.warn("[push] init failed", e);

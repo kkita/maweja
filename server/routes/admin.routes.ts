@@ -10,7 +10,8 @@ import { hashPassword } from "../auth";
 import { validate, validateParams, schemas } from "../validators";
 import { sendToUser } from "../websocket";
 import { logger } from "../lib/logger";
-import { sendPushToUser, isFirebaseConfigured } from "../lib/push";
+import { sendPushToUser, isFirebaseConfigured, toAbsoluteImageUrl } from "../lib/push";
+import admin from "firebase-admin";
 
 export function registerAdminRoutes(app: Express): void {
   app.get("/api/admin/password-reset-requests", requireAdmin, async (req, res) => {
@@ -684,6 +685,445 @@ export function registerAdminRoutes(app: Express): void {
         skippedReason: pushResult.skippedReason ?? null,
         results: pushResult.results ?? [],
       },
+    });
+  });
+
+  /**
+   * GET /api/admin/push/tokens
+   *
+   * Liste GLOBALE de tous les tokens push enregistrés en base, enrichie
+   * avec les infos user (name/email/role). Permet à l'admin d'inspecter
+   * d'un seul coup d'œil quels appareils ont enregistré un token, sur
+   * quelle plateforme, et de filtrer pour identifier les manquants.
+   *
+   * Query :
+   *   - role?: client | driver | admin
+   *   - platform?: web | android | ios
+   *   - activeOnly?: "true" → filtre isActive=true uniquement
+   *
+   * Retourne aussi un compteur par plateforme pour faciliter le diagnostic
+   * "aucun token Android enregistré".
+   */
+  app.get("/api/admin/push/tokens", requireAdmin, async (req, res) => {
+    const role = typeof req.query.role === "string" && ["client", "driver", "admin"].includes(req.query.role)
+      ? req.query.role
+      : undefined;
+    const platform = typeof req.query.platform === "string" && ["web", "android", "ios"].includes(req.query.platform)
+      ? req.query.platform
+      : undefined;
+    const activeOnly = req.query.activeOnly === "true";
+
+    const mask = (t?: string | null) =>
+      !t ? null : t.length <= 12 ? `${t.slice(0, 4)}…` : `${t.slice(0, 8)}…${t.slice(-6)}`;
+
+    let rows: Array<any> = [];
+    try {
+      rows = await storage.getAllPushTokensWithUser({ role, platform, activeOnly });
+    } catch (e) {
+      logger.warn?.(`[admin/push/tokens] échec listing`, e);
+      return res.status(500).json({ message: "Listing tokens impossible" });
+    }
+
+    const counts = { web: 0, android: 0, ios: 0, total: rows.length };
+    for (const r of rows) {
+      if (r.platform === "web") counts.web++;
+      else if (r.platform === "android") counts.android++;
+      else if (r.platform === "ios") counts.ios++;
+    }
+
+    res.json({
+      filters: { role: role ?? null, platform: platform ?? null, activeOnly },
+      counts,
+      tokens: rows.map((r: any) => ({
+        id: r.id,
+        userId: r.userId,
+        userName: r.userName,
+        userEmail: r.userEmail,
+        userRole: r.userRole,
+        platform: r.platform,
+        deviceId: r.deviceId,
+        appVersion: r.appVersion,
+        isActive: r.isActive,
+        lastSeenAt: r.lastSeenAt,
+        createdAt: r.createdAt,
+        tokenPreview: mask(r.token),
+        // source: web/android/ios — synonyme de platform pour clarté UI
+        source: r.platform,
+      })),
+      hint:
+        counts.android === 0
+          ? "Aucun token Android enregistré. Le problème est côté app mobile ou configuration native (vérifier google-services.json + npx cap sync android + reinstall APK)."
+          : null,
+    });
+  });
+
+  /**
+   * POST /api/admin/push/test-token
+   *
+   * Envoie un push de test DIRECT sur UN token précis (pas via le user) en
+   * appelant firebase-admin messaging().send() avec un payload Android
+   * complet (channelId maweja_default, sound default, priority high,
+   * visibility public, mutableContent iOS, image webpush). Sert à isoler
+   * un appareil suspect et confirmer si le problème vient du token, du
+   * payload, du canal Android ou de la conf Firebase.
+   *
+   * Body :
+   *   { tokenId?: number, token?: string,
+   *     title?: string, body?: string, imageUrl?: string, data?: object }
+   *
+   * Si Firebase retourne registration-token-not-registered ou
+   * invalid-registration-token, le token est automatiquement désactivé
+   * (isActive=false) et flagué dans la réponse.
+   */
+  app.post("/api/admin/push/test-token", requireAdmin, async (req, res) => {
+    const { tokenId, token: rawToken, title: rawTitle, body: rawBody, imageUrl: rawImage, data: rawData } = req.body || {};
+
+    if (!tokenId && !rawToken) {
+      return res.status(400).json({ message: "tokenId ou token requis" });
+    }
+
+    let row: any = null;
+    try {
+      if (tokenId && Number.isFinite(Number(tokenId))) {
+        row = await storage.getPushTokenById(Number(tokenId));
+      } else if (typeof rawToken === "string" && rawToken.length) {
+        row = await storage.getPushTokenByValue(rawToken);
+      }
+    } catch (e) {
+      logger.warn?.(`[admin/push/test-token] lookup échec`, e);
+    }
+
+    // Si on n'a pas trouvé en DB mais que le caller a fourni un token brut,
+    // on accepte de tester quand même (cas d'un token externe à débugger).
+    const tokenValue: string | null = row?.token || (typeof rawToken === "string" && rawToken.length ? rawToken : null);
+    if (!tokenValue) {
+      return res.status(404).json({ message: "Token introuvable" });
+    }
+
+    if (!isFirebaseConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: { code: "no-firebase", message: "Firebase Admin non configuré côté serveur (FIREBASE_SERVICE_ACCOUNT_JSON manquant)." },
+        tokenId: row?.id ?? null,
+        platform: row?.platform ?? null,
+        userId: row?.userId ?? null,
+      });
+    }
+
+    const title = (typeof rawTitle === "string" && rawTitle.length ? rawTitle : "Test push MAWEJA");
+    const body = (typeof rawBody === "string" && rawBody.length ? rawBody : "Si vous voyez ceci, le push fonctionne sur cet appareil.");
+    const absImg = toAbsoluteImageUrl(typeof rawImage === "string" && rawImage.length ? rawImage : null);
+
+    const testId = `test-${Date.now()}`;
+    const dataStr: Record<string, string> = {
+      testId,
+      type: "push_test",
+      eventType: "push:test",
+      source: "admin_push_diagnostics",
+      timestamp: String(Date.now()),
+      ...(row?.userId ? { userId: String(row.userId) } : {}),
+    };
+    if (rawData && typeof rawData === "object") {
+      for (const [k, v] of Object.entries(rawData as Record<string, unknown>)) {
+        dataStr[String(k)] = String(v ?? "");
+      }
+    }
+    if (absImg) dataStr.imageUrl = absImg;
+
+    // tryInit() est appelé par sendPushToUser → on s'assure ici aussi.
+    // On utilise admin.messaging() directement pour avoir le payload riche
+    // demandé par la spec diag (channelId maweja_default).
+    const a = admin.apps.length > 0 ? admin.app() : null;
+    if (!a) {
+      // Force init via un envoi à vide (no-op) pour déclencher tryInit()
+      try {
+        await sendPushToUser(-1, { title: "_init_", body: "_init_" });
+      } catch {}
+    }
+
+    try {
+      const messageId = await admin.messaging().send({
+        token: tokenValue,
+        notification: {
+          title,
+          body,
+          ...(absImg ? { imageUrl: absImg } : {}),
+        },
+        data: dataStr,
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "maweja_default",
+            sound: "default",
+            priority: "high",
+            visibility: "public",
+            defaultSound: true,
+            defaultVibrateTimings: true,
+            ...(absImg ? { imageUrl: absImg } : {}),
+          },
+        },
+        apns: {
+          headers: {
+            "apns-priority": "10",
+            "apns-push-type": "alert",
+          },
+          payload: {
+            aps: {
+              alert: { title, body },
+              sound: "default",
+              badge: 1,
+              "mutable-content": 1 as any,
+            },
+          },
+          ...(absImg ? { fcmOptions: { imageUrl: absImg } as any } : {}),
+        },
+        webpush: {
+          notification: {
+            title,
+            body,
+            icon: "/icon-192.png",
+            ...(absImg ? { image: absImg } : {}),
+          },
+        },
+      });
+
+      logger.info?.(`[admin/push/test-token] success token=${row?.id ?? "raw"} platform=${row?.platform ?? "?"} msgId=${messageId}`);
+
+      return res.json({
+        success: true,
+        firebaseMessageId: messageId,
+        tokenId: row?.id ?? null,
+        platform: row?.platform ?? null,
+        userId: row?.userId ?? null,
+        deviceId: row?.deviceId ?? null,
+      });
+    } catch (e: any) {
+      const code: string = e?.errorInfo?.code || e?.code || "unknown";
+      const message: string = e?.errorInfo?.message || e?.message || String(e);
+
+      // Désactivation automatique des tokens invalides (registration not-found, etc.)
+      const isInvalid =
+        code.includes("registration-token-not-registered") ||
+        code.includes("invalid-registration-token") ||
+        code.includes("invalid-argument") ||
+        code.includes("not-found") ||
+        code.includes("unregistered");
+
+      let deactivated = false;
+      if (isInvalid) {
+        try {
+          await storage.deactivatePushToken(tokenValue);
+          deactivated = true;
+          logger.warn?.(`[admin/push/test-token] token invalide désactivé id=${row?.id ?? "?"} code=${code}`);
+        } catch (de) {
+          logger.warn?.(`[admin/push/test-token] désactivation échec`, de);
+        }
+      } else {
+        logger.warn?.(`[admin/push/test-token] échec envoi code=${code} msg=${message}`);
+      }
+
+      return res.json({
+        success: false,
+        error: { code, message },
+        tokenId: row?.id ?? null,
+        platform: row?.platform ?? null,
+        userId: row?.userId ?? null,
+        deactivated,
+      });
+    }
+  });
+
+  /**
+   * POST /api/admin/push/test-user
+   *
+   * Envoie un push DIRECT (firebase-admin.messaging().send()) sur CHAQUE
+   * token actif d'un utilisateur, séparément, et retourne le détail brut
+   * par token. Permet d'identifier exactement quel device d'un user reçoit
+   * (ou pas) et pourquoi (code FCM précis).
+   *
+   * Différence avec sendPushToUser : on ne masque RIEN. "success" reflète
+   * uniquement le retour de firebase-admin → on ne dit jamais "envoyé" si
+   * messaging().send() a levé une exception.
+   *
+   * Body : { userId: number, title?, body?, imageUrl?, data? }
+   *
+   * Réponse :
+   *   {
+   *     userId, totalTokens,
+   *     results: [{ tokenId, platform, deviceId, tokenPreview,
+   *                 success, firebaseMessageId?, errorCode?, errorMessage?,
+   *                 deactivated? }],
+   *     summary: { sent, failed, deactivated }
+   *   }
+   */
+  app.post("/api/admin/push/test-user", requireAdmin, async (req, res) => {
+    const { userId: rawUserId, title: rawTitle, body: rawBody, imageUrl: rawImage, data: rawData } = req.body || {};
+    const userId = Number(rawUserId);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      return res.status(400).json({ message: "userId requis (number)" });
+    }
+
+    if (!isFirebaseConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: {
+          code: "no-firebase",
+          message: "Firebase Admin non configuré côté serveur (FIREBASE_SERVICE_ACCOUNT_JSON manquant).",
+        },
+        userId,
+      });
+    }
+
+    let tokens: Array<{ id: number; token: string; platform: string; deviceId: string | null }> = [];
+    try {
+      const all = await storage.getActivePushTokensByUser(userId);
+      tokens = (all || [])
+        .map((t: any) => ({
+          id: t.id,
+          token: t.token,
+          platform: t.platform || "?",
+          deviceId: t.deviceId || null,
+        }));
+    } catch (e) {
+      logger.warn?.(`[admin/push/test-user] lookup tokens échec userId=${userId}`, e);
+      return res.status(500).json({ message: "Erreur lookup tokens", userId });
+    }
+
+    if (tokens.length === 0) {
+      return res.json({
+        userId,
+        totalTokens: 0,
+        results: [],
+        summary: { sent: 0, failed: 0, deactivated: 0 },
+        hint: "Aucun token actif enregistré pour cet utilisateur. L'app mobile a-t-elle bien tourné une fois (init push) ?",
+      });
+    }
+
+    const title = (typeof rawTitle === "string" && rawTitle.length ? rawTitle : "Test push MAWEJA");
+    const body = (typeof rawBody === "string" && rawBody.length ? rawBody : "Test ciblé sur tous vos appareils — Admin Push Diagnostics.");
+    const absImg = toAbsoluteImageUrl(typeof rawImage === "string" && rawImage.length ? rawImage : null);
+
+    const testId = `test-user-${userId}-${Date.now()}`;
+    const dataStr: Record<string, string> = {
+      testId,
+      type: "push_test",
+      eventType: "push:test",
+      source: "admin_push_diagnostics_user",
+      userId: String(userId),
+      timestamp: String(Date.now()),
+    };
+    if (rawData && typeof rawData === "object") {
+      for (const [k, v] of Object.entries(rawData as Record<string, unknown>)) {
+        dataStr[String(k)] = String(v ?? "");
+      }
+    }
+    if (absImg) dataStr.imageUrl = absImg;
+
+    // S'assurer que firebase-admin est initialisé (idempotent via tryInit interne)
+    if (admin.apps.length === 0) {
+      try {
+        await sendPushToUser(-1, { title: "_init_", body: "_init_" });
+      } catch {}
+    }
+
+    const results: Array<any> = [];
+    let sent = 0, failed = 0, deactivated = 0;
+
+    for (const t of tokens) {
+      const tokenPreview = `${t.token.substring(0, 12)}…${t.token.substring(t.token.length - 6)}`;
+      try {
+        const messageId = await admin.messaging().send({
+          token: t.token,
+          notification: { title, body, ...(absImg ? { imageUrl: absImg } : {}) },
+          data: dataStr,
+          android: {
+            priority: "high",
+            notification: {
+              channelId: "maweja_default",
+              sound: "default",
+              priority: "high",
+              visibility: "public",
+              defaultSound: true,
+              defaultVibrateTimings: true,
+              ...(absImg ? { imageUrl: absImg } : {}),
+            },
+          },
+          apns: {
+            headers: { "apns-priority": "10", "apns-push-type": "alert" },
+            payload: {
+              aps: {
+                alert: { title, body },
+                sound: "default",
+                badge: 1,
+                "mutable-content": 1 as any,
+              },
+            },
+            ...(absImg ? { fcmOptions: { imageUrl: absImg } as any } : {}),
+          },
+          webpush: {
+            notification: {
+              title,
+              body,
+              icon: "/icon-192.png",
+              ...(absImg ? { image: absImg } : {}),
+            },
+          },
+        });
+
+        sent++;
+        results.push({
+          tokenId: t.id,
+          platform: t.platform,
+          deviceId: t.deviceId,
+          tokenPreview,
+          success: true,
+          firebaseMessageId: messageId,
+        });
+        logger.info?.(`[admin/push/test-user] OK userId=${userId} tokenId=${t.id} platform=${t.platform} msgId=${messageId}`);
+      } catch (e: any) {
+        failed++;
+        const code: string = e?.errorInfo?.code || e?.code || "unknown";
+        const message: string = e?.errorInfo?.message || e?.message || String(e);
+
+        const isInvalid =
+          code.includes("registration-token-not-registered") ||
+          code.includes("invalid-registration-token") ||
+          code.includes("invalid-argument") ||
+          code.includes("not-found") ||
+          code.includes("unregistered");
+
+        let didDeactivate = false;
+        if (isInvalid) {
+          try {
+            await storage.deactivatePushToken(t.token);
+            didDeactivate = true;
+            deactivated++;
+            logger.warn?.(`[admin/push/test-user] token invalide désactivé id=${t.id} code=${code}`);
+          } catch (de) {
+            logger.warn?.(`[admin/push/test-user] désactivation échec id=${t.id}`, de);
+          }
+        } else {
+          logger.warn?.(`[admin/push/test-user] FAIL userId=${userId} tokenId=${t.id} code=${code} msg=${message}`);
+        }
+
+        results.push({
+          tokenId: t.id,
+          platform: t.platform,
+          deviceId: t.deviceId,
+          tokenPreview,
+          success: false,
+          errorCode: code,
+          errorMessage: message,
+          deactivated: didDeactivate,
+        });
+      }
+    }
+
+    return res.json({
+      userId,
+      totalTokens: tokens.length,
+      results,
+      summary: { sent, failed, deactivated },
     });
   });
 
