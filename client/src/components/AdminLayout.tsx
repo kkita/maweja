@@ -243,10 +243,6 @@ export default function AdminLayout({ children, title, subtitle }: {
           {children}
         </div>
 
-        {/* ── Footer ── */}
-        <footer className="px-7 pb-5 text-center text-[10px] text-zinc-300 dark:text-zinc-700 font-medium select-none">
-          Made By Khevin Andrew Kita — Ed Corporation
-        </footer>
       </main>
     </div>
   );

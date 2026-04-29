@@ -339,7 +339,8 @@ export function registerChatRoutes(app: Express): void {
       }
     }
 
-    sendToUser(receiverId, {
+    // ─── Receiver direct WS event (chat_message réel — déclenche son/notif)
+    const wsDelivered = sendToUser(receiverId, {
       type: "chat_message",
       message: msg,
       data: { orderId: activeOrderId, senderId, type: "chat" },
@@ -361,12 +362,26 @@ export function registerChatRoutes(app: Express): void {
         ? `🖼️ ${sender.name}: Image partagée`
         : `${sender.name}: ${(message || "").substring(0, 50)}${(message || "").length > 50 ? "..." : ""}`;
 
-      const notifData = {
-        orderId: activeOrderId,
-        senderId,
-        type: "chat" as const,
-      };
+      // Deep-link cohérent (utilisé par le front pour ouvrir la bonne vue)
+      const deepLink = receiverIsDriver && activeOrderId
+        ? `/driver/chat/order/${activeOrderId}`
+        : activeOrderId
+        ? `/chat/order/${activeOrderId}`
+        : "/notifications";
 
+      // Note: types natifs (number) — le push FCM auto stringifie via storage.createNotification
+      const notifData: Record<string, any> = {
+        type: "chat",
+        eventType: "chat:new_message",
+        senderId,
+        receiverId,
+        deepLink,
+      };
+      if (activeOrderId) notifData.orderId = activeOrderId;
+
+      // Source unique de vérité : on skip l'auto-push de createNotification()
+      // pour faire UN SEUL appel sendPushToUser ici et pouvoir LOGGER le résultat
+      // (status, sentCount, failedCount, skippedReason).
       const createdNotif = await storage.createNotification({
         userId: receiverId,
         title: notifTitle,
@@ -374,7 +389,9 @@ export function registerChatRoutes(app: Express): void {
         type: "chat",
         data: notifData,
         isRead: false,
-      });
+      }, { skipAutoPush: true });
+
+      // Notif WS pour l'UI in-app (badge, toast, refresh liste notifs)
       sendToUser(receiverId, {
         type: "notification",
         notification: {
@@ -386,42 +403,62 @@ export function registerChatRoutes(app: Express): void {
         },
       });
 
-      // Push notification (no-op si non configuré). PushPayload.data exige Record<string,string>.
+      // Push FCM (no-op si Firebase non configuré ou aucun token)
+      let pushResultLabel = "skipped";
       try {
         const { sendPushToUser } = await import("../lib/push");
-        const pushData: Record<string, string> = {
-          url:
-            receiverIsDriver && activeOrderId
-              ? `/driver/chat/order/${activeOrderId}`
-              : activeOrderId
-              ? `/chat/order/${activeOrderId}`
-              : "/notifications",
+        const pushDataStr: Record<string, string> = {
           type: "chat",
+          eventType: "chat:new_message",
+          notificationId: String(createdNotif.id),
           senderId: String(senderId),
+          receiverId: String(receiverId),
+          deepLink,
         };
-        if (activeOrderId) pushData.orderId = String(activeOrderId);
-        await sendPushToUser(receiverId, {
+        if (activeOrderId) pushDataStr.orderId = String(activeOrderId);
+        const pushResult = await sendPushToUser(receiverId, {
           title: notifTitle,
           body: notifText,
-          data: pushData,
+          data: pushDataStr,
         });
+        pushResultLabel = pushResult.status === "skipped"
+          ? `skipped:${pushResult.skippedReason ?? "unknown"}`
+          : `${pushResult.status}(sent=${pushResult.sentCount}/failed=${pushResult.failedCount})`;
       } catch (e) {
         logger.error("[chat] push send failed", e);
+        pushResultLabel = "error";
       }
 
-      // Fanout temps-réel vers les admins (Dashboard) — sauf si l'expéditeur ou
-      // le destinataire est déjà admin (évite l'auto-notification)
+      // Log final structuré pour debug bout-en-bout
+      logger.info?.(
+        `[chat] delivered receiverId=${receiverId} receiverRole=${receiver?.role ?? "?"} ` +
+        `wsDelivered=${wsDelivered} notificationId=${createdNotif.id} push=${pushResultLabel}`,
+      );
+
+      // ─── Fanout admin (Dashboard) ─────────────────────────────────────────
+      // Important : on n'envoie PAS un type "chat_message" aux admins
+      // (cela déclencherait la sonnerie/notif sur le Dashboard pour des
+      // conversations Client↔Agent qui ne le concernent pas).
+      // → Type dédié "admin_chat_preview" avec flag silent:true que le front
+      //   ignore systématiquement dans handleWSEvent.
       const senderIsAdmin = sender.role === "admin";
       const receiverIsAdmin = receiver?.role === "admin";
       if (!senderIsAdmin && !receiverIsAdmin) {
         try {
           const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
-          const adminMsg = `${sender.name} → ${receiver?.name || "destinataire"}: ${notifText.replace(`${sender.name}: `, "")}`;
           for (const admin of admins) {
             sendToUser(admin.id, {
-              type: "chat_message",
+              type: "admin_chat_preview",
+              silent: true,
               message: msg,
-              meta: { adminPreview: true, senderName: sender.name, receiverName: receiver?.name },
+              meta: {
+                adminPreview: true,
+                senderId,
+                receiverId,
+                senderName: sender.name,
+                receiverName: receiver?.name,
+                orderId: activeOrderId,
+              },
             });
           }
         } catch (e) { logger.error("[chat] admin fanout failed", e); }

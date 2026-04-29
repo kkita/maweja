@@ -2,22 +2,20 @@ import { useState } from "react";
 import { useI18n } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
 import DriverNav from "../../components/DriverNav";
-import { Bell, Shield, HelpCircle, Info, ChevronRight, Globe, Check, Phone, Truck, LogOut, User, MonitorSmartphone } from "lucide-react";
+import { Bell, Shield, HelpCircle, ChevronRight, Globe, Check, Phone, Truck, LogOut, User, MonitorSmartphone } from "lucide-react";
 import { ThemePicker } from "../../components/driver/settings/SettingsUI";
 import {
   NotificationsModal,
   PrivacyPolicyModal,
   ContactSupportModal,
-  AboutModal,
 } from "../../components/driver/settings/SettingsModals";
 
-type ModalType = "notifications" | "privacy" | "support" | "about";
+type ModalType = "notifications" | "privacy" | "support";
 
 const MENU_ITEMS: { icon: any; label: string; desc: string; action: ModalType; iconBg: string; iconText: string }[] = [
   { icon: Bell,       label: "Notifications",                desc: "Commandes et alertes",     action: "notifications", iconBg: "bg-driver-amber/10",  iconText: "text-driver-amber"  },
   { icon: Shield,     label: "Politique de confidentialité", desc: "Données et vie privée",    action: "privacy",       iconBg: "bg-driver-blue/10",   iconText: "text-driver-blue"   },
   { icon: HelpCircle, label: "Contacter le support",         desc: "Aide & assistance 24h/24", action: "support",       iconBg: "bg-driver-green/10",  iconText: "text-driver-green"  },
-  { icon: Info,       label: "À propos",                    desc: "Version et informations",  action: "about",         iconBg: "bg-driver-s3",        iconText: "text-driver-subtle" },
 ];
 
 export default function DriverSettings() {
@@ -30,7 +28,6 @@ export default function DriverSettings() {
       {modal === "notifications" && <NotificationsModal onClose={() => setModal(null)} />}
       {modal === "privacy"       && <PrivacyPolicyModal onClose={() => setModal(null)} />}
       {modal === "support"       && <ContactSupportModal onClose={() => setModal(null)} userId={user?.id} />}
-      {modal === "about"         && <AboutModal onClose={() => setModal(null)} />}
 
       <DriverNav />
 
@@ -140,9 +137,6 @@ export default function DriverSettings() {
           Se déconnecter
         </button>
 
-        <p className="text-center text-[10px] text-driver-subtle">
-          MAWEJA v1.0 — Ed Corporation — Khevin Andrew Kita
-        </p>
       </div>
     </div>
   );

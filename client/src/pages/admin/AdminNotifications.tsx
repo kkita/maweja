@@ -112,19 +112,26 @@ export default function AdminNotifications() {
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      // Multer côté serveur attend le champ "file" (cf. server/routes/auth.routes.ts → upload.single("file"))
+      formData.append("file", file);
       const res = await fetch("/api/upload", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Upload échoué (${res.status})`);
+      }
       const data = await res.json();
       if (data.url) {
         setImageUrl(data.url);
-        toast({ title: "Image uploadee", description: "L'image sera jointe a la notification" });
+        toast({ title: "Image uploadée", description: "L'image sera jointe à la notification" });
+      } else {
+        throw new Error("URL manquante dans la réponse");
       }
-    } catch {
-      toast({ title: "Erreur", description: "Impossible d'uploader l'image", variant: "destructive" });
+    } catch (e: any) {
+      toast({ title: "Erreur", description: e?.message || "Impossible d'uploader l'image", variant: "destructive" });
       setImagePreview("");
     } finally {
       setUploading(false);

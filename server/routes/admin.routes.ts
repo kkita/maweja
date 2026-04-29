@@ -10,7 +10,7 @@ import { hashPassword } from "../auth";
 import { validate, validateParams, schemas } from "../validators";
 import { sendToUser } from "../websocket";
 import { logger } from "../lib/logger";
-import { sendPushToUser } from "../lib/push";
+import { sendPushToUser, isFirebaseConfigured } from "../lib/push";
 
 export function registerAdminRoutes(app: Express): void {
   app.get("/api/admin/password-reset-requests", requireAdmin, async (req, res) => {
@@ -486,6 +486,389 @@ export function registerAdminRoutes(app: Express): void {
    *   - message?: string
    *   - imageUrl?: string
    */
+  /**
+   * GET /api/admin/push/debug/:userId
+   *
+   * Diagnostic complet de la configuration push d'un utilisateur :
+   *   • état du legacy users.pushToken
+   *   • liste détaillée des tokens push_tokens actifs (avec platform, lastSeen)
+   *   • état Firebase Admin (configured / not configured)
+   *
+   * Aucune donnée sensible n'est retournée en clair (les tokens sont tronqués).
+   */
+  app.get("/api/admin/push/debug/:userId", requireAdmin, async (req, res) => {
+    const userId = Number(req.params.userId);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      return res.status(400).json({ message: "userId invalide" });
+    }
+    const user = await storage.getUser(userId);
+    if (!user) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    let activeTokens: any[] = [];
+    try {
+      activeTokens = await storage.getActivePushTokensByUser(userId);
+    } catch (e) {
+      logger.warn?.(`[admin/push/debug] getActivePushTokensByUser failed user=${userId}`, e);
+    }
+
+    const mask = (t?: string | null) =>
+      !t ? null : t.length <= 12 ? `${t.slice(0, 4)}…` : `${t.slice(0, 8)}…${t.slice(-6)}`;
+
+    const legacyToken = (user as any).pushToken as string | null | undefined;
+    const legacyPlatform = (user as any).pushPlatform as string | null | undefined;
+
+    res.json({
+      userId: user.id,
+      role: user.role,
+      legacyPushTokenExists: !!legacyToken,
+      legacyPushTokenPreview: mask(legacyToken),
+      legacyPushPlatform: legacyPlatform || null,
+      activeTokensCount: activeTokens.length,
+      activeTokens: activeTokens.map((t: any) => ({
+        id: t.id,
+        platform: t.platform,
+        deviceId: t.deviceId ?? null,
+        appVersion: t.appVersion ?? null,
+        isActive: t.isActive,
+        lastSeenAt: t.lastSeenAt ?? null,
+        createdAt: t.createdAt ?? null,
+        tokenPreview: mask(t.token),
+      })),
+      firebaseConfigured: isFirebaseConfigured(),
+    });
+  });
+
+  /**
+   * GET /api/admin/diag/firebase-status
+   *
+   * Vérifie l'état de la config Firebase Admin côté serveur sans jamais
+   * révéler la valeur des secrets. Indique uniquement la PRÉSENCE et la
+   * SOURCE des credentials, plus les erreurs visibles dans les logs récents.
+   */
+  app.get("/api/admin/diag/firebase-status", requireAdmin, async (_req, res) => {
+    let credentialsSource:
+      | "FIREBASE_SERVICE_ACCOUNT_JSON"
+      | "FIREBASE_SERVICE_ACCOUNT_BASE64"
+      | "GOOGLE_APPLICATION_CREDENTIALS"
+      | "none" = "none";
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) credentialsSource = "FIREBASE_SERVICE_ACCOUNT_JSON";
+    else if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) credentialsSource = "FIREBASE_SERVICE_ACCOUNT_BASE64";
+    else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) credentialsSource = "GOOGLE_APPLICATION_CREDENTIALS";
+
+    let projectIdHint: string | null = null;
+    let parseError: string | null = null;
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      try {
+        const obj = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+        projectIdHint = obj?.project_id || null;
+      } catch (e: any) { parseError = String(e?.message || e); }
+    } else if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+      try {
+        const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, "base64").toString("utf8");
+        const obj = JSON.parse(decoded);
+        projectIdHint = obj?.project_id || null;
+      } catch (e: any) { parseError = String(e?.message || e); }
+    }
+
+    res.json({
+      firebaseConfigured: isFirebaseConfigured(),
+      credentialsSource,
+      projectIdHint,
+      parseError,
+      expectedAndroidPackages: {
+        client: "com.edcorp.maweja",
+        driver: "com.edcorp.maweja.driver",
+      },
+      googleServicesJsonPath: {
+        client: "mobile/client/android/app/google-services.json",
+        driver: "mobile/driver/android/app/google-services.json",
+      },
+      hint:
+        credentialsSource === "none"
+          ? "Définissez FIREBASE_SERVICE_ACCOUNT_JSON dans les secrets serveur pour activer FCM."
+          : parseError
+          ? "Le secret est défini mais ne se parse pas en JSON valide."
+          : null,
+    });
+  });
+
+  /**
+   * POST /api/admin/push/test
+   *
+   * Envoi de test complet pour debug : DB notification + WebSocket + Push FCM,
+   * avec retour détaillé du résultat (sentCount/failedCount/invalidTokenCount,
+   * skippedReason, results par token).
+   *
+   * Body :
+   *   { userId, title?, body?, type?, eventType?, orderId?, imageUrl? }
+   */
+  app.post("/api/admin/push/test", requireAdmin, async (req, res) => {
+    const userId = Number(req.body?.userId);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      return res.status(400).json({ message: "userId requis" });
+    }
+    const target = await storage.getUser(userId);
+    if (!target) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    const title = (req.body?.title as string) || "Test push MAWEJA";
+    const body = (req.body?.body as string) || "Si vous voyez ceci, le push fonctionne.";
+    const type = (req.body?.type as string) || "info";
+    const eventType = (req.body?.eventType as string) || "admin_test";
+    const orderIdRaw = req.body?.orderId;
+    const orderId = orderIdRaw != null && orderIdRaw !== "" ? Number(orderIdRaw) : undefined;
+    const imageUrl = (req.body?.imageUrl as string) || null;
+
+    // Notif data : on garde les types natifs côté DB (numbers) — le push
+    // les stringifie automatiquement (cf. server/storage.ts createNotification).
+    const notifData: Record<string, any> = { type, eventType, test: true };
+    if (orderId) notifData.orderId = orderId;
+
+    // 1) DB notification (skipAutoPush — on contrôle nous-mêmes l'envoi pour
+    //    récupérer le PushResult détaillé)
+    const created = await storage.createNotification({
+      userId,
+      title,
+      message: body,
+      type,
+      imageUrl,
+      data: notifData,
+      isRead: false,
+    }, { skipAutoPush: true });
+
+    // 2) WebSocket
+    let websocketSent = false;
+    try {
+      sendToUser(userId, {
+        type: "notification",
+        notification: {
+          id: created.id,
+          title,
+          message: body,
+          type,
+          imageUrl,
+          data: notifData,
+        },
+      });
+      websocketSent = true;
+    } catch (e) {
+      logger.warn?.(`[admin/push/test] WS send failed user=${userId}`, e);
+    }
+
+    // 3) Push FCM
+    const pushDataStr: Record<string, string> = {
+      type: String(type),
+      eventType: String(eventType),
+      notificationId: String(created.id),
+    };
+    if (orderId) pushDataStr.orderId = String(orderId);
+    if (imageUrl) pushDataStr.imageUrl = imageUrl;
+
+    const pushResult = await sendPushToUser(userId, {
+      title,
+      body,
+      imageUrl: imageUrl || undefined,
+      data: pushDataStr,
+    });
+
+    logger.info?.(`[admin/push/test] target=${userId} push=${pushResult.status} sent=${pushResult.sentCount} failed=${pushResult.failedCount}`);
+
+    res.json({
+      notificationId: created.id,
+      target: { id: target.id, role: target.role },
+      websocketSent,
+      pushResult: {
+        status: pushResult.status,
+        sentCount: pushResult.sentCount,
+        failedCount: pushResult.failedCount,
+        invalidTokenCount: pushResult.invalidTokenCount,
+        skippedReason: pushResult.skippedReason ?? null,
+        results: pushResult.results ?? [],
+      },
+    });
+  });
+
+  /* ──────────────────────────────────────────────────────────────────────────
+   *  Page admin "Push Diagnostics" — endpoints dédiés
+   *  -------------------------------------------------
+   *  Trois canaux indépendants, distinguables dans le panneau admin :
+   *    • POST /api/admin/diag/ws        → WS only (pas de DB, pas de push)
+   *    • POST /api/admin/diag/push      → réutilise /api/admin/push/test (DB+WS+Push)
+   *    • POST /api/admin/diag/chat      → simule un message chat A→B (admin override)
+   * ────────────────────────────────────────────────────────────────────────── */
+
+  /** Envoie UNIQUEMENT un événement WebSocket à un user (no DB, no push). */
+  app.post("/api/admin/diag/ws", requireAdmin, async (req, res) => {
+    const userId = Number(req.body?.userId);
+    if (!Number.isFinite(userId) || userId <= 0) {
+      return res.status(400).json({ message: "userId requis" });
+    }
+    const target = await storage.getUser(userId);
+    if (!target) return res.status(404).json({ message: "Utilisateur introuvable" });
+    const message = (req.body?.message as string) || "Test WebSocket MAWEJA (admin diag)";
+    const delivered = sendToUser(userId, {
+      type: "notification",
+      notification: {
+        id: `diag-ws-${Date.now()}`,
+        title: "Test WebSocket",
+        message,
+        type: "info",
+        data: { eventType: "admin_diag_ws", test: true },
+      },
+    });
+    logger.info?.(`[admin/diag/ws] target=${userId} delivered=${delivered}`);
+    res.json({
+      ok: true,
+      target: { id: target.id, role: target.role },
+      websocketDelivered: delivered,
+    });
+  });
+
+  /**
+   * Simule un message chat A→B avec override admin. Ne vérifie PAS canChatBetween
+   * (puisque c'est un test). Reproduit la pipeline complète : storage.createChatMessage
+   * → WS chat_message au receiver → notif DB → push FCM (single source) → fanout
+   * admin_chat_preview silent. Retourne tous les statuts pour debug.
+   */
+  app.post("/api/admin/diag/chat", requireAdmin, async (req, res) => {
+    const senderId = Number(req.body?.senderId);
+    const receiverId = Number(req.body?.receiverId);
+    const body = (req.body?.message as string) || "Test chat MAWEJA (admin diag)";
+    if (!Number.isFinite(senderId) || senderId <= 0 || !Number.isFinite(receiverId) || receiverId <= 0) {
+      return res.status(400).json({ message: "senderId/receiverId requis" });
+    }
+    const [sender, receiver] = await Promise.all([
+      storage.getUser(senderId),
+      storage.getUser(receiverId),
+    ]);
+    if (!sender || !receiver) return res.status(404).json({ message: "Utilisateur introuvable" });
+
+    // 1) Crée le message chat en DB
+    const msg = await storage.createChatMessage({
+      senderId,
+      receiverId,
+      message: body,
+      fileUrl: null,
+      fileType: null,
+      isRead: false,
+    });
+
+    // 2) Trouve une commande active entre les deux (best-effort, sinon undefined)
+    let activeOrderId: number | undefined;
+    try {
+      const a = sender.role === "client" ? sender : receiver.role === "client" ? receiver : null;
+      const b = sender.role === "driver" ? sender : receiver.role === "driver" ? receiver : null;
+      if (a && b) {
+        const TERMINAL = ["delivered", "cancelled", "returned"];
+        const list = await storage.getOrders({ clientId: a.id });
+        const active = list.find(o => o.driverId === b.id && !TERMINAL.includes(o.status));
+        if (active) activeOrderId = active.id;
+      }
+    } catch (e) {
+      logger.warn?.("[admin/diag/chat] active order lookup failed", e);
+    }
+
+    // 3) WS chat_message au receiver (déclenche son/notif côté front)
+    const wsDelivered = sendToUser(receiverId, {
+      type: "chat_message",
+      message: msg,
+      data: { orderId: activeOrderId, senderId, type: "chat" },
+    });
+
+    // 4) Notif DB + push (single source — skipAutoPush + sendPushToUser explicite)
+    const receiverIsDriver = receiver.role === "driver";
+    const notifTitle = receiver.role === "client"
+      ? "Message de votre agent MAWEJA"
+      : receiverIsDriver
+      ? "Message du client"
+      : "Nouveau message";
+    const deepLink = receiverIsDriver && activeOrderId
+      ? `/driver/chat/order/${activeOrderId}`
+      : activeOrderId
+      ? `/chat/order/${activeOrderId}`
+      : "/notifications";
+    const notifData: Record<string, any> = {
+      type: "chat",
+      eventType: "chat:new_message",
+      senderId,
+      receiverId,
+      deepLink,
+      diag: true,
+    };
+    if (activeOrderId) notifData.orderId = activeOrderId;
+
+    const created = await storage.createNotification({
+      userId: receiverId,
+      title: notifTitle,
+      message: `${sender.name}: ${body.substring(0, 50)}${body.length > 50 ? "..." : ""}`,
+      type: "chat",
+      data: notifData,
+      isRead: false,
+    }, { skipAutoPush: true });
+
+    sendToUser(receiverId, {
+      type: "notification",
+      notification: {
+        id: created.id, title: notifTitle,
+        message: `${sender.name}: ${body}`,
+        type: "chat", data: notifData,
+      },
+    });
+
+    const pushDataStr: Record<string, string> = {
+      type: "chat",
+      eventType: "chat:new_message",
+      notificationId: String(created.id),
+      senderId: String(senderId),
+      receiverId: String(receiverId),
+      deepLink,
+    };
+    if (activeOrderId) pushDataStr.orderId = String(activeOrderId);
+    const pushResult = await sendPushToUser(receiverId, {
+      title: notifTitle,
+      body: `${sender.name}: ${body}`,
+      data: pushDataStr,
+    });
+
+    // 5) Fanout admin silent (cohérent avec /api/chat)
+    try {
+      const senderIsAdmin = sender.role === "admin";
+      const receiverIsAdmin = receiver.role === "admin";
+      if (!senderIsAdmin && !receiverIsAdmin) {
+        const admins = (await storage.getAllUsers()).filter(u => u.role === "admin");
+        for (const a of admins) {
+          sendToUser(a.id, {
+            type: "admin_chat_preview", silent: true, message: msg,
+            meta: { adminPreview: true, senderId, receiverId, senderName: sender.name, receiverName: receiver.name, orderId: activeOrderId },
+          });
+        }
+      }
+    } catch (e) { logger.warn?.("[admin/diag/chat] admin fanout failed", e); }
+
+    logger.info?.(
+      `[admin/diag/chat] sender=${senderId} receiver=${receiverId} ` +
+      `wsDelivered=${wsDelivered} notif=${created.id} push=${pushResult.status} ` +
+      `sent=${pushResult.sentCount} skipped=${pushResult.skippedReason ?? "n/a"}`,
+    );
+
+    res.json({
+      chatMessageId: msg.id,
+      notificationId: created.id,
+      activeOrderId: activeOrderId ?? null,
+      deepLink,
+      websocketDelivered: wsDelivered,
+      pushResult: {
+        status: pushResult.status,
+        sentCount: pushResult.sentCount,
+        failedCount: pushResult.failedCount,
+        invalidTokenCount: pushResult.invalidTokenCount,
+        skippedReason: pushResult.skippedReason ?? null,
+        results: pushResult.results ?? [],
+      },
+      sender: { id: sender.id, role: sender.role, name: sender.name },
+      receiver: { id: receiver.id, role: receiver.role, name: receiver.name },
+    });
+  });
+
   app.post("/api/admin/notifications/test", requireAdmin, async (req: any, res) => {
     const sessionUserId = (req.session as any)?.userId;
     const targetUserId = Number(req.body?.userId) || sessionUserId;

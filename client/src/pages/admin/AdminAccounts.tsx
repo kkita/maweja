@@ -540,7 +540,6 @@ export default function AdminAccounts() {
           </div>
         )}
 
-        <p className="text-center text-[11px] text-gray-400 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
 
       {modal && (

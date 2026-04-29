@@ -60,15 +60,35 @@ export interface WSEventData {
   type?: string;
   order?: { id?: number };
   orderId?: number | string;
+  silent?: boolean;
+  meta?: { adminPreview?: boolean; [k: string]: unknown } | null;
   [k: string]: unknown;
 }
 
 /**
  * Single source of truth for incoming WS events.
  * Routes to thematic handlers (order/chat/driver) with global dedupe & prefs.
+ *
+ * IMPORTANT — Filtre des previews admin :
+ * Le serveur peut diffuser certains events vers le Dashboard pour un simple
+ * rafraîchissement de liste (ex: aperçu de chat Client↔Agent). Ces events
+ * portent `silent:true`, `meta.adminPreview:true` ou `type:"admin_chat_preview"`.
+ * On les ignore systématiquement ici pour qu'ils ne déclenchent NI son NI
+ * notification système sur le Dashboard. Ils restent disponibles pour les
+ * écouteurs spécifiques de la page admin (qui s'abonnent en propre au WS).
  */
 export function handleWSEvent(data: WSEventData) {
   if (!data || typeof data !== "object" || !data.type) return;
+
+  // Filtre admin preview (silent fanout) — jamais de son ni de notif visuelle
+  if (
+    data.silent === true ||
+    data.meta?.adminPreview === true ||
+    data.type === "admin_chat_preview"
+  ) {
+    return;
+  }
+
   const prefs = userPrefs();
   if (!prefs.appOn) return;
 

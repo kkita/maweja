@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "../../lib/auth";
 import { authFetchJson, apiRequest, queryClient, resolveImg } from "../../lib/queryClient";
@@ -23,7 +23,7 @@ function timeAgo(date: string | Date) {
   return `Il y a ${Math.floor(h / 24)}j`;
 }
 
-function NotifDetailModal({ notif, onClose, navigate }: { notif: Notif; onClose: () => void; navigate: (to: string) => void }) {
+function NotifDetailModal({ notif, onClose, navigate, onZoomImage }: { notif: Notif; onClose: () => void; navigate: (to: string) => void; onZoomImage: (url: string) => void }) {
   const typeIcon: Record<string, JSX.Element> = {
     order: <ShoppingBag size={22} className="text-blue-500" />,
     promo: <Tag size={22} className="text-amber-500" />,
@@ -51,9 +51,16 @@ function NotifDetailModal({ notif, onClose, navigate }: { notif: Notif; onClose:
         onClick={e => e.stopPropagation()}
       >
         {imageUrl && (
-          <div className="w-full" style={{ height: 200 }}>
+          <button
+            type="button"
+            onClick={() => onZoomImage(resolveImg(imageUrl))}
+            className="block w-full bg-gray-100 dark:bg-gray-800 active:opacity-90"
+            style={{ height: 220 }}
+            data-testid="button-zoom-notif-image"
+            aria-label="Agrandir l'image"
+          >
             <img src={resolveImg(imageUrl)} alt={notif.title || ""} className="w-full h-full object-cover" />
-          </div>
+          </button>
         )}
         <div className="p-6">
           <div className="flex items-start gap-4 mb-4">
@@ -105,6 +112,27 @@ export default function NotificationsPage() {
     enabled: !!user,
     refetchInterval: 15000,
   });
+
+  // Deep-link : ouverture directe d'une notif via /notifications?n=<id>
+  // (utilisé quand le client tappe une notification système / push).
+  useEffect(() => {
+    if (!notifications.length) return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get("n");
+    if (!requestedId) return;
+    const id = Number(requestedId);
+    if (!Number.isFinite(id)) return;
+    const target = notifications.find((n) => n.id === id);
+    if (target) {
+      setSelectedNotif(target);
+      if (!target.isRead) markRead.mutate(id);
+      // On nettoie l'URL pour éviter de ré-ouvrir le modal au refresh.
+      try {
+        window.history.replaceState({}, "", "/notifications");
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications]);
 
   /**
    * Mark UNE notification comme lue.
@@ -250,33 +278,29 @@ export default function NotificationsPage() {
         ) : (
           <div className="space-y-2">
             {visibleNotifs.map(n => (
-              <div
+              <button
                 key={n.id}
                 data-testid={`notification-${n.id}`}
-                className="w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden text-left active:scale-[0.98] transition-transform"
+                onClick={() => {
+                  if (!n.isRead) markRead.mutate(n.id);
+                  setSelectedNotif(n);
+                }}
+                className="w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden text-left active:scale-[0.98] transition-transform block"
                 style={{
                   boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
                   borderLeft: !n.isRead ? "3px solid #dc2626" : "3px solid transparent",
                 }}
               >
                 {(n as any).imageUrl && (
-                  <button
-                    onClick={() => setExpandedImage(resolveImg((n as any).imageUrl))}
-                    className="w-full"
-                    data-testid={`notif-image-${n.id}`}
-                  >
+                  <div className="w-full" data-testid={`notif-image-${n.id}`}>
                     <img
                       src={resolveImg((n as any).imageUrl)}
                       alt={n.title}
                       className="w-full h-40 object-cover"
                     />
-                  </button>
+                  </div>
                 )}
-                <button
-                  onClick={() => {
-                    if (!n.isRead) markRead.mutate(n.id);
-                    setSelectedNotif(n);
-                  }}
+                <div
                   className="w-full p-4 flex gap-3 text-left"
                 >
                   <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${!n.isRead ? "bg-red-50 dark:bg-red-900/30" : "bg-gray-50 dark:bg-gray-800/60"}`}>
@@ -298,8 +322,8 @@ export default function NotificationsPage() {
                       {timeAgo(n.createdAt || new Date())}
                     </p>
                   </div>
-                </button>
-              </div>
+                </div>
+              </button>
             ))}
           </div>
         )}
@@ -332,6 +356,7 @@ export default function NotificationsPage() {
           notif={selectedNotif}
           onClose={() => setSelectedNotif(null)}
           navigate={navigate}
+          onZoomImage={(url) => setExpandedImage(url)}
         />
       )}
     </div>

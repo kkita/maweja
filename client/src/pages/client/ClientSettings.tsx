@@ -5,7 +5,7 @@ import ClientNav from "../../components/ClientNav";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, Globe, ChevronRight, Bell, Shield, HelpCircle, Info,
+  ArrowLeft, Globe, ChevronRight, Bell, Shield, HelpCircle,
   MonitorSmartphone, Check, LogOut, User, Mail, Phone,
   Wallet, TrendingUp, ArrowRight, Star
 } from "lucide-react";
@@ -14,10 +14,9 @@ import {
   NotificationsModal,
   PrivacyPolicyModal,
   ContactSupportModal,
-  AboutModal,
 } from "../../components/client/settings/SettingsModals";
 
-type ModalType = "notifications" | "privacy" | "support" | "about";
+type ModalType = "notifications" | "privacy" | "support";
 
 export default function ClientSettings() {
   const [, navigate] = useLocation();
@@ -46,7 +45,6 @@ export default function ClientSettings() {
       {modal === "notifications" && <NotificationsModal onClose={() => setModal(null)} />}
       {modal === "privacy"       && <PrivacyPolicyModal onClose={() => setModal(null)} />}
       {modal === "support"       && <ContactSupportModal onClose={() => setModal(null)} userId={user?.id} />}
-      {modal === "about"         && <AboutModal onClose={() => setModal(null)} />}
 
       <div className="max-w-lg mx-auto px-4 py-4">
         <div className="flex items-center gap-3 mb-5">
@@ -224,7 +222,6 @@ export default function ClientSettings() {
               { icon: Bell,       label: t.settings.notifications, testId: "button-notif",    action: "notifications" as ModalType },
               { icon: Shield,     label: t.settings.privacyPolicy,  testId: "button-privacy",  action: "privacy"       as ModalType },
               { icon: HelpCircle, label: t.settings.contactSupport, testId: "button-support",  action: "support"       as ModalType },
-              { icon: Info,       label: t.settings.about,          testId: "button-about",    action: "about"         as ModalType },
             ].map(item => (
               <button
                 key={item.label}
@@ -240,9 +237,6 @@ export default function ClientSettings() {
           </div>
         </div>
 
-        <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-6 font-medium">
-          MAWEJA v1.0 - Made By Khevin Andrew Kita - Ed Corporation
-        </p>
       </div>
     </div>
   );

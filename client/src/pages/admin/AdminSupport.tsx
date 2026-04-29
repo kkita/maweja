@@ -15,6 +15,7 @@ import { apiRequest, queryClient } from "../../lib/queryClient";
 import { useToast } from "../../hooks/use-toast";
 import { useAuth } from "../../lib/auth";
 import { formatDate, formatPrice } from "../../lib/utils";
+import AdminLayout from "../../components/AdminLayout";
 import {
   LifeBuoy, Send, CheckCircle2, XCircle, Clock, MessageSquare,
   AlertTriangle, DollarSign, UserCheck, Filter,
@@ -78,7 +79,7 @@ export default function AdminSupport() {
   const selected = tickets?.find(t => t.id === selectedId) ?? null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6">
+    <AdminLayout title="Centre de support">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/40 flex items-center justify-center">
@@ -162,7 +163,7 @@ export default function AdminSupport() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

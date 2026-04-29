@@ -71,6 +71,7 @@ const AdminMarketing = lazy(() => import("./pages/admin/AdminMarketing"));
 const AdminServices = lazy(() => import("./pages/admin/AdminServices"));
 const AdminAds = lazy(() => import("./pages/admin/AdminAds"));
 const AdminNotifications = lazy(() => import("./pages/admin/AdminNotifications"));
+const AdminPushDiagnostics = lazy(() => import("./pages/admin/AdminPushDiagnostics"));
 const AdminGallery = lazy(() => import("./pages/admin/AdminGallery"));
 const AdminPromotions = lazy(() => import("./pages/admin/AdminPromotions"));
 const AdminRestaurantCategories = lazy(() => import("./pages/admin/AdminRestaurantCategories"));
@@ -202,14 +203,22 @@ function AppRoutes() {
     if (user?.id) {
       connectWS(user.id, getAuthToken() ?? undefined);
       requestNotifPermission().catch(() => {});
-      // Push natif (FCM/APNs) — enregistrement du device
+      // Push natif (FCM/APNs) — enregistrement du device pour CE user/rôle.
+      // initPushNotifications est ré-appelable : si user/role change ou si le
+      // dernier register a échoué, l'enregistrement sera relancé.
       (window as any).__MAWEJA_QC__ = queryClient;
-      initPushNotifications().catch(() => {});
+      // Expose le user courant pour les filtres des handlers WS (ex: ne pas
+      // sonner si on reçoit l'écho d'un message qu'on vient d'envoyer).
+      (window as any).__MAWEJA_USER_ID__ = user.id;
+      (window as any).__MAWEJA_USER_ROLE__ = user.role;
+      initPushNotifications(user.id, user.role).catch(() => {});
     } else if (user === null) {
       disconnectWS();
+      // Désenregistre uniquement le token de CET appareil (les autres devices
+      // du compte continuent à recevoir les notifs).
       unregisterPushNotifications().catch(() => {});
     }
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   if (showSplash) {
     return <SplashScreen onDone={() => setShowSplash(false)} />;
@@ -247,6 +256,7 @@ function AppRoutes() {
           <Route path="/admin/boutique-categories" component={AdminBoutiqueCategories} />
           <Route path="/admin/ads" component={AdminAds} />
           <Route path="/admin/notifications" component={AdminNotifications} />
+          <Route path="/admin/push-diagnostics" component={AdminPushDiagnostics} />
           <Route path="/admin/accounts" component={AdminAccounts} />
           <Route path="/admin/gallery" component={AdminGallery} />
           <Route path="/admin/delivery-zones" component={AdminDeliveryZones} />

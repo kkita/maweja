@@ -276,7 +276,6 @@ export default function DriverOnboarding() {
             <CheckCircle2 size={16} />
             Actualiser le statut
           </button>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-8">Made By Khevin Andrew Kita - Ed Corporation</p>
         </div>
       </div>
     );
@@ -445,7 +444,6 @@ export default function DriverOnboarding() {
           {submitting ? "Envoi en cours..." : isRejected ? "Renvoyer les corrections" : "Envoyer pour verification"}
         </button>
 
-        <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-6">Made By Khevin Andrew Kita - Ed Corporation</p>
       </div>
     </div>
   );

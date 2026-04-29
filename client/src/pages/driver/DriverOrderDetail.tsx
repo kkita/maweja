@@ -449,7 +449,6 @@ export default function DriverOrderDetail() {
           </div>
         )}
 
-        <p className="text-center text-[10px] py-2 text-driver-subtle">MAWEJA Agent — Ed Corporation</p>
       </div>
     </div>
   );

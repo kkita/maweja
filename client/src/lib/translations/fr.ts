@@ -53,7 +53,6 @@ export const fr = {
     welcome: "Bienvenue sur",
     chooseLanguage: "Choisissez votre langue",
     continue: "Continuer",
-    madeBy: "Made By Khevin Andrew Kita - Ed Corporation",
   },
   auth: {
     loginTitle: "Connexion",
@@ -337,7 +336,6 @@ export const fr = {
     notifications: "Notifications",
     notificationsEnabled: "Notifications activees",
     darkMode: "Mode sombre",
-    about: "A propos",
     version: "Version",
     termsOfService: "Conditions d'utilisation",
     privacyPolicy: "Politique de confidentialite",

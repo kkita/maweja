@@ -83,7 +83,7 @@ export default function OrderDetailPanel({ order, restaurants, drivers, onPrint,
 
   useEffect(() => {
     const items = parseOrderItems(order.items);
-    setModifyItems(items.map((it: any) => ({ name: it.name, qty: it.qty, price: String(it.price) })));
+    setModifyItems(items.map((it: any) => ({ name: it.name, qty: Number(it.quantity ?? it.qty ?? 1), price: String(it.price ?? 0) })));
     setModifyDeliveryFee(String(order.deliveryFee));
     setModifyServiceFee(String(order.taxAmount));
     setModifyRemark("");
@@ -120,10 +120,10 @@ export default function OrderDetailPanel({ order, restaurants, drivers, onPrint,
     try {
       const newItems = modifyItems.map(it => ({
         name: it.name,
-        qty: it.qty,
+        quantity: Math.max(1, Number(it.qty) || 1),
         price: parseFloat(it.price) || 0,
       }));
-      const newSubtotal = parseFloat(newItems.reduce((s, it) => s + it.price * it.qty, 0).toFixed(2));
+      const newSubtotal = parseFloat(newItems.reduce((s, it) => s + it.price * it.quantity, 0).toFixed(2));
       const newDeliveryFee = parseFloat(modifyDeliveryFee) || 0;
       const newTaxAmount = parseFloat(modifyServiceFee) || 0;
       const newTotal = parseFloat(Math.max(0, newSubtotal + newDeliveryFee + newTaxAmount - (order.promoDiscount || 0) - (order.loyaltyCreditDiscount || 0)).toFixed(2));

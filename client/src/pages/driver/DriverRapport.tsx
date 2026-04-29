@@ -212,7 +212,6 @@ export default function DriverRapport() {
           </div>
         )}
 
-        <p className="text-center text-[10px] pt-2 text-driver-text3">MAWEJA Agent — Ed Corporation</p>
       </div>
     </div>
   );

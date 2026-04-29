@@ -254,7 +254,8 @@ const orderRate = z.object({
 });
 
 const orderStatusOverride = z.object({
-  status: z.enum([
+  code: z.string().min(1, "Code d'accès requis").max(100),
+  newStatus: z.enum([
     "pending", "confirmed", "preparing", "ready",
     "picked_up", "delivered", "cancelled", "returned",
   ], { message: "Statut invalide" }),

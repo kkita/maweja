@@ -138,17 +138,6 @@ function MobileSplashAnim({ withFadeOut, onEnd }: MobileSplashAnimProps) {
           transition: "opacity 0.55s ease",
         }}
       >
-        <span
-          style={{
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            fontSize: 10,
-            color: "rgba(255,255,255,0.32)",
-            letterSpacing: "0.16em",
-            textTransform: "uppercase",
-          }}
-        >
-          Made By Khevin Andrew Kita — Ed Corporation
-        </span>
       </div>
     </div>
   );
@@ -308,13 +297,6 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           </button>
         </div>
 
-        <p
-          className="text-center px-4 w-full pb-4"
-          style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", fontFamily: "system-ui, sans-serif" }}
-          data-testid="text-splash-signature"
-        >
-          Made By Khevin Andrew Kita — Ed Corporation
-        </p>
       </div>
     </div>
   );

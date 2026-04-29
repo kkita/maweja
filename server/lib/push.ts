@@ -22,6 +22,18 @@ let initialized = false;
 let warned = false;
 let app: admin.app.App | null = null;
 
+/**
+ * True dès qu'au moins une source de credentials Firebase est configurée
+ * (la vérification effective se fait au premier sendPushToUser via tryInit).
+ */
+export function isFirebaseConfigured(): boolean {
+  return !!(
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON ||
+    process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 ||
+    process.env.GOOGLE_APPLICATION_CREDENTIALS
+  );
+}
+
 function tryInit(): admin.app.App | null {
   if (initialized) return app;
   initialized = true;

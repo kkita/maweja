@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "../../lib/auth";
@@ -64,6 +64,7 @@ export default function DriverNotifications() {
   const { toast } = useToast();
   const [selected, setSelected] = useState<Notif | null>(null);
   const [confirmAll, setConfirmAll] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const notifQueryKey = ["/api/notifications", user?.id] as const;
 
@@ -134,6 +135,26 @@ export default function DriverNotifications() {
     setSelected(n);
     if (!n.isRead) markOneMutation.mutate(n.id);
   };
+
+  // Deep-link : ouverture directe d'une notif via /driver/notifications?n=<id>
+  // (utilisé quand l'agent tappe une notification système / push).
+  useEffect(() => {
+    if (!notifications.length) return;
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get("n");
+    if (!requestedId) return;
+    const id = Number(requestedId);
+    if (!Number.isFinite(id)) return;
+    const target = notifications.find((n) => n.id === id);
+    if (target) {
+      setSelected(target);
+      if (!target.isRead) markOneMutation.mutate(id);
+      try {
+        window.history.replaceState({}, "", "/driver/notifications");
+      } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications]);
 
   const dataAny = (selected?.data || {}) as Record<string, any>;
   const orderId = dataAny.orderId ?? dataAny.order_id;
@@ -345,9 +366,13 @@ export default function DriverNotifications() {
           >
             <div onClick={(e) => e.stopPropagation()}>
               {selected.imageUrl && (
-                <div
-                  className="relative w-full"
+                <button
+                  type="button"
+                  onClick={() => setZoomedImage(resolveImg(selected.imageUrl as string))}
+                  className="relative w-full block active:opacity-90"
                   style={{ background: dt.surface3, paddingTop: "56%" }}
+                  data-testid="button-zoom-notif-image"
+                  aria-label="Agrandir l'image"
                 >
                   <img
                     src={resolveImg(selected.imageUrl)}
@@ -355,7 +380,7 @@ export default function DriverNotifications() {
                     data-testid="img-notif-large"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
-                </div>
+                </button>
               )}
 
               <div className="p-5 space-y-4">
@@ -428,6 +453,32 @@ export default function DriverNotifications() {
               </div>
             </div>
           </AppCard>
+        </div>
+      )}
+
+      {/* ─── Modal zoom image ─────────────────────────────────────────────── */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.92)" }}
+          onClick={() => setZoomedImage(null)}
+          data-testid="modal-notif-image-zoom"
+        >
+          <button
+            onClick={() => setZoomedImage(null)}
+            data-testid="button-close-image-zoom"
+            className="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center text-white"
+            style={{ background: "rgba(255,255,255,0.18)" }}
+            aria-label="Fermer"
+          >
+            <X size={18} />
+          </button>
+          <img
+            src={zoomedImage}
+            alt="Notification"
+            className="max-w-full max-h-[88vh] object-contain rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

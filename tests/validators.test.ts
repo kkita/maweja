@@ -51,7 +51,7 @@ const happyFixtures: Record<string, Fixture | unknown> = {
   orderUpdate: { status: "confirmed" },
   orderRemark: { text: "Client a appelé pour modifier l'adresse." },
   orderRate: { rating: 5, comment: "Excellent service" },
-  orderStatusOverride: { status: "delivered", reason: "Confirmé par téléphone" },
+  orderStatusOverride: { code: "MAWEJA2025", newStatus: "delivered", reason: "Confirmé par téléphone" },
   orderCancel: { reason: "Client a annulé" },
   orderModify: {
     items: [{ name: "Poulet", price: 12, quantity: 1 }],
@@ -182,7 +182,7 @@ const rejectFixtures: Record<string, Fixture | unknown> = {
   orderUpdate: { status: "alien" },
   orderRemark: { text: "" },
   orderRate: { rating: 9 },
-  orderStatusOverride: { status: "??" },
+  orderStatusOverride: { code: "secret", newStatus: "??" },
   orderCancel: { reason: 123 },
   orderModify: { items: [] },
 

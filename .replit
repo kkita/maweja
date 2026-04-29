@@ -1,14 +1,10 @@
-modules = ["nodejs-20", "web", "python3", "postgresql-16"]
+modules = ["nodejs-20", "web", "python3", "postgresql-16", "python-3.11"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
 packages = ["alsa-lib", "at-spi2-atk", "at-spi2-core", "cairo", "cups", "dbus", "expat", "glib", "gtk3", "libdrm", "libxkbcommon", "mesa", "nspr", "nss", "pango", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "zip"]
-
-[[ports]]
-localPort = 5000
-externalPort = 80
 
 [env]
 PORT = "5000"
@@ -44,3 +40,19 @@ waitForPort = 5000
 
 [agent]
 integrations = ["github:1.0.0", "javascript_object_storage:2.0.0"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+VITE_FIREBASE_API_KEY = "AIzaSyDeAEP1EKNrJWorXk621qCwuoDxnzEBdmc"
+VITE_FIREBASE_AUTH_DOMAIN = "maweja-9bf20.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID = "maweja-9bf20"
+VITE_FIREBASE_STORAGE_BUCKET = "maweja-9bf20.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "231998182400"
+VITE_FIREBASE_APP_ID = "1:231998182400:web:f68fd140306e4b6d0134e5"
+VITE_FIREBASE_MEASUREMENT_ID = "G-ELJGM62K3X"
+VITE_FIREBASE_VAPID_KEY = "BCgMAXD8nWEfWbDS6ZckqVq8Dx9XsFFl74S0-fs_B17me2fVJAowLGUvx6I7gxqS7y_srJKAI2KOTro4ftz05FY"

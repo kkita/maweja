@@ -587,21 +587,10 @@ export default function PresentationPage() {
             La plateforme de référence pour la livraison de repas et services à domicile à Kinshasa, République Démocratique du Congo.
           </p>
 
-          <div
-            className="mt-6 flex flex-col items-center gap-2 rounded-2xl px-10 py-6"
-            style={{ background: T.brand(0.08), border: `1px solid ${T.brand(0.25)}` }}
-          >
-            <p className="text-white font-black" style={{ fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)" }}>
-              Khevin Andrew Kita
-            </p>
-            <p className="text-red-400 font-semibold tracking-widest text-sm uppercase">Développeur</p>
-            <p className="text-gray-400 dark:text-gray-500 font-mono text-sm mt-1">0802540138</p>
-          </div>
-
           <p
             className="text-gray-700 dark:text-gray-200 text-xs tracking-widest uppercase mt-8"
           >
-            © 2026 MAWEJA · Ed Corporation · Made with ❤️ in Kinshasa
+            © 2026 MAWEJA · Made with ❤️ in Kinshasa
           </p>
         </div>
       </section>

@@ -12,11 +12,32 @@ export function broadcast(data: any): void {
   });
 }
 
-export function sendToUser(userId: number, data: any): void {
+/**
+ * Envoie un message WebSocket à un utilisateur spécifique.
+ *
+ * Renvoie `true` si le message a effectivement été poussé sur le socket
+ * (socket connecté & ouvert), `false` sinon (utilisateur hors-ligne, socket
+ * fermé, etc.). Le caller peut alors logger / décider d'un fallback (push,
+ * email, etc.).
+ *
+ * Loggue toujours une ligne au format :
+ *   [ws] sendToUser userId=<id> type=<event-type> delivered=<true|false>
+ */
+export function sendToUser(userId: number, data: any): boolean {
   const ws = wsClients.get(userId);
+  const evType = (data && typeof data === "object" && (data as any).type) || "unknown";
+  let delivered = false;
   if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(data));
+    try {
+      ws.send(JSON.stringify(data));
+      delivered = true;
+    } catch (e) {
+      logger.warn?.(`[ws] sendToUser send failed userId=${userId} type=${evType}`, e);
+      delivered = false;
+    }
   }
+  logger.info?.(`[ws] sendToUser userId=${userId} type=${evType} delivered=${delivered}`);
+  return delivered;
 }
 
 export function setupWebSocket(httpServer: Server): void {

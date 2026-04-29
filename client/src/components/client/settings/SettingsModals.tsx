@@ -104,7 +104,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
     { title: "4. Sécurité",              body: "Vos données sont protégées par des mesures de sécurité standard de l'industrie. Les mots de passe sont chiffrés et ne sont jamais stockés en clair. Nos serveurs sont sécurisés et les accès sont contrôlés." },
     { title: "5. Vos droits",            body: "Vous pouvez à tout moment demander l'accès, la modification ou la suppression de vos données en contactant notre support au 0802540138. Nous traiterons votre demande dans un délai de 30 jours." },
     { title: "6. Cookies",               body: "MAWEJA utilise des cookies de session pour maintenir votre connexion. Aucun cookie de traçage publicitaire n'est utilisé." },
-    { title: "7. Contact",               body: "Pour toute question relative à la confidentialité : Ed Corporation - Kinshasa, RDC - Tél : 0802540138 - Email : support@maweja.cd" },
+    { title: "7. Contact",               body: "Pour toute question relative à la confidentialité : Kinshasa, RDC - Tél : 0802540138 - Email : support@maweja.cd" },
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -117,7 +117,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
               <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{body}</p>
             </div>
           ))}
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-4">Dernière mise à jour : Mars 2026 — MAWEJA / Ed Corporation</p>
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center mt-4">Dernière mise à jour : Mars 2026 — MAWEJA</p>
         </div>
       </div>
     </div>
@@ -197,37 +197,3 @@ export function ContactSupportModal({ onClose, userId }: { onClose: () => void; 
   );
 }
 
-export function AboutModal({ onClose }: { onClose: () => void }) {
-  const rows = [
-    { label: "Plateforme", value: "Livraison & Services — Kinshasa, RDC" },
-    { label: "Développeur", value: "Khevin Andrew Kita" },
-    { label: "Entreprise",  value: "Ed Corporation" },
-    { label: "Contact",     value: "+243819994041" },
-    { label: "Email",       value: "edcorporation9@gmail.com" },
-  ];
-  return (
-    <ModalShell onClose={onClose}>
-      <ModalHeader icon={Info} title="À propos" onClose={onClose} />
-      <div className="px-6">
-        <div className="text-center mb-6">
-          <div className="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-200 dark:shadow-red-900">
-            <span className="text-white text-3xl font-black">M</span>
-          </div>
-          <h2 className="text-2xl font-black text-gray-900 dark:text-white">MAWEJA</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Version 1.0.0</p>
-        </div>
-        <div className="space-y-3">
-          {rows.map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
-              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{label}</span>
-              <span className="text-sm font-bold text-gray-900 dark:text-white">{value}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-[10px] text-gray-400 dark:text-gray-500 mt-6">
-          © 2026 Ed Corporation — Tous droits réservés
-        </p>
-      </div>
-    </ModalShell>
-  );
-}

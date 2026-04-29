@@ -27,12 +27,81 @@ vi.mock("../server/db", () => ({
   pool: { connect: async () => ({ release: () => {} }) },
 }));
 
+/**
+ * Capteurs partagés (hoisted) pour les appels WebSocket et Push FCM.
+ *   - wsCalls.list  : tout appel à sendToUser(userId, data) y est poussé.
+ *   - pushCalls.list: tout appel à sendPushToUser(userId, payload) y est poussé.
+ *
+ * `pushMockCfg` permet aux tests de simuler dynamiquement les états :
+ *   - firebaseConfigured = false → tous les sendPushToUser renvoient
+ *     { status: "skipped", skippedReason: "no-firebase" }.
+ *   - firebaseConfigured = true (par défaut) → on renvoie un PushResult
+ *     "sent" basé sur le nombre de tokens actifs en DB (storage memory).
+ */
+const wsCalls = vi.hoisted(() => ({
+  list: [] as Array<{ userId: number; data: any }>,
+}));
+const pushCalls = vi.hoisted(() => ({
+  list: [] as Array<{ userId: number; payload: any }>,
+}));
+const pushMockCfg = vi.hoisted(() => ({
+  firebaseConfigured: true,
+}));
+
 vi.mock("../server/websocket", () => ({
   setupWebSocket: () => {},
   wsClients: new Map(),
   broadcast: () => {},
-  sendToUser: () => {},
+  sendToUser: (userId: number, data: any) => {
+    wsCalls.list.push({ userId, data });
+    return false; // pas de connexion réelle dans les tests
+  },
 }));
+
+vi.mock("../server/lib/push", async () => {
+  const actual = await vi.importActual<typeof import("../server/lib/push")>(
+    "../server/lib/push",
+  );
+  return {
+    ...actual,
+    isFirebaseConfigured: () => pushMockCfg.firebaseConfigured,
+    sendPushToUser: async (userId: number, payload: any) => {
+      pushCalls.list.push({ userId, payload });
+      if (!pushMockCfg.firebaseConfigured) {
+        return {
+          status: "skipped" as const,
+          sentCount: 0,
+          failedCount: 0,
+          invalidTokenCount: 0,
+          skippedReason: "no-firebase" as const,
+        };
+      }
+      // Compte les tokens actifs depuis le mock storage pour simuler "sent"
+      const { memoryStorage } = await import("./storage.mock");
+      const tokens = await memoryStorage.getActivePushTokensByUser(userId);
+      const user = await memoryStorage.getUser(userId);
+      const legacyToken = (user as any)?.pushToken || null;
+      const count =
+        tokens.length + (legacyToken && !tokens.find((t) => t.token === legacyToken) ? 1 : 0);
+      if (count === 0) {
+        return {
+          status: "skipped" as const,
+          sentCount: 0,
+          failedCount: 0,
+          invalidTokenCount: 0,
+          skippedReason: "no-token" as const,
+        };
+      }
+      return {
+        status: "sent" as const,
+        sentCount: count,
+        failedCount: 0,
+        invalidTokenCount: 0,
+        results: tokens.map((t) => ({ token: t.token, status: "sent" as const })),
+      };
+    },
+  };
+});
 
 vi.mock("../server/lib/cloudSync", () => ({
   normalizeUploadUrls: async () => {},
@@ -147,6 +216,11 @@ async function seedZone() {
 
 beforeEach(() => {
   memoryStorage.reset();
+  // Reset des capteurs WS/Push (les nouveaux tests "Section 8" en dépendent
+  // mais ne pas les vider entre tests pollue d'autres assertions).
+  wsCalls.list.length = 0;
+  pushCalls.list.length = 0;
+  pushMockCfg.firebaseConfigured = true;
 });
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -2812,5 +2886,307 @@ describe("PARTIE 6 — Reviews", () => {
     expect(r.userEmail).toBeUndefined();
     expect(res.body.tagCounts).toBeTruthy();
     expect(res.body.ratingHistogram).toBeTruthy();
+  });
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SECTION 8 — Tests automatisés notif/push/chat (refonte 2026-04)
+// ──────────────────────────────────────────────────────────────────────────────
+
+describe("Section 8.1 — Client → Driver : chat_message + notif DB + push + admin silencieux", () => {
+  beforeEach(() => memoryStorage.reset());
+
+  async function trio() {
+    const admin = await seedAdmin();
+    const client = await seedClient();
+    const driver = await seedDriver();
+    await seedRestaurant();
+    return { admin, client, driver };
+  }
+
+  async function activeOrder(clientId: number, driverId: number) {
+    return memoryStorage.createOrder({
+      orderNumber: `M${String(800 + Math.floor(Math.random() * 999)).padStart(8, "0")}`,
+      clientId, restaurantId: 1, driverId, status: "in_delivery",
+      items: [{ name: "x", price: 1, quantity: 1 }],
+      subtotal: 10, deliveryFee: 1.5, commission: 2, total: 11.5,
+      paymentMethod: "cash", paymentStatus: "pending",
+      deliveryAddress: "Gombe", taxAmount: 0, promoDiscount: 0,
+      driverAccepted: true, loyaltyPointsAwarded: false, loyaltyCreditDiscount: 0,
+    });
+  }
+
+  it("envoie un WS chat_message au driver, crée une notif DB ciblée, push avec eventType chat:new_message, et l'admin reçoit du admin_chat_preview silent (pas de chat_message)", async () => {
+    const { admin, client, driver } = await trio();
+    const order = await activeOrder(client.id, driver.id);
+    // Token push driver pour que le mock renvoie "sent"
+    await memoryStorage.upsertPushToken({
+      userId: driver.id, token: "tok-driver-1", platform: "android",
+    });
+
+    const app = buildApp();
+    const res = await request(app)
+      .post("/api/chat")
+      .set("Authorization", `Bearer ${TOKEN_CLIENT}`)
+      .send({ senderId: client.id, receiverId: driver.id, message: "Où es-tu ?" });
+    expect(res.status).toBe(200);
+
+    // (a) WS chat_message envoyé au driver
+    const chatMsgToDriver = wsCalls.list.find(
+      c => c.userId === driver.id && c.data?.type === "chat_message",
+    );
+    expect(chatMsgToDriver).toBeTruthy();
+    expect(chatMsgToDriver!.data?.message?.message).toBe("Où es-tu ?");
+
+    // (b) notification DB persistée pour userId=driverId
+    const driverNotifs = await memoryStorage.getNotifications(driver.id);
+    const chatNotif = driverNotifs.find(n => n.type === "chat");
+    expect(chatNotif).toBeTruthy();
+    expect((chatNotif as any).data?.orderId).toBe(order.id);
+    expect((chatNotif as any).data?.eventType).toBe("chat:new_message");
+    expect((chatNotif as any).data?.deepLink).toBe(`/driver/chat/order/${order.id}`);
+
+    // (c) push payload avec eventType chat:new_message
+    const pushToDriver = pushCalls.list.find(p => p.userId === driver.id);
+    expect(pushToDriver).toBeTruthy();
+    expect(pushToDriver!.payload?.data?.eventType).toBe("chat:new_message");
+    expect(pushToDriver!.payload?.data?.type).toBe("chat");
+    expect(pushToDriver!.payload?.data?.orderId).toBe(String(order.id));
+
+    // (d) le dashboard admin NE reçoit PAS de chat_message sonore.
+    //     Il reçoit un admin_chat_preview avec silent=true.
+    const adminChatMsg = wsCalls.list.find(
+      c => c.userId === admin.id && c.data?.type === "chat_message",
+    );
+    expect(adminChatMsg).toBeUndefined();
+    const adminPreview = wsCalls.list.find(
+      c => c.userId === admin.id && c.data?.type === "admin_chat_preview",
+    );
+    expect(adminPreview).toBeTruthy();
+    expect(adminPreview!.data?.silent).toBe(true);
+  });
+});
+
+describe("Section 8.2 — Driver → Client : chat_message + notif DB + push avec orderId + deepLink client", () => {
+  beforeEach(() => memoryStorage.reset());
+
+  async function trio() {
+    const admin = await seedAdmin();
+    const client = await seedClient();
+    const driver = await seedDriver();
+    await seedRestaurant();
+    return { admin, client, driver };
+  }
+
+  async function activeOrder(clientId: number, driverId: number) {
+    return memoryStorage.createOrder({
+      orderNumber: `M${String(700 + Math.floor(Math.random() * 999)).padStart(8, "0")}`,
+      clientId, restaurantId: 1, driverId, status: "in_delivery",
+      items: [{ name: "x", price: 1, quantity: 1 }],
+      subtotal: 10, deliveryFee: 1.5, commission: 2, total: 11.5,
+      paymentMethod: "cash", paymentStatus: "pending",
+      deliveryAddress: "Gombe", taxAmount: 0, promoDiscount: 0,
+      driverAccepted: true, loyaltyPointsAwarded: false, loyaltyCreditDiscount: 0,
+    });
+  }
+
+  it("envoie un WS chat_message au client, notif DB userId=clientId, push porte orderId et deepLink /chat/order/:id", async () => {
+    const { client, driver } = await trio();
+    const order = await activeOrder(client.id, driver.id);
+    await memoryStorage.upsertPushToken({
+      userId: client.id, token: "tok-client-1", platform: "ios",
+    });
+
+    const app = buildApp();
+    const res = await request(app)
+      .post("/api/chat")
+      .set("Authorization", `Bearer ${TOKEN_DRIVER}`)
+      .send({ senderId: driver.id, receiverId: client.id, message: "J'arrive dans 5 min" });
+    expect(res.status).toBe(200);
+
+    // (a) WS chat_message au client
+    const chatMsgToClient = wsCalls.list.find(
+      c => c.userId === client.id && c.data?.type === "chat_message",
+    );
+    expect(chatMsgToClient).toBeTruthy();
+
+    // (b) notif DB persistée pour userId=clientId
+    const clientNotifs = await memoryStorage.getNotifications(client.id);
+    const chatNotif = clientNotifs.find(n => n.type === "chat");
+    expect(chatNotif).toBeTruthy();
+    expect((chatNotif as any).userId).toBe(client.id);
+    expect((chatNotif as any).data?.orderId).toBe(order.id);
+
+    // (c) push payload avec orderId + deepLink correct côté client
+    const pushToClient = pushCalls.list.find(p => p.userId === client.id);
+    expect(pushToClient).toBeTruthy();
+    expect(pushToClient!.payload?.data?.orderId).toBe(String(order.id));
+    expect(pushToClient!.payload?.data?.deepLink).toBe(`/chat/order/${order.id}`);
+    // Important : NE doit PAS pointer vers /tracking pour un message chat
+    expect(pushToClient!.payload?.data?.deepLink).not.toMatch(/^\/tracking\//);
+  });
+});
+
+describe("Section 8.3 — Admin preview : silent + pas de sonnerie globale", () => {
+  beforeEach(() => memoryStorage.reset());
+
+  it("le fanout vers l'admin pour un chat client↔driver est admin_chat_preview avec silent=true (pas de chat_message)", async () => {
+    const admin = await seedAdmin();
+    const client = await seedClient();
+    const driver = await seedDriver();
+    await seedRestaurant();
+    await memoryStorage.createOrder({
+      orderNumber: "M00099001", clientId: client.id, restaurantId: 1, driverId: driver.id,
+      status: "in_delivery",
+      items: [{ name: "x", price: 1, quantity: 1 }],
+      subtotal: 10, deliveryFee: 1.5, commission: 2, total: 11.5,
+      paymentMethod: "cash", paymentStatus: "pending",
+      deliveryAddress: "Gombe", taxAmount: 0, promoDiscount: 0,
+      driverAccepted: true, loyaltyPointsAwarded: false, loyaltyCreditDiscount: 0,
+    });
+
+    const app = buildApp();
+    await request(app)
+      .post("/api/chat")
+      .set("Authorization", `Bearer ${TOKEN_DRIVER}`)
+      .send({ senderId: driver.id, receiverId: client.id, message: "Hello" });
+
+    const adminPreviews = wsCalls.list.filter(
+      c => c.userId === admin.id && c.data?.type === "admin_chat_preview",
+    );
+    expect(adminPreviews.length).toBeGreaterThan(0);
+    expect(adminPreviews[0].data?.silent).toBe(true);
+    expect(adminPreviews[0].data?.meta?.adminPreview).toBe(true);
+
+    // Aucun chat_message envoyé à l'admin (rien qui ferait sonner le Dashboard)
+    const adminChatMsgs = wsCalls.list.filter(
+      c => c.userId === admin.id && c.data?.type === "chat_message",
+    );
+    expect(adminChatMsgs).toHaveLength(0);
+
+    // Pas de notif DB de type "chat" pour l'admin
+    const adminNotifs = await memoryStorage.getNotifications(admin.id);
+    expect(adminNotifs.find(n => n.type === "chat")).toBeUndefined();
+  });
+});
+
+describe("Section 8.4 — Push tokens : multi-device + logout single-device", () => {
+  beforeEach(() => memoryStorage.reset());
+
+  it("register-token crée la ligne push_tokens", async () => {
+    const u = await seedClient();
+    const app = buildApp();
+    const res = await request(app)
+      .post("/api/push/register-token")
+      .set("Authorization", `Bearer ${TOKEN_CLIENT}`)
+      .send({ token: "fcm-A", platform: "android", deviceId: "dev-A" });
+    expect(res.status).toBe(200);
+    const rows = memoryStorage.pushTokens.filter(t => t.userId === u.id);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].token).toBe("fcm-A");
+    expect(rows[0].isActive).toBe(true);
+  });
+
+  it("plusieurs tokens par user restent actifs simultanément (Android + iOS + Web)", async () => {
+    const u = await seedClient();
+    const app = buildApp();
+    await request(app).post("/api/push/register-token")
+      .set("Authorization", `Bearer ${TOKEN_CLIENT}`)
+      .send({ token: "fcm-A", platform: "android", deviceId: "dev-A" });
+    await request(app).post("/api/push/register-token")
+      .set("Authorization", `Bearer ${TOKEN_CLIENT}`)
+      .send({ token: "fcm-I", platform: "ios", deviceId: "dev-I" });
+    await request(app).post("/api/push/register-token")
+      .set("Authorization", `Bearer ${TOKEN_CLIENT}`)
+      .send({ token: "fcm-W", platform: "web", deviceId: "dev-W" });
+
+    const active = await memoryStorage.getActivePushTokensByUser(u.id);
+    expect(active).toHaveLength(3);
+    expect(active.every(t => t.isActive)).toBe(true);
+    expect(active.map(t => t.token).sort()).toEqual(["fcm-A", "fcm-I", "fcm-W"]);
+  });
+
+  it("logout d'un appareil : unregister-token avec token précis ne désactive QUE ce token", async () => {
+    const u = await seedClient();
+    const app = buildApp();
+    await memoryStorage.upsertPushToken({ userId: u.id, token: "tok-keep-1", platform: "android" });
+    await memoryStorage.upsertPushToken({ userId: u.id, token: "tok-keep-2", platform: "ios" });
+    await memoryStorage.upsertPushToken({ userId: u.id, token: "tok-bye", platform: "web" });
+
+    const res = await request(app)
+      .post("/api/push/unregister-token")
+      .set("Authorization", `Bearer ${TOKEN_CLIENT}`)
+      .send({ token: "tok-bye" });
+    expect(res.status).toBe(200);
+
+    const active = await memoryStorage.getActivePushTokensByUser(u.id);
+    expect(active.map(t => t.token).sort()).toEqual(["tok-keep-1", "tok-keep-2"]);
+    // Le token retiré existe encore en DB mais avec isActive=false
+    const all = memoryStorage.pushTokens.filter(t => t.token === "tok-bye");
+    expect(all).toHaveLength(1);
+    expect(all[0].isActive).toBe(false);
+  });
+});
+
+describe("Section 8.5 — Admin GET /api/admin/push/debug : no-token / no-firebase / sentCount > 0", () => {
+  beforeEach(() => memoryStorage.reset());
+
+  it("renvoie 0 tokens et firebaseConfigured=true quand l'utilisateur n'a aucun token", async () => {
+    await seedAdmin();
+    const u = await seedClient();
+    pushMockCfg.firebaseConfigured = true;
+    const app = buildApp();
+    const res = await request(app)
+      .get(`/api/admin/push/debug/${u.id}`)
+      .set("Authorization", `Bearer ${TOKEN_ADMIN}`);
+    expect(res.status).toBe(200);
+    expect(res.body.activeTokensCount).toBe(0);
+    expect(res.body.legacyPushTokenExists).toBe(false);
+    expect(res.body.firebaseConfigured).toBe(true);
+  });
+
+  it("renvoie firebaseConfigured=false quand Firebase n'est pas configuré (et POST /test renvoie skipped:no-firebase)", async () => {
+    await seedAdmin();
+    const u = await seedClient();
+    await memoryStorage.upsertPushToken({ userId: u.id, token: "tok-x", platform: "android" });
+    pushMockCfg.firebaseConfigured = false;
+    const app = buildApp();
+
+    const dbg = await request(app)
+      .get(`/api/admin/push/debug/${u.id}`)
+      .set("Authorization", `Bearer ${TOKEN_ADMIN}`);
+    expect(dbg.status).toBe(200);
+    expect(dbg.body.firebaseConfigured).toBe(false);
+    expect(dbg.body.activeTokensCount).toBe(1);
+
+    const test = await request(app)
+      .post("/api/admin/push/test")
+      .set("Authorization", `Bearer ${TOKEN_ADMIN}`)
+      .send({ userId: u.id, title: "T", body: "B" });
+    expect(test.status).toBe(200);
+    expect(test.body.pushResult?.status).toBe("skipped");
+    expect(test.body.pushResult?.skippedReason).toBe("no-firebase");
+    expect(test.body.pushResult?.sentCount).toBe(0);
+  });
+
+  it("POST /api/admin/push/test : renvoie sentCount > 0 quand un token valide est mocké", async () => {
+    await seedAdmin();
+    const u = await seedClient();
+    await memoryStorage.upsertPushToken({ userId: u.id, token: "tok-valid-1", platform: "android" });
+    await memoryStorage.upsertPushToken({ userId: u.id, token: "tok-valid-2", platform: "ios" });
+    pushMockCfg.firebaseConfigured = true;
+    const app = buildApp();
+
+    const res = await request(app)
+      .post("/api/admin/push/test")
+      .set("Authorization", `Bearer ${TOKEN_ADMIN}`)
+      .send({ userId: u.id, title: "Hello", body: "World" });
+    expect(res.status).toBe(200);
+    expect(res.body.pushResult?.status).toBe("sent");
+    expect(res.body.pushResult?.sentCount).toBe(2);
+    expect(res.body.pushResult?.failedCount).toBe(0);
+    // Vérifie que sendPushToUser a bien été appelé une seule fois pour ce user
+    const callsForUser = pushCalls.list.filter(p => p.userId === u.id);
+    expect(callsForUser).toHaveLength(1);
   });
 });

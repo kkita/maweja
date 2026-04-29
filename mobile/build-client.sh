@@ -39,6 +39,22 @@ cd mobile/client
 npx cap sync android 2>/dev/null && echo "   ✓ Android sync OK" || echo "   ! Android non initialisé — lancez: npx cap add android"
 npx cap sync ios    2>/dev/null && echo "   ✓ iOS sync OK"     || echo "   ! iOS non initialisé — lancez: npx cap add ios (macOS requis)"
 
+# ---- 3a. google-services.json (Firebase Cloud Messaging) ----
+# Source de vérité : mobile/client/firebase/google-services.json (downloadable depuis
+# Firebase Console). Le plugin Gradle 'com.google.gms.google-services' attend
+# le fichier dans android/app/. On le recopie systématiquement.
+if [ -f "firebase/google-services.json" ]; then
+  if [ -d "android/app" ]; then
+    cp firebase/google-services.json android/app/google-services.json
+    echo "   ✓ google-services.json → android/app/ (com.edcorp.maweja)"
+  else
+    echo "   ! android/app introuvable — google-services.json non copié (lancez 'npx cap add android' d'abord)"
+  fi
+else
+  echo "   ! mobile/client/firebase/google-services.json absent — push notifications désactivées"
+  echo "     → Téléchargez-le depuis Firebase Console (projet maweja-9bf20)"
+fi
+
 # ---- 3b. Icône notification Android (ic_stat_notify) ----
 ANDROID_RES="android/app/src/main/res"
 if [ -d "$ANDROID_RES" ]; then

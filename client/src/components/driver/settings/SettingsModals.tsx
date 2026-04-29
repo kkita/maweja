@@ -76,7 +76,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
     { title: "3. Localisation GPS",        body: "Votre position GPS n'est partagée avec les clients que pendant une livraison active. Elle est désactivée dès que vous passez hors ligne." },
     { title: "4. Revenus et paiements",    body: "Vos données de revenus sont confidentielles et ne sont partagées qu'avec l'administration MAWEJA pour le calcul des commissions." },
     { title: "5. Vos droits",              body: "Vous pouvez demander la modification ou suppression de votre compte à tout moment en contactant le support au 0802540138." },
-    { title: "6. Contact",                 body: "Ed Corporation — Kinshasa, RDC — Tél : 0802540138 — Email : support@maweja.cd" },
+    { title: "6. Contact",                 body: "MAWEJA — Kinshasa, RDC — Tél : 0802540138 — Email : support@maweja.cd" },
   ];
   return (
     <BottomSheet onClose={onClose}>
@@ -88,7 +88,7 @@ export function PrivacyPolicyModal({ onClose }: { onClose: () => void }) {
             <p className="text-xs leading-relaxed text-driver-muted">{body}</p>
           </div>
         ))}
-        <p className="text-center text-[10px] text-driver-subtle">Dernière mise à jour : Mars 2026 — MAWEJA / Ed Corporation</p>
+        <p className="text-center text-[10px] text-driver-subtle">Dernière mise à jour : Mars 2026 — MAWEJA</p>
       </div>
     </BottomSheet>
   );
@@ -170,37 +170,3 @@ export function ContactSupportModal({ onClose, userId }: { onClose: () => void; 
   );
 }
 
-export function AboutModal({ onClose }: { onClose: () => void }) {
-  const rows = [
-    { label: "Plateforme", value: "Livraison & Services — Kinshasa, RDC" },
-    { label: "Développeur", value: "Khevin Andrew Kita" },
-    { label: "Entreprise",  value: "Ed Corporation" },
-    { label: "Contact",     value: "0802540138" },
-  ];
-  return (
-    <BottomSheet onClose={onClose}>
-      <SheetHeader icon={Info} title="À propos" onClose={onClose} />
-      <div className="px-5 py-4">
-        <div className="flex flex-col items-center text-center mb-6">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-4 bg-driver-accent shadow-[0_12px_32px_rgba(225,0,0,0.4)]">
-            <span className="text-white text-3xl font-black">M</span>
-          </div>
-          <h2 className="text-2xl font-black text-driver-text">MAWEJA Agent</h2>
-          <p className="text-sm mt-1 text-driver-subtle">Version 1.0.0</p>
-        </div>
-        <div className="rounded-2xl overflow-hidden bg-driver-s2">
-          {rows.map(({ label, value }, i) => (
-            <div
-              key={label}
-              className={`flex items-center justify-between px-4 py-3.5 ${i < rows.length - 1 ? "border-b border-driver-border" : ""}`}
-            >
-              <span className="text-xs font-semibold text-driver-subtle">{label}</span>
-              <span className="text-sm font-bold text-driver-text">{value}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-center text-[10px] mt-6 text-driver-subtle">© 2026 Ed Corporation — Tous droits réservés</p>
-      </div>
-    </BottomSheet>
-  );
-}

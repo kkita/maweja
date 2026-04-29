@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Star, AlertTriangle, Filter } from "lucide-react";
 import { formatDate } from "../../lib/utils";
 import type { Review } from "@shared/schema";
+import AdminLayout from "../../components/AdminLayout";
 
 interface LowRatedResp {
   threshold: number;
@@ -52,8 +53,8 @@ export default function AdminReviews() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-6" data-testid="page-admin-reviews">
-      <div className="max-w-6xl mx-auto">
+    <AdminLayout title="Avis & notes">
+      <div className="max-w-6xl mx-auto" data-testid="page-admin-reviews">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
           <Star className="text-yellow-400" /> Avis & notes
         </h1>
@@ -185,6 +186,6 @@ export default function AdminReviews() {
           )}
         </section>
       </div>
-    </div>
+    </AdminLayout>
   );
 }

@@ -236,13 +236,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <p
-          className="text-center text-white/30 text-[10px] mt-8"
-          style={{ fontFamily: "system-ui, sans-serif" }}
-          data-testid="text-signature"
-        >
-          Made By Khevin Andrew Kita — Ed Corporation
-        </p>
       </div>
     </div>
   );
